@@ -21,3 +21,5 @@ duplicati/*
 *.log
 .phpstorm.meta.php
 _ide_helper*
+.vault-password
+.spin.yml
