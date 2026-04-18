@@ -1,0 +1,25 @@
+// app global css in SCSS form
+
+@import "./open-sans/stylesheet.css";
+
+body {
+    font-family: "open_Sans";
+}
+
+.full-image-background {
+    background-image: url("/trotinette.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.splash-box {
+    // width: 95%;
+    margin-top: 20px;
+}
+
+@media (min-width: 576px) {
+    .splash-box {
+        width: 520px;
+    }
+}

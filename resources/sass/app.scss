@@ -1,0 +1,13 @@
+@import "custom";
+@import "~bootstrap/scss/bootstrap";
+@import "./open-sans/stylesheet.css";
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+
+body {
+    font-family: "open_sans";
+}
+html {
+    min-height: 100%;
+    text-size-adjust: 100%;
+    line-height: 1.15;
+}

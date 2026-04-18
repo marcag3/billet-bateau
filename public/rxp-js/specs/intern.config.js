@@ -1,0 +1,1 @@
+define({environments:[{browserName:"chrome",chromeOptions:{args:["headless","disable-gpu"]},fixSessionCapabilities:!1}],tunnel:"SeleniumTunnel",functionalSuites:["specs/functional/**/*_spec.js"],excludeInstrumentation:!0});
