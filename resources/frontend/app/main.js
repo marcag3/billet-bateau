@@ -6,8 +6,12 @@ import 'quasar/src/css/index.sass';
 import './styles/app.scss';
 import AppRoot from './AppRoot.vue';
 import router from './router';
+import { bootstrapTodosSync } from './sync/useTodosSync';
 
 const app = createApp(AppRoot);
+
+//TODO: this won't scale with multiple models
+void bootstrapTodosSync();
 
 app.use(createPinia());
 app.use(router);

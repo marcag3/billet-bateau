@@ -24,6 +24,8 @@ services:
     depends_on:
       pgsql:
         condition: service_healthy
+      electric:
+        condition: service_started
       redis:
         condition: service_healthy
       garage:
@@ -40,6 +42,10 @@ services:
       - "${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025"
     networks:
       - app
+
+  electric:
+    ports:
+      - "${FORWARD_ELECTRIC_PORT:-5133}:3000"
 
   pgsql:
     ports:

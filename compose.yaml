@@ -2,12 +2,21 @@ services:
   pgsql:
     image: "postgres:18-alpine"
     restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_replication_slots=10
+      - -c
+      - max_wal_senders=10
     environment:
       POSTGRES_DB: "${DB_DATABASE}"
       POSTGRES_USER: "${DB_USERNAME}"
       POSTGRES_PASSWORD: "${DB_PASSWORD}"
     volumes:
       - "./database/schema:/schema"
+      - "./docker/pgsql/create-electric-user.sql:/docker-entrypoint-initdb.d/20-create-electric-user.sql:ro"
       - "pgsql:/var/lib/postgresql/data"
     networks:
       - app
@@ -19,6 +28,19 @@ services:
       retries: 5
       timeout: 5s
       start_period: 30s
+
+  electric:
+    image: "electricsql/electric:latest"
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "${ELECTRIC_DATABASE_URL:-postgresql://electric:password@pgsql:5432/database?sslmode=disable}"
+      ELECTRIC_SECRET: "${ELECTRIC_SECRET:-electric-local-dev-secret-with-32-bytes-minimum}"
+      ELECTRIC_INSECURE: "${ELECTRIC_INSECURE:-true}"
+    depends_on:
+      pgsql:
+        condition: service_healthy
+    networks:
+      - app
 
   redis:
     image: "redis:alpine"
