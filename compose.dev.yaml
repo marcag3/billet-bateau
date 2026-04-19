@@ -22,10 +22,14 @@ services:
       - ".:/var/www/html"
     command: php artisan serve --host=0.0.0.0 --port=80
     depends_on:
-      - pgsql
-      - redis
-      - garage
-      - mailpit
+      pgsql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      garage-init:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
     networks:
       - app
 

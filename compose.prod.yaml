@@ -16,10 +16,14 @@ services:
       DB_HOST: "pgsql"
       REDIS_HOST: "redis"
     depends_on:
-      - pgsql
-      - redis
-      - gotenberg
-      - garage
+      pgsql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      gotenberg:
+        condition: service_started
+      garage-init:
+        condition: service_completed_successfully
     networks:
       - app
 
