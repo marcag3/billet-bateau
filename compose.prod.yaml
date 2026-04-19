@@ -1,0 +1,52 @@
+services:
+  production:
+    image: "${PRODUCTION_IMAGE:-billet-bateau-production:latest}"
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+    env_file: ".env"
+    volumes:
+      - "./storage/app:/var/www/html/storage/app"
+    environment:
+      AUTORUN_ENABLED: true
+      AUTORUN_LARAVEL_VIEW_CACHE: false
+      HEALTHCHECK_PATH: "/up"
+      DB_HOST: "pgsql"
+      REDIS_HOST: "redis"
+    depends_on:
+      - pgsql
+      - redis
+      - gotenberg
+      - garage
+    networks:
+      - app
+
+  production-schedule:
+    image: "${PRODUCTION_IMAGE:-billet-bateau-production:latest}"
+    restart: unless-stopped
+    command: ["php", "/var/www/html/artisan", "schedule:work"]
+    env_file: ".env"
+    environment:
+      AUTORUN_ENABLED: false
+      DB_HOST: "pgsql"
+      REDIS_HOST: "redis"
+    depends_on:
+      - production
+    networks:
+      - app
+
+  production-queue:
+    image: "${PRODUCTION_IMAGE:-billet-bateau-production:latest}"
+    restart: unless-stopped
+    command: ["php", "/var/www/html/artisan", "queue:work", "--tries=3"]
+    env_file: ".env"
+    environment:
+      AUTORUN_ENABLED: false
+      DB_HOST: "pgsql"
+      REDIS_HOST: "redis"
+    depends_on:
+      - production
+    networks:
+      - app

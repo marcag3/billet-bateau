@@ -1,54 +1,112 @@
 ############################################
-# Base Image
+# Shared PHP runtime
 ############################################
-
-# Learn more about the Server Side Up PHP Docker Images at:
-# https://serversideup.net/open-source/docker-php/
 FROM serversideup/php:8.5-frankenphp AS base
 
-## Uncomment if you need to install additional PHP extensions
-# USER root
-# RUN install-php-extensions bcmath gd
+WORKDIR /var/www/html
 
-############################################
-# Development Image
-############################################
-FROM base AS development
-
-# We can pass USER_ID and GROUP_ID as build arguments
-# to ensure the www-data user has the same UID and GID
-# as the user running Docker.
-ARG USER_ID
-ARG GROUP_ID
-
-# Switch to root so we can set the user ID and group ID
 USER root
 
-# Set the user ID and group ID for www-data
-RUN docker-php-serversideup-set-id www-data $USER_ID:$GROUP_ID  && \
-    docker-php-serversideup-set-file-permissions --owner $USER_ID:$GROUP_ID
-
-# Drop privileges back to www-data    
-USER www-data
+RUN install-php-extensions intl gd exif
 
 ############################################
-# CI image
+# Development tools (Sail-like all-in-one)
 ############################################
-FROM base AS ci
+FROM base AS devtools
 
-# Sometimes CI images need to run as root
-# so we set the ROOT user and configure
-# the PHP-FPM pool to run as www-data
-USER root
+ARG NODE_VERSION=22
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        dnsutils \
+        ffmpeg \
+        fswatch \
+        git \
+        gnupg \
+        nano \
+        postgresql-client \
+        redis-tools \
+        sqlite3 \
+        unzip \
+        zip \
+    && mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+        | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_VERSION}.x nodistro main" \
+        > /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm install -g npm pnpm bun \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN if ! command -v composer >/dev/null 2>&1; then \
+        curl -sLS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer; \
+    fi
 
 ############################################
-# Production Image
+# Development runtime target
 ############################################
-FROM base AS deploy
-COPY --chown=www-data:www-data . /var/www/html
+FROM devtools AS development
 
-# Create the SQLite directory and set the owner to www-data (remove this if you're not using SQLite)
-RUN mkdir -p /var/www/html/.infrastructure/volume_data/sqlite/ && \
-    chown -R www-data:www-data /var/www/html/.infrastructure/volume_data/sqlite/
+ARG WWWGROUP=1000
+ARG WWWUSER=1000
+
+RUN groupadd --force -g "${WWWGROUP}" sail \
+    && useradd -ms /bin/bash --no-user-group -g "${WWWGROUP}" -u "${WWWUSER}" sail \
+    && mkdir -p /home/sail/.composer \
+    && chown -R sail:sail /home/sail /var/www/html
+
+RUN git config --global --add safe.directory /var/www/html
+
+USER sail
+
+############################################
+# Production build stages
+############################################
+FROM base AS composer_deps
+
+WORKDIR /var/www/html
+
+COPY composer.json artisan composer.lock ./
+COPY bootstrap/ bootstrap/
+
+RUN composer install \
+    --optimize-autoloader \
+    --no-dev \
+    --no-interaction \
+    --no-scripts \
+    --prefer-dist
+
+FROM node:22-alpine AS frontend_assets
+
+WORKDIR /var/www/html
+
+COPY package.json package-lock.json vite.config.js tailwind.config.js postcss.config.js ./
+COPY resources/ resources/
+COPY --from=composer_deps /var/www/html/vendor/ vendor/
+
+RUN npm ci && npm run build
+
+############################################
+# Production runtime target
+############################################
+FROM base AS production
+
+WORKDIR /var/www/html
+
+ENV S6_CMD_WAIT_FOR_SERVICES=1
+
+COPY --chmod=755 ./.deploy/entrypoint.d/ /etc/entrypoint.d/
+COPY --chown=www-data:www-data . .
+COPY --from=composer_deps /var/www/html/vendor/ ./vendor
+COPY --from=frontend_assets /var/www/html/public/build ./public/build
+
+RUN composer dump-autoload --optimize --classmap-authoritative --no-dev
 
 USER www-data

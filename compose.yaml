@@ -1,0 +1,81 @@
+services:
+  pgsql:
+    image: "postgres:18-alpine"
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${DB_DATABASE}"
+      POSTGRES_USER: "${DB_USERNAME}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+    volumes:
+      - "./database/schema:/schema"
+      - "pgsql:/var/lib/postgresql/data"
+    networks:
+      - app
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -q -d "$${POSTGRES_DB}" -U "$${POSTGRES_USER}"
+      interval: 10s
+      retries: 5
+      timeout: 5s
+      start_period: 30s
+
+  redis:
+    image: "redis:alpine"
+    restart: unless-stopped
+    volumes:
+      - "redis:/data"
+    networks:
+      - app
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      retries: 3
+      timeout: 5s
+
+  gotenberg:
+    image: "gotenberg/gotenberg:8.30.0-chromium"
+    restart: unless-stopped
+    environment:
+      CHROMIUM_ALLOW_INSECURE_LOCALHOST: true
+      CHROMIUM_IGNORE_CERTIFICATE_ERRORS: true
+      CHROMIUM_DISABLE_WEB_SECURITY: true
+      CHROMIUM_AUTO_START: true
+    networks:
+      - app
+
+  garage:
+    image: "dxflrs/garage:v1.1.0"
+    restart: unless-stopped
+    command: "/garage -c /etc/garage.toml server"
+    volumes:
+      - "./docker/garage/garage.toml:/etc/garage.toml:ro"
+      - "garage-meta:/var/lib/garage/meta"
+      - "garage-data:/var/lib/garage/data"
+    networks:
+      - app
+    healthcheck:
+      test:
+        - CMD
+        - /garage
+        - -c
+        - /etc/garage.toml
+        - status
+      retries: 3
+      timeout: 5s
+
+networks:
+  app:
+    driver: bridge
+
+volumes:
+  pgsql:
+    driver: local
+  redis:
+    driver: local
+  garage-meta:
+    driver: local
+  garage-data:
+    driver: local

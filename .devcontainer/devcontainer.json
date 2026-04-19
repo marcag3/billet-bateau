@@ -1,0 +1,43 @@
+// https://aka.ms/devcontainer.json
+{
+    "name": "Docker",
+    "dockerComposeFile": ["../compose.yaml", "../compose.dev.yaml"],
+    "service": "laravel.test",
+    "workspaceFolder": "/var/www/html",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "mehedidracula.php-namespace-resolver",
+                "bmewburn.vscode-intelephense-client",
+                "xdebug.php-debug",
+                "junstyle.php-cs-fixer",
+                "onecentlin.laravel-extension-pack",
+                "georgykurian.laravel-ide-helper",
+                "eamodio.gitlens",
+                "visualstudioexptteam.vscodeintellicode",
+                "esbenp.prettier-vscode",
+                "wayou.vscode-todo-highlight",
+                "vscode-icons-team.vscode-icons",
+                "csstools.postcss",
+                "jaguadoromero.vscode-php-create-class",
+                "sonarsource.sonarlint-vscode",
+                "entexa.tall-stack",
+                "open-southeners.laravel-pint",
+                "sperovita.alpinejs-syntax-highlight",
+                "formulahendry.auto-close-tag",
+                "formulahendry.auto-rename-tag",
+                "kamikillerto.vscode-colorize",
+                "github.vscode-github-actions"
+            ],
+            "settings": {}
+        }
+    },
+    "remoteUser": "sail",
+    "postCreateCommand": "chown -R 1000:1000 /var/www/html"
+    // "forwardPorts": [5173]
+    // "runServices": [],
+    // "shutdownAction": "none",
+    // "mounts": [
+    //     "source=${localEnv:HOME}/.ssh,target=/home/sail/.ssh,type=bind,consistency=cached"
+    // ]
+}
