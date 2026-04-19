@@ -7,8 +7,8 @@
 FROM serversideup/php:8.5-frankenphp AS base
 
 ## Uncomment if you need to install additional PHP extensions
-USER root
-RUN install-php-extensions bcmath gd
+# USER root
+# RUN install-php-extensions bcmath gd
 
 ############################################
 # Development Image
@@ -46,5 +46,9 @@ USER root
 ############################################
 FROM base AS deploy
 COPY --chown=www-data:www-data . /var/www/html
+
+# Create the SQLite directory and set the owner to www-data (remove this if you're not using SQLite)
+RUN mkdir -p /var/www/html/.infrastructure/volume_data/sqlite/ && \
+    chown -R www-data:www-data /var/www/html/.infrastructure/volume_data/sqlite/
 
 USER www-data
