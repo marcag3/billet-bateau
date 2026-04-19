@@ -36,8 +36,11 @@ services:
       APP_ENV: "${SPIN_DEPLOYMENT_ENVIRONMENT}" # 👈 Remove this if you're not using `spin deploy`
       HEALTHCHECK_PATH: "/up" # Use Laravel's built-in health route
       SSL_MODE: full
+      DB_HOST: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
     networks:
       - web-public
+      - database
     volumes:
       - "storage_private:/var/www/html/storage/app/private/"
       - "storage_public:/var/www/html/storage/app/public/"
@@ -73,6 +76,24 @@ services:
         - "traefik.http.services.my-php-app.loadbalancer.healthcheck.timeout=5s"
         - "traefik.http.services.my-php-app.loadbalancer.healthcheck.scheme=http"
 
+  postgres:
+    networks:
+      - database
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+      rollback_config:
+        parallelism: 0
+        order: stop-first
+      restart_policy:
+        condition: any
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+
 configs:
   traefik:
     name: "traefik-${SPIN_MD5_HASH_TRAEFIK_YML}.yml"
@@ -85,6 +106,9 @@ volumes:
   storage_sessions:
   storage_logs:
   database_sqlite:
+  postgres_data:
 
 networks:
   web-public:
+  database:
+    internal: true

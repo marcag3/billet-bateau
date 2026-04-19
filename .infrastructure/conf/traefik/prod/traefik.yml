@@ -62,7 +62,7 @@ api:
 certificatesResolvers:
   letsencryptresolver:
     acme:
-      email: "changeme@example.com"
+      email: "mantoine3@gmail.com"
       storage: "/certificates/acme.json"
       httpChallenge:
         entryPoint: web

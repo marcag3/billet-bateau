@@ -4,7 +4,7 @@ services:
     - "80:80"
     - "443:443"
     networks:
-      development:
+      - development
     volumes:
       # Mount the Docker socket as read-only so Traefik can listen to events
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -18,12 +18,19 @@ services:
       args:
         USER_ID: ${SPIN_USER_ID}
         GROUP_ID: ${SPIN_GROUP_ID}
+    environment:
+      DB_HOST: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
     volumes:
       - .:/var/www/html/
     networks:
       - development
+      - database
     depends_on:
-      - traefik
+      traefik:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.laravel.rule=HostRegexp(`localhost`)"
@@ -46,5 +53,13 @@ services:
       ports:
         - "8025:8025"
 
+  postgres:
+    networks:
+      - database
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+
 networks:
   development:
+  database:
+    internal: true
