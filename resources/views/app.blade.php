@@ -10,7 +10,7 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'Billet Bateau App') }}">
         <title>{{ config('app.name', 'Billet Bateau App') }}</title>
-        <link rel="manifest" href="/app.webmanifest">
+        <link rel="manifest" href="/build/app.webmanifest">
         <link rel="icon" href="/icons/app-icon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/icons/app-icon.svg">
         @vite('resources/frontend/app/main.js')

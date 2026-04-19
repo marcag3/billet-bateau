@@ -8,6 +8,9 @@ import AppRoot from './AppRoot.vue';
 import router from './router';
 import { bootstrapTodosSync } from './sync/useTodosSync';
 
+const APP_SW_URL = '/app-sw.js';
+const APP_SW_SCOPE = '/app/';
+
 const app = createApp(AppRoot);
 
 //TODO: this won't scale with multiple models
@@ -20,7 +23,7 @@ app.mount('#app-root');
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/app-sw.js', { scope: '/app/' }).catch((error) => {
+        navigator.serviceWorker.register(APP_SW_URL, { scope: APP_SW_SCOPE }).catch((error) => {
             console.error('App service worker registration failed:', error);
         });
     });
