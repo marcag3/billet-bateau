@@ -7,6 +7,14 @@ let cachedExpiryTimestamp = 0;
 let inflightTokenPromise = null;
 let inflightCsrfRefreshPromise = null;
 
+function dispatchAuthExpiredEvent() {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    window.dispatchEvent(new CustomEvent('app:auth-expired'));
+}
+
 function getCsrfTokenFromMeta() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 }
@@ -157,6 +165,11 @@ async function requestJson(url, options = {}) {
     const payload = await response.json().catch(() => ({}));
 
     if (!response.ok) {
+        if (response.status === 401) {
+            clearElectricTokenCache();
+            dispatchAuthExpiredEvent();
+        }
+
         const message = payload?.message ?? `Request to ${url} failed with ${response.status}`;
         throw new Error(message);
     }
@@ -194,6 +207,10 @@ export async function getElectricToken({ forceRefresh = false } = {}) {
             cachedExpiryTimestamp = parseExpiryTimestamp(payload.expires_at);
 
             return cachedToken;
+        })
+        .catch((error) => {
+            clearElectricTokenCache();
+            throw error;
         })
         .finally(() => {
             inflightTokenPromise = null;

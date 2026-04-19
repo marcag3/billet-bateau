@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 class ElectricTokenControllerTest extends TestCase
@@ -36,5 +37,24 @@ class ElectricTokenControllerTest extends TestCase
             ->assertJson([
                 'token_type' => 'Bearer',
             ]);
+    }
+
+    public function test_logged_out_user_cannot_get_an_electric_token(): void
+    {
+        User::factory()->create([
+            'email' => 'john@example.com',
+        ]);
+
+        $this->postJson('/login', [
+            'email' => 'john@example.com',
+            'password' => 'password',
+        ])->assertOk();
+
+        $this->postJson('/logout')->assertNoContent();
+        Auth::forgetGuards();
+
+        $response = $this->getJson('/api/electric/token');
+
+        $response->assertUnauthorized();
     }
 }
