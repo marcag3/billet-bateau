@@ -816,6 +816,36 @@
   resolved "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.27.7.tgz"
   integrity sha512-hzznmADPt+OmsYzw1EE33ccA+HPdIqiCRq7cQeL1Jlq2gb1+OyWBkMCrYGBJ+sxVzve2ZJEVeePbLM2iEIZSxA==
 
+"@intlify/core-base@11.3.2":
+  version "11.3.2"
+  resolved "https://registry.npmjs.org/@intlify/core-base/-/core-base-11.3.2.tgz"
+  integrity sha512-cgsUaV/dyD6aS49UPgerIblrWeXAZHNaDWqm4LujOGC7IafSyhghGXEiSVvuDYaDPiQTP+tSFSTM1HIu7Yp1nA==
+  dependencies:
+    "@intlify/devtools-types" "11.3.2"
+    "@intlify/message-compiler" "11.3.2"
+    "@intlify/shared" "11.3.2"
+
+"@intlify/devtools-types@11.3.2":
+  version "11.3.2"
+  resolved "https://registry.npmjs.org/@intlify/devtools-types/-/devtools-types-11.3.2.tgz"
+  integrity sha512-q96G2ZZw0FNoXzejbjIf9dbfgz1xyYBZu6ZT4b5TE/55j8d1O9X5jv0k+U+L3fVe7uebPcqRQFD0ffm30i5mJA==
+  dependencies:
+    "@intlify/core-base" "11.3.2"
+    "@intlify/shared" "11.3.2"
+
+"@intlify/message-compiler@11.3.2":
+  version "11.3.2"
+  resolved "https://registry.npmjs.org/@intlify/message-compiler/-/message-compiler-11.3.2.tgz"
+  integrity sha512-d/awyHUkNSaGPxBxT/qlUpfRizxHX9dt55CnW03xx5p1KmMyfYHKupCnvzINX+Na8JR8LAR7y32lPKjoeQGmzA==
+  dependencies:
+    "@intlify/shared" "11.3.2"
+    source-map-js "^1.0.2"
+
+"@intlify/shared@11.3.2":
+  version "11.3.2"
+  resolved "https://registry.npmjs.org/@intlify/shared/-/shared-11.3.2.tgz"
+  integrity sha512-x66fjdH6i+lNYPae5URSQGTjBL68Av6hi09jvC5Ci96iTkwfqrPhCj46aylQZmgMaG89rOZCIKqS7ApC8ZDVjg==
+
 "@isaacs/cliui@^9.0.0":
   version "9.0.0"
   resolved "https://registry.npmjs.org/@isaacs/cliui/-/cliui-9.0.0.tgz"
@@ -1107,6 +1137,11 @@
   dependencies:
     "@vue/compiler-dom" "3.5.32"
     "@vue/shared" "3.5.32"
+
+"@vue/devtools-api@^6.5.0":
+  version "6.6.4"
+  resolved "https://registry.npmjs.org/@vue/devtools-api/-/devtools-api-6.6.4.tgz"
+  integrity sha512-sGhTPMuXqZ1rVOk32RylztWkfXTRhuS7vgAKv0zjqk8gbsHkJ7xfFf+jbySxt7tWObEJwyKaHMikV/WGDiQm8g==
 
 "@vue/devtools-api@^6.6.4":
   version "6.6.4"
@@ -2799,7 +2834,7 @@ sorted-btree@^1.8.1:
   resolved "https://registry.npmjs.org/sorted-btree/-/sorted-btree-1.8.1.tgz"
   integrity sha512-395+XIP+wqNn3USkFSrNz7G3Ss/MXlZEqesxvzCRFwL14h6e8LukDHdLBePn5pwbm5OQ9vGu8mDyz2lLDIqamQ==
 
-source-map-js@^1.2.1, "source-map-js@>=0.6.2 <2.0.0":
+source-map-js@^1.0.2, source-map-js@^1.2.1, "source-map-js@>=0.6.2 <2.0.0":
   version "1.2.1"
   resolved "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.1.tgz"
   integrity sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==
@@ -3161,6 +3196,16 @@ vite-plugin-pwa@^1.2.0:
     tinyglobby "^0.2.15"
   optionalDependencies:
     fsevents "~2.3.3"
+
+vue-i18n@^11.3.2:
+  version "11.3.2"
+  resolved "https://registry.npmjs.org/vue-i18n/-/vue-i18n-11.3.2.tgz"
+  integrity sha512-gmFrvM+iuf2AH4ygligw/pC7PRJ63AdRNE68E0GPlQ83Mzfyck6g6cRQC3KzkYXr+ZidR91wq+5YBmAMpkgE1A==
+  dependencies:
+    "@intlify/core-base" "11.3.2"
+    "@intlify/devtools-types" "11.3.2"
+    "@intlify/shared" "11.3.2"
+    "@vue/devtools-api" "^6.5.0"
 
 vue-router@^4.6.4:
   version "4.6.4"

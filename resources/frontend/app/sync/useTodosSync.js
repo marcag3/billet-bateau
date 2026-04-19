@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue';
+import { translate } from '../../i18n';
 import { todosCollection } from './todosCollection';
 
 const todos = ref([]);
@@ -20,7 +21,7 @@ async function waitForPersistence(transaction) {
     try {
         await transaction.isPersisted.promise;
     } catch (error) {
-        errorMessage.value = error instanceof Error ? error.message : 'Sync request failed.';
+        errorMessage.value = error instanceof Error ? error.message : translate('sync.syncRequestFailed');
         throw error;
     }
 }
@@ -46,7 +47,7 @@ export async function bootstrapTodosSync() {
             refreshTodosSnapshot();
             errorMessage.value = '';
         } catch (error) {
-            errorMessage.value = error instanceof Error ? error.message : 'Unable to load todo sync.';
+            errorMessage.value = error instanceof Error ? error.message : translate('sync.unableLoadTodoSync');
         } finally {
             isLoading.value = false;
         }

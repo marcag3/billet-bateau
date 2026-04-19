@@ -27,7 +27,8 @@
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
         "phpunit/phpunit": "^12.5.12",
-        "serversideup/spin": "^3.2"
+        "serversideup/spin": "^3.2",
+        "spatie/laravel-stubs": "^3.2"
     },
     "autoload": {
         "psr-4": {
@@ -63,7 +64,8 @@
             "@php artisan package:discover --ansi"
         ],
         "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
+            "@php artisan spatie-stub:publish --force"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""

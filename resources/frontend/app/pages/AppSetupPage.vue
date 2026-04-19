@@ -1,9 +1,9 @@
 <template>
     <q-page class="row items-center justify-center q-pa-md">
-        <q-card class="app-login-card q-pa-lg">
+        <q-card class="app-setup-card q-pa-lg">
             <q-card-section class="q-pb-sm">
-                <div class="text-h5">{{ t('auth.signIn') }}</div>
-                <div class="text-body2 text-grey-7">{{ t('auth.authenticateWorkspace') }}</div>
+                <div class="text-h5">{{ t('setup.title') }}</div>
+                <div class="text-body2 text-grey-7">{{ t('setup.subtitle') }}</div>
             </q-card-section>
 
             <q-card-section>
@@ -11,14 +11,22 @@
                     {{ errorMessage }}
                 </q-banner>
 
-                <q-form class="q-gutter-md" @submit.prevent="submitLogin">
+                <q-form class="q-gutter-md" @submit.prevent="submitSetup">
+                    <q-input
+                        v-model="organizationName"
+                        outlined
+                        dense
+                        :label="t('setup.organizationName')"
+                        :disable="isSubmitting"
+                    />
+
                     <q-input
                         v-model="email"
                         type="email"
                         outlined
                         dense
                         autocomplete="username"
-                        :label="t('auth.email')"
+                        :label="t('setup.adminEmail')"
                         :disable="isSubmitting"
                     />
 
@@ -27,17 +35,25 @@
                         type="password"
                         outlined
                         dense
-                        autocomplete="current-password"
+                        autocomplete="new-password"
                         :label="t('auth.password')"
                         :disable="isSubmitting"
                     />
 
-                    <q-checkbox v-model="remember" :label="t('auth.rememberMe')" :disable="isSubmitting" />
+                    <q-input
+                        v-model="passwordConfirmation"
+                        type="password"
+                        outlined
+                        dense
+                        autocomplete="new-password"
+                        :label="t('setup.confirmPassword')"
+                        :disable="isSubmitting"
+                    />
 
                     <q-btn
                         type="submit"
                         color="primary"
-                        :label="t('auth.signIn')"
+                        :label="t('setup.completeSetup')"
                         :loading="isSubmitting"
                         :disable="isSubmitting"
                         class="full-width"
@@ -51,27 +67,32 @@
 <script setup>
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { bootstrapTodosSync } from '../sync/useTodosSync';
 import { useAuthStore } from '../stores/authStore';
 
 const authStore = useAuthStore();
-const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 
+const organizationName = ref('');
 const email = ref('');
 const password = ref('');
-const remember = ref(true);
+const passwordConfirmation = ref('');
 const isSubmitting = ref(false);
 const errorMessage = ref('');
 
-async function submitLogin() {
+async function submitSetup() {
+    const normalizedOrganizationName = organizationName.value.trim();
     const normalizedEmail = email.value.trim();
-    const normalizedPassword = password.value;
 
-    if (normalizedEmail.length === 0 || normalizedPassword.length === 0) {
-        errorMessage.value = t('auth.emailPasswordRequired');
+    if (normalizedOrganizationName.length === 0 || normalizedEmail.length === 0 || password.value.length === 0) {
+        errorMessage.value = t('setup.requiredFields');
+        return;
+    }
+
+    if (password.value !== passwordConfirmation.value) {
+        errorMessage.value = t('setup.passwordMismatch');
         return;
     }
 
@@ -79,18 +100,17 @@ async function submitLogin() {
     errorMessage.value = '';
 
     try {
-        await authStore.login({
+        await authStore.completeSetup({
+            organizationName: normalizedOrganizationName,
             email: normalizedEmail,
-            password: normalizedPassword,
-            remember: remember.value,
+            password: password.value,
+            passwordConfirmation: passwordConfirmation.value,
         });
 
         await bootstrapTodosSync();
-
-        const redirectTarget = typeof route.query.redirect === 'string' ? route.query.redirect : '/';
-        await router.replace(redirectTarget);
+        await router.replace({ name: 'dashboard' });
     } catch (error) {
-        errorMessage.value = error instanceof Error ? error.message : t('auth.unableAuthenticate');
+        errorMessage.value = error instanceof Error ? error.message : t('auth.unableCompleteSetup');
     } finally {
         isSubmitting.value = false;
     }
@@ -98,8 +118,8 @@ async function submitLogin() {
 </script>
 
 <style scoped>
-.app-login-card {
+.app-setup-card {
     width: 100%;
-    max-width: 420px;
+    max-width: 460px;
 }
 </style>

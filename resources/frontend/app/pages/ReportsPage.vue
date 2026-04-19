@@ -1,9 +1,9 @@
 <template>
     <q-page class="page-wrap">
         <div class="content-width">
-            <h1 class="text-h4 q-mb-sm">Reports</h1>
+            <h1 class="text-h4 q-mb-sm">{{ t('reports.title') }}</h1>
             <p class="text-body1 text-grey-8 q-mb-lg">
-                This page is lazy-loaded to keep initial app startup responsive.
+                {{ t('legacyReports.startupDescription') }}
             </p>
 
             <q-table
@@ -19,15 +19,20 @@
 </template>
 
 <script setup>
-const columns = [
-    { name: 'line', label: 'Line', field: 'line', align: 'left' },
-    { name: 'bookings', label: 'Bookings', field: 'bookings', align: 'right' },
-    { name: 'fillRate', label: 'Fill rate', field: 'fillRate', align: 'right' },
-];
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-const rows = [
-    { line: 'Morning ferry', bookings: 184, fillRate: '92%' },
-    { line: 'Afternoon ferry', bookings: 166, fillRate: '83%' },
-    { line: 'Evening ferry', bookings: 152, fillRate: '76%' },
-];
+const { t } = useI18n();
+
+const columns = computed(() => [
+    { name: 'line', label: t('legacyReports.line'), field: 'line', align: 'left' },
+    { name: 'bookings', label: t('legacyReports.bookings'), field: 'bookings', align: 'right' },
+    { name: 'fillRate', label: t('legacyReports.fillRate'), field: 'fillRate', align: 'right' },
+]);
+
+const rows = computed(() => [
+    { line: t('legacyReports.morningFerry'), bookings: 184, fillRate: '92%' },
+    { line: t('legacyReports.afternoonFerry'), bookings: 166, fillRate: '83%' },
+    { line: t('legacyReports.eveningFerry'), bookings: 152, fillRate: '76%' },
+]);
 </script>

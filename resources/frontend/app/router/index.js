@@ -3,6 +3,14 @@ import { useAuthStore } from '../stores/authStore';
 
 const routes = [
     {
+        path: '/setup',
+        name: 'setup',
+        component: () => import('../pages/AppSetupPage.vue'),
+        meta: {
+            guestOnly: true,
+        },
+    },
+    {
         path: '/login',
         name: 'login',
         component: () => import('../pages/AppLoginPage.vue'),
@@ -45,6 +53,19 @@ router.beforeEach(async (to) => {
     const authStore = useAuthStore();
 
     await authStore.initialize();
+    await authStore.fetchSetupStatus();
+
+    if (authStore.installRequired === true && to.name !== 'setup') {
+        return { name: 'setup' };
+    }
+
+    if (authStore.installRequired === false && to.name === 'setup') {
+        if (authStore.canAccessProtectedRoute()) {
+            return { name: 'dashboard' };
+        }
+
+        return { name: 'login' };
+    }
 
     const requiresAuth = to.meta.requiresAuth === true;
     const guestOnly = to.meta.guestOnly === true;

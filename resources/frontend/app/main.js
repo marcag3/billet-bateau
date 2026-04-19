@@ -8,6 +8,7 @@ import AppRoot from './AppRoot.vue';
 import router from './router';
 import { bootstrapTodosSync } from './sync/useTodosSync';
 import { useAuthStore } from './stores/authStore';
+import { i18n } from '../i18n';
 
 const APP_SW_URL = '/app-sw.js';
 const APP_SW_SCOPE = '/app/';
@@ -18,6 +19,7 @@ const pinia = createPinia();
 app.use(pinia);
 app.use(router);
 app.use(Quasar);
+app.use(i18n);
 
 const authStore = useAuthStore(pinia);
 

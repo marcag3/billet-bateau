@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { translate } from '../../i18n';
 
 const AUTH_MARKER_STORAGE_KEY = 'app.hasAuthenticatedOnce';
 
@@ -66,6 +67,7 @@ export const useAuthStore = defineStore('auth', {
         isInitialized: false,
         isAuthenticated: false,
         hasAuthenticatedBefore: readInitialAuthMarker(),
+        installRequired: null,
         user: null,
         requiresReauthentication: false,
         authErrorMessage: '',
@@ -80,7 +82,7 @@ export const useAuthStore = defineStore('auth', {
 
             persistAuthMarker(true);
         },
-        markAuthExpired(message = 'Your session expired. Please sign in again.') {
+        markAuthExpired(message = translate('auth.sessionExpired')) {
             this.isAuthenticated = false;
             this.user = null;
             this.requiresReauthentication = true;
@@ -92,6 +94,34 @@ export const useAuthStore = defineStore('auth', {
             }
 
             await this.refreshSession({ allowOfflineFallback: true, markInitialized: true, silent: true });
+
+            try {
+                await this.fetchSetupStatus({ force: true });
+            } catch (_error) {
+                this.installRequired = false;
+            }
+        },
+        async fetchSetupStatus({ force = false } = {}) {
+            if (!force && this.installRequired !== null) {
+                return this.installRequired;
+            }
+
+            const response = await fetch('/setup/status', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: buildHeaders({
+                    'Cache-Control': 'no-cache',
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(translate('auth.unableSetupStatus'));
+            }
+
+            const payload = await response.json().catch(() => ({}));
+            this.installRequired = payload?.install_required === true;
+
+            return this.installRequired;
         },
         async ensureCsrfCookie() {
             const response = await fetch('/sanctum/csrf-cookie', {
@@ -101,7 +131,7 @@ export const useAuthStore = defineStore('auth', {
             });
 
             if (!response.ok) {
-                throw new Error('Unable to initialize CSRF protection.');
+                throw new Error(translate('auth.unableInitCsrf'));
             }
         },
         async refreshSession({ allowOfflineFallback = false, markInitialized = false, silent = false } = {}) {
@@ -120,7 +150,7 @@ export const useAuthStore = defineStore('auth', {
                     this.requiresReauthentication = false;
 
                     if (!silent) {
-                        this.authErrorMessage = 'Please sign in to continue.';
+                        this.authErrorMessage = translate('auth.pleaseSignInContinue');
                     }
 
                     if (markInitialized) {
@@ -131,7 +161,7 @@ export const useAuthStore = defineStore('auth', {
                 }
 
                 if (!response.ok) {
-                    throw new Error('Unable to verify the current session.');
+                    throw new Error(translate('auth.unableVerifySession'));
                 }
 
                 const payload = await response.json();
@@ -156,7 +186,7 @@ export const useAuthStore = defineStore('auth', {
 
                 if (!silent) {
                     this.authErrorMessage =
-                        error instanceof Error ? error.message : 'Unable to verify the current session.';
+                        error instanceof Error ? error.message : translate('auth.unableVerifySession');
                 }
 
                 if (markInitialized) {
@@ -194,11 +224,61 @@ export const useAuthStore = defineStore('auth', {
                 const message =
                     payload?.message ??
                     payload?.errors?.email?.[0] ??
-                    'Unable to sign in with the provided credentials.';
+                    translate('auth.unableSignInCreds');
                 throw new Error(message);
             }
 
             this.markAuthenticated(payload.user ?? null);
+        },
+        async completeSetup({
+            organizationName,
+            email,
+            password,
+            passwordConfirmation,
+            hasRetried = false,
+        }) {
+            await this.ensureCsrfCookie();
+
+            const response = await fetch('/setup', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: buildHeaders({
+                    'Content-Type': 'application/json',
+                    ...getXsrfHeaders(),
+                }),
+                body: JSON.stringify({
+                    organization_name: organizationName,
+                    email,
+                    password,
+                    password_confirmation: passwordConfirmation,
+                }),
+            });
+
+            if (response.status === 419 && !hasRetried) {
+                await this.ensureCsrfCookie();
+                return this.completeSetup({
+                    organizationName,
+                    email,
+                    password,
+                    passwordConfirmation,
+                    hasRetried: true,
+                });
+            }
+
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                const message =
+                    payload?.message ??
+                    payload?.errors?.organization_name?.[0] ??
+                    payload?.errors?.email?.[0] ??
+                    payload?.errors?.password?.[0] ??
+                    translate('auth.unableCompleteSetup');
+                throw new Error(message);
+            }
+
+            this.markAuthenticated(payload.user ?? null);
+            this.installRequired = false;
         },
         async logout() {
             await this.ensureCsrfCookie();

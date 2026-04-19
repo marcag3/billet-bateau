@@ -1,8 +1,8 @@
 <template>
     <q-page class="q-pa-xl">
-        <h1 class="text-h4 q-mb-md">Dashboard</h1>
+        <h1 class="text-h4 q-mb-md">{{ t('dashboard.title') }}</h1>
         <p class="text-body1 q-mb-lg">
-            Local todos are synced through Electric and TanStack DB.
+            {{ t('dashboard.syncedDescription') }}
         </p>
 
         <q-banner v-if="hasError" class="bg-red-1 text-negative q-mb-md" rounded>
@@ -15,24 +15,24 @@
                     v-model="draftTitle"
                     outlined
                     dense
-                    label="New todo"
-                    placeholder="Write next task..."
+                    :label="t('dashboard.newTodo')"
+                    :placeholder="t('dashboard.newTodoPlaceholder')"
                     :disable="isWorking"
                 />
             </div>
 
             <div class="col-auto">
-                <q-btn color="primary" type="submit" label="Add" :loading="isWorking" />
+                <q-btn color="primary" type="submit" :label="t('dashboard.add')" :loading="isWorking" />
             </div>
         </q-form>
 
         <q-list bordered separator class="bg-white rounded-borders">
             <q-item v-if="isLoading">
-                <q-item-section>Loading todos...</q-item-section>
+                <q-item-section>{{ t('dashboard.loadingTodos') }}</q-item-section>
             </q-item>
 
             <q-item v-else-if="todos.length === 0">
-                <q-item-section>No synced todos yet.</q-item-section>
+                <q-item-section>{{ t('dashboard.noSyncedTodos') }}</q-item-section>
             </q-item>
 
             <q-item v-for="todo in todos" :key="todo.id">
@@ -49,7 +49,7 @@
                         {{ todo.title }}
                     </q-item-label>
                     <q-item-label caption>
-                        Updated {{ formatTimestamp(todo.updated_at) }}
+                        {{ t('dashboard.updated', { timestamp: formatTimestamp(todo.updated_at) }) }}
                     </q-item-label>
                 </q-item-section>
 
@@ -70,10 +70,12 @@
 
 <script setup>
 import { onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useTodosSync } from '../sync/useTodosSync';
 
 const draftTitle = ref('');
 const isWorking = ref(false);
+const { t, locale } = useI18n();
 
 const { todos, isLoading, errorMessage, hasError, createTodo, toggleTodo, removeTodo, refresh } = useTodosSync();
 
@@ -83,16 +85,16 @@ onMounted(() => {
 
 function formatTimestamp(value) {
     if (!value) {
-        return 'just now';
+        return t('dashboard.justNow');
     }
 
     const timestamp = Date.parse(value);
 
     if (Number.isNaN(timestamp)) {
-        return 'recently';
+        return t('dashboard.recently');
     }
 
-    return new Date(timestamp).toLocaleString();
+    return new Date(timestamp).toLocaleString(locale.value);
 }
 
 async function submitTodo() {
