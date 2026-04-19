@@ -59,8 +59,9 @@ ARG WWWUSER=1000
 
 RUN groupadd --force -g "${WWWGROUP}" sail \
     && useradd -ms /bin/bash --no-user-group -g "${WWWGROUP}" -u "${WWWUSER}" sail \
+    && mkdir -p /composer/cache \
     && mkdir -p /home/sail/.composer \
-    && chown -R sail:sail /home/sail /var/www/html
+    && chown -R sail:sail /composer /home/sail /var/www/html
 
 RUN git config --global --add safe.directory /var/www/html
 
@@ -87,8 +88,8 @@ FROM node:22-alpine AS frontend_assets
 
 WORKDIR /var/www/html
 
-COPY package.json package-lock.json vite.config.js tailwind.config.js postcss.config.js ./
-COPY resources/ resources/
+COPY package.json package-lock.json vite.config.js ./
+COPY resources/frontend/ resources/frontend/
 COPY --from=composer_deps /var/www/html/vendor/ vendor/
 
 RUN npm ci && npm run build

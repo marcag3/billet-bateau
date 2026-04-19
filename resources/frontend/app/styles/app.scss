@@ -1,0 +1,18 @@
+body {
+    margin: 0;
+    background: #f7f8fc;
+    color: #202431;
+}
+
+#app-root {
+    min-height: 100vh;
+}
+
+.page-wrap {
+    padding: 1.5rem;
+}
+
+.content-width {
+    width: min(70rem, 100%);
+    margin: 0 auto;
+}

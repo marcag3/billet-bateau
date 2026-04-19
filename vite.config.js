@@ -1,14 +1,18 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import tailwindcss from '@tailwindcss/vite';
+import vue from '@vitejs/plugin-vue';
+import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: ['resources/frontend/public/main.js', 'resources/frontend/app/main.js'],
             refresh: true,
         }),
-        tailwindcss(),
+        vue({
+            template: { transformAssetUrls },
+        }),
+        quasar(),
     ],
     server: {
         watch: {
