@@ -13,3 +13,11 @@ app.use(createPinia());
 app.use(router);
 app.use(Quasar);
 app.mount('#app-root');
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/app-sw.js', { scope: '/app/' }).catch((error) => {
+            console.error('App service worker registration failed:', error);
+        });
+    });
+}
