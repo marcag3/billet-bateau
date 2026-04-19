@@ -22,8 +22,8 @@ services:
         condition: service_healthy
       gotenberg:
         condition: service_started
-      garage-init:
-        condition: service_completed_successfully
+      garage:
+        condition: service_healthy
     networks:
       - app
 

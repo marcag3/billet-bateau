@@ -36,7 +36,7 @@ services:
       timeout: 5s
 
   gotenberg:
-    image: "gotenberg/gotenberg:8.30.0-chromium"
+    image: "gotenberg/gotenberg:8-chromium"
     restart: unless-stopped
     environment:
       CHROMIUM_ALLOW_INSECURE_LOCALHOST: true
@@ -47,9 +47,13 @@ services:
       - app
 
   garage:
-    image: "dxflrs/garage:v1.1.0"
+    image: "dxflrs/garage:v2.3.0"
     restart: unless-stopped
-    command: "/garage -c /etc/garage.toml server"
+    command: "/garage -c /etc/garage.toml server --single-node --default-bucket"
+    environment:
+      GARAGE_DEFAULT_ACCESS_KEY: "${AWS_ACCESS_KEY_ID:-GKb69252a3b0643e8bd08d4cd4}"
+      GARAGE_DEFAULT_SECRET_KEY: "${AWS_SECRET_ACCESS_KEY:-9115be9c9e4994306a4176543b0db461f4eb04c5c8a388676d1b57392d0f4e93}"
+      GARAGE_DEFAULT_BUCKET: "${AWS_BUCKET:-app}"
     volumes:
       - "./docker/garage/garage.toml:/etc/garage.toml:ro"
       - "garage-meta:/var/lib/garage/meta"
@@ -65,33 +69,6 @@ services:
         - status
       retries: 3
       timeout: 5s
-
-  garage-init:
-    image: "dxflrs/garage:v1.1.0"
-    restart: "no"
-    depends_on:
-      garage:
-        condition: service_healthy
-    environment:
-      GARAGE_ACCESS_KEY: "${AWS_ACCESS_KEY_ID:-GKb69252a3b0643e8bd08d4cd4}"
-      GARAGE_SECRET_KEY: "${AWS_SECRET_ACCESS_KEY:-9115be9c9e4994306a4176543b0db461f4eb04c5c8a388676d1b57392d0f4e93}"
-      GARAGE_BUCKET: "${AWS_BUCKET:-app}"
-    command: >-
-      /bin/sh -ec '
-      NODE_ID="$$(/garage -c /etc/garage.toml status 2>/dev/null | awk "/NO ROLE ASSIGNED/{print \$$1; exit}")";
-      if [ -n "$$NODE_ID" ]; then
-        /garage -c /etc/garage.toml layout assign -z dc1 -c 10G "$$NODE_ID";
-        /garage -c /etc/garage.toml layout apply --version 1;
-        sleep 1;
-      fi;
-      /garage -c /etc/garage.toml key import -n app --yes "$$GARAGE_ACCESS_KEY" "$$GARAGE_SECRET_KEY" 2>/dev/null || true;
-      /garage -c /etc/garage.toml bucket create "$$GARAGE_BUCKET" 2>/dev/null || true;
-      /garage -c /etc/garage.toml bucket allow --read --write "$$GARAGE_BUCKET" --key "$$GARAGE_ACCESS_KEY";
-      '
-    volumes:
-      - "./docker/garage/garage.toml:/etc/garage.toml:ro"
-    networks:
-      - app
 
 networks:
   app:
