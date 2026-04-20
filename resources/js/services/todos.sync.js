@@ -3,7 +3,7 @@ import { electricCollectionOptions } from '@tanstack/electric-db-collection';
 import { getElectricShapeUrl } from './electric.api';
 import { requireTxid, awaitTxidReconciliation } from './electric.txid';
 import { isRecoverableNetworkError } from './network.errors';
-import { replaceLocalTodos, readPendingTodoMutations, writePendingTodoMutations } from './pglite.todo.repository';
+import { readPendingTodoMutations, writePendingTodoMutations } from './pglite.todo.repository';
 import { createSingleFlightQueueFlusher } from './sync.queue';
 import { createTodo, deleteTodo, updateTodo } from './todos.api';
 
@@ -96,10 +96,6 @@ async function queuePendingMutation(nextMutation) {
     }
 
     await writePendingMutations(current);
-}
-
-export async function persistTodosCollectionSnapshot() {
-    await replaceLocalTodos(Array.from(todosCollection.values()));
 }
 
 export function setTodoOutboxLifecycleReporter(reporter) {

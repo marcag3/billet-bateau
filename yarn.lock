@@ -1074,6 +1074,13 @@
   resolved "https://registry.npmjs.org/@tanstack/store/-/store-0.9.3.tgz"
   integrity sha512-8reSzl/qGWGGVKhBoxXPMWzATSbZLZFWhwBAFO9NAyp0TxzfBP0mIrGb8CP8KrQTmvzXlR/vFPPUrHTLBGyFyw==
 
+"@tanstack/vue-db@^0.0.116":
+  version "0.0.116"
+  resolved "https://registry.npmjs.org/@tanstack/vue-db/-/vue-db-0.0.116.tgz"
+  integrity sha512-Ic5vH5D+m+vCn+dNNa4vd5HckVaW6tfbDqWPJw6cUiOwUE9AzoN/l/9NAaK97Out8Lm4OrBiKKBvtzw3ojpYmg==
+  dependencies:
+    "@tanstack/db" "0.6.5"
+
 "@types/estree@^1.0.0":
   version "1.0.8"
   resolved "https://registry.npmjs.org/@types/estree/-/estree-1.0.8.tgz"
@@ -3224,7 +3231,7 @@ vue-router@^4.6.4:
   dependencies:
     "@vue/devtools-api" "^6.6.4"
 
-vue@^3.0.0, vue@^3.2.25, vue@^3.5.0, vue@^3.5.11, vue@^3.5.32, vue@3.5.32:
+vue@^3.0.0, vue@^3.2.25, vue@^3.5.0, vue@^3.5.11, vue@^3.5.32, vue@>=3.3.0, vue@3.5.32:
   version "3.5.32"
   resolved "https://registry.npmjs.org/vue/-/vue-3.5.32.tgz"
   integrity sha512-vM4z4Q9tTafVfMAK7IVzmxg34rSzTFMyIe0UUEijUCkn9+23lj0WRfA83dg7eQZIUlgOSGrkViIaCfqSAUXsMw==

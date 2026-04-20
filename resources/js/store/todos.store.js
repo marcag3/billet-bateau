@@ -1,25 +1,23 @@
+import { useLiveQuery } from '@tanstack/vue-db';
 import { computed, ref } from 'vue';
 import { isRecoverableNetworkError } from '../services/network.errors';
-import { listLocalTodos } from '../services/pglite.todo.repository';
 import {
     flushPendingTodoMutations,
-    persistTodosCollectionSnapshot,
     readPendingOutboxEntries,
     setTodoOutboxLifecycleReporter,
     todosCollection,
 } from '../services/todos.sync';
 import { translate } from '../utilities/i18n';
 
-const todos = ref([]);
 const isLoading = ref(true);
 const errorMessage = ref('');
 const outboxEntries = ref([]);
+const hasBootstrappedCollection = ref(false);
 
 const OUTBOX_SYNCED_RETENTION_MS = 5 * 60 * 1000;
 const OUTBOX_MAX_ENTRIES = 60;
 
 let bootstrapPromise = null;
-let subscription = null;
 let hasHydratedOutbox = false;
 
 function buildOutboxId(type, todoId) {
@@ -104,15 +102,6 @@ async function hydratePendingOutboxEntries() {
     });
 }
 
-async function refreshTodosSnapshot() {
-    todos.value = await listLocalTodos();
-}
-
-async function syncCollectionSnapshotIntoLocalStore() {
-    await persistTodosCollectionSnapshot();
-    await refreshTodosSnapshot();
-}
-
 function monitorPersistence(transaction, outboxEntry) {
     void transaction.isPersisted.promise
         .then(() => {
@@ -151,27 +140,15 @@ export async function bootstrapTodos() {
 
     bootstrapPromise = (async () => {
         try {
-            await refreshTodosSnapshot();
             await todosCollection.preload();
             await hydratePendingOutboxEntries();
-
-            if (subscription === null) {
-                subscription = todosCollection.subscribeChanges(
-                    () => {
-                        void syncCollectionSnapshotIntoLocalStore().catch(() => {
-                            // Keep the latest successful snapshot on local storage.
-                        });
-                    },
-                    { includeInitialState: true },
-                );
-            }
-
-            await syncCollectionSnapshotIntoLocalStore();
+            hasBootstrappedCollection.value = true;
             errorMessage.value = '';
             void flushPendingTodoMutations().catch((error) => {
                 errorMessage.value = error instanceof Error ? error.message : translate('sync.syncRequestFailed');
             });
         } catch (error) {
+            hasBootstrappedCollection.value = false;
             errorMessage.value = error instanceof Error ? error.message : translate('sync.unableLoadTodoSync');
         } finally {
             isLoading.value = false;
@@ -182,6 +159,20 @@ export async function bootstrapTodos() {
 }
 
 export function useTodos() {
+    const { data: todos } = useLiveQuery(
+        (queryBuilder) => {
+            if (!hasBootstrappedCollection.value) {
+                return undefined;
+            }
+
+            return queryBuilder
+                .from({ todos: todosCollection })
+                .orderBy(({ todos: todo }) => todo.updated_at, 'desc')
+                .orderBy(({ todos: todo }) => todo.created_at, 'desc')
+                .orderBy(({ todos: todo }) => todo.id, 'desc');
+        },
+        [hasBootstrappedCollection],
+    );
     const hasError = computed(() => errorMessage.value.length > 0);
     const pendingOutboxCount = computed(() => {
         return outboxEntries.value.filter((entry) => entry.status === 'queued' || entry.status === 'sending').length;
@@ -220,9 +211,6 @@ export function useTodos() {
         });
 
         monitorPersistence(transaction, outboxEntry);
-        void syncCollectionSnapshotIntoLocalStore().catch(() => {
-            // The stream subscription will retry persistence.
-        });
     }
 
     async function toggleTodo(todo) {
@@ -245,9 +233,6 @@ export function useTodos() {
         });
 
         monitorPersistence(transaction, outboxEntry);
-        void syncCollectionSnapshotIntoLocalStore().catch(() => {
-            // The stream subscription will retry persistence.
-        });
     }
 
     async function removeTodo(todo) {
@@ -267,9 +252,6 @@ export function useTodos() {
         const transaction = todosCollection.delete(todo.id);
 
         monitorPersistence(transaction, outboxEntry);
-        void syncCollectionSnapshotIntoLocalStore().catch(() => {
-            // The stream subscription will retry persistence.
-        });
     }
 
     return {
