@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue';
-import { translate } from '../../i18n';
-import { todosCollection } from './todosCollection';
+import { todosCollection } from '../services/todos.sync';
+import { translate } from '../utilities/i18n';
 
 const todos = ref([]);
 const isLoading = ref(true);
@@ -26,7 +26,7 @@ async function waitForPersistence(transaction) {
     }
 }
 
-export async function bootstrapTodosSync() {
+export async function bootstrapTodos() {
     if (bootstrapPromise !== null) {
         return bootstrapPromise;
     }
@@ -56,7 +56,7 @@ export async function bootstrapTodosSync() {
     return bootstrapPromise;
 }
 
-export function useTodosSync() {
+export function useTodos() {
     const hasError = computed(() => errorMessage.value.length > 0);
 
     async function createTodo(title) {
@@ -107,6 +107,6 @@ export function useTodosSync() {
         createTodo,
         toggleTodo,
         removeTodo,
-        refresh: bootstrapTodosSync,
+        refresh: bootstrapTodos,
     };
 }

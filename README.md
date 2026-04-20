@@ -4,10 +4,12 @@ Local-first pwa based on tanstack-db + electric-sql sync. Using quasar.dev compo
 
 ## Priority:
 
-[] Design architecture for separating responsability cleanly in the frontend
-[] User can create template day with defined trips
-[] User can assign template days to calendar day
-[] User can manually add trips to calendar day
+[x] Design architecture for separating responsability cleanly in the frontend
+[] Confirm electric is syncing and tanstack db is débéing
+[] Campaigns
+[] Template day with defined trips
+[] Assign template days to calendar day
+[] Manually add trips to calendar day
 
 ## Later:
 

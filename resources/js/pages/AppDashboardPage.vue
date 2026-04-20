@@ -71,13 +71,13 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useTodosSync } from '../sync/useTodosSync';
+import { useTodos } from '../store/todos.store';
 
 const draftTitle = ref('');
 const isWorking = ref(false);
 const { t, locale } = useI18n();
 
-const { todos, isLoading, errorMessage, hasError, createTodo, toggleTodo, removeTodo, refresh } = useTodosSync();
+const { todos, isLoading, errorMessage, hasError, createTodo, toggleTodo, removeTodo, refresh } = useTodos();
 
 onMounted(() => {
     void refresh();

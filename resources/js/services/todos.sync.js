@@ -1,14 +1,21 @@
 import { createCollection } from '@tanstack/db';
 import { electricCollectionOptions } from '@tanstack/electric-db-collection';
-import { FetchError } from '@electric-sql/client';
-import {
-    clearElectricTokenCache,
-    createTodo,
-    deleteTodo,
-    getElectricShapeUrl,
-    getElectricToken,
-    updateTodo,
-} from './electricApi';
+import { getElectricShapeUrl } from './electric.api';
+import { createTodo, deleteTodo, updateTodo } from './todos.api';
+
+function extractTxid(response, mutationType) {
+    if (response?.txid === undefined || response.txid === null) {
+        throw new Error(`[todos] Missing txid from ${mutationType} response.`);
+    }
+
+    const txid = Number(response.txid);
+
+    if (!Number.isFinite(txid)) {
+        throw new Error(`[todos] Invalid txid from ${mutationType} response.`);
+    }
+
+    return txid;
+}
 
 export const todosCollection = createCollection(
     electricCollectionOptions({
@@ -16,25 +23,6 @@ export const todosCollection = createCollection(
         getKey: (item) => item.id,
         shapeOptions: {
             url: getElectricShapeUrl(),
-            params: {
-                table: 'todos',
-            },
-            headers: {
-                Authorization: async () => `Bearer ${await getElectricToken()}`,
-            },
-            onError: async (error) => {
-                if (error instanceof FetchError && error.status === 401) {
-                    clearElectricTokenCache();
-
-                    return {
-                        headers: {
-                            Authorization: `Bearer ${await getElectricToken({ forceRefresh: true })}`,
-                        },
-                    };
-                }
-
-                return;
-            },
         },
         onInsert: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
@@ -45,7 +33,7 @@ export const todosCollection = createCollection(
 
             const response = await createTodo(mutation.modified);
 
-            return { txid: response.txid };
+            return { txid: extractTxid(response, 'insert') };
         },
         onUpdate: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
@@ -56,7 +44,7 @@ export const todosCollection = createCollection(
 
             const response = await updateTodo(mutation.original.id, mutation.changes);
 
-            return { txid: response.txid };
+            return { txid: extractTxid(response, 'update') };
         },
         onDelete: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
@@ -67,7 +55,7 @@ export const todosCollection = createCollection(
 
             const response = await deleteTodo(mutation.original.id);
 
-            return { txid: response.txid };
+            return { txid: extractTxid(response, 'delete') };
         },
     }),
 );

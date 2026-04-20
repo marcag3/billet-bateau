@@ -16,7 +16,7 @@ services:
       POSTGRES_PASSWORD: "${DB_PASSWORD}"
     volumes:
       - "./database/schema:/schema"
-      - "./docker/pgsql/create-electric-user.sql:/docker-entrypoint-initdb.d/20-create-electric-user.sql:ro"
+      - "./docker/pgsql/create-electric-user.sh:/docker-entrypoint-initdb.d/20-create-electric-user.sh:ro"
       - "pgsql:/var/lib/postgresql/data"
     networks:
       - app
@@ -34,7 +34,7 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: "${ELECTRIC_DATABASE_URL:-postgresql://electric:password@pgsql:5432/database?sslmode=disable}"
-      ELECTRIC_SECRET: "${ELECTRIC_SECRET:-electric-local-dev-secret-with-32-bytes-minimum}"
+      ELECTRIC_SECRET: "${ELECTRIC_API_SECRET:-electric-local-dev-secret-with-32-bytes-minimum}"
       ELECTRIC_INSECURE: "${ELECTRIC_INSECURE:-false}"
     depends_on:
       pgsql:

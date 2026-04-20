@@ -58,7 +58,7 @@ class TodoController extends Controller
                 'completed' => $validated['completed'] ?? false,
             ]);
 
-            $txid = (int) DB::scalar('select pg_current_xact_id()::xid::text');
+            $txid = (string) DB::scalar('select pg_current_xact_id()::xid::text');
         });
 
         return response()->json([
@@ -93,7 +93,7 @@ class TodoController extends Controller
             $todo->fill($validated);
             $todo->save();
 
-            $txid = (int) DB::scalar('select pg_current_xact_id()::xid::text');
+            $txid = (string) DB::scalar('select pg_current_xact_id()::xid::text');
         });
 
         return response()->json([
@@ -122,7 +122,7 @@ class TodoController extends Controller
 
         DB::transaction(function () use ($todo, &$txid): void {
             $todo->delete();
-            $txid = (int) DB::scalar('select pg_current_xact_id()::xid::text');
+            $txid = (string) DB::scalar('select pg_current_xact_id()::xid::text');
         });
 
         return response()->json([

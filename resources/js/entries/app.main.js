@@ -3,17 +3,18 @@ import { createPinia } from 'pinia';
 import { Quasar } from 'quasar';
 import '@quasar/extras/material-icons/material-icons.css';
 import 'quasar/src/css/index.sass';
-import './styles/app.scss';
-import AppRoot from './AppRoot.vue';
-import router from './router';
-import { bootstrapTodosSync } from './sync/useTodosSync';
-import { useAuthStore } from './stores/authStore';
-import { i18n } from '../i18n';
+import '../assets/app.scss';
+import AppShell from '../AppShell.vue';
+import router from '../router';
+import { useAuthStore } from '../store/auth.store';
+import { bootstrapTodos } from '../store/todos.store';
+import { i18n } from '../utilities/i18n';
+import { APP_AUTH_EXPIRED_EVENT } from '../utilities/events';
 
 const APP_SW_URL = '/app-sw.js';
 const APP_SW_SCOPE = '/app/';
 
-const app = createApp(AppRoot);
+const app = createApp(AppShell);
 const pinia = createPinia();
 
 app.use(pinia);
@@ -23,7 +24,7 @@ app.use(i18n);
 
 const authStore = useAuthStore(pinia);
 
-window.addEventListener('app:auth-expired', () => {
+window.addEventListener(APP_AUTH_EXPIRED_EVENT, () => {
     authStore.markAuthExpired();
 });
 
@@ -34,8 +35,7 @@ window.addEventListener('online', () => {
 await authStore.initialize();
 
 if (authStore.canAccessProtectedRoute()) {
-    // TODO: this won't scale with multiple models
-    void bootstrapTodosSync();
+    void bootstrapTodos();
 }
 
 app.mount('#app-root');

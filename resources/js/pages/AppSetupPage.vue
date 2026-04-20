@@ -68,8 +68,7 @@
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { bootstrapTodosSync } from '../sync/useTodosSync';
-import { useAuthStore } from '../stores/authStore';
+import { useAuthStore } from '../store/auth.store';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -106,8 +105,6 @@ async function submitSetup() {
             password: password.value,
             passwordConfirmation: passwordConfirmation.value,
         });
-
-        await bootstrapTodosSync();
         await router.replace({ name: 'dashboard' });
     } catch (error) {
         errorMessage.value = error instanceof Error ? error.message : t('auth.unableCompleteSetup');

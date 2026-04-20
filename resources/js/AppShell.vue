@@ -60,8 +60,8 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { setLocale } from '../i18n';
-import { useAuthStore } from './stores/authStore';
+import { useAuthStore } from './store/auth.store';
+import { setLocale } from './utilities/i18n';
 
 const router = useRouter();
 const authStore = useAuthStore();

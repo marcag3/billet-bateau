@@ -1,10 +1,10 @@
+import { readCookieValue } from '../utilities/cookies';
+import { APP_AUTH_EXPIRED_EVENT } from '../utilities/events';
+
 const API_HEADERS = {
     Accept: 'application/json',
 };
 
-let cachedToken = null;
-let cachedExpiryTimestamp = 0;
-let inflightTokenPromise = null;
 let inflightCsrfRefreshPromise = null;
 
 function dispatchAuthExpiredEvent() {
@@ -12,7 +12,7 @@ function dispatchAuthExpiredEvent() {
         return;
     }
 
-    window.dispatchEvent(new CustomEvent('app:auth-expired'));
+    window.dispatchEvent(new CustomEvent(APP_AUTH_EXPIRED_EVENT));
 }
 
 function getCsrfTokenFromMeta() {
@@ -36,24 +36,10 @@ function setCsrfTokenMeta(token) {
     document.head.append(metaTag);
 }
 
-function getCookieValue(name) {
-    const cookiePrefix = `${name}=`;
-    const matchedCookie = document.cookie
-        .split(';')
-        .map((cookie) => cookie.trim())
-        .find((cookie) => cookie.startsWith(cookiePrefix));
-
-    if (!matchedCookie) {
-        return '';
-    }
-
-    return decodeURIComponent(matchedCookie.slice(cookiePrefix.length));
-}
-
 function getCsrfHeaders() {
     const headers = {};
     const csrfToken = getCsrfTokenFromMeta();
-    const xsrfToken = getCookieValue('XSRF-TOKEN');
+    const xsrfToken = readCookieValue('XSRF-TOKEN');
 
     if (csrfToken.length > 0) {
         headers['X-CSRF-TOKEN'] = csrfToken;
@@ -64,11 +50,6 @@ function getCsrfHeaders() {
     }
 
     return headers;
-}
-
-function parseExpiryTimestamp(isoDate) {
-    const timestamp = Date.parse(isoDate ?? '');
-    return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
 function buildHeaders(extraHeaders = {}) {
@@ -119,7 +100,7 @@ async function refreshCsrfSource() {
                 },
             });
 
-            if (sanctumResponse.ok && getCookieValue('XSRF-TOKEN').length > 0) {
+            if (sanctumResponse.ok && readCookieValue('XSRF-TOKEN').length > 0) {
                 return true;
             }
         } catch {
@@ -138,7 +119,7 @@ async function refreshCsrfSource() {
     return inflightCsrfRefreshPromise;
 }
 
-async function requestJson(url, options = {}) {
+export async function requestJson(url, options = {}) {
     const withCsrf = options.withCsrf === true;
     const fetchOptions = { ...options };
     delete fetchOptions.withCsrf;
@@ -166,7 +147,6 @@ async function requestJson(url, options = {}) {
 
     if (!response.ok) {
         if (response.status === 401) {
-            clearElectricTokenCache();
             dispatchAuthExpiredEvent();
         }
 
@@ -175,76 +155,4 @@ async function requestJson(url, options = {}) {
     }
 
     return payload;
-}
-
-export function getElectricShapeUrl() {
-    const configuredUrl = import.meta.env.VITE_ELECTRIC_URL;
-    const baseUrl = configuredUrl && configuredUrl.length > 0 ? configuredUrl : 'http://localhost:5133';
-
-    return `${baseUrl.replace(/\/$/, '')}/v1/shape`;
-}
-
-export function clearElectricTokenCache() {
-    cachedToken = null;
-    cachedExpiryTimestamp = 0;
-}
-
-export async function getElectricToken({ forceRefresh = false } = {}) {
-    const now = Date.now();
-    const isTokenFresh = cachedToken !== null && now < cachedExpiryTimestamp - 10_000;
-
-    if (!forceRefresh && isTokenFresh) {
-        return cachedToken;
-    }
-
-    if (inflightTokenPromise !== null) {
-        return inflightTokenPromise;
-    }
-
-    inflightTokenPromise = requestJson('/api/electric/token')
-        .then((payload) => {
-            cachedToken = payload.token;
-            cachedExpiryTimestamp = parseExpiryTimestamp(payload.expires_at);
-
-            return cachedToken;
-        })
-        .catch((error) => {
-            clearElectricTokenCache();
-            throw error;
-        })
-        .finally(() => {
-            inflightTokenPromise = null;
-        });
-
-    return inflightTokenPromise;
-}
-
-export async function createTodo(payload) {
-    return requestJson('/api/todos', {
-        method: 'POST',
-        withCsrf: true,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-    });
-}
-
-export async function updateTodo(id, payload) {
-    return requestJson(`/api/todos/${id}`, {
-        method: 'PUT',
-        withCsrf: true,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-    });
-}
-
-//TODO: todo don't belongs in electric api.
-export async function deleteTodo(id) {
-    return requestJson(`/api/todos/${id}`, {
-        method: 'DELETE',
-        withCsrf: true,
-    });
 }

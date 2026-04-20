@@ -7,7 +7,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/frontend/public/main.js', 'resources/frontend/app/main.js'],
+            input: ['resources/js/entries/public.main.js', 'resources/js/entries/app.main.js'],
             refresh: true,
         }),
         vue({
@@ -16,7 +16,7 @@ export default defineConfig({
         quasar(),
         VitePWA({
             strategies: 'injectManifest',
-            srcDir: 'resources/frontend/app',
+            srcDir: 'resources/js/service-worker',
             filename: 'app-sw.js',
             injectRegister: false,
             registerType: 'autoUpdate',
