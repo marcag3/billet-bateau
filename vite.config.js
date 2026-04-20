@@ -6,6 +6,9 @@ import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+    optimizeDeps: {
+        exclude: ['@electric-sql/pglite', '@electric-sql/pglite/worker'],
+    },
     plugins: [
         wayfinder(),
         laravel({
@@ -47,6 +50,9 @@ export default defineConfig({
             },
         }),
     ],
+    worker: {
+        format: 'es',
+    },
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],

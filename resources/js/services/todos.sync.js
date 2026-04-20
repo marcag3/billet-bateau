@@ -3,11 +3,9 @@ import { electricCollectionOptions } from '@tanstack/electric-db-collection';
 import { getElectricShapeUrl } from './electric.api';
 import { requireTxid, awaitTxidReconciliation } from './electric.txid';
 import { isRecoverableNetworkError } from './network.errors';
+import { replaceLocalTodos, readPendingTodoMutations, writePendingTodoMutations } from './pglite.todo.repository';
 import { createSingleFlightQueueFlusher } from './sync.queue';
 import { createTodo, deleteTodo, updateTodo } from './todos.api';
-import { readStorageArray, writeStorageArray } from './storage.local';
-
-const PENDING_MUTATIONS_STORAGE_KEY = 'todos.pendingMutations.v1';
 
 /**
  * @typedef {{
@@ -17,25 +15,25 @@ const PENDING_MUTATIONS_STORAGE_KEY = 'todos.pendingMutations.v1';
  * }} PendingTodoMutation
  */
 
-function isPendingTodoMutation(mutation) {
-    return mutation && typeof mutation.id === 'string' && typeof mutation.type === 'string';
-}
+async function readPendingMutations() {
+    const pendingMutations = await readPendingTodoMutations();
 
-function readPendingMutations() {
-    return readStorageArray(PENDING_MUTATIONS_STORAGE_KEY, isPendingTodoMutation);
+    return pendingMutations.filter((mutation) => {
+        return mutation && typeof mutation.id === 'string' && typeof mutation.type === 'string';
+    });
 }
 
 function writePendingMutations(mutations) {
-    writeStorageArray(PENDING_MUTATIONS_STORAGE_KEY, mutations);
+    return writePendingTodoMutations(mutations);
 }
 
-function queuePendingMutation(nextMutation) {
-    const current = readPendingMutations();
+async function queuePendingMutation(nextMutation) {
+    const current = await readPendingMutations();
     const existingIndex = current.findIndex((mutation) => mutation.id === nextMutation.id);
 
     if (existingIndex === -1) {
         current.push(nextMutation);
-        writePendingMutations(current);
+        await writePendingMutations(current);
         return;
     }
 
@@ -71,7 +69,11 @@ function queuePendingMutation(nextMutation) {
         }
     }
 
-    writePendingMutations(current);
+    await writePendingMutations(current);
+}
+
+export async function persistTodosCollectionSnapshot() {
+    await replaceLocalTodos(Array.from(todosCollection.values()));
 }
 
 async function reconcileTxid(txid) {
@@ -146,7 +148,7 @@ export const todosCollection = createCollection(
                     throw error;
                 }
 
-                queuePendingMutation({
+                await queuePendingMutation({
                     type: 'insert',
                     id: String(mutation.modified.id),
                     payload: mutation.modified,
@@ -169,7 +171,7 @@ export const todosCollection = createCollection(
                     throw error;
                 }
 
-                queuePendingMutation({
+                await queuePendingMutation({
                     type: 'update',
                     id: String(mutation.original.id),
                     payload: mutation.changes,
@@ -192,7 +194,7 @@ export const todosCollection = createCollection(
                     throw error;
                 }
 
-                queuePendingMutation({
+                await queuePendingMutation({
                     type: 'delete',
                     id: String(mutation.original.id),
                 });

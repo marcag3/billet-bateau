@@ -18,7 +18,7 @@ export function createSingleFlightQueueFlusher({
                 return;
             }
 
-            const queue = readQueue();
+            const queue = await readQueue();
             if (queue.length === 0) {
                 return;
             }
@@ -37,12 +37,12 @@ export function createSingleFlightQueueFlusher({
                     }
 
                     remaining.push(item, ...queue.slice(index + 1));
-                    writeQueue(remaining);
+                    await writeQueue(remaining);
                     throw error;
                 }
             }
 
-            writeQueue(remaining);
+            await writeQueue(remaining);
         })().finally(() => {
             flushPromise = null;
         });
