@@ -1,7 +1,8 @@
 import { requestJson } from './http.client';
+import { destroy, store, update } from '../routes/todos';
 
 export async function createTodo(payload) {
-    return requestJson('/api/todos', {
+    return requestJson(store.url(), {
         method: 'POST',
         withCsrf: true,
         headers: {
@@ -12,7 +13,7 @@ export async function createTodo(payload) {
 }
 
 export async function updateTodo(id, payload) {
-    return requestJson(`/api/todos/${id}`, {
+    return requestJson(update.url({ todo: id }), {
         method: 'PUT',
         withCsrf: true,
         headers: {
@@ -23,7 +24,7 @@ export async function updateTodo(id, payload) {
 }
 
 export async function deleteTodo(id) {
-    return requestJson(`/api/todos/${id}`, {
+    return requestJson(destroy.url({ todo: id }), {
         method: 'DELETE',
         withCsrf: true,
     });

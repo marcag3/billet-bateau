@@ -1,5 +1,6 @@
 import { readCookieValue } from '../utilities/cookies';
 import { APP_AUTH_EXPIRED_EVENT } from '../utilities/events';
+import { csrfCookie } from '../routes/sanctum';
 
 const API_HEADERS = {
     Accept: 'application/json',
@@ -92,7 +93,7 @@ async function refreshCsrfSource() {
 
     inflightCsrfRefreshPromise = (async () => {
         try {
-            const sanctumResponse = await fetch('/sanctum/csrf-cookie', {
+            const sanctumResponse = await fetch(csrfCookie.url(), {
                 method: 'GET',
                 credentials: 'same-origin',
                 headers: {

@@ -1,5 +1,8 @@
 import { readCookieValue } from '../utilities/cookies';
 import { translate } from '../utilities/i18n';
+import { csrfCookie } from '../routes/sanctum';
+import { status as setupStatus, store as setupStore } from '../routes/setup';
+import { destroy as sessionDestroy, me as sessionMe, store as sessionStore } from '../actions/App/Http/Controllers/Auth/SessionController';
 
 function buildHeaders(extraHeaders = {}) {
     return {
@@ -26,7 +29,7 @@ async function parseResponsePayload(response) {
 }
 
 export async function fetchSetupStatus() {
-    const response = await fetch('/setup/status', {
+    const response = await fetch(setupStatus.url(), {
         method: 'GET',
         credentials: 'same-origin',
         headers: buildHeaders({
@@ -43,7 +46,7 @@ export async function fetchSetupStatus() {
 }
 
 export async function ensureCsrfCookie() {
-    const response = await fetch('/sanctum/csrf-cookie', {
+    const response = await fetch(csrfCookie.url(), {
         method: 'GET',
         credentials: 'same-origin',
         headers: buildHeaders(),
@@ -55,7 +58,7 @@ export async function ensureCsrfCookie() {
 }
 
 export async function fetchCurrentSession() {
-    const response = await fetch('/api/auth/me', {
+    const response = await fetch(sessionMe.url(), {
         method: 'GET',
         credentials: 'same-origin',
         headers: buildHeaders({
@@ -89,7 +92,7 @@ export async function login({
 }) {
     await ensureCsrfCookie();
 
-    const response = await fetch('/login', {
+    const response = await fetch(sessionStore.url(), {
         method: 'POST',
         credentials: 'same-origin',
         headers: buildHeaders({
@@ -127,7 +130,7 @@ export async function completeSetup({
 }) {
     await ensureCsrfCookie();
 
-    const response = await fetch('/setup', {
+    const response = await fetch(setupStore.url(), {
         method: 'POST',
         credentials: 'same-origin',
         headers: buildHeaders({
@@ -171,7 +174,7 @@ export async function completeSetup({
 export async function logout() {
     await ensureCsrfCookie();
 
-    await fetch('/logout', {
+    await fetch(sessionDestroy.url(), {
         method: 'POST',
         credentials: 'same-origin',
         headers: buildHeaders({

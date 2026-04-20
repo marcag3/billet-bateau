@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
+import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import vue from '@vitejs/plugin-vue';
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
     plugins: [
+        wayfinder(),
         laravel({
             input: ['resources/js/entries/public.main.js', 'resources/js/entries/app.main.js'],
             refresh: true,
