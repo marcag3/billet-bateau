@@ -53,9 +53,10 @@ function getCsrfHeaders() {
     return headers;
 }
 
-function buildHeaders(extraHeaders = {}) {
+export function buildJsonHeaders(extraHeaders = {}, { includeRequestedWith = false } = {}) {
     return {
         ...API_HEADERS,
+        ...(includeRequestedWith ? { 'X-Requested-With': 'XMLHttpRequest' } : {}),
         ...extraHeaders,
     };
 }
@@ -86,7 +87,7 @@ async function refreshCsrfFromAppShell() {
     return true;
 }
 
-async function refreshCsrfSource() {
+export async function refreshCsrfSource() {
     if (inflightCsrfRefreshPromise !== null) {
         return inflightCsrfRefreshPromise;
     }
@@ -120,6 +121,10 @@ async function refreshCsrfSource() {
     return inflightCsrfRefreshPromise;
 }
 
+export async function parseJsonPayload(response) {
+    return response.json().catch(() => ({}));
+}
+
 export async function requestJson(url, options = {}) {
     const withCsrf = options.withCsrf === true;
     const fetchOptions = { ...options };
@@ -129,7 +134,7 @@ export async function requestJson(url, options = {}) {
         fetch(url, {
             credentials: 'same-origin',
             ...fetchOptions,
-            headers: buildHeaders({
+            headers: buildJsonHeaders({
                 ...fetchOptions.headers,
                 ...(withCsrf ? getCsrfHeaders() : {}),
             }),
@@ -144,7 +149,7 @@ export async function requestJson(url, options = {}) {
         }
     }
 
-    const payload = await response.json().catch(() => ({}));
+    const payload = await parseJsonPayload(response);
 
     if (!response.ok) {
         if (response.status === 401) {

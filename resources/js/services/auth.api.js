@@ -3,14 +3,7 @@ import { translate } from '../utilities/i18n';
 import { csrfCookie } from '../routes/sanctum';
 import { status as setupStatus, store as setupStore } from '../routes/setup';
 import { destroy as sessionDestroy, me as sessionMe, store as sessionStore } from '../actions/App/Http/Controllers/Auth/SessionController';
-
-function buildHeaders(extraHeaders = {}) {
-    return {
-        Accept: 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        ...extraHeaders,
-    };
-}
+import { buildJsonHeaders, parseJsonPayload, refreshCsrfSource } from './http.client';
 
 function getXsrfHeaders() {
     const xsrfToken = readCookieValue('XSRF-TOKEN');
@@ -24,32 +17,50 @@ function getXsrfHeaders() {
     };
 }
 
-async function parseResponsePayload(response) {
-    return response.json().catch(() => ({}));
-}
-
 export async function fetchSetupStatus() {
     const response = await fetch(setupStatus.url(), {
         method: 'GET',
         credentials: 'same-origin',
-        headers: buildHeaders({
-            'Cache-Control': 'no-cache',
-        }),
+        headers: buildJsonHeaders(
+            {
+                'Cache-Control': 'no-cache',
+            },
+            { includeRequestedWith: true },
+        ),
     });
 
     if (!response.ok) {
         throw new Error(translate('auth.unableSetupStatus'));
     }
 
-    const payload = await parseResponsePayload(response);
+    const payload = await parseJsonPayload(response);
     return payload?.install_required === true;
+}
+
+async function requestWithCsrfRetry(url, options, hasRetried = false) {
+    const response = await fetch(url, {
+        credentials: 'same-origin',
+        ...options,
+    });
+
+    if (response.status === 419 && !hasRetried) {
+        const csrfWasRefreshed = await refreshCsrfSource();
+        if (csrfWasRefreshed) {
+            return requestWithCsrfRetry(url, options, true);
+        }
+    }
+
+    return response;
 }
 
 export async function ensureCsrfCookie() {
     const response = await fetch(csrfCookie.url(), {
         method: 'GET',
         credentials: 'same-origin',
-        headers: buildHeaders(),
+        headers: buildJsonHeaders(
+            {},
+            { includeRequestedWith: true },
+        ),
     });
 
     if (!response.ok) {
@@ -61,9 +72,12 @@ export async function fetchCurrentSession() {
     const response = await fetch(sessionMe.url(), {
         method: 'GET',
         credentials: 'same-origin',
-        headers: buildHeaders({
-            'Cache-Control': 'no-cache',
-        }),
+        headers: buildJsonHeaders(
+            {
+                'Cache-Control': 'no-cache',
+            },
+            { includeRequestedWith: true },
+        ),
     });
 
     if (response.status === 401) {
@@ -77,7 +91,7 @@ export async function fetchCurrentSession() {
         throw new Error(translate('auth.unableVerifySession'));
     }
 
-    const payload = await parseResponsePayload(response);
+    const payload = await parseJsonPayload(response);
     return {
         isAuthenticated: true,
         user: payload.user ?? null,
@@ -88,17 +102,18 @@ export async function login({
     email,
     password,
     remember = false,
-    hasRetried = false,
 }) {
     await ensureCsrfCookie();
 
-    const response = await fetch(sessionStore.url(), {
+    const response = await requestWithCsrfRetry(sessionStore.url(), {
         method: 'POST',
-        credentials: 'same-origin',
-        headers: buildHeaders({
-            'Content-Type': 'application/json',
-            ...getXsrfHeaders(),
-        }),
+        headers: buildJsonHeaders(
+            {
+                'Content-Type': 'application/json',
+                ...getXsrfHeaders(),
+            },
+            { includeRequestedWith: true },
+        ),
         body: JSON.stringify({
             email,
             password,
@@ -106,12 +121,7 @@ export async function login({
         }),
     });
 
-    if (response.status === 419 && !hasRetried) {
-        await ensureCsrfCookie();
-        return login({ email, password, remember, hasRetried: true });
-    }
-
-    const payload = await parseResponsePayload(response);
+    const payload = await parseJsonPayload(response);
 
     if (!response.ok) {
         const message = payload?.message ?? payload?.errors?.email?.[0] ?? translate('auth.unableSignInCreds');
@@ -126,17 +136,18 @@ export async function completeSetup({
     email,
     password,
     passwordConfirmation,
-    hasRetried = false,
 }) {
     await ensureCsrfCookie();
 
-    const response = await fetch(setupStore.url(), {
+    const response = await requestWithCsrfRetry(setupStore.url(), {
         method: 'POST',
-        credentials: 'same-origin',
-        headers: buildHeaders({
-            'Content-Type': 'application/json',
-            ...getXsrfHeaders(),
-        }),
+        headers: buildJsonHeaders(
+            {
+                'Content-Type': 'application/json',
+                ...getXsrfHeaders(),
+            },
+            { includeRequestedWith: true },
+        ),
         body: JSON.stringify({
             organization_name: organizationName,
             email,
@@ -145,18 +156,7 @@ export async function completeSetup({
         }),
     });
 
-    if (response.status === 419 && !hasRetried) {
-        await ensureCsrfCookie();
-        return completeSetup({
-            organizationName,
-            email,
-            password,
-            passwordConfirmation,
-            hasRetried: true,
-        });
-    }
-
-    const payload = await parseResponsePayload(response);
+    const payload = await parseJsonPayload(response);
 
     if (!response.ok) {
         const message =
@@ -177,8 +177,11 @@ export async function logout() {
     await fetch(sessionDestroy.url(), {
         method: 'POST',
         credentials: 'same-origin',
-        headers: buildHeaders({
-            ...getXsrfHeaders(),
-        }),
+        headers: buildJsonHeaders(
+            {
+                ...getXsrfHeaders(),
+            },
+            { includeRequestedWith: true },
+        ),
     });
 }

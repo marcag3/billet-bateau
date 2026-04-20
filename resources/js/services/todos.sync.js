@@ -1,7 +1,11 @@
 import { createCollection } from '@tanstack/db';
 import { electricCollectionOptions } from '@tanstack/electric-db-collection';
 import { getElectricShapeUrl } from './electric.api';
+import { requireTxid, awaitTxidReconciliation } from './electric.txid';
+import { isRecoverableNetworkError } from './network.errors';
+import { createSingleFlightQueueFlusher } from './sync.queue';
 import { createTodo, deleteTodo, updateTodo } from './todos.api';
+import { readStorageArray, writeStorageArray } from './storage.local';
 
 const PENDING_MUTATIONS_STORAGE_KEY = 'todos.pendingMutations.v1';
 
@@ -13,70 +17,16 @@ const PENDING_MUTATIONS_STORAGE_KEY = 'todos.pendingMutations.v1';
  * }} PendingTodoMutation
  */
 
-/** @type {Promise<void> | null} */
-let flushPromise = null;
-
-function extractTxid(response, mutationType) {
-    if (response?.txid === undefined || response.txid === null) {
-        throw new Error(`[todos] Missing txid from ${mutationType} response.`);
-    }
-
-    const txid = Number(response.txid);
-
-    if (!Number.isFinite(txid)) {
-        throw new Error(`[todos] Invalid txid from ${mutationType} response.`);
-    }
-
-    return txid;
-}
-
-function isRecoverableNetworkError(error) {
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-        return true;
-    }
-
-    if (error instanceof TypeError) {
-        return true;
-    }
-
-    const message = error instanceof Error ? error.message.toLowerCase() : '';
-
-    return message.includes('networkerror') || message.includes('failed to fetch');
+function isPendingTodoMutation(mutation) {
+    return mutation && typeof mutation.id === 'string' && typeof mutation.type === 'string';
 }
 
 function readPendingMutations() {
-    if (typeof window === 'undefined') {
-        return [];
-    }
-
-    try {
-        const raw = window.localStorage.getItem(PENDING_MUTATIONS_STORAGE_KEY);
-        if (raw === null) {
-            return [];
-        }
-
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
-
-        return parsed.filter((mutation) => mutation && typeof mutation.id === 'string' && typeof mutation.type === 'string');
-    } catch {
-        return [];
-    }
+    return readStorageArray(PENDING_MUTATIONS_STORAGE_KEY, isPendingTodoMutation);
 }
 
 function writePendingMutations(mutations) {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    if (mutations.length === 0) {
-        window.localStorage.removeItem(PENDING_MUTATIONS_STORAGE_KEY);
-        return;
-    }
-
-    window.localStorage.setItem(PENDING_MUTATIONS_STORAGE_KEY, JSON.stringify(mutations));
+    writeStorageArray(PENDING_MUTATIONS_STORAGE_KEY, mutations);
 }
 
 function queuePendingMutation(nextMutation) {
@@ -125,72 +75,37 @@ function queuePendingMutation(nextMutation) {
 }
 
 async function reconcileTxid(txid) {
-    try {
-        await todosCollection.utils.awaitTxId(txid, 15000);
-    } catch {
-        // The write is durable once the API accepted it; the stream can catch up later.
-    }
+    await awaitTxidReconciliation((targetTxid, timeoutMs) => todosCollection.utils.awaitTxId(targetTxid, timeoutMs), txid, 15000);
 }
 
 async function runPendingMutation(mutation) {
     if (mutation.type === 'insert') {
         const response = await createTodo(mutation.payload ?? {});
-        await reconcileTxid(extractTxid(response, 'insert'));
+        await reconcileTxid(requireTxid(response, 'insert', 'todos'));
         return;
     }
 
     if (mutation.type === 'update') {
         const response = await updateTodo(mutation.id, mutation.payload ?? {});
-        await reconcileTxid(extractTxid(response, 'update'));
+        await reconcileTxid(requireTxid(response, 'update', 'todos'));
         return;
     }
 
     const response = await deleteTodo(mutation.id);
-    await reconcileTxid(extractTxid(response, 'delete'));
+    await reconcileTxid(requireTxid(response, 'delete', 'todos'));
 }
 
 export function flushPendingTodoMutations() {
-    if (flushPromise !== null) {
-        return flushPromise;
-    }
-
-    flushPromise = (async () => {
-        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-            return;
-        }
-
-        const queue = readPendingMutations();
-
-        if (queue.length === 0) {
-            return;
-        }
-
-        const remaining = [];
-
-        for (let index = 0; index < queue.length; index += 1) {
-            const mutation = queue[index];
-
-            try {
-                await runPendingMutation(mutation);
-            } catch (error) {
-                if (isRecoverableNetworkError(error)) {
-                    remaining.push(mutation);
-                    continue;
-                }
-
-                remaining.push(mutation, ...queue.slice(index + 1));
-                writePendingMutations(remaining);
-                throw error;
-            }
-        }
-
-        writePendingMutations(remaining);
-    })().finally(() => {
-        flushPromise = null;
-    });
-
-    return flushPromise;
+    return flushPendingMutations();
 }
+
+const flushPendingMutations = createSingleFlightQueueFlusher({
+    isOnline: () => typeof navigator === 'undefined' || navigator.onLine !== false,
+    readQueue: readPendingMutations,
+    writeQueue: writePendingMutations,
+    runItem: runPendingMutation,
+    isRecoverableError: isRecoverableNetworkError,
+});
 
 function setupPendingMutationFlush() {
     if (typeof window === 'undefined') {
@@ -225,7 +140,7 @@ export const todosCollection = createCollection(
             try {
                 const response = await createTodo(mutation.modified);
 
-                return { txid: extractTxid(response, 'insert') };
+                return { txid: requireTxid(response, 'insert', 'todos') };
             } catch (error) {
                 if (!isRecoverableNetworkError(error)) {
                     throw error;
@@ -248,7 +163,7 @@ export const todosCollection = createCollection(
             try {
                 const response = await updateTodo(mutation.original.id, mutation.changes);
 
-                return { txid: extractTxid(response, 'update') };
+                return { txid: requireTxid(response, 'update', 'todos') };
             } catch (error) {
                 if (!isRecoverableNetworkError(error)) {
                     throw error;
@@ -271,7 +186,7 @@ export const todosCollection = createCollection(
             try {
                 const response = await deleteTodo(mutation.original.id);
 
-                return { txid: extractTxid(response, 'delete') };
+                return { txid: requireTxid(response, 'delete', 'todos') };
             } catch (error) {
                 if (!isRecoverableNetworkError(error)) {
                     throw error;
