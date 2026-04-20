@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue';
-import { todosCollection } from '../services/todos.sync';
+import { flushPendingTodoMutations, todosCollection } from '../services/todos.sync';
 import { translate } from '../utilities/i18n';
 
 const todos = ref([]);
@@ -17,13 +17,14 @@ function refreshTodosSnapshot() {
     todos.value = Array.from(todosCollection.values()).sort(sortTodos);
 }
 
-async function waitForPersistence(transaction) {
-    try {
-        await transaction.isPersisted.promise;
-    } catch (error) {
-        errorMessage.value = error instanceof Error ? error.message : translate('sync.syncRequestFailed');
-        throw error;
-    }
+function monitorPersistence(transaction) {
+    void transaction.isPersisted.promise
+        .then(() => {
+            errorMessage.value = '';
+        })
+        .catch((error) => {
+            errorMessage.value = error instanceof Error ? error.message : translate('sync.syncRequestFailed');
+        });
 }
 
 export async function bootstrapTodos() {
@@ -46,6 +47,9 @@ export async function bootstrapTodos() {
 
             refreshTodosSnapshot();
             errorMessage.value = '';
+            void flushPendingTodoMutations().catch((error) => {
+                errorMessage.value = error instanceof Error ? error.message : translate('sync.syncRequestFailed');
+            });
         } catch (error) {
             errorMessage.value = error instanceof Error ? error.message : translate('sync.unableLoadTodoSync');
         } finally {
@@ -77,7 +81,7 @@ export function useTodos() {
             updated_at: timestamp,
         });
 
-        await waitForPersistence(transaction);
+        monitorPersistence(transaction);
     }
 
     async function toggleTodo(todo) {
@@ -88,7 +92,7 @@ export function useTodos() {
             draft.updated_at = new Date().toISOString();
         });
 
-        await waitForPersistence(transaction);
+        monitorPersistence(transaction);
     }
 
     async function removeTodo(todo) {
@@ -96,7 +100,7 @@ export function useTodos() {
 
         const transaction = todosCollection.delete(todo.id);
 
-        await waitForPersistence(transaction);
+        monitorPersistence(transaction);
     }
 
     return {
