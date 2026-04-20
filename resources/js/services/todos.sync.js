@@ -4,6 +4,9 @@ import { getElectricShapeUrl } from './electric.api';
 import { requireTxid, awaitTxidReconciliation } from './electric.txid';
 import { isRecoverableNetworkError } from './network.errors';
 import { readPendingTodoMutations, writePendingTodoMutations } from './pglite.todo.repository';
+import { mergePendingMutationQueue } from './sync.mutation-queue';
+import { registerOnlineQueueFlush } from './sync.online';
+import { buildOutboxId } from './sync.outbox';
 import { createSingleFlightQueueFlusher } from './sync.queue';
 import { createTodo, deleteTodo, updateTodo } from './todos.api';
 
@@ -18,10 +21,6 @@ import { createTodo, deleteTodo, updateTodo } from './todos.api';
 
 /** @type {(event: Record<string, unknown>) => void | null} */
 let outboxLifecycleReporter = null;
-
-function buildOutboxId(type, todoId) {
-    return `${type}:${todoId}`;
-}
 
 function emitOutboxLifecycle(event) {
     if (typeof outboxLifecycleReporter !== 'function') {
@@ -55,47 +54,13 @@ function writePendingMutations(mutations) {
 
 async function queuePendingMutation(nextMutation) {
     const current = await readPendingMutations();
-    const existingIndex = current.findIndex((mutation) => mutation.id === nextMutation.id);
+    const nextQueue = mergePendingMutationQueue(current, nextMutation);
 
-    if (existingIndex === -1) {
-        current.push(nextMutation);
-        await writePendingMutations(current);
+    if (nextQueue === current) {
         return;
     }
 
-    const existing = current[existingIndex];
-
-    if (nextMutation.type === 'insert') {
-        current[existingIndex] = nextMutation;
-    } else if (nextMutation.type === 'update') {
-        if (existing.type === 'insert') {
-            current[existingIndex] = {
-                ...existing,
-                payload: {
-                    ...existing.payload,
-                    ...nextMutation.payload,
-                },
-            };
-        } else if (existing.type === 'update') {
-            current[existingIndex] = {
-                ...existing,
-                payload: {
-                    ...existing.payload,
-                    ...nextMutation.payload,
-                },
-            };
-        } else {
-            return;
-        }
-    } else if (nextMutation.type === 'delete') {
-        if (existing.type === 'insert') {
-            current.splice(existingIndex, 1);
-        } else {
-            current[existingIndex] = nextMutation;
-        }
-    }
-
-    await writePendingMutations(current);
+    await writePendingMutations(nextQueue);
 }
 
 export function setTodoOutboxLifecycleReporter(reporter) {
@@ -122,91 +87,57 @@ async function reconcileTxid(txid) {
     await awaitTxidReconciliation((targetTxid, timeoutMs) => todosCollection.utils.awaitTxId(targetTxid, timeoutMs), txid, 15000);
 }
 
+function resolveErrorMessage(error) {
+    return error instanceof Error ? error.message : '';
+}
+
+function emitMutationLifecycle({ outboxId, type, todoId, title, status, error = '' }) {
+    const event = {
+        id: outboxId,
+        type,
+        todoId,
+        title,
+        status,
+    };
+
+    if (typeof error === 'string' && error.length > 0) {
+        event.error = error;
+    }
+
+    emitOutboxLifecycle(event);
+}
+
+async function executeTodoMutation(type, id, payload) {
+    if (type === 'insert') {
+        return createTodo(payload ?? {});
+    }
+
+    if (type === 'update') {
+        return updateTodo(id, payload ?? {});
+    }
+
+    return deleteTodo(id);
+}
+
 async function runPendingMutation(mutation) {
     const todoId = String(mutation.id);
     const outboxId = mutation.outboxId ?? buildOutboxId(mutation.type, todoId);
     const title = resolveMutationTitle(mutation);
 
-    emitOutboxLifecycle({
-        id: outboxId,
-        type: mutation.type,
-        todoId,
-        title,
-        status: 'sending',
-    });
-
-    if (mutation.type === 'insert') {
-        try {
-            const response = await createTodo(mutation.payload ?? {});
-            await reconcileTxid(requireTxid(response, 'insert', 'todos'));
-            emitOutboxLifecycle({
-                id: outboxId,
-                type: mutation.type,
-                todoId,
-                title,
-                status: 'synced',
-            });
-        } catch (error) {
-            emitOutboxLifecycle({
-                id: outboxId,
-                type: mutation.type,
-                todoId,
-                title,
-                status: isRecoverableNetworkError(error) ? 'queued' : 'failed',
-                error: error instanceof Error ? error.message : null,
-            });
-
-            throw error;
-        }
-
-        return;
-    }
-
-    if (mutation.type === 'update') {
-        try {
-            const response = await updateTodo(mutation.id, mutation.payload ?? {});
-            await reconcileTxid(requireTxid(response, 'update', 'todos'));
-            emitOutboxLifecycle({
-                id: outboxId,
-                type: mutation.type,
-                todoId,
-                title,
-                status: 'synced',
-            });
-        } catch (error) {
-            emitOutboxLifecycle({
-                id: outboxId,
-                type: mutation.type,
-                todoId,
-                title,
-                status: isRecoverableNetworkError(error) ? 'queued' : 'failed',
-                error: error instanceof Error ? error.message : null,
-            });
-
-            throw error;
-        }
-
-        return;
-    }
+    emitMutationLifecycle({ outboxId, type: mutation.type, todoId, title, status: 'sending' });
 
     try {
-        const response = await deleteTodo(mutation.id);
-        await reconcileTxid(requireTxid(response, 'delete', 'todos'));
-        emitOutboxLifecycle({
-            id: outboxId,
-            type: mutation.type,
-            todoId,
-            title,
-            status: 'synced',
-        });
+        const response = await executeTodoMutation(mutation.type, mutation.id, mutation.payload);
+        await reconcileTxid(requireTxid(response, mutation.type, 'todos'));
+        emitMutationLifecycle({ outboxId, type: mutation.type, todoId, title, status: 'synced' });
     } catch (error) {
-        emitOutboxLifecycle({
-            id: outboxId,
+        emitMutationLifecycle({
+            outboxId,
             type: mutation.type,
             todoId,
             title,
             status: isRecoverableNetworkError(error) ? 'queued' : 'failed',
-            error: error instanceof Error ? error.message : null,
+            error: resolveErrorMessage(error),
         });
 
         throw error;
@@ -225,20 +156,41 @@ const flushPendingMutations = createSingleFlightQueueFlusher({
     isRecoverableError: isRecoverableNetworkError,
 });
 
-function setupPendingMutationFlush() {
-    if (typeof window === 'undefined') {
-        return;
-    }
+async function sendCollectionMutation({
+    type,
+    todoId,
+    title,
+    request,
+    payload,
+}) {
+    const outboxId = buildOutboxId(type, todoId);
+    emitMutationLifecycle({ outboxId, type, todoId, title, status: 'sending' });
 
-    window.addEventListener('online', () => {
-        void flushPendingTodoMutations().catch(() => {
-            // Keep queued operations for a later retry.
+    try {
+        const response = await request();
+        return { txid: requireTxid(response, type, 'todos') };
+    } catch (error) {
+        if (!isRecoverableNetworkError(error)) {
+            emitMutationLifecycle({
+                outboxId,
+                type,
+                todoId,
+                title,
+                status: 'failed',
+                error: resolveErrorMessage(error),
+            });
+            throw error;
+        }
+
+        emitMutationLifecycle({ outboxId, type, todoId, title, status: 'queued' });
+        await queuePendingMutation({
+            type,
+            id: todoId,
+            ...(payload === undefined ? {} : { payload }),
+            outboxId,
         });
-    });
-
-    void flushPendingTodoMutations().catch(() => {
-        // Keep queued operations for a later retry.
-    });
+        return undefined;
+    }
 }
 
 export const todosCollection = createCollection(
@@ -256,49 +208,15 @@ export const todosCollection = createCollection(
             }
 
             const todoId = String(mutation.modified.id);
-            const outboxId = buildOutboxId('insert', todoId);
+            const title = typeof mutation.modified.title === 'string' ? mutation.modified.title : '';
 
-            emitOutboxLifecycle({
-                id: outboxId,
+            return sendCollectionMutation({
                 type: 'insert',
                 todoId,
-                title: typeof mutation.modified.title === 'string' ? mutation.modified.title : '',
-                status: 'sending',
+                title,
+                payload: mutation.modified,
+                request: () => createTodo(mutation.modified),
             });
-
-            try {
-                const response = await createTodo(mutation.modified);
-
-                return { txid: requireTxid(response, 'insert', 'todos') };
-            } catch (error) {
-                if (!isRecoverableNetworkError(error)) {
-                    emitOutboxLifecycle({
-                        id: outboxId,
-                        type: 'insert',
-                        todoId,
-                        title: typeof mutation.modified.title === 'string' ? mutation.modified.title : '',
-                        status: 'failed',
-                        error: error instanceof Error ? error.message : null,
-                    });
-
-                    throw error;
-                }
-
-                emitOutboxLifecycle({
-                    id: outboxId,
-                    type: 'insert',
-                    todoId,
-                    title: typeof mutation.modified.title === 'string' ? mutation.modified.title : '',
-                    status: 'queued',
-                });
-
-                await queuePendingMutation({
-                    type: 'insert',
-                    id: todoId,
-                    payload: mutation.modified,
-                    outboxId,
-                });
-            }
         },
         onUpdate: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
@@ -308,49 +226,15 @@ export const todosCollection = createCollection(
             }
 
             const todoId = String(mutation.original.id);
-            const outboxId = buildOutboxId('update', todoId);
+            const title = typeof mutation.changes?.title === 'string' ? mutation.changes.title : '';
 
-            emitOutboxLifecycle({
-                id: outboxId,
+            return sendCollectionMutation({
                 type: 'update',
                 todoId,
-                title: typeof mutation.changes?.title === 'string' ? mutation.changes.title : '',
-                status: 'sending',
+                title,
+                payload: mutation.changes,
+                request: () => updateTodo(mutation.original.id, mutation.changes),
             });
-
-            try {
-                const response = await updateTodo(mutation.original.id, mutation.changes);
-
-                return { txid: requireTxid(response, 'update', 'todos') };
-            } catch (error) {
-                if (!isRecoverableNetworkError(error)) {
-                    emitOutboxLifecycle({
-                        id: outboxId,
-                        type: 'update',
-                        todoId,
-                        title: typeof mutation.changes?.title === 'string' ? mutation.changes.title : '',
-                        status: 'failed',
-                        error: error instanceof Error ? error.message : null,
-                    });
-
-                    throw error;
-                }
-
-                emitOutboxLifecycle({
-                    id: outboxId,
-                    type: 'update',
-                    todoId,
-                    title: typeof mutation.changes?.title === 'string' ? mutation.changes.title : '',
-                    status: 'queued',
-                });
-
-                await queuePendingMutation({
-                    type: 'update',
-                    id: todoId,
-                    payload: mutation.changes,
-                    outboxId,
-                });
-            }
         },
         onDelete: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
@@ -360,50 +244,14 @@ export const todosCollection = createCollection(
             }
 
             const todoId = String(mutation.original.id);
-            const outboxId = buildOutboxId('delete', todoId);
-
-            emitOutboxLifecycle({
-                id: outboxId,
+            return sendCollectionMutation({
                 type: 'delete',
                 todoId,
                 title: '',
-                status: 'sending',
+                request: () => deleteTodo(mutation.original.id),
             });
-
-            try {
-                const response = await deleteTodo(mutation.original.id);
-
-                return { txid: requireTxid(response, 'delete', 'todos') };
-            } catch (error) {
-                if (!isRecoverableNetworkError(error)) {
-                    emitOutboxLifecycle({
-                        id: outboxId,
-                        type: 'delete',
-                        todoId,
-                        title: '',
-                        status: 'failed',
-                        error: error instanceof Error ? error.message : null,
-                    });
-
-                    throw error;
-                }
-
-                emitOutboxLifecycle({
-                    id: outboxId,
-                    type: 'delete',
-                    todoId,
-                    title: '',
-                    status: 'queued',
-                });
-
-                await queuePendingMutation({
-                    type: 'delete',
-                    id: todoId,
-                    outboxId,
-                });
-            }
         },
     }),
 );
 
-setupPendingMutationFlush();
+registerOnlineQueueFlush(flushPendingTodoMutations);

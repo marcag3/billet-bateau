@@ -1,6 +1,7 @@
 import { useLiveQuery } from '@tanstack/vue-db';
 import { computed, ref } from 'vue';
 import { isRecoverableNetworkError } from '../services/network.errors';
+import { buildOutboxId } from '../services/sync.outbox';
 import {
     flushPendingTodoMutations,
     readPendingOutboxEntries,
@@ -19,10 +20,6 @@ const OUTBOX_MAX_ENTRIES = 60;
 
 let bootstrapPromise = null;
 let hasHydratedOutbox = false;
-
-function buildOutboxId(type, todoId) {
-    return `${type}:${todoId}`;
-}
 
 function sortOutboxEntries(left, right) {
     return String(right.updatedAt ?? '').localeCompare(String(left.updatedAt ?? ''));
