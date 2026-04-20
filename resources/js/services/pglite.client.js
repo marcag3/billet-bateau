@@ -1,10 +1,12 @@
 import { PGlite } from '@electric-sql/pglite';
 import { PGliteWorker } from '@electric-sql/pglite/worker';
+import { runPgliteMigrations } from './pglite.migrations';
 
 const OPFS_DATA_DIR = 'opfs-ahp://todos-local-db';
 const IDB_DATA_DIR = 'idb://todos-local-db';
 
 let pglitePromise = null;
+let schemaReadyPromise = null;
 
 function isSafariBrowser() {
     if (typeof navigator === 'undefined') {
@@ -85,5 +87,14 @@ export async function getPgliteClient() {
         pglitePromise = connectPglite();
     }
 
-    return pglitePromise;
+    if (schemaReadyPromise === null) {
+        schemaReadyPromise = (async () => {
+            const pg = await pglitePromise;
+            await runPgliteMigrations(pg);
+
+            return pg;
+        })();
+    }
+
+    return schemaReadyPromise;
 }

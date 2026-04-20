@@ -1,21 +1,4 @@
 import { getPgliteClient } from './pglite.client';
-import { ensurePgliteSchema } from './pglite.schema';
-
-let repositoryReadyPromise = null;
-
-async function getRepositoryClient() {
-    if (repositoryReadyPromise !== null) {
-        return repositoryReadyPromise;
-    }
-
-    repositoryReadyPromise = (async () => {
-        const pg = await getPgliteClient();
-        await ensurePgliteSchema(pg);
-        return pg;
-    })();
-
-    return repositoryReadyPromise;
-}
 
 function mapPendingMutationRow(row) {
     let payload = undefined;
@@ -36,7 +19,7 @@ function mapPendingMutationRow(row) {
 }
 
 export async function readPendingTodoMutations() {
-    const pg = await getRepositoryClient();
+    const pg = await getPgliteClient();
     const result = await pg.query(
         `
             SELECT position, mutation_type, todo_id, payload
@@ -49,7 +32,7 @@ export async function readPendingTodoMutations() {
 }
 
 export async function writePendingTodoMutations(mutations) {
-    const pg = await getRepositoryClient();
+    const pg = await getPgliteClient();
 
     await pg.transaction(async (tx) => {
         await tx.query('DELETE FROM todo_mutation_queue');
