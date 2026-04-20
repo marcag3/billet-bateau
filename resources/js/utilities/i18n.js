@@ -69,6 +69,19 @@ const messages = {
             syncRequestFailed: 'Sync request failed.',
             unableLoadTodoSync: 'Unable to load todo sync.',
         },
+        outbox: {
+            title: 'Outbox',
+            openOutbox: 'Open outbox',
+            empty: 'No transactions yet.',
+            untitledTodo: 'Untitled todo',
+            statusQueued: 'Queued',
+            statusSending: 'Sending',
+            statusSynced: 'Synced',
+            statusFailed: 'Failed',
+            operationInsert: 'Create: {title}',
+            operationUpdate: 'Update: {title}',
+            operationDelete: 'Delete: {title}',
+        },
         legacyDashboard: {
             featureRichDescription:
                 'This application bundle is intentionally feature-rich and can grow independently from the public site.',
@@ -161,6 +174,19 @@ const messages = {
         sync: {
             syncRequestFailed: 'La requete de synchronisation a echoue.',
             unableLoadTodoSync: 'Impossible de charger la synchronisation des taches.',
+        },
+        outbox: {
+            title: 'Boite denvoi',
+            openOutbox: 'Ouvrir la boite denvoi',
+            empty: 'Aucune transaction pour le moment.',
+            untitledTodo: 'Tache sans titre',
+            statusQueued: 'En attente',
+            statusSending: 'Envoi',
+            statusSynced: 'Synchronisee',
+            statusFailed: 'Echec',
+            operationInsert: 'Creation : {title}',
+            operationUpdate: 'Mise a jour : {title}',
+            operationDelete: 'Suppression : {title}',
         },
         legacyDashboard: {
             featureRichDescription:
