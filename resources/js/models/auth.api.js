@@ -3,7 +3,7 @@ import { translate } from '../utilities/i18n';
 import { csrfCookie } from '../routes/sanctum';
 import { status as setupStatus, store as setupStore } from '../routes/setup';
 import { destroy as sessionDestroy, me as sessionMe, store as sessionStore } from '../actions/App/Http/Controllers/Auth/SessionController';
-import { buildJsonHeaders, parseJsonPayload, refreshCsrfSource } from './http.client';
+import { buildJsonHeaders, parseJsonPayload, refreshCsrfSource } from '../services/http.client';
 
 function getXsrfHeaders() {
     const xsrfToken = readCookieValue('XSRF-TOKEN');

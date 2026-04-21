@@ -1,4 +1,4 @@
-import { getPgliteClient } from './pglite.client';
+import { getPgliteClient } from '../services/pglite.client';
 
 function mapPendingMutationRow(row) {
     let payload = undefined;

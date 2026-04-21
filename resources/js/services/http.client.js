@@ -61,7 +61,7 @@ export function buildJsonHeaders(extraHeaders = {}, { includeRequestedWith = fal
     };
 }
 
-async function refreshCsrfFromAppShell() {
+async function refreshCsrfFromAppLayout() {
     const response = await fetch('/app', {
         method: 'GET',
         credentials: 'same-origin',
@@ -106,11 +106,11 @@ export async function refreshCsrfSource() {
                 return true;
             }
         } catch {
-            // Ignore and fall back to reloading the app shell.
+            // Ignore and fall back to reloading the app layout HTML.
         }
 
         try {
-            return await refreshCsrfFromAppShell();
+            return await refreshCsrfFromAppLayout();
         } catch {
             return false;
         }

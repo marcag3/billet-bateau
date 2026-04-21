@@ -3,18 +3,18 @@ import { createPinia } from 'pinia';
 import { Quasar } from 'quasar';
 import '@quasar/extras/material-icons/material-icons.css';
 import 'quasar/src/css/index.sass';
-import '../assets/app.scss';
-import AppShell from '../AppShell.vue';
-import router from '../router';
-import { useAuthStore } from '../store/auth.store';
-import { bootstrapTodos } from '../store/todos.store';
-import { i18n } from '../utilities/i18n';
-import { APP_AUTH_EXPIRED_EVENT } from '../utilities/events';
+import '../css/app.scss';
+import AppLayout from './layouts/AppLayout.vue';
+import router from './router';
+import { useAuthStore } from './store/auth.store';
+import { bootstrapTodos } from './models/todos.model';
+import { i18n } from './utilities/i18n';
+import { APP_AUTH_EXPIRED_EVENT } from './utilities/events';
 
 const APP_SW_URL = '/app-sw.js';
 const APP_SW_SCOPE = '/app/';
 
-const app = createApp(AppShell);
+const app = createApp(AppLayout);
 const pinia = createPinia();
 
 app.use(pinia);

@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ config('app.name', 'Billet Bateau') }}</title>
-        @vite('resources/js/entries/public.main.js')
+        @vite('resources/js/public.main.js')
     </head>
     <body>
         <div id="public-root"></div>
@@ -16,7 +16,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ config('app.name', 'Laravel') }} - Public</title>
-        @vite('resources/js/entries/public.main.js')
+        @vite('resources/js/public.main.js')
     </head>
     <body>
         <div id="public-root"></div>

@@ -5,7 +5,7 @@ import {
     fetchSetupStatus as fetchSetupStatusRequest,
     login as loginRequest,
     logout as logoutRequest,
-} from '../services/auth.api';
+} from '../models/auth.api';
 import { translate } from '../utilities/i18n';
 
 const AUTH_MARKER_STORAGE_KEY = 'app.hasAuthenticatedOnce';

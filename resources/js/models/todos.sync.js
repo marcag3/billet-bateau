@@ -1,13 +1,13 @@
 import { createCollection } from '@tanstack/db';
 import { electricCollectionOptions } from '@tanstack/electric-db-collection';
-import { getElectricShapeUrl } from './electric.api';
-import { requireTxid, awaitTxidReconciliation } from './electric.txid';
-import { isRecoverableNetworkError } from './network.errors';
-import { readPendingTodoMutations, writePendingTodoMutations } from './pglite.todo.repository';
-import { mergePendingMutationQueue } from './sync.mutation-queue';
-import { registerOnlineQueueFlush } from './sync.online';
-import { buildOutboxId } from './sync.outbox';
-import { createSingleFlightQueueFlusher } from './sync.queue';
+import { getElectricShapeUrl } from '../services/electric.api';
+import { requireTxid, awaitTxidReconciliation } from '../services/electric.txid';
+import { isRecoverableNetworkError } from '../services/network.errors';
+import { readPendingTodoMutations, writePendingTodoMutations } from './todo.repository';
+import { mergePendingMutationQueue } from '../services/sync.mutation-queue';
+import { registerOnlineQueueFlush } from '../services/sync.online';
+import { buildOutboxId } from '../services/sync.outbox';
+import { createSingleFlightQueueFlusher } from '../services/sync.queue';
 import { createTodo, deleteTodo, updateTodo } from './todos.api';
 
 /**

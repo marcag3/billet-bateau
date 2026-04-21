@@ -7,7 +7,7 @@ import {
     readPendingOutboxEntries,
     setTodoOutboxLifecycleReporter,
     todosCollection,
-} from '../services/todos.sync';
+} from './todos.sync';
 import { translate } from '../utilities/i18n';
 
 const isLoading = ref(true);

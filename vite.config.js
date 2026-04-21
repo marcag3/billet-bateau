@@ -12,7 +12,7 @@ export default defineConfig({
     plugins: [
         wayfinder(),
         laravel({
-            input: ['resources/js/entries/public.main.js', 'resources/js/entries/app.main.js'],
+            input: ['resources/js/public.main.js', 'resources/js/app.main.js'],
             refresh: true,
         }),
         vue({

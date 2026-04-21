@@ -13,7 +13,7 @@
         <link rel="manifest" href="/build/app.webmanifest">
         <link rel="icon" href="/icons/app-icon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/icons/app-icon.svg">
-        @vite('resources/js/entries/app.main.js')
+        @vite('resources/js/app.main.js')
     </head>
     <body>
         <div id="app-root"></div>
