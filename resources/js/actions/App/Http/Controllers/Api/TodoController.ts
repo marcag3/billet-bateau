@@ -82,7 +82,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 * @see app/Http/Controllers/Api/TodoController.php:73
 * @route '/api/todos/{todo}'
 */
-export const update = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+export const update = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -97,7 +97,7 @@ update.definition = {
 * @see app/Http/Controllers/Api/TodoController.php:73
 * @route '/api/todos/{todo}'
 */
-update.url = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
+update.url = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { todo: args }
     }
@@ -130,7 +130,7 @@ update.url = (args: { todo: string | { id: string } } | [todo: string | { id: st
 * @see app/Http/Controllers/Api/TodoController.php:73
 * @route '/api/todos/{todo}'
 */
-update.put = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+update.put = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -140,7 +140,7 @@ update.put = (args: { todo: string | { id: string } } | [todo: string | { id: st
 * @see app/Http/Controllers/Api/TodoController.php:73
 * @route '/api/todos/{todo}'
 */
-update.patch = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+update.patch = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: update.url(args, options),
     method: 'patch',
 })
@@ -150,7 +150,7 @@ update.patch = (args: { todo: string | { id: string } } | [todo: string | { id: 
 * @see app/Http/Controllers/Api/TodoController.php:108
 * @route '/api/todos/{todo}'
 */
-export const destroy = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+export const destroy = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -165,7 +165,7 @@ destroy.definition = {
 * @see app/Http/Controllers/Api/TodoController.php:108
 * @route '/api/todos/{todo}'
 */
-destroy.url = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
+destroy.url = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { todo: args }
     }
@@ -198,7 +198,7 @@ destroy.url = (args: { todo: string | { id: string } } | [todo: string | { id: s
 * @see app/Http/Controllers/Api/TodoController.php:108
 * @route '/api/todos/{todo}'
 */
-destroy.delete = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroy.delete = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })

@@ -22,8 +22,9 @@
     },
     "dependencies": {
         "@electric-sql/client": "^1.5.15",
-        "@electric-sql/pglite": "^0.4.4",
+        "@journeyapps/wa-sqlite": "^1.6.0",
         "@quasar/extras": "^1.18.0",
+        "@tanstack/browser-db-sqlite-persistence": "^0.1.9",
         "@tanstack/db": "^0.6.5",
         "@tanstack/electric-db-collection": "^0.3.3",
         "@tanstack/vue-db": "^0.0.116",

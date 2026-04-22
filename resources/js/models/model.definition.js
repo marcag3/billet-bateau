@@ -12,6 +12,7 @@
  *   titleFromPayload?: (payload: Record<string, unknown>) => string,
  *   orderBy?: Array<{ key: string, direction?: 'asc' | 'desc' }>,
  *   relations?: Record<string, unknown>,
+ *   persistenceSchemaVersion?: number,
  * }} ModelDefinition
  */
 
