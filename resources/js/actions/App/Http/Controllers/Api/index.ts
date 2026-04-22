@@ -1,8 +1,8 @@
-import TodoShapeProxyController from './TodoShapeProxyController'
+import ShapeProxyController from './ShapeProxyController'
 import TodoController from './TodoController'
 
 const Api = {
-    TodoShapeProxyController: Object.assign(TodoShapeProxyController, TodoShapeProxyController),
+    ShapeProxyController: Object.assign(ShapeProxyController, ShapeProxyController),
     TodoController: Object.assign(TodoController, TodoController),
 }
 

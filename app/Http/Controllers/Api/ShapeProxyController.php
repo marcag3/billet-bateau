@@ -9,8 +9,15 @@ use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class TodoShapeProxyController extends Controller
+class ShapeProxyController extends Controller
 {
+    /**
+     * @var array<string, string>
+     */
+    private const ALLOWED_SHAPES = [
+        'todos' => 'todos',
+    ];
+
     private const CONTINUITY_PARAMS = [
         'cursor',
         'handle',
@@ -23,15 +30,20 @@ class TodoShapeProxyController extends Controller
     /**
      * Proxy Electric shape requests for the current user.
      */
-    public function __invoke(Request $request): StreamedResponse
+    public function __invoke(Request $request, string $shape): StreamedResponse
     {
+        if (! isset(self::ALLOWED_SHAPES[$shape])) {
+            abort(404);
+        }
+
         $user = $request->user();
 
         if ($user === null) {
             abort(401);
         }
 
-        $shapeQuery = $this->buildShapeQuery($request, (int) $user->getAuthIdentifier());
+        $table = self::ALLOWED_SHAPES[$shape];
+        $shapeQuery = $this->buildShapeQuery($request, (int) $user->getAuthIdentifier(), $table);
         $electricResponse = $this->requestShapeStream($shapeQuery);
 
         return response()->stream(
@@ -51,7 +63,7 @@ class TodoShapeProxyController extends Controller
     /**
      * @return array<string, string>
      */
-    private function buildShapeQuery(Request $request, int $userId): array
+    private function buildShapeQuery(Request $request, int $userId, string $table): array
     {
         $apiSecret = (string) config('electric.api_secret');
 
@@ -60,7 +72,7 @@ class TodoShapeProxyController extends Controller
         }
 
         $query = [
-            'table' => 'todos',
+            'table' => $table,
             'where' => "user_id = {$userId}",
             'source_id' => (string) config('electric.source_id'),
             'api_secret' => $apiSecret,

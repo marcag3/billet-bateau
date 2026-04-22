@@ -7,7 +7,7 @@ import '../css/app.scss';
 import AppLayout from './layouts/AppLayout.vue';
 import router from './router';
 import { useAuthStore } from './store/auth.store';
-import { bootstrapTodos } from './models/todos.model';
+import { bootstrapLocalFirstModels } from './models/model.registry';
 import { i18n } from './utilities/i18n';
 import { APP_AUTH_EXPIRED_EVENT } from './utilities/events';
 
@@ -35,7 +35,7 @@ window.addEventListener('online', () => {
 await authStore.initialize();
 
 if (authStore.canAccessProtectedRoute()) {
-    void bootstrapTodos();
+    void bootstrapLocalFirstModels();
 }
 
 app.mount('#app-root');

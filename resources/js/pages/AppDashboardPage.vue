@@ -71,7 +71,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useTodos } from '../models/todos.model';
+import { useTodos } from '../models/todos/todos.model';
 
 const draftTitle = ref('');
 const isWorking = ref(false);

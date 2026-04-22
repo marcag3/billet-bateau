@@ -8,7 +8,7 @@ use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
-class TodoShapeProxyControllerTest extends TestCase
+class ShapeProxyControllerTest extends TestCase
 {
     use RefreshDatabase;
 

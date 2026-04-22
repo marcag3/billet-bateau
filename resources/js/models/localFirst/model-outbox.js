@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue';
-import { isPendingSyncStatus, SYNC_STATUS } from './sync.status';
+import { isPendingSyncStatus, SYNC_STATUS } from '../sync.status';
 
 const OUTBOX_SYNCED_RETENTION_MS = 5 * 60 * 1000;
 const OUTBOX_MAX_ENTRIES = 60;
@@ -14,7 +14,7 @@ function normalizeOutboxEntry(partialEntry) {
     return {
         id: partialEntry.id,
         type: partialEntry.type ?? 'update',
-        todoId: partialEntry.todoId ?? '',
+        recordId: partialEntry.recordId ?? '',
         title: partialEntry.title ?? '',
         status: partialEntry.status ?? SYNC_STATUS.sending,
         error: partialEntry.error ?? '',
