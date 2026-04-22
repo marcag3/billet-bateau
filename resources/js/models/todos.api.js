@@ -1,31 +1,14 @@
-import { requestJson } from '../services/http.client';
 import { destroy, store, update } from '../routes/todos';
+import { createEntityApi } from './entity.api';
 
-export async function createTodo(payload) {
-    return requestJson(store.url(), {
-        method: 'POST',
-        withCsrf: true,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-    });
-}
+const todosApi = createEntityApi({
+    createUrl: () => store.url(),
+    updateUrl: (id) => update.url({ todo: id }),
+    deleteUrl: (id) => destroy.url({ todo: id }),
+});
 
-export async function updateTodo(id, payload) {
-    return requestJson(update.url({ todo: id }), {
-        method: 'PUT',
-        withCsrf: true,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-    });
-}
+export const createTodo = (payload) => todosApi.create(payload);
 
-export async function deleteTodo(id) {
-    return requestJson(destroy.url({ todo: id }), {
-        method: 'DELETE',
-        withCsrf: true,
-    });
-}
+export const updateTodo = (id, payload) => todosApi.update(id, payload);
+
+export const deleteTodo = (id) => todosApi.remove(id);
