@@ -1,4 +1,5 @@
 import { useLiveQuery } from '@tanstack/vue-db';
+import { isRef, unref } from 'vue';
 
 function applyOrdering(query, alias, orderBy = []) {
     let current = query;
@@ -45,22 +46,29 @@ export function withModelRelations(query, relationHandlers = [], relations = {})
 }
 
 export function useEntityList({ enabledRef, alias, collection, dependencies = [], where, orderBy = [], relationHandlers = [], relations = {} }) {
+    const collectionDeps = isRef(collection) ? [collection] : [];
+
     return useLiveQuery(
         (queryBuilder) => {
             if (enabledRef && enabledRef.value === false) {
                 return undefined;
             }
 
+            const resolvedCollection = unref(collection);
+            if (!resolvedCollection) {
+                return undefined;
+            }
+
             const query = buildEntityListQuery({
                 queryBuilder,
                 alias,
-                collection,
+                collection: resolvedCollection,
                 where,
                 orderBy,
             });
 
             return withModelRelations(query, relationHandlers, relations);
         },
-        [...dependencies, enabledRef].filter(Boolean),
+        [...dependencies, enabledRef, ...collectionDeps].filter(Boolean),
     );
 }

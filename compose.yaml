@@ -16,7 +16,7 @@ services:
       POSTGRES_PASSWORD: "${DB_PASSWORD}"
     volumes:
       - "./database/schema:/schema"
-      - "./docker/pgsql/create-electric-user.sh:/docker-entrypoint-initdb.d/20-create-electric-user.sh:ro"
+      - "./docker/pgsql/create-powersync-user.sh:/docker-entrypoint-initdb.d/20-create-powersync-user.sh:ro"
       - "pgsql:/var/lib/postgresql/data"
     networks:
       - app
@@ -29,18 +29,35 @@ services:
       timeout: 5s
       start_period: 30s
 
-  electric:
-    image: "electricsql/electric:latest"
+  powersync:
+    image: "journeyapps/powersync-service:latest"
     restart: unless-stopped
+    command: ["start", "-r", "unified"]
+    volumes:
+      - "./docker/powersync:/config:ro"
     environment:
-      DATABASE_URL: "${ELECTRIC_DATABASE_URL:-postgresql://electric:password@pgsql:5432/database?sslmode=disable}"
-      ELECTRIC_SECRET: "${ELECTRIC_API_SECRET:-electric-local-dev-secret-with-32-bytes-minimum}"
-      ELECTRIC_INSECURE: "${ELECTRIC_INSECURE:-false}"
+      POWERSYNC_CONFIG_PATH: /config/service.yaml
+      NODE_OPTIONS: --max-old-space-size=1000
+      PS_PORT: "8080"
+      PS_DATA_SOURCE_URI: "${POWERSYNC_DATA_SOURCE_URI:-postgresql://powersync:password@pgsql:5432/${DB_DATABASE}?sslmode=disable}"
+      PS_STORAGE_SOURCE_URI: "${POWERSYNC_STORAGE_SOURCE_URI:-postgresql://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/powersync_storage?sslmode=disable}"
+      PS_JWT_SECRET_B64URL: "${POWERSYNC_JWT_SECRET_B64URL}"
     depends_on:
       pgsql:
         condition: service_healthy
     networks:
       - app
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:8080/probes/liveness').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+      interval: 5s
+      timeout: 2s
+      retries: 15
+    ports:
+      - "${FORWARD_POWERSYNC_PORT:-6080}:8080"
 
   redis:
     image: "redis:alpine"

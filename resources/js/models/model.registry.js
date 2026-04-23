@@ -1,7 +1,6 @@
 /**
- * Central bootstrap for domain models (Electric-backed TanStack DB collections).
+ * Central bootstrap for domain models (PowerSync-backed TanStack DB collections).
  */
-import { ensureBrowserSqlitePersistence } from './persistence/browser-sqlite-persistence.js';
 import { bootstrapTodos } from './todos/todos.model.js';
 
 /**
@@ -14,13 +13,11 @@ export const domainModelBootstraps = {
 };
 
 /**
- * Initializes shared browser persistence (OPFS SQLite when available) then boots each registered domain model.
+ * Boots each registered domain model (each model owns its PowerSync database + TanStack collection).
  *
  * @returns {Promise<void>}
  */
 export async function bootstrapDomainModels() {
-    await ensureBrowserSqlitePersistence();
-
     for (const bootstrap of Object.values(domainModelBootstraps)) {
         await bootstrap();
     }

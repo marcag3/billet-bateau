@@ -4,7 +4,6 @@
  *   collectionId: string,
  *   persistenceSchemaVersion: number,
  *   idKey?: string,
- *   shapeUrl: string | (() => string),
  *   api: {
  *     create: (payload: Record<string, unknown>, options?: { idempotencyKey?: string }) => Promise<Record<string, unknown>>,
  *     update: (id: string, payload: Record<string, unknown>, options?: { idempotencyKey?: string }) => Promise<Record<string, unknown>>,
@@ -40,10 +39,6 @@ export function defineModel(definition) {
     const { create, update, remove } = definition.api;
     if (typeof create !== 'function' || typeof update !== 'function' || typeof remove !== 'function') {
         throw new Error(`[models] Model "${normalizedName}" must define api.create/api.update/api.remove.`);
-    }
-
-    if (typeof definition.shapeUrl !== 'string' && typeof definition.shapeUrl !== 'function') {
-        throw new Error(`[models] Model "${normalizedName}" requires a shapeUrl string or resolver.`);
     }
 
     const schemaVersion = definition.persistenceSchemaVersion;

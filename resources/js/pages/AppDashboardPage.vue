@@ -13,41 +13,6 @@
             {{ persistenceLimitedMessage }}
         </q-banner>
 
-        <q-banner v-if="hasOutboxCommitError" class="bg-red-1 text-negative q-mb-md" rounded>
-            <template #avatar>
-                <q-icon name="error_outline" color="negative" />
-            </template>
-            <div class="text-weight-medium">{{ t('sync.outboxCommitFailed') }}</div>
-            <div class="text-caption q-mt-xs">{{ outboxCommitError }}</div>
-            <template #action>
-                <q-btn flat color="negative" :label="t('common.dismiss')" @click="dismissOutboxCommitError" />
-            </template>
-        </q-banner>
-
-        <q-expansion-item
-            v-if="outboxPendingCount > 0 || outboxPreview.length > 0"
-            dense
-            expand-separator
-            class="bg-grey-2 rounded-borders q-mb-md"
-            :label="t('sync.outboxTitle')"
-            :caption="String(outboxPendingCount)"
-        >
-            <q-list dense bordered class="bg-white">
-                <q-item v-if="outboxPreview.length === 0">
-                    <q-item-section>{{ t('sync.outboxEmpty') }}</q-item-section>
-                </q-item>
-                <q-item v-for="row in outboxPreview" :key="row.id">
-                    <q-item-section>
-                        <q-item-label>{{ row.mutationFnName }}</q-item-label>
-                        <q-item-label caption>{{ row.id }}</q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                        <q-item-label caption>{{ formatOutboxTime(row.createdAt) }}</q-item-label>
-                    </q-item-section>
-                </q-item>
-            </q-list>
-        </q-expansion-item>
-
         <q-form class="row q-col-gutter-sm q-mb-lg" @submit.prevent="submitTodo">
             <div class="col">
                 <q-input
@@ -126,12 +91,6 @@ const {
     hasError,
     persistenceUnavailable,
     persistenceLimitedMessage,
-    outboxPendingCount,
-    outboxPreview,
-    outboxCommitError,
-    hasOutboxCommitError,
-    dismissOutboxCommitError,
-    refreshOutbox,
     createTodo,
     toggleTodo,
     removeTodo,
@@ -139,24 +98,8 @@ const {
 } = useTodos();
 
 onMounted(() => {
-    void refresh().finally(() => {
-        void refreshOutbox();
-    });
+    void refresh();
 });
-
-function formatOutboxTime(value) {
-    if (!value) {
-        return '—';
-    }
-
-    const d = value instanceof Date ? value : new Date(value);
-
-    if (Number.isNaN(d.getTime())) {
-        return '—';
-    }
-
-    return d.toLocaleString(locale.value);
-}
 
 function formatTimestamp(value) {
     if (!value) {

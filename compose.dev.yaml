@@ -24,8 +24,8 @@ services:
     depends_on:
       pgsql:
         condition: service_healthy
-      electric:
-        condition: service_started
+      powersync:
+        condition: service_healthy
       redis:
         condition: service_healthy
       garage:
@@ -43,9 +43,9 @@ services:
     networks:
       - app
 
-  electric:
+  powersync:
     ports:
-      - "${FORWARD_ELECTRIC_PORT:-5133}:3000"
+      - "${FORWARD_POWERSYNC_PORT:-6080}:8080"
 
   pgsql:
     ports:

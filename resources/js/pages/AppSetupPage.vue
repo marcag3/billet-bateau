@@ -105,7 +105,7 @@ async function submitSetup() {
             password: password.value,
             passwordConfirmation: passwordConfirmation.value,
         });
-        await router.replace({ name: 'dashboard' });
+        await router.replace({ name: 'login' });
     } catch (error) {
         errorMessage.value = error instanceof Error ? error.message : t('auth.unableCompleteSetup');
     } finally {

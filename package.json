@@ -21,13 +21,11 @@
         "vitest": "^4.1.5"
     },
     "dependencies": {
-        "@electric-sql/client": "^1.5.15",
         "@journeyapps/wa-sqlite": "^1.6.0",
+        "@powersync/web": "^1.37.2",
         "@quasar/extras": "^1.18.0",
-        "@tanstack/browser-db-sqlite-persistence": "^0.1.9",
         "@tanstack/db": "^0.6.5",
-        "@tanstack/electric-db-collection": "^0.3.3",
-        "@tanstack/offline-transactions": "^1.0.30",
+        "@tanstack/powersync-db-collection": "^0.1.43",
         "@tanstack/vue-db": "^0.0.116",
         "pinia": "^3.0.4",
         "quasar": "^2.19.3",

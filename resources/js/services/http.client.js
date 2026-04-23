@@ -142,6 +142,43 @@ export async function requestJson(url, options = {}) {
 
     let response = await sendRequest();
 
+    // #region agent log
+    try {
+        const path = typeof url === 'string' ? url.split('?')[0] : '';
+        if (path.includes('/api/')) {
+            const loc =
+                typeof window !== 'undefined' && window.location
+                    ? `${window.location.protocol}//${window.location.host}`
+                    : '';
+            fetch('/api/_cursor-debug/ingest-d855ad', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({
+                    sessionId: 'd855ad',
+                    runId: 'pre-fix',
+                    hypothesisId: 'H1',
+                    location: 'http.client.js:requestJson',
+                    message: 'api fetch first response',
+                    data: {
+                        pageOrigin: loc,
+                        pageHost: typeof window !== 'undefined' && window.location ? window.location.host : '',
+                        requestPath: path,
+                        status: response.status,
+                        ok: response.ok,
+                        hasCsrfMeta:
+                            typeof document !== 'undefined' &&
+                            (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')?.length ?? 0) > 0,
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(() => {});
+        }
+    } catch {
+        /* ignore debug log errors */
+    }
+    // #endregion
+
     if (response.status === 419) {
         const csrfWasRefreshed = await refreshCsrfSource();
         if (csrfWasRefreshed) {

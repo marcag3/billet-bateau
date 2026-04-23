@@ -66,7 +66,7 @@ self.addEventListener('fetch', (event) => {
 
     const bypassRuntimeCaching =
         url.pathname.startsWith('/api/') ||
-        url.pathname.startsWith('/electric/') ||
+        url.pathname.startsWith('/powersync/') ||
         AUTH_PATH_PATTERN.test(url.pathname);
 
     if (bypassRuntimeCaching) {

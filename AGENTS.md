@@ -19,7 +19,7 @@ This application is a fullstack laravel api + vue local-first + completly offlin
 - phpunit/phpunit (PHPUNIT) - v12
 - vue (VUE) - v3
 - Quasar.dev
-- Tanstack-db + electric-sql sync
+- Tanstack-db + PowerSync sync
 
 ## Skills Activation
 

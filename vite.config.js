@@ -44,6 +44,8 @@ export default defineConfig({
             },
             injectManifest: {
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2,ttf,json,wasm}'],
+                // PowerSync / wa-sqlite ships multi-megabyte WASM bundles for the sync worker.
+                maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
             },
         }),
     ],

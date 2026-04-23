@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Auth\InstallController::status
-* @see app/Http/Controllers/Auth/InstallController.php:18
+* @see app/Http/Controllers/Auth/InstallController.php:17
 * @route '/setup/status'
 */
 export const status = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ status.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\InstallController::status
-* @see app/Http/Controllers/Auth/InstallController.php:18
+* @see app/Http/Controllers/Auth/InstallController.php:17
 * @route '/setup/status'
 */
 status.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ status.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\InstallController::status
-* @see app/Http/Controllers/Auth/InstallController.php:18
+* @see app/Http/Controllers/Auth/InstallController.php:17
 * @route '/setup/status'
 */
 status.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ status.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\InstallController::status
-* @see app/Http/Controllers/Auth/InstallController.php:18
+* @see app/Http/Controllers/Auth/InstallController.php:17
 * @route '/setup/status'
 */
 status.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ status.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\InstallController::store
-* @see app/Http/Controllers/Auth/InstallController.php:25
+* @see app/Http/Controllers/Auth/InstallController.php:24
 * @route '/setup'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -60,7 +60,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\InstallController::store
-* @see app/Http/Controllers/Auth/InstallController.php:25
+* @see app/Http/Controllers/Auth/InstallController.php:24
 * @route '/setup'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -69,7 +69,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\InstallController::store
-* @see app/Http/Controllers/Auth/InstallController.php:25
+* @see app/Http/Controllers/Auth/InstallController.php:24
 * @route '/setup'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({

@@ -34,11 +34,11 @@ window.addEventListener('online', () => {
 
 await authStore.initialize();
 
-if (authStore.canAccessProtectedRoute()) {
-    await bootstrapDomainModels();
-}
-
 app.mount('#app-root');
+
+if (authStore.canAccessProtectedRoute()) {
+    void bootstrapDomainModels();
+}
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {

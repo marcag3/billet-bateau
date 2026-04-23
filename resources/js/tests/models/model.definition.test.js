@@ -14,7 +14,6 @@ test('defineModel applies defaults', () => {
         name: 'todos',
         collectionId: 'todos',
         persistenceSchemaVersion: 1,
-        shapeUrl: '/api/shapes/todos',
         api: createApi(),
     });
 
@@ -29,7 +28,6 @@ test('defineModel validates required fields', () => {
             name: '',
             collectionId: 'todos',
             persistenceSchemaVersion: 1,
-            shapeUrl: '/api/shapes/todos',
             api: createApi(),
         }),
     ).toThrow(/requires a non-empty "name"/);
@@ -40,7 +38,6 @@ test('defineModel requires persistenceSchemaVersion', () => {
         defineModel({
             name: 'todos',
             collectionId: 'todos',
-            shapeUrl: '/api/shapes/todos',
             api: createApi(),
         }),
     ).toThrow(/persistenceSchemaVersion/);

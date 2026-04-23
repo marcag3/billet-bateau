@@ -143,15 +143,21 @@ export const useAuthStore = defineStore('auth', {
             password,
             passwordConfirmation,
         }) {
-            const user = await completeSetupRequest({
+            await completeSetupRequest({
                 organizationName,
                 email,
                 password,
                 passwordConfirmation,
             });
 
-            this.markAuthenticated(user);
+            this.isAuthenticated = false;
+            this.user = null;
+            this.hasAuthenticatedBefore = false;
+            this.requiresReauthentication = false;
+            this.authErrorMessage = '';
             this.installRequired = false;
+
+            persistAuthMarker(false);
         },
         async logout() {
             await logoutRequest();

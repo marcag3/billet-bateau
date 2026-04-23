@@ -48,7 +48,7 @@ const messages = {
         },
         dashboard: {
             title: 'Dashboard',
-            syncedDescription: 'Local todos are synced through Electric and TanStack DB.',
+            syncedDescription: 'Local todos are synced through PowerSync and TanStack DB.',
             newTodo: 'New todo',
             newTodoPlaceholder: 'Write next task...',
             add: 'Add',
@@ -73,10 +73,9 @@ const messages = {
                 'Browser storage (OPFS/SQLite) is unavailable. Todos work online only until you use a supported browser.',
             outboxTitle: 'Pending sync',
             outboxEmpty: 'No pending writes.',
-            outboxMutation: 'Operation',
-            outboxCreated: 'Queued at',
             rowPendingSync: 'Pending server sync',
-            outboxCommitFailed: 'Could not save your change to offline storage. You can try again.',
+            outboxCommitFailed:
+                'Could not sync a pending change to the server yet. Your edit is still queued locally; you can try again.',
         },
         legacyDashboard: {
             featureRichDescription:
@@ -149,7 +148,7 @@ const messages = {
         },
         dashboard: {
             title: 'Tableau de bord',
-            syncedDescription: 'Les taches locales sont synchronisees via Electric et TanStack DB.',
+            syncedDescription: 'Les taches locales sont synchronisees via PowerSync et TanStack DB.',
             newTodo: 'Nouvelle tache',
             newTodoPlaceholder: 'Ecrivez la prochaine tache...',
             add: 'Ajouter',
@@ -175,11 +174,9 @@ const messages = {
                 "Le stockage du navigateur (OPFS/SQLite) n'est pas disponible. Les taches ne fonctionnent qu'en ligne avec ce navigateur.",
             outboxTitle: 'Synchronisation en attente',
             outboxEmpty: 'Aucune ecriture en attente.',
-            outboxMutation: 'Operation',
-            outboxCreated: 'Mis en file a',
             rowPendingSync: 'En attente du serveur',
             outboxCommitFailed:
-                "Impossible d'enregistrer la modification hors ligne. Vous pouvez reessayer.",
+                "La synchronisation d'une modification vers le serveur a echoue pour le moment. Votre modification reste en file localement ; vous pouvez reessayer.",
         },
         legacyDashboard: {
             featureRichDescription:

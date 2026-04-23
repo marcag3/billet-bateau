@@ -1,8 +1,10 @@
-import ShapeProxyController from './ShapeProxyController'
+import PowerSyncCredentialsController from './PowerSyncCredentialsController'
+import PowerSyncUploadController from './PowerSyncUploadController'
 import TodoController from './TodoController'
 
 const Api = {
-    ShapeProxyController: Object.assign(ShapeProxyController, ShapeProxyController),
+    PowerSyncCredentialsController: Object.assign(PowerSyncCredentialsController, PowerSyncCredentialsController),
+    PowerSyncUploadController: Object.assign(PowerSyncUploadController, PowerSyncUploadController),
     TodoController: Object.assign(TodoController, TodoController),
 }
 

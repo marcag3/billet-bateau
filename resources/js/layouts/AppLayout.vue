@@ -6,6 +6,8 @@
 
                 <q-space />
 
+                <AppOutboxToolbarMenu />
+
                 <q-tabs shrink v-if="authStore.isAuthenticated || authStore.canAccessProtectedRoute()">
                     <q-route-tab :label="t('common.dashboard')" to="/" />
                     <q-route-tab :label="t('common.reports')" to="/reports" />
@@ -61,6 +63,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../store/auth.store';
+import AppOutboxToolbarMenu from '../components/AppOutboxToolbarMenu.vue';
 import { setLocale } from '../utilities/i18n';
 
 const router = useRouter();

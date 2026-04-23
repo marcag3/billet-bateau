@@ -34,7 +34,7 @@ class InstallSetupFlowTest extends TestCase
             ]);
     }
 
-    public function test_guest_can_complete_setup_and_is_authenticated(): void
+    public function test_guest_can_complete_setup_without_being_authenticated(): void
     {
         $response = $this->postJson('/setup', [
             'organization_name' => 'Acme Transport',
@@ -47,7 +47,7 @@ class InstallSetupFlowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('user.email', 'admin@example.com');
 
-        $this->assertAuthenticated();
+        $this->assertGuest();
         $this->assertDatabaseHas('users', [
             'email' => 'admin@example.com',
             'name' => 'Administrator',

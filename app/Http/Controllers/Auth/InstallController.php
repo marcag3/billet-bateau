@@ -7,7 +7,6 @@ use App\Models\AppSetting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -52,7 +51,6 @@ class InstallController extends Controller
             return $createdUser;
         });
 
-        Auth::guard('web')->login($user);
         $request->session()->regenerate();
         Cache::forever('app.installed', true);
 

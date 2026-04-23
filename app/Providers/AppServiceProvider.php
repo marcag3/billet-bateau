@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\PowerSyncTokenIssuer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 use Lorisleiva\Actions\ActionManager;
@@ -13,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(PowerSyncTokenIssuer::class, fn (): PowerSyncTokenIssuer => PowerSyncTokenIssuer::fromConfig());
     }
 
     /**
