@@ -2,17 +2,18 @@
  * @typedef {{
  *   name: string,
  *   collectionId: string,
+ *   persistenceSchemaVersion: number,
  *   idKey?: string,
  *   shapeUrl: string | (() => string),
  *   api: {
- *     create: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>,
- *     update: (id: string, payload: Record<string, unknown>) => Promise<Record<string, unknown>>,
- *     remove: (id: string) => Promise<Record<string, unknown>>,
+ *     create: (payload: Record<string, unknown>, options?: { idempotencyKey?: string }) => Promise<Record<string, unknown>>,
+ *     update: (id: string, payload: Record<string, unknown>, options?: { idempotencyKey?: string }) => Promise<Record<string, unknown>>,
+ *     remove: (id: string, options?: { idempotencyKey?: string }) => Promise<Record<string, unknown>>,
  *   },
  *   titleFromPayload?: (payload: Record<string, unknown>) => string,
  *   orderBy?: Array<{ key: string, direction?: 'asc' | 'desc' }>,
  *   relations?: Record<string, unknown>,
- *   persistenceSchemaVersion?: number,
+ *   pickUpdatePayload?: (changes: Record<string, unknown>) => Record<string, unknown>,
  * }} ModelDefinition
  */
 
@@ -45,6 +46,13 @@ export function defineModel(definition) {
         throw new Error(`[models] Model "${normalizedName}" requires a shapeUrl string or resolver.`);
     }
 
+    const schemaVersion = definition.persistenceSchemaVersion;
+    if (typeof schemaVersion !== 'number' || !Number.isInteger(schemaVersion) || schemaVersion < 1) {
+        throw new Error(
+            `[models] Model "${normalizedName}" requires a positive integer "persistenceSchemaVersion" (bump when the persisted collection shape changes).`,
+        );
+    }
+
     return {
         idKey: 'id',
         orderBy: [],
@@ -55,5 +63,6 @@ export function defineModel(definition) {
         ...definition,
         name: normalizedName,
         collectionId: normalizedCollectionId,
+        persistenceSchemaVersion: schemaVersion,
     };
 }

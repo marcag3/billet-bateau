@@ -1,17 +1,28 @@
 import { requestJson } from '../services/http.client';
 
-function jsonRequest(url, method, payload) {
+/**
+ * @param {string} url
+ * @param {string} method
+ * @param {{ body?: unknown, idempotencyKey?: string }} [opts]
+ */
+function jsonRequest(url, method, opts = {}) {
+    const { body, idempotencyKey } = opts;
+    /** @type {Record<string, string>} */
+    const headers = {};
+
+    if (body !== undefined) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    if (idempotencyKey) {
+        headers['Idempotency-Key'] = String(idempotencyKey);
+    }
+
     return requestJson(url, {
         method,
         withCsrf: true,
-        ...(payload === undefined
-            ? {}
-            : {
-                  headers: {
-                      'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(payload),
-              }),
+        ...(Object.keys(headers).length > 0 ? { headers } : {}),
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
 }
 
@@ -24,14 +35,35 @@ function jsonRequest(url, method, payload) {
  */
 export function createEntityApi(routes) {
     return {
-        create(payload) {
-            return jsonRequest(routes.createUrl(), 'POST', payload);
+        /**
+         * @param {Record<string, unknown>} payload
+         * @param {{ idempotencyKey?: string }} [options]
+         */
+        create(payload, options = {}) {
+            return jsonRequest(routes.createUrl(), 'POST', {
+                body: payload,
+                idempotencyKey: options.idempotencyKey,
+            });
         },
-        update(id, payload) {
-            return jsonRequest(routes.updateUrl(id), 'PUT', payload);
+        /**
+         * @param {string} id
+         * @param {Record<string, unknown>} payload
+         * @param {{ idempotencyKey?: string }} [options]
+         */
+        update(id, payload, options = {}) {
+            return jsonRequest(routes.updateUrl(id), 'PUT', {
+                body: payload,
+                idempotencyKey: options.idempotencyKey,
+            });
         },
-        remove(id) {
-            return jsonRequest(routes.deleteUrl(id), 'DELETE');
+        /**
+         * @param {string} id
+         * @param {{ idempotencyKey?: string }} [options]
+         */
+        remove(id, options = {}) {
+            return jsonRequest(routes.deleteUrl(id), 'DELETE', {
+                idempotencyKey: options.idempotencyKey,
+            });
         },
     };
 }

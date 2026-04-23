@@ -59,4 +59,26 @@ class ShapeProxyControllerTest extends TestCase
         $response->assertHeader('Content-Type', 'application/json');
         $this->assertStringContainsString('Cookie', (string) $response->headers->get('Vary'));
     }
+
+    public function test_proxy_forwards_electric_409_without_throwing(): void
+    {
+        $user = User::factory()->create();
+
+        config()->set('electric.service_url', 'http://electric:3000');
+        config()->set('electric.source_id', 'default');
+        config()->set('electric.api_secret', 'test-api-secret');
+
+        Http::fake([
+            '*' => Http::response('{"refetch":true}', 409, [
+                'Content-Type' => 'application/json',
+                'electric-handle' => 'new-handle',
+            ]),
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/shapes/todos');
+
+        $response->assertStatus(409);
+        $response->assertJson(['refetch' => true]);
+        $response->assertHeader('electric-handle', 'new-handle');
+    }
 }

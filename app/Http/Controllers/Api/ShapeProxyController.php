@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Client\Response as HttpResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -44,7 +45,7 @@ class ShapeProxyController extends Controller
 
         $table = self::ALLOWED_SHAPES[$shape];
         $shapeQuery = $this->buildShapeQuery($request, (int) $user->getAuthIdentifier(), $table);
-        $electricResponse = $this->requestShapeStream($shapeQuery);
+        $electricResponse = $this->requestShapeStream($shapeQuery, (int) $user->getAuthIdentifier());
 
         return response()->stream(
             function () use ($electricResponse): void {
@@ -92,14 +93,25 @@ class ShapeProxyController extends Controller
     /**
      * @param  array<string, string>  $query
      */
-    private function requestShapeStream(array $query): HttpResponse
+    private function requestShapeStream(array $query, int $userId): HttpResponse
     {
-        return Http::withOptions(['stream' => true])
+        $response = Http::withOptions(['stream' => true])
             ->accept($this->acceptedContentType())
             ->connectTimeout(10)
             ->timeout(0)
-            ->get($this->shapeUrl(), $query)
-            ->throw();
+            ->get($this->shapeUrl(), $query);
+
+        if ($response->status() === 409) {
+            Log::info('Electric shape returned 409; forwarding so the client can refetch.', [
+                'userId' => $userId,
+            ]);
+        }
+
+        if ($response->serverError()) {
+            $response->throw();
+        }
+
+        return $response;
     }
 
     private function shapeUrl(): string

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\ShapeProxyController::__invoke
-* @see app/Http/Controllers/Api/ShapeProxyController.php:33
+* @see app/Http/Controllers/Api/ShapeProxyController.php:34
 * @route '/api/shapes/{shape}'
 */
 const ShapeProxyController = (args: { shape: string | number } | [shape: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ ShapeProxyController.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ShapeProxyController::__invoke
-* @see app/Http/Controllers/Api/ShapeProxyController.php:33
+* @see app/Http/Controllers/Api/ShapeProxyController.php:34
 * @route '/api/shapes/{shape}'
 */
 ShapeProxyController.url = (args: { shape: string | number } | [shape: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -43,7 +43,7 @@ ShapeProxyController.url = (args: { shape: string | number } | [shape: string | 
 
 /**
 * @see \App\Http\Controllers\Api\ShapeProxyController::__invoke
-* @see app/Http/Controllers/Api/ShapeProxyController.php:33
+* @see app/Http/Controllers/Api/ShapeProxyController.php:34
 * @route '/api/shapes/{shape}'
 */
 ShapeProxyController.get = (args: { shape: string | number } | [shape: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ ShapeProxyController.get = (args: { shape: string | number } | [shape: string | 
 
 /**
 * @see \App\Http\Controllers\Api\ShapeProxyController::__invoke
-* @see app/Http/Controllers/Api/ShapeProxyController.php:33
+* @see app/Http/Controllers/Api/ShapeProxyController.php:34
 * @route '/api/shapes/{shape}'
 */
 ShapeProxyController.head = (args: { shape: string | number } | [shape: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({

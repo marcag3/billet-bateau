@@ -17,6 +17,7 @@ const messages = {
             openApp: 'Open App',
             language: 'Language',
             welcome: 'Welcome',
+            dismiss: 'Dismiss',
         },
         auth: {
             signIn: 'Sign in',
@@ -68,6 +69,14 @@ const messages = {
         sync: {
             syncRequestFailed: 'Sync request failed.',
             unableLoadTodoSync: 'Unable to load todo sync.',
+            persistenceLimited:
+                'Browser storage (OPFS/SQLite) is unavailable. Todos work online only until you use a supported browser.',
+            outboxTitle: 'Pending sync',
+            outboxEmpty: 'No pending writes.',
+            outboxMutation: 'Operation',
+            outboxCreated: 'Queued at',
+            rowPendingSync: 'Pending server sync',
+            outboxCommitFailed: 'Could not save your change to offline storage. You can try again.',
         },
         legacyDashboard: {
             featureRichDescription:
@@ -108,6 +117,7 @@ const messages = {
             openApp: "Ouvrir l'application",
             language: 'Langue',
             welcome: 'Bienvenue',
+            dismiss: 'Fermer',
         },
         auth: {
             signIn: 'Se connecter',
@@ -161,6 +171,15 @@ const messages = {
         sync: {
             syncRequestFailed: 'La requete de synchronisation a echoue.',
             unableLoadTodoSync: 'Impossible de charger la synchronisation des taches.',
+            persistenceLimited:
+                "Le stockage du navigateur (OPFS/SQLite) n'est pas disponible. Les taches ne fonctionnent qu'en ligne avec ce navigateur.",
+            outboxTitle: 'Synchronisation en attente',
+            outboxEmpty: 'Aucune ecriture en attente.',
+            outboxMutation: 'Operation',
+            outboxCreated: 'Mis en file a',
+            rowPendingSync: 'En attente du serveur',
+            outboxCommitFailed:
+                "Impossible d'enregistrer la modification hors ligne. Vous pouvez reessayer.",
         },
         legacyDashboard: {
             featureRichDescription:

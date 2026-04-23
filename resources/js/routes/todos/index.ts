@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\TodoController::index
-* @see app/Http/Controllers/Api/TodoController.php:17
+* @see app/Http/Controllers/Api/TodoController.php:63
 * @route '/api/todos'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::index
-* @see app/Http/Controllers/Api/TodoController.php:17
+* @see app/Http/Controllers/Api/TodoController.php:63
 * @route '/api/todos'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::index
-* @see app/Http/Controllers/Api/TodoController.php:17
+* @see app/Http/Controllers/Api/TodoController.php:63
 * @route '/api/todos'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::index
-* @see app/Http/Controllers/Api/TodoController.php:17
+* @see app/Http/Controllers/Api/TodoController.php:63
 * @route '/api/todos'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::store
-* @see app/Http/Controllers/Api/TodoController.php:36
+* @see app/Http/Controllers/Api/TodoController.php:82
 * @route '/api/todos'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -60,7 +60,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::store
-* @see app/Http/Controllers/Api/TodoController.php:36
+* @see app/Http/Controllers/Api/TodoController.php:82
 * @route '/api/todos'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -69,7 +69,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::store
-* @see app/Http/Controllers/Api/TodoController.php:36
+* @see app/Http/Controllers/Api/TodoController.php:82
 * @route '/api/todos'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -79,10 +79,10 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::update
-* @see app/Http/Controllers/Api/TodoController.php:73
+* @see app/Http/Controllers/Api/TodoController.php:121
 * @route '/api/todos/{todo}'
 */
-export const update = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+export const update = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -94,10 +94,10 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::update
-* @see app/Http/Controllers/Api/TodoController.php:73
+* @see app/Http/Controllers/Api/TodoController.php:121
 * @route '/api/todos/{todo}'
 */
-update.url = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+update.url = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { todo: args }
     }
@@ -127,30 +127,30 @@ update.url = (args: { todo: string | number | { id: string | number } } | [todo:
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::update
-* @see app/Http/Controllers/Api/TodoController.php:73
+* @see app/Http/Controllers/Api/TodoController.php:121
 * @route '/api/todos/{todo}'
 */
-update.put = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+update.put = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::update
-* @see app/Http/Controllers/Api/TodoController.php:73
+* @see app/Http/Controllers/Api/TodoController.php:121
 * @route '/api/todos/{todo}'
 */
-update.patch = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+update.patch = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: update.url(args, options),
     method: 'patch',
 })
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::destroy
-* @see app/Http/Controllers/Api/TodoController.php:108
+* @see app/Http/Controllers/Api/TodoController.php:158
 * @route '/api/todos/{todo}'
 */
-export const destroy = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+export const destroy = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -162,10 +162,10 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::destroy
-* @see app/Http/Controllers/Api/TodoController.php:108
+* @see app/Http/Controllers/Api/TodoController.php:158
 * @route '/api/todos/{todo}'
 */
-destroy.url = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+destroy.url = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { todo: args }
     }
@@ -195,10 +195,10 @@ destroy.url = (args: { todo: string | number | { id: string | number } } | [todo
 
 /**
 * @see \App\Http\Controllers\Api\TodoController::destroy
-* @see app/Http/Controllers/Api/TodoController.php:108
+* @see app/Http/Controllers/Api/TodoController.php:158
 * @route '/api/todos/{todo}'
 */
-destroy.delete = (args: { todo: string | number | { id: string | number } } | [todo: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroy.delete = (args: { todo: string | { id: string } } | [todo: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })

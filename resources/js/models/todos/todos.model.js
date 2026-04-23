@@ -1,58 +1,23 @@
 import { createCollection } from '@tanstack/db';
-import { electricCollectionOptions } from '@tanstack/electric-db-collection';
-import { persistedCollectionOptions } from '@tanstack/browser-db-sqlite-persistence';
 import { useLiveQuery } from '@tanstack/vue-db';
+import { NonRetriableError, startOfflineExecutor } from '@tanstack/offline-transactions';
 import { computed, ref, shallowRef } from 'vue';
 import { destroy, store, update } from '../../routes/todos';
 import { getElectricShapeUrlForShape } from '../../services/electric.api';
-import { awaitTxidReconciliation, requireTxid } from '../../services/electric.txid';
-import { translate } from '../../utilities/i18n';
 import { createEntityApi } from '../entity.api';
 import { defineRelations } from '../entity.relations';
 import { defineModel } from '../model.definition';
 import { buildEntityListQuery, withModelRelations } from '../entity.queries';
 import { ensureBrowserSqlitePersistence } from '../persistence/browser-sqlite-persistence';
-import { wrapCollectionSyncWritesForJsonSafeRows } from '../persistence/json-safe-rows';
-
-const TODOS_SCHEMA_VERSION = 1;
+import { createElectricPersistedCollectionOptions } from '../sync/create-electric-persisted-collection-options.js';
+import { runElectricModelMutations } from '../sync/run-electric-model-mutations.js';
+import { translate } from '../../utilities/i18n';
 
 const todosApi = createEntityApi({
     createUrl: () => store.url(),
     updateUrl: (id) => update.url({ todo: id }),
     deleteUrl: (id) => destroy.url({ todo: id }),
 });
-
-const todosModelDefinition = defineModel({
-    name: 'todos',
-    collectionId: 'todos',
-    shapeUrl: () => getElectricShapeUrlForShape('todos'),
-    api: {
-        create: (payload) => todosApi.create(payload),
-        update: (id, payload) => todosApi.update(id, payload),
-        remove: (id) => todosApi.remove(id),
-    },
-    orderBy: [
-        { key: 'updated_at', direction: 'desc' },
-        { key: 'created_at', direction: 'desc' },
-        { key: 'id', direction: 'desc' },
-    ],
-    titleFromPayload: (payload) => {
-        const title = payload?.title;
-        return typeof title === 'string' ? title : '';
-    },
-    relations: defineRelations([]),
-});
-
-const syncRequestFailedMessage = translate('sync.syncRequestFailed');
-const loadFailedMessage = translate('sync.unableLoadTodoSync');
-
-const isLoading = ref(true);
-const errorMessage = ref('');
-const hasBootstrappedCollection = ref(false);
-let bootstrapPromise = null;
-
-/** @type {import('vue').ShallowRef<import('@tanstack/db').Collection | null>} */
-const todosCollectionRef = shallowRef(null);
 
 /**
  * @param {Record<string, unknown>} changes
@@ -72,108 +37,166 @@ function pickTodoUpdatePayload(changes) {
     return payload;
 }
 
-/**
- * @param {unknown} error
- * @returns {boolean}
- */
-function isNonRetriableHttpError(error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return /\b401\b|\b403\b|\b404\b|\b422\b|Unauthenticated|Forbidden/i.test(message);
-}
+export const todosModelDefinition = defineModel({
+    name: 'todos',
+    collectionId: 'todos',
+    persistenceSchemaVersion: 1,
+    shapeUrl: () => getElectricShapeUrlForShape('todos'),
+    pickUpdatePayload: pickTodoUpdatePayload,
+    api: {
+        create: (payload, options) => todosApi.create(payload, options),
+        update: (id, payload, options) => todosApi.update(id, payload, options),
+        remove: (id, options) => todosApi.remove(id, options),
+    },
+    orderBy: [
+        { key: 'updated_at', direction: 'desc' },
+        { key: 'created_at', direction: 'desc' },
+        { key: 'id', direction: 'desc' },
+    ],
+    titleFromPayload: (payload) => {
+        const title = payload?.title;
+        return typeof title === 'string' ? title : '';
+    },
+    relations: defineRelations([]),
+});
 
-/**
- * @param {import('@tanstack/db').Transaction} dbTransaction
- * @param {import('@tanstack/db').Collection} collection
- * @returns {Promise<void>}
- */
-async function executeTodoMutations(dbTransaction, collection) {
-    const txids = [];
+const loadFailedMessage = translate('sync.unableLoadTodoSync');
+const persistenceLimitedMessage = translate('sync.persistenceLimited');
 
-    for (const mutation of dbTransaction.mutations) {
-        try {
-            if (mutation.type === 'insert') {
-                const modified = mutation.modified;
-                const idKey = todosModelDefinition.idKey ?? 'id';
-                const recordId = String(modified[idKey]);
-                const response = await todosModelDefinition.api.create({
-                    id: recordId,
-                    title: String(modified.title ?? ''),
-                    completed: Boolean(modified.completed),
-                    created_at: modified.created_at,
-                    updated_at: modified.updated_at,
-                });
-                txids.push(requireTxid(response, 'insert', todosModelDefinition.name));
-                continue;
-            }
+const isLoading = ref(true);
+const errorMessage = ref('');
+const hasBootstrappedCollection = ref(false);
+const persistenceUnavailable = ref(false);
+const outboxPendingCount = ref(0);
+const outboxPreview = ref(/** @type {Array<{ id: string, mutationFnName: string, createdAt: Date | string }>} */ ([]));
+/** Set when durable enqueue (`tx.commit`) fails; cleared on the next mutation attempt. */
+const outboxCommitError = ref('');
+let bootstrapPromise = null;
 
-            if (mutation.type === 'update') {
-                const { original, changes } = mutation;
-                const idKey = todosModelDefinition.idKey ?? 'id';
-                const recordId = String(original[idKey]);
-                const payload = pickTodoUpdatePayload(changes);
-                const response = await todosModelDefinition.api.update(recordId, payload);
-                txids.push(requireTxid(response, 'update', todosModelDefinition.name));
-                continue;
-            }
+/** @type {import('vue').ShallowRef<import('@tanstack/db').Collection | null>} */
+const todosCollectionRef = shallowRef(null);
 
-            if (mutation.type === 'delete') {
-                const { original } = mutation;
-                const idKey = todosModelDefinition.idKey ?? 'id';
-                const recordId = String(original[idKey]);
-                const response = await todosModelDefinition.api.remove(recordId);
-                txids.push(requireTxid(response, 'delete', todosModelDefinition.name));
-                continue;
-            }
-        } catch (error) {
-            if (isNonRetriableHttpError(error)) {
-                throw new Error(error instanceof Error ? error.message : syncRequestFailedMessage);
-            }
+/** @type {import('vue').ShallowRef<ReturnType<typeof startOfflineExecutor> | null>} */
+const todosOfflineExecutorRef = shallowRef(null);
 
-            const message = error instanceof Error ? error.message : syncRequestFailedMessage;
-            throw error instanceof Error ? error : new Error(message);
-        }
-    }
+const SYNC_TODOS_MUTATION = 'syncTodos';
 
-    const awaitTxId = collection.utils?.awaitTxId;
-    if (typeof awaitTxId !== 'function') {
+async function refreshOutboxSnapshot() {
+    const executor = todosOfflineExecutorRef.value;
+
+    if (!executor) {
+        outboxPendingCount.value = 0;
+        outboxPreview.value = [];
         return;
     }
 
-    for (const txid of txids) {
-        await awaitTxidReconciliation(awaitTxId, txid);
+    try {
+        await executor.waitForInit();
+        const pending = await executor.peekOutbox();
+        outboxPendingCount.value = Array.isArray(pending) ? pending.length : 0;
+        outboxPreview.value = (Array.isArray(pending) ? pending : []).map((tx) => ({
+            id: tx.id,
+            mutationFnName: tx.mutationFnName,
+            createdAt: tx.createdAt,
+        }));
+    } catch {
+        outboxPendingCount.value = 0;
+        outboxPreview.value = [];
     }
 }
 
-function buildTodosCollectionOptions(sqlitePersistence) {
-    const electricOptions = electricCollectionOptions({
-        id: todosModelDefinition.collectionId,
-        getKey: (item) => String(item[todosModelDefinition.idKey ?? 'id']),
-        shapeOptions: {
-            url: (() => {
-                const shapeUrl = todosModelDefinition.shapeUrl;
-                return typeof shapeUrl === 'function' ? shapeUrl() : shapeUrl;
-            })(),
-        },
-        onInsert: async ({ transaction, collection }) => {
-            await executeTodoMutations(/** @type {import('@tanstack/db').Transaction} */ (transaction), collection);
-        },
-        onUpdate: async ({ transaction, collection }) => {
-            await executeTodoMutations(/** @type {import('@tanstack/db').Transaction} */ (transaction), collection);
-        },
-        onDelete: async ({ transaction, collection }) => {
-            await executeTodoMutations(/** @type {import('@tanstack/db').Transaction} */ (transaction), collection);
-        },
-    });
+/**
+ * @returns {Promise<import('@tanstack/db').Collection | null>}
+ */
+export async function bootstrapTodos() {
+    if (hasBootstrappedCollection.value && todosCollectionRef.value) {
+        try {
+            await todosCollectionRef.value.preload();
+            errorMessage.value = '';
+        } catch (error) {
+            errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+        }
 
-    const base = !sqlitePersistence
-        ? electricOptions
-        : persistedCollectionOptions({
-              ...electricOptions,
-              persistence: sqlitePersistence,
-              schemaVersion: TODOS_SCHEMA_VERSION,
-          });
+        await refreshOutboxSnapshot();
+        return todosCollectionRef.value;
+    }
 
-    return wrapCollectionSyncWritesForJsonSafeRows(base);
+    if (bootstrapPromise !== null) {
+        return bootstrapPromise;
+    }
+
+    bootstrapPromise = (async () => {
+        try {
+            const sqlitePersistence = await ensureBrowserSqlitePersistence();
+            persistenceUnavailable.value = sqlitePersistence === null;
+
+            const collectionOptions = createElectricPersistedCollectionOptions({
+                model: todosModelDefinition,
+                sqlitePersistence,
+            });
+
+            const collection = createCollection(/** @type {any} */ (collectionOptions));
+            todosCollectionRef.value = collection;
+
+            const offlineExecutor = startOfflineExecutor({
+                collections: {
+                    [todosModelDefinition.collectionId]: collection,
+                },
+                mutationFns: {
+                    [SYNC_TODOS_MUTATION]: async ({ transaction, idempotencyKey }) => {
+                        const col = todosCollectionRef.value;
+
+                        if (!col) {
+                            throw new NonRetriableError('Todos collection is not initialized.');
+                        }
+
+                        await runElectricModelMutations(
+                            todosModelDefinition,
+                            col,
+                            { mutations: transaction.mutations },
+                            { idempotencyKey },
+                        );
+                    },
+                },
+                onStorageFailure: () => {
+                    persistenceUnavailable.value = true;
+                },
+            });
+
+            todosOfflineExecutorRef.value = offlineExecutor;
+            await offlineExecutor.waitForInit();
+
+            try {
+                await collection.preload();
+            } catch (preloadError) {
+                if (sqlitePersistence) {
+                    hasBootstrappedCollection.value = true;
+                    errorMessage.value = preloadError instanceof Error ? preloadError.message : loadFailedMessage;
+                    await refreshOutboxSnapshot();
+                    return collection;
+                }
+
+                throw preloadError;
+            }
+
+            hasBootstrappedCollection.value = true;
+            errorMessage.value = '';
+            await refreshOutboxSnapshot();
+            return collection;
+        } catch (error) {
+            bootstrapPromise = null;
+            hasBootstrappedCollection.value = false;
+            todosOfflineExecutorRef.value?.dispose();
+            todosOfflineExecutorRef.value = null;
+            todosCollectionRef.value = null;
+            errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+            return null;
+        } finally {
+            isLoading.value = false;
+        }
+    })();
+
+    return bootstrapPromise;
 }
 
 function useTodosList() {
@@ -198,35 +221,31 @@ function useTodosList() {
     );
 }
 
-export async function bootstrapTodos() {
-    if (bootstrapPromise !== null) {
-        return bootstrapPromise;
-    }
-
-    bootstrapPromise = (async () => {
-        try {
-            const sqlitePersistence = await ensureBrowserSqlitePersistence();
-            const collectionOptions = buildTodosCollectionOptions(sqlitePersistence);
-
-            const collection = createCollection(
-                /** @type {any} */ (collectionOptions),
-            );
-
-            todosCollectionRef.value = collection;
-
-            await collection.preload();
-            hasBootstrappedCollection.value = true;
-            errorMessage.value = '';
-        } catch (error) {
-            hasBootstrappedCollection.value = false;
-            todosCollectionRef.value = null;
-            errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
-        } finally {
-            isLoading.value = false;
-        }
-    })();
-
-    return bootstrapPromise;
+/**
+ * Applies the optimistic mutation, persists to the outbox, then returns without waiting for
+ * `tx.commit()` to finish (that path can block while offline in @tanstack/offline-transactions).
+ * Server flush + Electric reconciliation are reflected separately via `outboxPendingCount` and
+ * per-row `$synced`.
+ *
+ * @param {ReturnType<typeof startOfflineExecutor>} executor
+ * @param {(draft: () => void) => void} mutateBody
+ * @returns {Promise<void>}
+ */
+async function enqueueOfflineTodoMutation(executor, mutateBody) {
+    await executor.waitForInit();
+    outboxCommitError.value = '';
+    const offlineTx = executor.createOfflineTransaction({
+        mutationFnName: SYNC_TODOS_MUTATION,
+        autoCommit: false,
+    });
+    offlineTx.mutate(mutateBody);
+    void offlineTx
+        .commit()
+        .then(() => refreshOutboxSnapshot())
+        .catch((error) => {
+            outboxCommitError.value = error instanceof Error ? error.message : String(error);
+            void refreshOutboxSnapshot();
+        });
 }
 
 export function useTodos() {
@@ -241,17 +260,6 @@ export function useTodos() {
         }
     }
 
-    /**
-     * @param {unknown} tx
-     * @returns {Promise<void>}
-     */
-    async function awaitCollectionTx(tx) {
-        if (!tx || typeof tx !== 'object' || !('isPersisted' in tx)) {
-            return;
-        }
-        await /** @type {{ isPersisted: { promise: Promise<unknown> } }} */ (tx).isPersisted.promise;
-    }
-
     async function createTodo(title) {
         const normalizedTitle = title.trim();
 
@@ -262,53 +270,57 @@ export function useTodos() {
         await ensureTodosReady();
 
         const collection = todosCollectionRef.value;
+        const executor = todosOfflineExecutorRef.value;
 
-        if (!collection) {
+        if (!collection || !executor) {
             return;
         }
 
         const timestamp = new Date().toISOString();
         const todoId = crypto.randomUUID();
 
-        const tx = collection.insert({
-            id: todoId,
-            title: normalizedTitle,
-            completed: false,
-            created_at: timestamp,
-            updated_at: timestamp,
+        await enqueueOfflineTodoMutation(executor, () => {
+            collection.insert({
+                id: todoId,
+                title: normalizedTitle,
+                completed: false,
+                created_at: timestamp,
+                updated_at: timestamp,
+            });
         });
-
-        await awaitCollectionTx(tx);
     }
 
     async function toggleTodo(todo) {
         await ensureTodosReady();
 
         const collection = todosCollectionRef.value;
+        const executor = todosOfflineExecutorRef.value;
 
-        if (!collection) {
+        if (!collection || !executor) {
             return;
         }
 
-        const tx = collection.update(todo.id, (draft) => {
-            draft.completed = !Boolean(draft.completed);
-            draft.updated_at = new Date().toISOString();
+        await enqueueOfflineTodoMutation(executor, () => {
+            collection.update(todo.id, (draft) => {
+                draft.completed = !Boolean(draft.completed);
+                draft.updated_at = new Date().toISOString();
+            });
         });
-
-        await awaitCollectionTx(tx);
     }
 
     async function removeTodo(todo) {
         await ensureTodosReady();
 
         const collection = todosCollectionRef.value;
+        const executor = todosOfflineExecutorRef.value;
 
-        if (!collection) {
+        if (!collection || !executor) {
             return;
         }
 
-        const tx = collection.delete(todo.id);
-        await awaitCollectionTx(tx);
+        await enqueueOfflineTodoMutation(executor, () => {
+            collection.delete(todo.id);
+        });
     }
 
     return {
@@ -316,6 +328,18 @@ export function useTodos() {
         isLoading,
         errorMessage,
         hasError: computed(() => errorMessage.value.length > 0),
+        persistenceUnavailable,
+        persistenceLimitedMessage,
+        outboxPendingCount,
+        outboxPreview,
+        /** True while there are queued writes that have not finished the server mutation path. */
+        hasPendingOutboxWrites: computed(() => outboxPendingCount.value > 0),
+        outboxCommitError,
+        hasOutboxCommitError: computed(() => outboxCommitError.value.length > 0),
+        dismissOutboxCommitError: () => {
+            outboxCommitError.value = '';
+        },
+        refreshOutbox: refreshOutboxSnapshot,
         createTodo,
         toggleTodo,
         removeTodo,
