@@ -17,35 +17,16 @@ function applyOrdering(query, alias, orderBy = []) {
     return current;
 }
 
-export function buildEntityListQuery({ queryBuilder, alias, collection, where, orderBy = [] }) {
-    let query = queryBuilder.from({ [alias]: collection });
-
-    if (typeof where === 'function') {
-        query = where(query, alias);
-    }
-
-    return applyOrdering(query, alias, orderBy);
-}
-
-export function withModelRelations(query, relationHandlers = [], relations = {}) {
-    if (!Array.isArray(relationHandlers) || relationHandlers.length === 0) {
-        return query;
-    }
-
-    let current = query;
-
-    for (const handler of relationHandlers) {
-        if (typeof handler !== 'function') {
-            continue;
-        }
-
-        current = handler(current, relations) ?? current;
-    }
-
-    return current;
-}
-
-export function useEntityList({ enabledRef, alias, collection, dependencies = [], where, orderBy = [], relationHandlers = [], relations = {} }) {
+/**
+ * Live list from a TanStack DB collection with optional ordering.
+ *
+ * @param {object} options
+ * @param {import('vue').Ref<boolean> | undefined} options.enabledRef When false, query is disabled.
+ * @param {string} options.alias Table alias in the query (matches model `name`).
+ * @param {import('vue').Ref<import('@tanstack/db').Collection | null> | import('@tanstack/db').Collection} options.collection
+ * @param {Array<{ key: string, direction?: string }>} [options.orderBy]
+ */
+export function useEntityList({ enabledRef, alias, collection, orderBy = [] }) {
     const collectionDeps = isRef(collection) ? [collection] : [];
 
     return useLiveQuery(
@@ -59,16 +40,9 @@ export function useEntityList({ enabledRef, alias, collection, dependencies = []
                 return undefined;
             }
 
-            const query = buildEntityListQuery({
-                queryBuilder,
-                alias,
-                collection: resolvedCollection,
-                where,
-                orderBy,
-            });
-
-            return withModelRelations(query, relationHandlers, relations);
+            const query = queryBuilder.from({ [alias]: resolvedCollection });
+            return applyOrdering(query, alias, orderBy);
         },
-        [...dependencies, enabledRef, ...collectionDeps].filter(Boolean),
+        [enabledRef, ...collectionDeps].filter(Boolean),
     );
 }

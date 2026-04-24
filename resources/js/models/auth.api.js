@@ -1,21 +1,13 @@
-import { readCookieValue } from '../utilities/cookies';
 import { translate } from '../utilities/i18n';
 import { csrfCookie } from '../routes/sanctum';
 import { status as setupStatus, store as setupStore } from '../routes/setup';
 import { destroy as sessionDestroy, me as sessionMe, store as sessionStore } from '../actions/App/Http/Controllers/Auth/SessionController';
-import { buildJsonHeaders, parseJsonPayload, refreshCsrfSource } from '../services/http.client';
-
-function getXsrfHeaders() {
-    const xsrfToken = readCookieValue('XSRF-TOKEN');
-
-    if (xsrfToken.length === 0) {
-        return {};
-    }
-
-    return {
-        'X-XSRF-TOKEN': xsrfToken,
-    };
-}
+import {
+    buildJsonHeaders,
+    fetchWith419Retry,
+    getCsrfHeaders,
+    parseJsonPayload,
+} from '../services/http.client';
 
 export async function fetchSetupStatus() {
     const response = await fetch(setupStatus.url(), {
@@ -37,23 +29,7 @@ export async function fetchSetupStatus() {
     return payload?.install_required === true;
 }
 
-async function requestWithCsrfRetry(url, options, hasRetried = false) {
-    const response = await fetch(url, {
-        credentials: 'same-origin',
-        ...options,
-    });
-
-    if (response.status === 419 && !hasRetried) {
-        const csrfWasRefreshed = await refreshCsrfSource();
-        if (csrfWasRefreshed) {
-            return requestWithCsrfRetry(url, options, true);
-        }
-    }
-
-    return response;
-}
-
-export async function ensureCsrfCookie() {
+async function ensureCsrfCookie() {
     const response = await fetch(csrfCookie.url(), {
         method: 'GET',
         credentials: 'same-origin',
@@ -105,12 +81,12 @@ export async function login({
 }) {
     await ensureCsrfCookie();
 
-    const response = await requestWithCsrfRetry(sessionStore.url(), {
+    const response = await fetchWith419Retry(sessionStore.url(), {
         method: 'POST',
         headers: buildJsonHeaders(
             {
                 'Content-Type': 'application/json',
-                ...getXsrfHeaders(),
+                ...getCsrfHeaders(),
             },
             { includeRequestedWith: true },
         ),
@@ -139,12 +115,12 @@ export async function completeSetup({
 }) {
     await ensureCsrfCookie();
 
-    const response = await requestWithCsrfRetry(setupStore.url(), {
+    const response = await fetchWith419Retry(setupStore.url(), {
         method: 'POST',
         headers: buildJsonHeaders(
             {
                 'Content-Type': 'application/json',
-                ...getXsrfHeaders(),
+                ...getCsrfHeaders(),
             },
             { includeRequestedWith: true },
         ),
@@ -174,12 +150,11 @@ export async function completeSetup({
 export async function logout() {
     await ensureCsrfCookie();
 
-    await fetch(sessionDestroy.url(), {
+    await fetchWith419Retry(sessionDestroy.url(), {
         method: 'POST',
-        credentials: 'same-origin',
         headers: buildJsonHeaders(
             {
-                ...getXsrfHeaders(),
+                ...getCsrfHeaders(),
             },
             { includeRequestedWith: true },
         ),

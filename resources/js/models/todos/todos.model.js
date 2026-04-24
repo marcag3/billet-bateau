@@ -290,8 +290,6 @@ export function useTodos() {
         alias: todosModelDefinition.name,
         collection: todosCollectionRef,
         orderBy: todosModelDefinition.orderBy ?? [],
-        relations: todosModelDefinition.relations ?? {},
-        relationHandlers: [],
     });
 
     /**

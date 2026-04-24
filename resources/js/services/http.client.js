@@ -37,7 +37,7 @@ function setCsrfTokenMeta(token) {
     document.head.append(metaTag);
 }
 
-function getCsrfHeaders() {
+export function getCsrfHeaders() {
     const headers = {};
     const csrfToken = getCsrfTokenFromMeta();
     const xsrfToken = readCookieValue('XSRF-TOKEN');
@@ -125,29 +125,42 @@ export async function parseJsonPayload(response) {
     return response.json().catch(() => ({}));
 }
 
+/**
+ * Same-origin fetch with a single 419 CSRF retry (mirrors Sanctum / meta refresh flow).
+ *
+ * @param {string} url
+ * @param {RequestInit} [init]
+ * @param {boolean} [hasRetried]
+ * @returns {Promise<Response>}
+ */
+export async function fetchWith419Retry(url, init = {}, hasRetried = false) {
+    const response = await fetch(url, {
+        credentials: 'same-origin',
+        ...init,
+    });
+
+    if (response.status === 419 && !hasRetried) {
+        const csrfWasRefreshed = await refreshCsrfSource();
+        if (csrfWasRefreshed) {
+            return fetchWith419Retry(url, init, true);
+        }
+    }
+
+    return response;
+}
+
 export async function requestJson(url, options = {}) {
     const withCsrf = options.withCsrf === true;
     const fetchOptions = { ...options };
     delete fetchOptions.withCsrf;
 
-    const sendRequest = () =>
-        fetch(url, {
-            credentials: 'same-origin',
-            ...fetchOptions,
-            headers: buildJsonHeaders({
-                ...fetchOptions.headers,
-                ...(withCsrf ? getCsrfHeaders() : {}),
-            }),
-        });
-
-    let response = await sendRequest();
-
-    if (response.status === 419) {
-        const csrfWasRefreshed = await refreshCsrfSource();
-        if (csrfWasRefreshed) {
-            response = await sendRequest();
-        }
-    }
+    const response = await fetchWith419Retry(url, {
+        ...fetchOptions,
+        headers: buildJsonHeaders({
+            ...fetchOptions.headers,
+            ...(withCsrf ? getCsrfHeaders() : {}),
+        }),
+    });
 
     const payload = await parseJsonPayload(response);
 
