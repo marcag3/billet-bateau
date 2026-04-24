@@ -213,6 +213,10 @@ export async function bootstrapTodos() {
             const db = new PowerSyncDatabase({
                 schema: todosPowerSyncSchema,
                 database: { dbFilename: 'billbateau-powersync.db' },
+                // Document is served from the app origin (e.g. :80) while Vite serves modules from :5173. WA-SQLite
+                // workers are created with URLs on the Vite origin, which is cross-origin vs the document; Firefox
+                // never completes worker startup. Run SQLite on the main thread in dev only.
+                ...(import.meta.env.DEV ? { flags: { useWebWorker: false } } : {}),
             });
 
             await db.init();
@@ -223,31 +227,6 @@ export async function bootstrapTodos() {
                 statusChanged: (status) => {
                     const uploadError = status.dataFlowStatus?.uploadError;
                     const formatted = formatPowerSyncUploadError(uploadError);
-                    // #region agent log
-                    try {
-                        if (formatted.length > 0) {
-                            fetch('http://localhost:7565/ingest/392e3314-4174-4627-903d-36c5d530a41d', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'd855ad' },
-                                body: JSON.stringify({
-                                    sessionId: 'd855ad',
-                                    runId: 'pre-fix',
-                                    hypothesisId: 'H5',
-                                    location: 'todos.model.js:statusChanged',
-                                    message: 'powersync upload error surfaced',
-                                    data: {
-                                        formattedLen: formatted.length,
-                                        formattedPreview: formatted.slice(0, 120),
-                                        benign: isBenignPowerSyncUploadFailure(uploadError, formatted),
-                                    },
-                                    timestamp: Date.now(),
-                                }),
-                            }).catch(() => {});
-                        }
-                    } catch {
-                        /* ignore */
-                    }
-                    // #endregion
                     outboxCommitError.value =
                         isBenignPowerSyncUploadFailure(uploadError, formatted) || formatted.length === 0
                             ? ''
@@ -265,6 +244,7 @@ export async function bootstrapTodos() {
             todosCollectionRef.value = collection;
 
             const connector = createTodosPowerSyncConnector();
+
             await db.connect(connector);
 
             try {
@@ -341,25 +321,6 @@ export function useTodos() {
         const userId = Number.parseInt(currentUserIdRef.value, 10);
 
         if (!Number.isFinite(userId)) {
-            // #region agent log
-            try {
-                fetch('http://localhost:7565/ingest/392e3314-4174-4627-903d-36c5d530a41d', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'd855ad' },
-                    body: JSON.stringify({
-                        sessionId: 'd855ad',
-                        runId: 'pre-fix',
-                        hypothesisId: 'H2',
-                        location: 'todos.model.js:createTodo',
-                        message: 'createTodo aborted invalid userId',
-                        data: { currentUserIdRef: String(currentUserIdRef.value) },
-                        timestamp: Date.now(),
-                    }),
-                }).catch(() => {});
-            } catch {
-                /* ignore */
-            }
-            // #endregion
             return;
         }
 

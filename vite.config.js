@@ -6,6 +6,12 @@ import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+    // PowerSync / WA-SQLite ship web workers + WASM; pre-bundling them breaks `db.init()` in dev (hangs forever).
+    // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
+    // https://github.com/powersync-ja/powersync-js/blob/main/demos/example-vite/vite.config.ts
+    optimizeDeps: {
+        exclude: ['@powersync/web', '@journeyapps/wa-sqlite'],
+    },
     plugins: [
         wayfinder(),
         laravel({
