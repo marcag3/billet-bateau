@@ -2,19 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Address extends Model
 {
-    protected $primaryKey = 'program_id';
+    use HasUuids;
 
     public $incrementing = false;
 
     protected $keyType = 'string';
 
     protected $fillable = [
-        'program_id',
+        'id',
         'line_1',
         'line_2',
         'city',
@@ -32,8 +33,8 @@ class Address extends Model
         ];
     }
 
-    public function program(): BelongsTo
+    public function program(): HasOne
     {
-        return $this->belongsTo(Program::class, 'program_id', 'id');
+        return $this->hasOne(Program::class, 'address_id', 'id');
     }
 }

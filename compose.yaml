@@ -30,6 +30,7 @@ services:
       start_period: 30s
 
   powersync:
+    # Sync Streams (sync-config.yaml edition: 3) require PowerSync Service v1.20.0+.
     image: "journeyapps/powersync-service:latest"
     restart: unless-stopped
     command: ["start", "-r", "unified"]

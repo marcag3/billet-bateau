@@ -7,8 +7,7 @@
         "dev": "vite",
         "test": "vitest",
         "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
-        "lint": "eslint \"resources/js/**/*.{js,vue}\"",
-        "check": "npm run typecheck && npm run lint"
+        "lint": "eslint \"resources/js/**/*.{js,vue}\""
     },
     "devDependencies": {
         "@eslint/js": "^9.39.2",

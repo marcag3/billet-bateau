@@ -17,7 +17,7 @@ storage:
 port: !env PS_PORT
 
 sync_config:
-  path: sync-rules.yaml
+  path: sync-config.yaml
 
 client_auth:
   audience: ['powersync-dev', 'powersync']

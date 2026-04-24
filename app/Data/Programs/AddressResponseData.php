@@ -7,6 +7,7 @@ use Spatie\LaravelData\Data;
 final class AddressResponseData extends Data
 {
     public function __construct(
+        public string $id,
         public ?string $line_1,
         public ?string $line_2,
         public ?string $city,

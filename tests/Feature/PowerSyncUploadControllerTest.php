@@ -129,9 +129,19 @@ class PowerSyncUploadControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $programId = (string) Str::uuid();
+        $addressId = (string) Str::uuid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'addresses',
+                    'id' => $addressId,
+                    'data' => [
+                        'line_1' => 'Pier 2',
+                        'city' => 'Seaside',
+                    ],
+                ],
                 [
                     'op' => 'PUT',
                     'type' => 'programs',
@@ -139,22 +149,19 @@ class PowerSyncUploadControllerTest extends TestCase
                     'data' => [
                         'name' => 'With address',
                         'theme_color' => '#111111',
-                    ],
-                ],
-                [
-                    'op' => 'PUT',
-                    'type' => 'addresses',
-                    'id' => $programId,
-                    'data' => [
-                        'line_1' => 'Pier 2',
-                        'city' => 'Seaside',
+                        'address_id' => $addressId,
                     ],
                 ],
             ],
         ])->assertOk();
 
+        $this->assertDatabaseHas('programs', [
+            'id' => $programId,
+            'address_id' => $addressId,
+        ]);
+
         $this->assertDatabaseHas('addresses', [
-            'program_id' => $programId,
+            'id' => $addressId,
             'line_1' => 'Pier 2',
             'city' => 'Seaside',
         ]);
@@ -163,10 +170,13 @@ class PowerSyncUploadControllerTest extends TestCase
     public function test_delete_removes_owned_program(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $addressId = (string) Str::uuid();
         Address::query()->create([
-            'program_id' => $program->getKey(),
+            'id' => $addressId,
             'line_1' => 'Old dock',
+        ]);
+        $program = Program::factory()->for($user)->create([
+            'address_id' => $addressId,
         ]);
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -180,6 +190,6 @@ class PowerSyncUploadControllerTest extends TestCase
         ])->assertOk();
 
         $this->assertDatabaseMissing('programs', ['id' => $program->getKey()]);
-        $this->assertDatabaseMissing('addresses', ['program_id' => $program->getKey()]);
+        $this->assertDatabaseMissing('addresses', ['id' => $addressId]);
     }
 }

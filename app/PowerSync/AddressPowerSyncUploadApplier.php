@@ -2,9 +2,15 @@
 
 namespace App\PowerSync;
 
-use App\Models\Program;
 use App\Models\Address;
+use App\Models\Program;
 
+/**
+ * Address row mutations from PowerSync uploads.
+ * Rows are not per-user; authorization is not via a user_id column. Any authenticated
+ * uploader may apply op entries; the HTTP layer already enforces a logged-in user.
+ * Clearing a row (empty PUT/PATCH or DELETE) removes the address and nulls programs.address_id.
+ */
 final class AddressPowerSyncUploadApplier
 {
     /**
@@ -12,22 +18,14 @@ final class AddressPowerSyncUploadApplier
      */
     public function apply(array $entry, int $userId): void
     {
-        $programId = $entry['id'];
+        $addressId = $entry['id'];
         $op = $entry['op'];
         /** @var array<string, mixed> $data */
         $data = $entry['data'] ?? [];
 
-        $program = Program::query()
-            ->whereKey($programId)
-            ->where('user_id', $userId)
-            ->first();
-
-        if ($program === null) {
-            return;
-        }
-
         if ($op === 'DELETE') {
-            Address::query()->whereKey($programId)->delete();
+            $this->nullProgramsReferencingForUser($addressId, $userId);
+            $this->deleteAddressIfOrphaned($addressId);
 
             return;
         }
@@ -36,13 +34,14 @@ final class AddressPowerSyncUploadApplier
             $row = $this->normalizeAddressRow($data);
 
             if (! $this->rowHasAny($row)) {
-                Address::query()->whereKey($programId)->delete();
+                $this->nullProgramsReferencingForUser($addressId, $userId);
+                $this->deleteAddressIfOrphaned($addressId);
 
                 return;
             }
 
             Address::query()->updateOrCreate(
-                ['program_id' => $programId],
+                ['id' => $addressId],
                 $row,
             );
 
@@ -50,13 +49,18 @@ final class AddressPowerSyncUploadApplier
         }
 
         if ($op === 'PATCH') {
-            $address = Address::query()->whereKey($programId)->first();
+            $address = Address::query()->whereKey($addressId)->first();
 
             if ($address === null) {
                 $row = $this->normalizeAddressRow($data);
-                if ($this->rowHasAny($row)) {
-                    Address::query()->create(array_merge($row, ['program_id' => $programId]));
+                if (! $this->rowHasAny($row)) {
+                    return;
                 }
+
+                Address::query()->create(array_merge(
+                    $row,
+                    ['id' => $addressId],
+                ));
 
                 return;
             }
@@ -69,7 +73,12 @@ final class AddressPowerSyncUploadApplier
             }
 
             if (! $this->modelHasAny($address)) {
-                $address->delete();
+                $this->nullProgramsReferencingForUser($addressId, $userId);
+                if (Program::query()->where('address_id', $addressId)->exists()) {
+                    $address->save();
+                } else {
+                    Address::query()->whereKey($addressId)->delete();
+                }
 
                 return;
             }
@@ -80,6 +89,20 @@ final class AddressPowerSyncUploadApplier
         }
 
         throw new \RuntimeException('Unsupported PowerSync CRUD op for addresses: '.$op);
+    }
+
+    private function nullProgramsReferencingForUser(string $addressId, int $userId): void
+    {
+        Program::query()->where('address_id', $addressId)->where('user_id', $userId)->update(['address_id' => null]);
+    }
+
+    private function deleteAddressIfOrphaned(string $addressId): void
+    {
+        if (Program::query()->where('address_id', $addressId)->exists()) {
+            return;
+        }
+
+        Address::query()->whereKey($addressId)->delete();
     }
 
     /**

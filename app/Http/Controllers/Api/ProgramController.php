@@ -29,18 +29,21 @@ class ProgramController extends Controller
 
             $themeColor = strtoupper($data->theme_color);
 
+            $addressId = null;
+            if ($data->address !== null && $data->address->hasAnyNonEmpty()) {
+                $address = Address::query()->create($data->address->toRow());
+                $addressId = $address->id;
+            }
+
             /** @var Program $program */
             $program = Program::query()->create([
                 'id' => $id,
                 'user_id' => $user->getAuthIdentifier(),
+                'address_id' => $addressId,
                 'name' => $data->name,
                 'description' => $data->description,
                 'theme_color' => $themeColor,
             ]);
-
-            if ($data->address !== null && $data->address->hasAnyNonEmpty()) {
-                $program->address()->create($data->address->toRow());
-            }
 
             if ($data->images !== null) {
                 foreach ($data->images as $file) {

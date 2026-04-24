@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,5 +29,15 @@ class PowerSyncCredentialsControllerTest extends TestCase
         $response->assertJsonPath('endpoint', 'http://powersync.test');
         $this->assertIsString($response->json('token'));
         $this->assertNotSame('', $response->json('token'));
+
+        $token = (string) $response->json('token');
+        $secret = (string) config('powersync.jwt_secret');
+        $decoded = JWT::decode($token, new Key($secret, 'HS256'));
+
+        $this->assertSame((string) $user->getAuthIdentifier(), $decoded->sub);
+        $this->assertSame((string) config('powersync.jwt_audience'), $decoded->aud);
+        $this->assertIsInt($decoded->iat);
+        $this->assertIsInt($decoded->exp);
+        $this->assertGreaterThan($decoded->iat, $decoded->exp);
     }
 }

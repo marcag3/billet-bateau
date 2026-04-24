@@ -14,7 +14,7 @@ import {
 } from './app.powersync-schema.js';
 import { translate } from '../utilities/i18n.js';
 
-const DB_FILENAME = 'billbateau-app-v4.db';
+const DB_FILENAME = 'billbateau-app-v5.db';
 
 const loadFailedMessage = translate('sync.unableLoadTodoSync');
 const persistenceLimitedMessage = translate('sync.persistenceLimited');

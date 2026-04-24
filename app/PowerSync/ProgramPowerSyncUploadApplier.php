@@ -2,7 +2,9 @@
 
 namespace App\PowerSync;
 
+use App\Models\Address;
 use App\Models\Program;
+use Illuminate\Support\Str;
 
 final class ProgramPowerSyncUploadApplier
 {
@@ -17,10 +19,12 @@ final class ProgramPowerSyncUploadApplier
         $data = $entry['data'] ?? [];
 
         if ($op === 'DELETE') {
-            Program::query()
+            $program = Program::query()
                 ->whereKey($id)
                 ->where('user_id', $userId)
-                ->delete();
+                ->first();
+
+            $program?->delete();
 
             return;
         }
@@ -34,14 +38,21 @@ final class ProgramPowerSyncUploadApplier
                 $themeColor = '#000000';
             }
 
+            $attributes = [
+                'user_id' => $userId,
+                'name' => $name !== '' ? $name : 'Untitled',
+                'description' => $description,
+                'theme_color' => $themeColor,
+            ];
+
+            $existing = Program::query()->whereKey($id)->first();
+            if (array_key_exists('address_id', $data)) {
+                $attributes['address_id'] = $this->resolveAddressId($id, $data['address_id'], $existing);
+            }
+
             Program::query()->updateOrCreate(
                 ['id' => $id],
-                [
-                    'user_id' => $userId,
-                    'name' => $name !== '' ? $name : 'Untitled',
-                    'description' => $description,
-                    'theme_color' => $themeColor,
-                ],
+                $attributes,
             );
 
             return;
@@ -75,11 +86,48 @@ final class ProgramPowerSyncUploadApplier
                 }
             }
 
+            if (array_key_exists('address_id', $data)) {
+                $program->address_id = $this->resolveAddressId($id, $data['address_id'], $program);
+            }
+
             $program->save();
 
             return;
         }
 
         throw new \RuntimeException('Unsupported PowerSync CRUD op for programs: '.$op);
+    }
+
+    /**
+     * @return ?string UUID or null; keeps the existing FK when the requested id is missing, invalid, in use by another program, or unchanged when resolving fails
+     */
+    private function resolveAddressId(string $programId, mixed $value, ?Program $existing): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_string($value) && trim($value) === '') {
+            return null;
+        }
+
+        if (! is_string($value) || ! Str::isUuid($value)) {
+            return $existing?->address_id;
+        }
+
+        if (! Address::query()->whereKey($value)->exists()) {
+            return $existing?->address_id;
+        }
+
+        $owner = Program::query()
+            ->where('address_id', $value)
+            ->where('id', '!=', $programId)
+            ->first();
+
+        if ($owner !== null) {
+            return $existing?->address_id;
+        }
+
+        return $value;
     }
 }

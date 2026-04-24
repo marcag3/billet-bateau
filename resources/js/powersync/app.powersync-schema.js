@@ -10,6 +10,7 @@ const todosTable = new Table({
 
 const programsTable = new Table({
     user_id: column.integer,
+    address_id: column.text,
     name: column.text,
     description: column.text,
     theme_color: column.text,
@@ -18,7 +19,7 @@ const programsTable = new Table({
 });
 
 const addressesTable = new Table({
-    program_id: column.text,
+    id: column.text,
     line_1: column.text,
     line_2: column.text,
     city: column.text,

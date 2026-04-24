@@ -38,6 +38,7 @@ final class ProgramData extends Data
 
         if ($program->address !== null) {
             $address = AddressResponseData::from([
+                'id' => (string) $program->address->getKey(),
                 'line_1' => $program->address->line_1,
                 'line_2' => $program->address->line_2,
                 'city' => $program->address->city,

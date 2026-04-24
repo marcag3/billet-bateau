@@ -1,0 +1,28 @@
+# Sync Streams (edition 3). Included via service.yaml → sync_config.path.
+# See: https://docs.powersync.com/sync/streams/overview
+#
+# Semantics (replaces legacy sync-rules buckets):
+# - todos + programs: scoped to JWT user (auth.user_id())
+# - addresses: global reference data for every authenticated user
+# - media: rows for programs owned by the user (Spatie morph on Program)
+
+config:
+  edition: 3
+
+streams:
+  user_todos_programs:
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM todos WHERE user_id = auth.user_id()
+      - SELECT * FROM programs WHERE user_id = auth.user_id()
+
+  global_addresses:
+    auto_subscribe: true
+    query: SELECT * FROM addresses
+
+  user_program_media:
+    auto_subscribe: true
+    query: |
+      SELECT * FROM media
+      WHERE model_type = 'App\Models\Program'
+        AND model_id IN (SELECT id FROM programs WHERE user_id = auth.user_id())

@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('programs', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('address_id')->nullable()->unique()->constrained('addresses')->nullOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('theme_color', 7);
@@ -20,8 +21,4 @@ return new class extends Migration
         });
     }
 
-    public function down(): void
-    {
-        Schema::dropIfExists('programs');
-    }
 };

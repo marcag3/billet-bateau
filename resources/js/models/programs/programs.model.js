@@ -1,4 +1,5 @@
 import { computed } from 'vue';
+import { addressHasAny, buildAddressInsertRow } from '../addresses/addresses.model.js';
 import { defineRelations } from '../entity.relations.js';
 import { defineModel } from '../model.definition.js';
 import { useEntityList } from '../entity.queries.js';
@@ -37,7 +38,7 @@ const noopApi = {
 export const programsModelDefinition = defineModel({
     name: 'programs',
     collectionId: 'programs',
-    persistenceSchemaVersion: 3,
+    persistenceSchemaVersion: 4,
     pickUpdatePayload: (changes) => ({ ...changes }),
     api: noopApi,
     orderBy: [
@@ -59,17 +60,6 @@ function normalizeThemeColor(hex) {
     }
 
     return '#000000';
-}
-
-/**
- * @param {object} address
- * @returns {boolean}
- */
-function addressHasAny(address) {
-    return ['line_1', 'line_2', 'city', 'postal_code', 'country'].some((key) => {
-        const value = address[key];
-        return typeof value === 'string' && value.trim().length > 0;
-    });
 }
 
 export function usePrograms() {
@@ -116,30 +106,24 @@ export function usePrograms() {
         const id = crypto.randomUUID();
         const now = new Date().toISOString();
         const themeColor = normalizeThemeColor(input.themeColor);
+        const address = input.address ?? {};
+        const addressId = crypto.randomUUID();
+        const hasAddress = addressHasAny(address);
+
+        if (hasAddress) {
+            addressesCollection.insert(buildAddressInsertRow(addressId, address, now));
+        }
 
         programsCollection.insert({
             id,
             user_id: userId,
+            address_id: hasAddress ? addressId : null,
             name: input.name.trim(),
             description: input.description.trim().length > 0 ? input.description.trim() : null,
             theme_color: themeColor,
             created_at: now,
             updated_at: now,
         });
-
-        const address = input.address ?? {};
-        if (addressHasAny(address)) {
-            addressesCollection.insert({
-                program_id: id,
-                line_1: typeof address.line_1 === 'string' ? address.line_1.trim() || null : null,
-                line_2: typeof address.line_2 === 'string' ? address.line_2.trim() || null : null,
-                city: typeof address.city === 'string' ? address.city.trim() || null : null,
-                postal_code: typeof address.postal_code === 'string' ? address.postal_code.trim() || null : null,
-                country: typeof address.country === 'string' ? address.country.trim() || null : null,
-                created_at: now,
-                updated_at: now,
-            });
-        }
 
         void refreshOutboxSnapshot();
 
