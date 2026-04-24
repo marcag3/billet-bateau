@@ -1,4 +1,5 @@
 // https://aka.ms/devcontainer.json
+// Node version: Docker build arg NODE_VERSION in compose.dev.yaml (default 24); see Dockerfile devtools stage.
 {
     "name": "Docker",
     "dockerComposeFile": ["../compose.yaml", "../compose.dev.yaml"],
@@ -34,10 +35,10 @@
     },
     "remoteUser": "sail",
     "postCreateCommand": "chown -R 1000:1000 /var/www/html && npm ci",
-    "forwardPorts": [5173]
+    "forwardPorts": [5173],
     // "runServices": [],
     // "shutdownAction": "none",
-    // "mounts": [
-    //     "source=${localEnv:HOME}/.ssh,target=/home/sail/.ssh,type=bind,consistency=cached"
-    // ]
+    "mounts": [
+        "source=${localEnv:HOME}/.ssh,target=/home/sail/.ssh,type=bind,consistency=cached"
+    ]
 }

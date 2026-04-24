@@ -14,7 +14,7 @@ RUN install-php-extensions intl gd exif
 ############################################
 FROM base AS devtools
 
-ARG NODE_VERSION=22
+ARG NODE_VERSION=24
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
@@ -84,7 +84,7 @@ RUN composer install \
     --no-scripts \
     --prefer-dist
 
-FROM node:22-alpine AS frontend_assets
+FROM node:24-alpine AS frontend_assets
 
 WORKDIR /var/www/html
 
