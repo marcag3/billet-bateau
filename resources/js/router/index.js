@@ -42,6 +42,14 @@ const routes = [
             requiresAuth: true,
         },
     },
+    {
+        path: '/programs/new',
+        name: 'programs.create',
+        component: () => import('../pages/AppProgramCreatePage.vue'),
+        meta: {
+            requiresAuth: true,
+        },
+    },
 ];
 
 const router = createRouter({

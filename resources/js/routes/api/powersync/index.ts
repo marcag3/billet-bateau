@@ -45,7 +45,7 @@ credentials.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PowerSyncUploadController::__invoke
-* @see app/Http/Controllers/Api/PowerSyncUploadController.php:17
+* @see app/Http/Controllers/Api/PowerSyncUploadController.php:21
 * @route '/api/powersync/upload'
 */
 export const upload = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -60,7 +60,7 @@ upload.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PowerSyncUploadController::__invoke
-* @see app/Http/Controllers/Api/PowerSyncUploadController.php:17
+* @see app/Http/Controllers/Api/PowerSyncUploadController.php:21
 * @route '/api/powersync/upload'
 */
 upload.url = (options?: RouteQueryOptions) => {
@@ -69,7 +69,7 @@ upload.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PowerSyncUploadController::__invoke
-* @see app/Http/Controllers/Api/PowerSyncUploadController.php:17
+* @see app/Http/Controllers/Api/PowerSyncUploadController.php:21
 * @route '/api/powersync/upload'
 */
 upload.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({

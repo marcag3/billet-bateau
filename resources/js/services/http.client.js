@@ -175,3 +175,38 @@ export async function requestJson(url, options = {}) {
 
     return payload;
 }
+
+/**
+ * Multipart POST with JSON response + CSRF retry (do not set Content-Type; browser sets boundary).
+ *
+ * @param {string} url
+ * @param {FormData} formData
+ * @param {{ withCsrf?: boolean }} [options]
+ * @returns {Promise<Record<string, unknown>>}
+ */
+export async function requestFormData(url, formData, options = {}) {
+    const withCsrf = options.withCsrf === true;
+
+    const response = await fetchWith419Retry(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: formData,
+        headers: {
+            Accept: 'application/json',
+            ...(withCsrf ? getCsrfHeaders() : {}),
+        },
+    });
+
+    const payload = await parseJsonPayload(response);
+
+    if (!response.ok) {
+        if (response.status === 401) {
+            dispatchAuthExpiredEvent();
+        }
+
+        const message = payload?.message ?? `Request to ${url} failed with ${response.status}`;
+        throw new Error(message);
+    }
+
+    return payload;
+}

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Program;
+use App\Models\Address;
 use App\Models\Todo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -93,5 +95,91 @@ class PowerSyncUploadControllerTest extends TestCase
         ])->assertOk();
 
         $this->assertDatabaseMissing('todos', ['id' => $todo->id]);
+    }
+
+    public function test_put_creates_program_for_current_user(): void
+    {
+        $user = User::factory()->create();
+        $id = (string) Str::uuid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'programs',
+                    'id' => $id,
+                    'data' => [
+                        'name' => 'Dockside',
+                        'description' => 'Weekend runs',
+                        'theme_color' => '#ff00aa',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('programs', [
+            'id' => $id,
+            'user_id' => $user->getAuthIdentifier(),
+            'name' => 'Dockside',
+            'theme_color' => '#FF00AA',
+        ]);
+    }
+
+    public function test_put_creates_address_when_parent_owned(): void
+    {
+        $user = User::factory()->create();
+        $programId = (string) Str::uuid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'programs',
+                    'id' => $programId,
+                    'data' => [
+                        'name' => 'With address',
+                        'theme_color' => '#111111',
+                    ],
+                ],
+                [
+                    'op' => 'PUT',
+                    'type' => 'addresses',
+                    'id' => $programId,
+                    'data' => [
+                        'line_1' => 'Pier 2',
+                        'city' => 'Seaside',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('addresses', [
+            'program_id' => $programId,
+            'line_1' => 'Pier 2',
+            'city' => 'Seaside',
+        ]);
+    }
+
+    public function test_delete_removes_owned_program(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->for($user)->create();
+        Address::query()->create([
+            'program_id' => $program->getKey(),
+            'line_1' => 'Old dock',
+        ]);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'DELETE',
+                    'type' => 'programs',
+                    'id' => $program->getKey(),
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('programs', ['id' => $program->getKey()]);
+        $this->assertDatabaseMissing('addresses', ['program_id' => $program->getKey()]);
     }
 }

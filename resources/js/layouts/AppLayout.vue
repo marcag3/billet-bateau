@@ -2,14 +2,26 @@
     <q-layout view="hHh lpR fFf">
         <q-header elevated>
             <q-toolbar>
-                <q-toolbar-title>{{ t('common.appWorkspace') }}</q-toolbar-title>
+                <q-toolbar-title>{{
+                    t("common.appWorkspace")
+                }}</q-toolbar-title>
 
                 <q-space />
 
                 <AppOutboxToolbarMenu />
 
-                <q-tabs shrink v-if="authStore.isAuthenticated || authStore.canAccessProtectedRoute()">
+                <q-tabs
+                    shrink
+                    v-if="
+                        authStore.isAuthenticated ||
+                        authStore.canAccessProtectedRoute()
+                    "
+                >
                     <q-route-tab :label="t('common.dashboard')" to="/" />
+                    <q-route-tab
+                        :label="t('common.newProgram')"
+                        to="/programs/new"
+                    />
                     <q-route-tab :label="t('common.reports')" to="/reports" />
                     <q-route-tab :label="t('common.settings')" to="/settings" />
                 </q-tabs>
@@ -42,7 +54,10 @@
                 rounded
                 dense
             >
-                {{ authStore.authErrorMessage || t('auth.sessionExpiredAfterReconnect') }}
+                {{
+                    authStore.authErrorMessage ||
+                    t("auth.sessionExpiredAfterReconnect")
+                }}
                 <template #action>
                     <q-btn
                         flat
@@ -59,20 +74,20 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '../store/auth.store';
-import AppOutboxToolbarMenu from '../components/AppOutboxToolbarMenu.vue';
-import { setLocale } from '../utilities/i18n';
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "../store/auth.store";
+import AppOutboxToolbarMenu from "../components/AppOutboxToolbarMenu.vue";
+import { setLocale } from "../utilities/i18n";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const { t, locale } = useI18n();
 
 const localeOptions = computed(() => [
-    { label: 'EN', value: 'en' },
-    { label: 'FR', value: 'fr' },
+    { label: "EN", value: "en" },
+    { label: "FR", value: "fr" },
 ]);
 
 const selectedLocale = computed({
@@ -84,7 +99,7 @@ const selectedLocale = computed({
 
 async function goToLogin() {
     await router.push({
-        name: 'login',
+        name: "login",
         query: {
             redirect: router.currentRoute.value.fullPath,
         },
@@ -93,6 +108,6 @@ async function goToLogin() {
 
 async function logout() {
     await authStore.logout();
-    await router.replace({ name: 'login' });
+    await router.replace({ name: "login" });
 }
 </script>

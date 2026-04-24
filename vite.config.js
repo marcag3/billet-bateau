@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import { wayfinder } from '@laravel/vite-plugin-wayfinder';
+
+const wayfinderDisabled = process.env.VITEST === 'true' || process.env.DISABLE_WAYFINDER === 'true';
 import vue from '@vitejs/plugin-vue';
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -13,7 +15,11 @@ export default defineConfig({
         exclude: ['@powersync/web', '@journeyapps/wa-sqlite'],
     },
     plugins: [
-        wayfinder(),
+        ...(wayfinderDisabled
+            ? []
+            : [
+                  wayfinder(),
+              ]),
         laravel({
             input: ['resources/js/public.main.js', 'resources/js/app.main.js'],
             refresh: true,

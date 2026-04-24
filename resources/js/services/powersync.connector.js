@@ -4,7 +4,7 @@ import { requestJson } from './http.client';
 /**
  * @returns {import('@powersync/common').PowerSyncBackendConnector}
  */
-export function createTodosPowerSyncConnector() {
+export function createAppPowerSyncConnector() {
     return {
         async fetchCredentials() {
             const res = await requestJson(credentials.url(), {

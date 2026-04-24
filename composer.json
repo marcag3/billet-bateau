@@ -17,6 +17,7 @@
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.16",
         "lorisleiva/laravel-actions": "^2.10",
+        "spatie/laravel-medialibrary": "^11.17",
         "spatie/laravel-data": "^4.22",
         "spatie/typescript-transformer": "^3.1",
         "timokoerber/laravel-one-time-operations": "^1.4"

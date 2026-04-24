@@ -61,7 +61,7 @@
 import { onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../store/auth.store';
-import { useTodos } from '../models/todos/todos.model';
+import { useAppPowerSyncOutbox } from '../powersync/app-powersync.runtime';
 
 const authStore = useAuthStore();
 const { t } = useI18n();
@@ -72,7 +72,7 @@ const {
     hasOutboxCommitError,
     dismissOutboxCommitError,
     refreshOutbox,
-} = useTodos();
+} = useAppPowerSyncOutbox();
 
 onMounted(() => {
     if (authStore.canAccessProtectedRoute()) {

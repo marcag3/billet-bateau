@@ -1,19 +1,19 @@
 /**
  * Central bootstrap for domain models (PowerSync-backed TanStack DB collections).
  */
-import { bootstrapTodos } from './todos/todos.model.js';
+import { bootstrapAppPowerSync } from '../powersync/app-powersync.runtime.js';
 
 /**
- * Ordered domain model bootstraps. Register a new model by importing its bootstrap and adding one entry.
+ * Ordered domain model bootstraps.
  *
  * @type {Record<string, () => Promise<unknown>>}
  */
 export const domainModelBootstraps = {
-    todos: bootstrapTodos,
+    powersync: bootstrapAppPowerSync,
 };
 
 /**
- * Boots each registered domain model (each model owns its PowerSync database + TanStack collection).
+ * Boots PowerSync once with the unified app schema (todos, programs, media metadata, …).
  *
  * @returns {Promise<void>}
  */

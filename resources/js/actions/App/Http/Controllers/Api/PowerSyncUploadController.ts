@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PowerSyncUploadController::__invoke
-* @see app/Http/Controllers/Api/PowerSyncUploadController.php:17
+* @see app/Http/Controllers/Api/PowerSyncUploadController.php:21
 * @route '/api/powersync/upload'
 */
 const PowerSyncUploadController = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ PowerSyncUploadController.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PowerSyncUploadController::__invoke
-* @see app/Http/Controllers/Api/PowerSyncUploadController.php:17
+* @see app/Http/Controllers/Api/PowerSyncUploadController.php:21
 * @route '/api/powersync/upload'
 */
 PowerSyncUploadController.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ PowerSyncUploadController.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PowerSyncUploadController::__invoke
-* @see app/Http/Controllers/Api/PowerSyncUploadController.php:17
+* @see app/Http/Controllers/Api/PowerSyncUploadController.php:21
 * @route '/api/powersync/upload'
 */
 PowerSyncUploadController.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({

@@ -5,3 +5,11 @@ bucket_definitions:
     parameters: SELECT request.user_id() AS user_id
     data:
       - SELECT * FROM todos WHERE todos.user_id::text = bucket.user_id
+      - SELECT * FROM programs WHERE programs.user_id::text = bucket.user_id
+
+  # Legacy sync rules forbid JOINs. One bucket row per program_id scopes child tables without joins.
+  user_program_children:
+    parameters: SELECT id AS program_id FROM programs WHERE programs.user_id::text = request.user_id()::text
+    data:
+      - SELECT * FROM addresses WHERE program_id::text = bucket.program_id::text
+      - SELECT * FROM media WHERE model_type = 'App\Models\Program' AND model_id::text = bucket.program_id::text
