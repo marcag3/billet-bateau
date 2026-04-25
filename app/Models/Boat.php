@@ -51,4 +51,9 @@ class Boat extends Model
     {
         return $this->belongsToMany(Voyage::class, 'voyage_boat')->withTimestamps();
     }
+
+    public function programs(): BelongsToMany
+    {
+        return $this->belongsToMany(Program::class, 'boat_program')->withTimestamps();
+    }
 }

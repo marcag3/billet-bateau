@@ -8,13 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('boat_types', function (Blueprint $table): void {
+
+        Schema::create('boat_program', function (Blueprint $table): void {
             $table->uuid('id')->primary();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('name');
+            $table->foreignUuid('boat_id')->constrained('boats')->cascadeOnDelete();
+            $table->foreignUuid('program_id')->constrained('programs')->cascadeOnDelete();
             $table->timestamps();
 
-            $table->index(['user_id', 'updated_at']);
+            $table->unique(['boat_id', 'program_id']);
         });
     }
 };

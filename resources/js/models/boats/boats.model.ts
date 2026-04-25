@@ -5,9 +5,11 @@ import { useEntityList } from '../entity.queries';
 import {
     bootstrapAppPowerSync,
     getAppPowerSyncBootstrappedRef,
+    getBoatProgramCollectionRef,
     getBoatsCollectionRef,
     getCurrentUserIdRef,
     getPowerSyncDbRef,
+    getProgramSyncScopeIdRef,
     refreshOutboxSnapshot,
     waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
@@ -44,13 +46,39 @@ export function parseOptionalCapacity(v) {
 export function useBoats() {
     const hasBootstrappedCollection = getAppPowerSyncBootstrappedRef();
     const boatsCollectionRef = getBoatsCollectionRef();
+    const boatProgramCollectionRef = getBoatProgramCollectionRef();
+    const programSyncScopeIdRef = getProgramSyncScopeIdRef();
     const currentUserIdRef = getCurrentUserIdRef();
 
-    const { data: boats } = useEntityList({
+    const { data: allBoats } = useEntityList({
         enabledRef: hasBootstrappedCollection,
         alias: boatsModelDefinition.name,
         collection: boatsCollectionRef,
         orderBy: boatsModelDefinition.orderBy ?? [],
+    });
+
+    const { data: boatProgramLinks } = useEntityList({
+        enabledRef: hasBootstrappedCollection,
+        alias: 'boat_program',
+        collection: boatProgramCollectionRef,
+        orderBy: [
+            { key: 'updated_at', direction: 'desc' },
+            { key: 'created_at', direction: 'desc' },
+            { key: 'id', direction: 'desc' },
+        ],
+    });
+
+    const boats = computed(() => {
+        const pid = programSyncScopeIdRef.value.trim();
+        if (pid.length === 0) {
+            return [];
+        }
+        const boatIds = new Set(
+            boatProgramLinks.value
+                .filter((row) => String(row.program_id) === pid)
+                .map((row) => String(row.boat_id)),
+        );
+        return allBoats.value.filter((b) => boatIds.has(String(b.id)));
     });
 
     /**
@@ -69,15 +97,23 @@ export function useBoats() {
     async function createBoatRow(input) {
         await ensureBoatsReady();
 
+        const programId = programSyncScopeIdRef.value.trim();
+        if (programId.length === 0) {
+            throw new Error('Select a program roster before adding boats.');
+        }
+
         const collection = boatsCollectionRef.value;
         if (!collection) {
             throw new Error('Boats collection is not ready.');
         }
 
-        const userId = Number.parseInt(currentUserIdRef.value, 10);
-        if (!Number.isFinite(userId)) {
-            throw new Error('Missing authenticated user id.');
+        const boatProgramCollection = boatProgramCollectionRef.value;
+        if (!boatProgramCollection) {
+            throw new Error('Boat program collection is not ready.');
         }
+
+        const parsedUserId = Number.parseInt(currentUserIdRef.value, 10);
+        const userId = Number.isFinite(parsedUserId) ? parsedUserId : null;
 
         const id = crypto.randomUUID();
         const now = new Date().toISOString();
@@ -94,6 +130,15 @@ export function useBoats() {
             name: name.length > 0 ? name : 'Untitled',
             capacity: capacity === null ? null : capacity,
             notes: notes.length > 0 ? notes : null,
+            created_at: now,
+            updated_at: now,
+        });
+
+        const linkId = crypto.randomUUID();
+        boatProgramCollection.insert({
+            id: linkId,
+            boat_id: id,
+            program_id: programId,
             created_at: now,
             updated_at: now,
         });
@@ -136,6 +181,15 @@ export function useBoats() {
         const collection = boatsCollectionRef.value;
         if (!collection) {
             return;
+        }
+
+        const bpCol = boatProgramCollectionRef.value;
+        if (bpCol) {
+            for (const row of boatProgramLinks.value) {
+                if (String(row.boat_id) === String(boatId)) {
+                    bpCol.delete(String(row.id));
+                }
+            }
         }
 
         collection.delete(boatId);

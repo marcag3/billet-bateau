@@ -94,10 +94,8 @@ export function usePrograms() {
             throw new Error('Program collections are not ready.');
         }
 
-        const userId = Number.parseInt(currentUserIdRef.value, 10);
-        if (!Number.isFinite(userId)) {
-            throw new Error('Missing authenticated user id.');
-        }
+        const parsedUserId = Number.parseInt(currentUserIdRef.value, 10);
+        const userId = Number.isFinite(parsedUserId) ? parsedUserId : null;
 
         const id = crypto.randomUUID();
         const now = new Date().toISOString();

@@ -20,11 +20,8 @@
             content-class="q-gutter-y-md"
         >
             <AppCardSection :label="t('boatTypesList.addNew')">
-                <q-form
-                    class="row q-col-gutter-sm items-end"
-                    @submit.prevent="onCreateSubmit"
-                >
-                    <div class="col-12 col-sm-grow">
+                <q-form @submit.prevent="onCreateSubmit">
+                    <AppFormStack>
                         <q-input
                             v-model="createName"
                             v-bind="createNameProps"
@@ -33,26 +30,25 @@
                             :label="t('boatTypesList.name')"
                             :disable="isSubmitting"
                         />
-                    </div>
-                    <div class="col-12 col-sm-auto">
                         <q-btn
                             type="submit"
                             color="primary"
                             :label="t('boatTypesList.create')"
                             :loading="isSubmitting"
                             :disable="!meta.valid || isSubmitting"
+                            class="self-start"
                         />
-                    </div>
+                    </AppFormStack>
                 </q-form>
             </AppCardSection>
 
             <AppEntityList>
                 <AppEmptyListRow
-                    :show="myBoatTypes.length === 0"
+                    :show="boatTypes.length === 0"
                     :message="t('boatTypesList.empty')"
                 />
                 <q-item
-                    v-for="bt in myBoatTypes"
+                    v-for="bt in boatTypes"
                     :key="bt.id"
                     class="q-pa-md"
                     style="align-items: flex-start"
@@ -69,7 +65,7 @@
                             @update:model-value="(v) => setNameDraft(bt.id, v)"
                             @blur="() => commitName(bt)"
                         />
-                        <div class="row q-col-gutter-md items-start q-mb-sm">
+                        <AppFormRow class="q-mb-sm">
                             <div class="col-12 col-md-6">
                                 <div
                                     v-if="primaryImageFor(bt.id)"
@@ -96,7 +92,7 @@
                                     @update:model-value="(files) => onPickImages(String(bt.id), files)"
                                 />
                             </div>
-                        </div>
+                        </AppFormRow>
                         <q-btn
                             flat
                             color="negative"
@@ -117,7 +113,6 @@ import { useForm } from 'vee-validate';
 import { onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { useAuthStore } from '../store/auth.store';
 import { createBoatTypeFormSchema, type BoatTypeFormValues } from '../models/boat-types/boat-types.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { safeParseBoatEntityName } from '../models/boats/boats.validation';
@@ -131,7 +126,6 @@ import {
 import mediaRoutes from '../routes/api/media';
 import { requestFormData } from '../services/http.client';
 import { normalizeImageFiles } from '../utilities/image-files';
-import { useUserScopedCollection } from '../composables/useUserScopedCollection';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
@@ -139,6 +133,8 @@ import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
 import AppBootstrapGate from '../components/ui/AppBootstrapGate.vue';
 import AppCardSection from '../components/ui/AppCardSection.vue';
+import AppFormStack from '../components/ui/AppFormStack.vue';
+import AppFormRow from '../components/ui/AppFormRow.vue';
 import AppEntityList from '../components/ui/AppEntityList.vue';
 import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
 
@@ -146,7 +142,6 @@ const BOAT_TYPE_MODEL = 'App\\Models\\BoatType';
 
 const { t } = useI18n();
 const $q = useQuasar();
-const authStore = useAuthStore();
 const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
@@ -186,8 +181,6 @@ const [createName, createNameProps] = quasarField('name');
 const patchingId = ref('');
 const uploadingId = ref('');
 const nameDrafts = reactive<Record<string, string>>({});
-
-const myBoatTypes = useUserScopedCollection(boatTypes, () => authStore.user?.id);
 
 onMounted(() => {
     void ensureBoatTypesReady();

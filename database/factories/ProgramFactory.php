@@ -14,6 +14,15 @@ class ProgramFactory extends Factory
 {
     protected $model = Program::class;
 
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Program $program): void {
+            if ($program->user_id !== null) {
+                $program->users()->syncWithoutDetaching([(int) $program->user_id]);
+            }
+        });
+    }
+
     /**
      * @return array<string, mixed>
      */

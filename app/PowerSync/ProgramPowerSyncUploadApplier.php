@@ -4,6 +4,7 @@ namespace App\PowerSync;
 
 use App\Models\Address;
 use App\Models\Program;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Str;
 
 final class ProgramPowerSyncUploadApplier
@@ -23,13 +24,22 @@ final class ProgramPowerSyncUploadApplier
         if ($op === 'DELETE') {
             $program = Program::query()->whereKey($id)->first();
 
-            $program?->delete();
+            if ($program === null) {
+                return;
+            }
+
+            $this->ensureUserManagesProgram($program, $userId);
+            $program->delete();
 
             return;
         }
 
         if ($op === 'PUT') {
             $existing = Program::query()->whereKey($id)->first();
+
+            if ($existing !== null) {
+                $this->ensureUserManagesProgram($existing, $userId);
+            }
 
             $name = isset($data['name']) && is_string($data['name']) ? trim($data['name']) : '';
             $description = isset($data['description']) && is_string($data['description']) ? $data['description'] : null;
@@ -65,6 +75,10 @@ final class ProgramPowerSyncUploadApplier
                 $attributes,
             );
 
+            if ($existing === null) {
+                Program::query()->whereKey($id)->first()?->users()->syncWithoutDetaching([$userId]);
+            }
+
             return;
         }
 
@@ -74,6 +88,8 @@ final class ProgramPowerSyncUploadApplier
             if ($program === null) {
                 return;
             }
+
+            $this->ensureUserManagesProgram($program, $userId);
 
             if (array_key_exists('name', $data) && is_string($data['name'])) {
                 $trimmed = trim($data['name']);
@@ -118,6 +134,13 @@ final class ProgramPowerSyncUploadApplier
         }
 
         throw new \RuntimeException('Unsupported PowerSync CRUD op for programs: '.$op);
+    }
+
+    private function ensureUserManagesProgram(Program $program, int $userId): void
+    {
+        if (! $program->userCanManage($userId)) {
+            throw new AuthorizationException;
+        }
     }
 
     private function normalizeSlugValue(mixed $value): ?string

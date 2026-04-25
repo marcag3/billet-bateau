@@ -7,9 +7,13 @@ use Spatie\LaravelData\Data;
 
 final class ProgramData extends Data
 {
+    /**
+     * @param  list<int>  $user_ids
+     */
     public function __construct(
         public string $id,
-        public int $user_id,
+        public ?int $user_id,
+        public array $user_ids,
         public string $name,
         public ?string $description,
         public string $theme_color,
@@ -18,6 +22,10 @@ final class ProgramData extends Data
         public ?AddressResponseData $address,
     ) {}
 
+    /**
+     * @param  Program  $program  Expects `users` loaded at the call site (e.g. `load('users')` or `fresh([..., 'users'])`).
+     *                            In non-production, accessing `users` without loading throws (strict mode / lazy-load prevention).
+     */
     public static function fromModel(Program $program): self
     {
         $address = null;
@@ -33,9 +41,17 @@ final class ProgramData extends Data
             ]);
         }
 
+        $userIds = $program->users
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->sort()
+            ->values()
+            ->all();
+
         return new self(
             id: (string) $program->getKey(),
-            user_id: (int) $program->user_id,
+            user_id: $program->user_id !== null ? (int) $program->user_id : null,
+            user_ids: $userIds,
             name: (string) $program->name,
             description: $program->description,
             theme_color: (string) $program->theme_color,

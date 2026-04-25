@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/auth.store';
 import { createAppPowerSyncConnector } from '../services/powersync.connector';
 import {
     appAddressesPowerSyncTable,
+    appBoatProgramPowerSyncTable,
     appBoatTypesPowerSyncTable,
     appBoatsPowerSyncTable,
     appProgramsPowerSyncTable,
@@ -15,7 +16,7 @@ import {
 } from './app.powersync-schema';
 import { translate } from '../utilities/i18n';
 
-const DB_FILENAME = 'billbateau-app-v8.db';
+const DB_FILENAME = 'billbateau-app-v9.db';
 
 const loadFailedMessage = translate('sync.unableLoadSync');
 const persistenceLimitedMessage = translate('sync.persistenceLimited');
@@ -109,6 +110,7 @@ const collectionRefs = {
     addresses: shallowRef(null),
     boat_types: shallowRef(null),
     boats: shallowRef(null),
+    boat_program: shallowRef(null),
     media: shallowRef(null),
 };
 
@@ -117,8 +119,56 @@ const tableByName = {
     addresses: appAddressesPowerSyncTable,
     boat_types: appBoatTypesPowerSyncTable,
     boats: appBoatsPowerSyncTable,
+    boat_program: appBoatProgramPowerSyncTable,
     media: appMediaPowerSyncTable,
 };
+
+/** @type {import('vue').Ref<string>} */
+const programSyncScopeIdRef = ref('');
+
+/** @type {{ unsubscribe: () => void } | null} */
+let programScopeSubscription = null;
+
+/**
+ * Active program id for `program_scope` PowerSync stream (boats + boat_program roster).
+ *
+ * @returns {import('vue').Ref<string>}
+ */
+export function getProgramSyncScopeIdRef() {
+    return programSyncScopeIdRef;
+}
+
+/**
+ * @param {string | null | undefined} programId
+ * @returns {Promise<void>}
+ */
+export async function setProgramSyncScopeId(programId) {
+    programSyncScopeIdRef.value =
+        programId == null || programId === '' ? '' : String(programId).trim();
+    await resyncProgramScopeSubscription();
+}
+
+/**
+ * @returns {Promise<void>}
+ */
+async function resyncProgramScopeSubscription() {
+    const db = powerSyncDbRef.value;
+    if (!db) {
+        return;
+    }
+
+    if (programScopeSubscription) {
+        programScopeSubscription.unsubscribe();
+        programScopeSubscription = null;
+    }
+
+    const pid = programSyncScopeIdRef.value.trim();
+    if (pid.length === 0) {
+        return;
+    }
+
+    programScopeSubscription = await db.syncStream('program_scope', { program_id: pid }).subscribe();
+}
 
 export async function refreshOutboxSnapshot() {
     const db = powerSyncDbRef.value;
@@ -245,6 +295,8 @@ export async function bootstrapAppPowerSync() {
 
             await db.connect(connector);
 
+            await resyncProgramScopeSubscription();
+
             try {
                 await Promise.all(
                     Object.values(collectionRefs)
@@ -266,6 +318,10 @@ export async function bootstrapAppPowerSync() {
         } catch (error) {
             bootstrapPromise = null;
             hasBootstrappedCollection.value = false;
+            if (programScopeSubscription) {
+                programScopeSubscription.unsubscribe();
+                programScopeSubscription = null;
+            }
             powerSyncStatusUnsubscribe?.();
             powerSyncStatusUnsubscribe = null;
             try {
@@ -318,6 +374,10 @@ export function getBoatTypesCollectionRef() {
 
 export function getBoatsCollectionRef() {
     return collectionRefs.boats;
+}
+
+export function getBoatProgramCollectionRef() {
+    return collectionRefs.boat_program;
 }
 
 export function getMediaCollectionRef() {

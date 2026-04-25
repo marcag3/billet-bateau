@@ -33,6 +33,11 @@ This project has domain-specific skills available. You MUST activate the relevan
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
 
+## Data scoping (programs, boat types, boats)
+
+- Do **not** scope models by `user_id` in Eloquent, PowerSync sync rules, or the Vue app. This product uses shared staff data; any `user_id` column is **optional metadata/audit** only, not a visibility or tenancy key.
+- Do not add per-user list filtering or `whereBelongsTo($user)` for these models unless the user explicitly requests a new product decision.
+
 ## Verification Scripts
 
 - Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.

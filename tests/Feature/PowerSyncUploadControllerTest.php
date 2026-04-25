@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Address;
 use App\Models\Boat;
+use App\Models\BoatProgram;
 use App\Models\BoatType;
 use App\Models\Program;
 use App\Models\User;
@@ -60,6 +61,11 @@ class PowerSyncUploadControllerTest extends TestCase
             'is_active' => 0,
             'slug' => 'dockside',
         ]);
+
+        $this->assertDatabaseHas('program_user', [
+            'program_id' => $id,
+            'user_id' => $user->getAuthIdentifier(),
+        ]);
     }
 
     public function test_put_creates_address_when_parent_owned(): void
@@ -102,6 +108,11 @@ class PowerSyncUploadControllerTest extends TestCase
             'id' => $addressId,
             'line_1' => 'Pier 2',
             'city' => 'Seaside',
+        ]);
+
+        $this->assertDatabaseHas('program_user', [
+            'program_id' => $programId,
+            'user_id' => $user->getAuthIdentifier(),
         ]);
     }
 
@@ -185,7 +196,7 @@ class PowerSyncUploadControllerTest extends TestCase
         ])->assertUnprocessable();
     }
 
-    public function test_put_allows_authenticated_user_to_overwrite_another_users_program(): void
+    public function test_put_forbids_non_member_from_overwriting_another_users_program(): void
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
@@ -203,15 +214,13 @@ class PowerSyncUploadControllerTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertOk();
+        ])->assertForbidden();
 
         $program->refresh();
-        $this->assertSame('Hijacked', $program->name);
-        $this->assertSame((int) $intruder->getAuthIdentifier(), (int) $program->user_id);
-        $this->assertSame('#ABCDEF', $program->theme_color);
+        $this->assertSame('Owners', $program->name);
     }
 
-    public function test_delete_allows_authenticated_user_to_remove_another_users_program(): void
+    public function test_delete_forbids_non_member_from_removing_another_users_program(): void
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
@@ -225,9 +234,9 @@ class PowerSyncUploadControllerTest extends TestCase
                     'id' => $program->getKey(),
                 ],
             ],
-        ])->assertOk();
+        ])->assertForbidden();
 
-        $this->assertDatabaseMissing('programs', ['id' => $program->getKey()]);
+        $this->assertDatabaseHas('programs', ['id' => $program->getKey()]);
     }
 
     public function test_address_delete_by_authenticated_user_unlinks_foreign_program_and_removes_orphan(): void
@@ -469,5 +478,57 @@ class PowerSyncUploadControllerTest extends TestCase
         ])->assertOk();
 
         $this->assertDatabaseMissing('boats', ['id' => $boat->getKey()]);
+    }
+
+    public function test_put_creates_boat_program_link(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->for($user)->create();
+        $boat = Boat::factory()->for($user)->create();
+        $linkId = (string) Str::uuid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'boat_program',
+                    'id' => $linkId,
+                    'data' => [
+                        'boat_id' => $boat->getKey(),
+                        'program_id' => $program->getKey(),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('boat_program', [
+            'id' => $linkId,
+            'boat_id' => $boat->getKey(),
+            'program_id' => $program->getKey(),
+        ]);
+    }
+
+    public function test_delete_removes_boat_program_link(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->for($user)->create();
+        $boat = Boat::factory()->for($user)->create();
+        $link = BoatProgram::query()->create([
+            'id' => (string) Str::uuid(),
+            'boat_id' => $boat->getKey(),
+            'program_id' => $program->getKey(),
+        ]);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'DELETE',
+                    'type' => 'boat_program',
+                    'id' => $link->getKey(),
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('boat_program', ['id' => $link->getKey()]);
     }
 }

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -79,9 +80,25 @@ class Program extends Model implements HasMedia
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsToMany<User, $this> */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
+    public function userCanManage(int $userId): bool
+    {
+        return $this->users()->whereKey($userId)->exists();
+    }
+
     public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'address_id');
+    }
+
+    public function boats(): BelongsToMany
+    {
+        return $this->belongsToMany(Boat::class, 'boat_program')->withTimestamps();
     }
 
     public function trips(): HasMany

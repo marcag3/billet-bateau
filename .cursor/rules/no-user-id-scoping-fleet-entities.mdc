@@ -1,0 +1,13 @@
+---
+description: Do not use user_id to scope models
+alwaysApply: true
+---
+
+# No user_id scoping for fleet and program data
+
+v1 back-office and PowerSync data for all models is **shared** among authenticated staff. It is not filtered or owned per user.
+
+- Do **not** add `where('user_id', …)`, `whereBelongsTo($user, …)` on these models, PowerSync `WHERE user_id = auth.user_id()`, or Vue `row.user_id === currentUser` filters for visibility.
+- A nullable **`user_id`** on these rows is **optional metadata/audit** only (e.g. who created the row), not an authorization or isolation boundary.
+- For authorization, follow product rules: e.g. **guest vs authenticated** staff; avoid inventing per-user resource ownership for these tables unless the user explicitly changes the product.
+- The generic `laravel-best-practices` examples about `user_id` on posts/orders are **not** the default for these domain tables—prefer domain-specific FKs and policies as documented in this app.

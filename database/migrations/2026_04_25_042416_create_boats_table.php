@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('boats', function (Blueprint $table): void {
             $table->uuid('id')->primary();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignUuid('boat_type_id')->nullable()->constrained('boat_types')->nullOnDelete();
             $table->string('name');
             $table->unsignedInteger('capacity')->nullable();

@@ -142,6 +142,9 @@ const messages = {
             deleteConfirmMessage: 'Remove "{name}"? This cannot be undone.',
             nameRequired: 'Name is required.',
             errorGeneric: 'Something went wrong. Please try again.',
+            programRoster: 'Program roster',
+            programRosterHint: 'Pick which program this boat list belongs to. Boats sync for that program only.',
+            noProgramsForBoats: 'Create a program first, then choose it here to manage boats for that roster.',
         },
         boatTypesList: {
             title: 'Boat types',
@@ -317,6 +320,11 @@ const messages = {
             deleteConfirmMessage: 'Supprimer « {name} » ? Cette action est definitive.',
             nameRequired: 'Le nom est obligatoire.',
             errorGeneric: 'Une erreur est survenue. Veuillez reessayer.',
+            programRoster: 'Programme (liste)',
+            programRosterHint:
+                'Choisissez le programme auquel rattacher cette liste. Les bateaux se synchronisent pour ce programme seulement.',
+            noProgramsForBoats:
+                "Creez d'abord un programme, puis selectionnez-le pour gerer ses bateaux.",
         },
         boatTypesList: {
             title: 'Types de bateau',

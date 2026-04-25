@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('programs', function (Blueprint $table): void {
             $table->uuid('id')->primary();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignUuid('address_id')->nullable()->unique()->constrained('addresses')->nullOnDelete();
             $table->string('name');
             $table->text('description')->nullable();

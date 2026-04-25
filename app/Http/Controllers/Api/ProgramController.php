@@ -53,7 +53,10 @@ class ProgramController extends Controller
                 }
             }
 
-            return $program->fresh(['address']);
+            // First manager on the program; additional managers require an invite (pivot row).
+            $program->users()->syncWithoutDetaching([(int) $user->getAuthIdentifier()]);
+
+            return $program->fresh(['address', 'users']);
         });
 
         return response()->json([

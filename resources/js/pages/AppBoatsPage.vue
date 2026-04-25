@@ -19,65 +19,85 @@
             :ready="hasBootstrapped"
             content-class="q-gutter-y-md"
         >
-            <AppCardSection :label="t('boatsList.addNew')">
-                <q-form
-                    class="q-gutter-md"
-                    @submit.prevent="onCreateSubmit"
+            <AppCardSection :label="t('boatsList.programRoster')">
+                <q-select
+                    v-model="selectedProgramId"
+                    outlined
+                    emit-value
+                    map-options
+                    :options="programOptions"
+                    :label="t('boatsList.programRoster')"
+                    :hint="t('boatsList.programRosterHint')"
+                    :disable="programs.length === 0"
+                />
+                <q-banner
+                    v-if="programs.length === 0"
+                    class="bg-grey-2 q-mt-sm rounded-borders"
+                    dense
                 >
-                    <q-input
-                        v-model="createName"
-                        v-bind="createNameProps"
-                        outlined
-                        :label="t('boatsList.name')"
-                        :disable="isSubmitting"
-                    />
-                    <q-input
-                        v-model.number="createCapacity"
-                        v-bind="createCapacityProps"
-                        outlined
-                        type="number"
-                        :label="t('boatsList.capacity')"
-                        :hint="t('boatsList.capacityHint')"
-                        clearable
-                        :disable="isSubmitting"
-                    />
-                    <q-input
-                        v-model="createNotes"
-                        v-bind="createNotesProps"
-                        type="textarea"
-                        autogrow
-                        outlined
-                        :label="t('boatsList.notes')"
-                        :disable="isSubmitting"
-                    />
-                    <q-select
-                        v-model="createBoatTypeId"
-                        v-bind="createBoatTypeIdProps"
-                        outlined
-                        emit-value
-                        map-options
-                        clearable
-                        :options="boatTypeOptions"
-                        :label="t('boatsList.boatType')"
-                        :disable="isSubmitting"
-                    />
-                    <q-btn
-                        color="primary"
-                        type="submit"
-                        :label="t('boatsList.create')"
-                        :loading="isSubmitting"
-                        :disable="!meta.valid || isSubmitting"
-                    />
+                    {{ t('boatsList.noProgramsForBoats') }}
+                </q-banner>
+            </AppCardSection>
+
+            <AppCardSection :label="t('boatsList.addNew')">
+                <q-form @submit.prevent="onCreateSubmit">
+                    <AppFormStack>
+                        <q-input
+                            v-model="createName"
+                            v-bind="createNameProps"
+                            outlined
+                            :label="t('boatsList.name')"
+                            :disable="isSubmitting"
+                        />
+                        <q-input
+                            v-model.number="createCapacity"
+                            v-bind="createCapacityProps"
+                            outlined
+                            type="number"
+                            :label="t('boatsList.capacity')"
+                            :hint="t('boatsList.capacityHint')"
+                            clearable
+                            :disable="isSubmitting"
+                        />
+                        <q-input
+                            v-model="createNotes"
+                            v-bind="createNotesProps"
+                            type="textarea"
+                            autogrow
+                            outlined
+                            :label="t('boatsList.notes')"
+                            :disable="isSubmitting"
+                        />
+                        <q-select
+                            v-model="createBoatTypeId"
+                            v-bind="createBoatTypeIdProps"
+                            outlined
+                            emit-value
+                            map-options
+                            clearable
+                            :options="boatTypeOptions"
+                            :label="t('boatsList.boatType')"
+                            :disable="isSubmitting"
+                        />
+                        <q-btn
+                            color="primary"
+                            type="submit"
+                            :label="t('boatsList.create')"
+                            :loading="isSubmitting"
+                            :disable="!meta.valid || isSubmitting || selectedProgramId.trim() === ''"
+                            class="self-start"
+                        />
+                    </AppFormStack>
                 </q-form>
             </AppCardSection>
 
             <AppEntityList>
                 <AppEmptyListRow
-                    :show="myBoats.length === 0"
+                    :show="boats.length === 0"
                     :message="t('boatsList.empty')"
                 />
                 <q-item
-                    v-for="b in myBoats"
+                    v-for="b in boats"
                     :key="b.id"
                     class="q-pa-md"
                     style="align-items: flex-start"
@@ -153,19 +173,19 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { useAuthStore } from '../store/auth.store';
 import { parseOptionalCapacity, useBoats } from '../models/boats/boats.model';
 import { createBoatCreateFormSchema, type BoatCreateFormValues, safeParseBoatEntityName } from '../models/boats/boats.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useBoatTypes } from '../models/boat-types/boat-types.model';
 import {
     getAppPowerSyncBootstrappedRef,
+    setProgramSyncScopeId,
     useAppPowerSyncOutbox,
 } from '../powersync/app-powersync.runtime';
-import { useUserScopedCollection } from '../composables/useUserScopedCollection';
+import { usePrograms } from '../models/programs/programs.model';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
@@ -173,13 +193,14 @@ import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
 import AppBootstrapGate from '../components/ui/AppBootstrapGate.vue';
 import AppCardSection from '../components/ui/AppCardSection.vue';
+import AppFormStack from '../components/ui/AppFormStack.vue';
 import AppEntityList from '../components/ui/AppEntityList.vue';
 import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
 
 const { t } = useI18n();
 const $q = useQuasar();
-const authStore = useAuthStore();
 const { boats, ensureBoatsReady, createBoatRow, patchBoatRow, deleteBoatRow } = useBoats();
+const { programs, ensureProgramsReady } = usePrograms();
 const { boatTypes, ensureBoatTypesReady } = useBoatTypes();
 const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
@@ -210,18 +231,47 @@ const [createBoatTypeId, createBoatTypeIdProps] = quasarField('boatTypeId');
 const patchingId = ref('');
 const drafts = reactive<Record<string, Record<string, string>>>({});
 
-const myBoats = useUserScopedCollection(boats, () => authStore.user?.id);
+const selectedProgramId = ref('');
 
-const myBoatTypes = useUserScopedCollection(boatTypes, () => authStore.user?.id);
+const programOptions = computed(() =>
+    programs.value.map((p) => ({
+        label: String(p.name ?? ''),
+        value: String(p.id),
+    })),
+);
+
+watch(
+    programs,
+    (list) => {
+        if (list.length === 0) {
+            selectedProgramId.value = '';
+            void setProgramSyncScopeId('');
+            return;
+        }
+        const current = selectedProgramId.value.trim();
+        if (list.some((p) => String(p.id) === current)) {
+            void setProgramSyncScopeId(current);
+            return;
+        }
+        selectedProgramId.value = String(list[0].id);
+        void setProgramSyncScopeId(selectedProgramId.value);
+    },
+    { immediate: true },
+);
+
+watch(selectedProgramId, (v) => {
+    void setProgramSyncScopeId(v);
+});
 
 const boatTypeOptions = computed(() =>
-    myBoatTypes.value.map((bt) => ({
+    boatTypes.value.map((bt) => ({
         label: String(bt.name ?? ''),
         value: String(bt.id),
     })),
 );
 
 onMounted(() => {
+    void ensureProgramsReady();
     void ensureBoatTypesReady();
     void ensureBoatsReady();
 });

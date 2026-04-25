@@ -74,6 +74,13 @@ class ProgramControllerTest extends TestCase
             'slug' => 'harbor-week',
         ]);
 
+        $this->assertDatabaseHas('program_user', [
+            'program_id' => $id,
+            'user_id' => $user->getAuthIdentifier(),
+        ]);
+
+        $response->assertJsonPath('data.user_ids.0', (int) $user->getAuthIdentifier());
+
         $this->assertDatabaseHas('addresses', [
             'id' => $addressId,
             'line_1' => '1 Wharf',
@@ -86,7 +93,22 @@ class ProgramControllerTest extends TestCase
         $this->assertCount(1, $program->getMedia('images'));
     }
 
-    public function test_store_media_allows_any_authenticated_user(): void
+    public function test_program_user_pivot_allows_multiple_users(): void
+    {
+        $owner = User::factory()->create();
+        $collaborator = User::factory()->create();
+
+        $program = Program::factory()->for($owner)->create();
+
+        $program->users()->syncWithoutDetaching([(int) $collaborator->getAuthIdentifier()]);
+
+        $program->load('users');
+        $this->assertCount(2, $program->users);
+        $this->assertTrue($program->users->contains('id', $owner->getKey()));
+        $this->assertTrue($program->users->contains('id', $collaborator->getKey()));
+    }
+
+    public function test_store_media_forbids_user_not_linked_to_program(): void
     {
         Storage::fake('public');
 
@@ -98,6 +120,28 @@ class ProgramControllerTest extends TestCase
         $image = $this->fakePngUpload('x.png');
 
         $this->actingAs($other)
+            ->post('/api/media/program/'.$program->getKey(), [
+                'images' => [$image],
+            ])
+            ->assertForbidden();
+
+        $program->refresh();
+        $this->assertCount(0, $program->getMedia('images'));
+    }
+
+    public function test_store_media_allows_user_linked_via_program_user_pivot(): void
+    {
+        Storage::fake('public');
+
+        $owner = User::factory()->create();
+        $collaborator = User::factory()->create();
+
+        $program = Program::factory()->for($owner)->create();
+        $program->users()->syncWithoutDetaching([(int) $collaborator->getAuthIdentifier()]);
+
+        $image = $this->fakePngUpload('x.png');
+
+        $this->actingAs($collaborator)
             ->post('/api/media/program/'.$program->getKey(), [
                 'images' => [$image],
             ])

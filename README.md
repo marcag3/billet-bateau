@@ -46,7 +46,7 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 ### Backend — on-water data model
 
 - [ ] PostGIS + Magellan in Docker/CI; `water_routes`: `name`, `trace` (LineString), `duration_minutes` — **reusable** rows (no departure columns; same geometry across many `trips`)
-- [ ] `boats`: as implemented today (`name`, `boat_type_id`, `user_id`, capacity, notes, …) — physical hull in fleet CRUD / sync
+- [ ] `boats`: as implemented today (`name`, `boat_type_id`, optional `user_id` for audit, capacity, notes, …) — physical hull in fleet CRUD / sync; not per-user scoping
 - [ ] `trips`: `scheduled_departure_at`, `boat_type_id`, `water_route_id`, …
 - [ ] `voyages`: nullable `trip_id`, **`water_route_id` NOT NULL** (actual path may differ from `trips.water_route_id`), `started_at`, `arrived_at`, `status`; optional `scheduled_departure_at` **only** when `trip_id` is null; **no** `boat_id`
 - [ ] `voyage_boat` pivot; `guides` + `voyage_guide` (multi-select at start)
@@ -177,7 +177,7 @@ This keeps the admin UI to: pick two types + set ratio, without hard-coding “a
 
 1. **PostGIS + Magellan** in Docker/CI + PHP: enable `geometry` columns, migrations for **`water_routes`**: `name`, `trace` (`LineString`), **`duration_minutes`** (unsigned int or as you prefer) — **no** departure columns; rows are **reused** across **`trips`**.
 2. **`boat_types`** — as today for trip catalog; **trips** reference `boat_type_id`, **`water_route_id`**, **`scheduled_departure_at`** (and capacity / calendar fields as you build the bookable model).
-3. **`boats`** — as implemented: `boat_type_id`, `user_id`, `name`, optional `capacity`, `notes`, etc.
+3. **`boats`** — as implemented: `boat_type_id`, optional `user_id` (audit/metadata only), `name`, optional `capacity`, `notes`, etc. Shared among staff, not user-isolated.
 4. **`voyages`** — nullable `trip_id`, **`water_route_id` NOT NULL** (actual path for this row; may differ from `trips.water_route_id`), `started_at`, `arrived_at`, `status` (`draft` \| `ready` \| `underway` \| `completed` \| `cancelled` — tune names), optional `eta_cached_at`. Optional **`scheduled_departure_at`** only when **`trip_id`** is null; when **`trip_id`** is non-null, use **`trips.scheduled_departure_at`** for departure. **No** `boat_id` — use step 5.
 5. **`voyage_boat`** — `voyage_id`, `boat_id` (and optional sort/`is_lead` if needed). Created/updated when staff **starts** the voyage (or edit before underway).
 6. **`guides`** — e.g. **`display_name`**, **`email`**, **`phone`** (nullable as needed), nullable **`user_id`** (staff link).

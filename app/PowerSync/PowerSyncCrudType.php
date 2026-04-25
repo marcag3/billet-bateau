@@ -14,4 +14,6 @@ enum PowerSyncCrudType: string
     case Boats = 'boats';
 
     case BoatTypes = 'boat_types';
+
+    case BoatProgram = 'boat_program';
 }

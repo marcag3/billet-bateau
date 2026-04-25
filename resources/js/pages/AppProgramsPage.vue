@@ -19,11 +19,11 @@
         <AppBootstrapGate :ready="hasBootstrapped">
             <AppEntityList>
                 <AppEmptyListRow
-                    :show="myPrograms.length === 0"
+                    :show="programs.length === 0"
                     :message="t('programsList.empty')"
                 />
                 <q-item
-                    v-for="p in myPrograms"
+                    v-for="p in programs"
                     :key="p.id"
                     class="q-pa-md"
                     style="align-items: flex-start"
@@ -73,14 +73,12 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { useAuthStore } from '../store/auth.store';
 import { safeParseProgramSlug } from '../models/programs/programs.validation';
 import { usePrograms } from '../models/programs/programs.model';
 import {
     getAppPowerSyncBootstrappedRef,
     useAppPowerSyncOutbox,
 } from '../powersync/app-powersync.runtime';
-import { useUserScopedCollection } from '../composables/useUserScopedCollection';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
 import AppEntityList from '../components/ui/AppEntityList.vue';
@@ -89,7 +87,6 @@ import AppBootstrapGate from '../components/ui/AppBootstrapGate.vue';
 
 const { t } = useI18n();
 const $q = useQuasar();
-const authStore = useAuthStore();
 const { programs, ensureProgramsReady, patchProgramRow } = usePrograms();
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 
@@ -98,8 +95,6 @@ const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
 
 const isPatching = ref(false);
 const slugDrafts = reactive<Record<string, string>>({});
-
-const myPrograms = useUserScopedCollection(programs, () => authStore.user?.id);
 
 onMounted(() => {
     void ensureProgramsReady();
