@@ -65,35 +65,44 @@
     </q-page>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { fetchPublicJson } from '../services/publicApi.js';
+
+type PublicProgramCard = {
+    id?: string | number;
+    name?: string;
+    description?: string;
+    path_segment?: string;
+    image_url?: string;
+    theme_color?: string;
+};
 
 const { t } = useI18n();
 const router = useRouter();
 
 const isLoading = ref(true);
 const errorMessage = ref('');
-const raw = ref(/** @type {unknown} */(null));
+const raw = ref<unknown>(null);
 
-const items = computed(() => {
+const items = computed((): PublicProgramCard[] => {
     if (!raw.value || typeof raw.value !== 'object') {
         return [];
     }
-    const d = /** @type {{ data?: unknown }} */(raw.value).data;
-    return Array.isArray(d) ? d : [];
+    const d = (raw.value as { data?: unknown }).data;
+    return Array.isArray(d) ? (d as PublicProgramCard[]) : [];
 });
 
-function placeholderBoxStyle(themeColor) {
+function placeholderBoxStyle(themeColor: string | undefined) {
     return {
         minHeight: '200px',
         background: themeColor || '#0f172a',
     };
 }
 
-function goProgram(p) {
+function goProgram(p: PublicProgramCard) {
     if (typeof p.path_segment === 'string' && p.path_segment.length > 0) {
         void router.push({ name: 'public.program', params: { identifier: p.path_segment } });
     }

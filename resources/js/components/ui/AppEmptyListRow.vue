@@ -6,15 +6,12 @@
     </q-item>
 </template>
 
-<script setup>
-defineProps({
-    show: {
-        type: Boolean,
-        default: true,
-    },
-    message: {
-        type: String,
-        required: true,
-    },
-});
+<script setup lang="ts">
+withDefaults(
+    defineProps<{
+        show?: boolean;
+        message: string;
+    }>(),
+    { show: true },
+);
 </script>

@@ -25,7 +25,7 @@
                 </p>
                 <div v-if="(program.images ?? []).length" class="row q-col-gutter-sm q-my-md">
                     <div
-                        v-for="img in program.images"
+                        v-for="img in program.images ?? []"
                         :key="img.uuid"
                         class="col-6 col-sm-4 col-md-3"
                     >
@@ -43,31 +43,35 @@
     </q-page>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { fetchPublicJson } from '../services/publicApi.js';
 
-const props = defineProps({
-    identifier: {
-        type: String,
-        required: true,
-    },
-});
+const props = defineProps<{
+    identifier: string;
+}>();
+
+type ProgramImage = { uuid: string; url?: string; name?: string };
+type PublicProgram = {
+    name?: string;
+    description?: string;
+    images?: ProgramImage[];
+};
 
 const { t } = useI18n();
 const isLoading = ref(true);
 const errorMessage = ref('');
-const program = ref(/** @type {Record<string, unknown> | null} */(null));
+const program = ref<PublicProgram | null>(null);
 
 function load() {
     isLoading.value = true;
     errorMessage.value = '';
     const path = '/api/public/programs/' + encodeURIComponent(props.identifier);
     fetchPublicJson(path)
-        .then((j) => {
-            if (j && typeof j === 'object' && 'data' in j && j.data) {
-                program.value = /** @type {Record<string, unknown>} */(j.data);
+        .then((j: unknown) => {
+            if (j && typeof j === 'object' && 'data' in j && (j as { data: unknown }).data) {
+                program.value = (j as { data: PublicProgram }).data;
             } else {
                 program.value = null;
             }

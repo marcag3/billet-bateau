@@ -151,16 +151,15 @@
     </q-page>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useForm } from 'vee-validate';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from '../store/auth.store';
 import { parseOptionalCapacity, useBoats } from '../models/boats/boats.model';
-import { createBoatCreateFormSchema } from '../models/boats/boats.validation';
+import { createBoatCreateFormSchema, type BoatCreateFormValues, safeParseBoatEntityName } from '../models/boats/boats.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
-import { safeParseBoatEntityName } from '../models/boats/boats.validation';
 import { useBoatTypes } from '../models/boat-types/boat-types.model';
 import {
     getAppPowerSyncBootstrappedRef,
@@ -190,14 +189,15 @@ const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
 
-const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm({
-    validationSchema: createBoatCreateFormSchema(t),
+const boatCreateSchema = createBoatCreateFormSchema(t);
+const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm<BoatCreateFormValues>({
+    validationSchema: boatCreateSchema,
     initialValues: {
         name: '',
         capacity: null,
         notes: '',
         boatTypeId: null,
-    },
+    } satisfies BoatCreateFormValues,
 });
 
 const quasarField = createQuasarFieldBinder(defineField);
@@ -208,8 +208,7 @@ const [createNotes, createNotesProps] = quasarField('notes');
 const [createBoatTypeId, createBoatTypeIdProps] = quasarField('boatTypeId');
 
 const patchingId = ref('');
-/** @type {import('vue').Reactive<Record<string, Record<string, string>>>} */
-const drafts = reactive({});
+const drafts = reactive<Record<string, Record<string, string>>>({});
 
 const myBoats = useUserScopedCollection(boats, () => authStore.user?.id);
 
@@ -227,10 +226,7 @@ onMounted(() => {
     void ensureBoatsReady();
 });
 
-/**
- * @param {Record<string, unknown>} b
- */
-function boatTypeSelectValue(b) {
+function boatTypeSelectValue(b: Record<string, unknown>) {
     const v = b.boat_type_id;
     if (v == null || String(v).length === 0) {
         return null;
@@ -238,11 +234,7 @@ function boatTypeSelectValue(b) {
     return String(v);
 }
 
-/**
- * @param {Record<string, unknown>} b
- * @param {string} field
- */
-function draftNumber(b, field) {
+function draftNumber(b: Record<string, unknown>, field: 'capacity') {
     const id = String(b.id);
     if (drafts[id]?.[field] !== undefined) {
         return drafts[id][field];
@@ -254,23 +246,14 @@ function draftNumber(b, field) {
     return Number(raw);
 }
 
-/**
- * @param {string} boatId
- * @param {string} field
- * @param {unknown} v
- */
-function setFieldDraft(boatId, field, v) {
+function setFieldDraft(boatId: string, field: string, v: unknown) {
     if (!drafts[boatId]) {
         drafts[boatId] = {};
     }
     drafts[boatId][field] = String(v ?? '');
 }
 
-/**
- * @param {Record<string, unknown>} b
- * @param {'name' | 'notes'} field
- */
-function commitField(b, field) {
+function commitField(b: Record<string, unknown>, field: 'name' | 'notes') {
     const id = String(b.id);
     const draft = drafts[id]?.[field];
     const next = draft !== undefined ? String(draft).trim() : String(b[field] ?? '').trim();
@@ -297,10 +280,7 @@ function commitField(b, field) {
     });
 }
 
-/**
- * @param {Record<string, unknown>} b
- */
-function commitCapacity(b) {
+function commitCapacity(b: Record<string, unknown>) {
     const id = String(b.id);
     const raw = drafts[id]?.capacity;
     const current = b.capacity === null || b.capacity === undefined ? null : Number(b.capacity);
@@ -313,11 +293,7 @@ function commitCapacity(b) {
     });
 }
 
-/**
- * @param {Record<string, unknown>} b
- * @param {string | number | null} value
- */
-function onBoatTypeChange(b, value) {
+function onBoatTypeChange(b: Record<string, unknown>, value: string | number | null) {
     const id = String(b.id);
     const next = value == null || value === '' ? null : String(value);
     const current =
@@ -330,11 +306,7 @@ function onBoatTypeChange(b, value) {
     });
 }
 
-/**
- * @param {string} id
- * @param {(draft: Record<string, unknown>) => void} fn
- */
-async function patchWith(id, fn) {
+async function patchWith(id: string, fn: (draft: Record<string, unknown>) => void) {
     patchingId.value = id;
     try {
         await patchBoatRow(id, fn);
@@ -343,7 +315,7 @@ async function patchWith(id, fn) {
     }
 }
 
-const onCreateSubmit = handleSubmit(async (values) => {
+const onCreateSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
     await runWithNotify(
         async () => {
             await createBoatRow({
@@ -358,10 +330,7 @@ const onCreateSubmit = handleSubmit(async (values) => {
     );
 });
 
-/**
- * @param {Record<string, unknown>} b
- */
-function confirmDelete(b) {
+function confirmDelete(b: Record<string, unknown>) {
     confirm({
         title: t('boatsList.deleteConfirmTitle'),
         message: t('boatsList.deleteConfirmMessage', { name: String(b.name ?? '') }),

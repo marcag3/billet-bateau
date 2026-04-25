@@ -24,27 +24,26 @@
     </q-banner>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 
-const props = defineProps({
-    /** error | warning | info */
-    variant: {
-        type: String,
-        default: 'warning',
-        validator: (v) => v === 'error' || v === 'warning' || v === 'info',
+const props = withDefaults(
+    defineProps<{
+        /** error | warning | info */
+        variant?: 'error' | 'warning' | 'info';
+        dismissible?: boolean;
+        dismissLabel?: string;
+    }>(),
+    {
+        variant: 'warning',
+        dismissible: false,
+        dismissLabel: '',
     },
-    dismissible: {
-        type: Boolean,
-        default: false,
-    },
-    dismissLabel: {
-        type: String,
-        default: '',
-    },
-});
+);
 
-const emit = defineEmits(['dismiss']);
+const emit = defineEmits<{
+    dismiss: [];
+}>();
 
 const bannerClass = computed(() => {
     const base = 'q-mb-md';

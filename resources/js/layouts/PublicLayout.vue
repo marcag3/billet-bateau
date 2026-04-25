@@ -26,7 +26,7 @@
     </q-layout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';

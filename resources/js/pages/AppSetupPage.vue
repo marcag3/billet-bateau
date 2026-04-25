@@ -63,12 +63,12 @@
     </AppAuthFormLayout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useForm } from 'vee-validate';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { createSetupFormSchema } from '../models/auth.validation';
+import { createSetupFormSchema, type SetupFormValues } from '../models/auth.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useAuthStore } from '../store/auth.store';
 import AppAuthFormLayout from '../components/ui/AppAuthFormLayout.vue';
@@ -79,14 +79,15 @@ const { t } = useI18n();
 
 const errorMessage = ref('');
 
-const { handleSubmit, defineField, isSubmitting } = useForm({
-    validationSchema: createSetupFormSchema(t),
+const validationSchema = createSetupFormSchema(t);
+const { handleSubmit, defineField, isSubmitting } = useForm<SetupFormValues>({
+    validationSchema,
     initialValues: {
         organizationName: '',
         email: '',
         password: '',
         passwordConfirmation: '',
-    },
+    } satisfies SetupFormValues,
 });
 
 const quasarField = createQuasarFieldBinder(defineField);

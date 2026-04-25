@@ -84,6 +84,7 @@
                                     />
                                 </div>
                                 <q-file
+                                    :model-value="null"
                                     outlined
                                     dense
                                     multiple
@@ -92,7 +93,7 @@
                                     :label="t('boatTypesList.images')"
                                     accept="image/jpeg,image/png,image/webp"
                                     :disable="uploadingId === bt.id"
-                                    @update:model-value="(files) => onPickImages(bt.id, files)"
+                                    @update:model-value="(files) => onPickImages(String(bt.id), files)"
                                 />
                             </div>
                         </div>
@@ -111,13 +112,13 @@
     </q-page>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useForm } from 'vee-validate';
 import { onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from '../store/auth.store';
-import { createBoatTypeFormSchema } from '../models/boat-types/boat-types.validation';
+import { createBoatTypeFormSchema, type BoatTypeFormValues } from '../models/boat-types/boat-types.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { safeParseBoatEntityName } from '../models/boats/boats.validation';
 import { useBoatTypes } from '../models/boat-types/boat-types.model';
@@ -171,11 +172,12 @@ const { data: mediaRows } = useEntityList({
     ],
 });
 
-const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm({
-    validationSchema: createBoatTypeFormSchema(t),
+const boatTypeFormSchema = createBoatTypeFormSchema(t);
+const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm<BoatTypeFormValues>({
+    validationSchema: boatTypeFormSchema,
     initialValues: {
         name: '',
-    },
+    } satisfies BoatTypeFormValues,
 });
 
 const quasarField = createQuasarFieldBinder(defineField);
@@ -183,8 +185,7 @@ const [createName, createNameProps] = quasarField('name');
 
 const patchingId = ref('');
 const uploadingId = ref('');
-/** @type {import('vue').Reactive<Record<string, string>>} */
-const nameDrafts = reactive({});
+const nameDrafts = reactive<Record<string, string>>({});
 
 const myBoatTypes = useUserScopedCollection(boatTypes, () => authStore.user?.id);
 
@@ -192,41 +193,30 @@ onMounted(() => {
     void ensureBoatTypesReady();
 });
 
-/**
- * @param {string} id
- * @param {unknown} v
- */
-function setNameDraft(id, v) {
+function setNameDraft(id: string, v: unknown) {
     nameDrafts[id] = String(v ?? '');
 }
 
-/**
- * @param {string} boatTypeId
- * @returns {string | undefined}
- */
-function primaryImageFor(boatTypeId) {
+function primaryImageFor(boatTypeId: string) {
     const rows = mediaRows.value ?? [];
     const match = rows.find(
-        (m) =>
+        (m: Record<string, unknown> | null) =>
             m != null &&
             String(m.model_type) === BOAT_TYPE_MODEL &&
             String(m.model_id) === boatTypeId &&
             String(m.collection_name) === 'images',
     );
-    if (!match || typeof match.name !== 'string') {
+    if (!match || typeof match['name'] !== 'string') {
         return undefined;
     }
-    const fileName = typeof match.file_name === 'string' ? match.file_name : '';
+    const fileName = typeof match['file_name'] === 'string' ? match['file_name'] : '';
     if (fileName.length === 0) {
         return undefined;
     }
-    return `/storage/${match.id}/${fileName}`;
+    return `/storage/${String(match['id'] ?? '')}/${fileName}`;
 }
 
-/**
- * @param {Record<string, unknown>} bt
- */
-function commitName(bt) {
+function commitName(bt: Record<string, unknown>) {
     const id = String(bt.id);
     const next = (nameDrafts[id] ?? String(bt.name ?? '')).trim();
     const current = String(bt.name ?? '').trim();
@@ -256,7 +246,7 @@ function commitName(bt) {
     })();
 }
 
-const onCreateSubmit = handleSubmit(async (values) => {
+const onCreateSubmit = handleSubmit(async (values: BoatTypeFormValues) => {
     await runWithNotify(
         async () => {
             await createBoatTypeRow(values.name);
@@ -266,11 +256,10 @@ const onCreateSubmit = handleSubmit(async (values) => {
     );
 });
 
-/**
- * @param {string} boatTypeId
- * @param {File | File[] | null} value
- */
-async function onPickImages(boatTypeId, value) {
+async function onPickImages(
+    boatTypeId: string,
+    value: File | File[] | null | undefined,
+) {
     const files = normalizeImageFiles(value);
     if (files.length === 0) {
         return;
@@ -295,10 +284,7 @@ async function onPickImages(boatTypeId, value) {
     }
 }
 
-/**
- * @param {Record<string, unknown>} bt
- */
-function confirmDelete(bt) {
+function confirmDelete(bt: Record<string, unknown>) {
     confirm({
         title: t('boatTypesList.deleteConfirmTitle'),
         message: t('boatTypesList.deleteConfirmMessage', { name: String(bt.name ?? '') }),

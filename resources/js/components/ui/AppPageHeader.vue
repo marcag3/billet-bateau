@@ -31,31 +31,25 @@
     </header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, useSlots } from 'vue';
 
-const props = defineProps({
-    title: {
-        type: String,
-        default: '',
+const props = withDefaults(
+    defineProps<{
+        title?: string;
+        description?: string;
+        /** Default: list page. `hero` uses dark gradient (e.g. programs). */
+        variant?: 'default' | 'hero';
+        /** `body1` (default) or `body2` for the description line. */
+        descriptionSize?: 'body1' | 'body2';
+    }>(),
+    {
+        title: '',
+        description: '',
+        variant: 'default',
+        descriptionSize: 'body1',
     },
-    description: {
-        type: String,
-        default: '',
-    },
-    /** Default: list page. `hero` uses dark gradient (e.g. programs). */
-    variant: {
-        type: String,
-        default: 'default',
-        validator: (v) => v === 'default' || v === 'hero',
-    },
-    /** `body1` (default) or `body2` for the description line. */
-    descriptionSize: {
-        type: String,
-        default: 'body1',
-        validator: (v) => v === 'body1' || v === 'body2',
-    },
-});
+);
 
 const slots = useSlots();
 const hasDefaultSlot = computed(() => Boolean(slots.default));

@@ -39,30 +39,25 @@
     </q-page>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, useSlots } from 'vue';
 import AppAlertBanner from './AppAlertBanner.vue';
 
-const props = defineProps({
-    title: {
-        type: String,
-        default: '',
+const props = withDefaults(
+    defineProps<{
+        title?: string;
+        subtitle?: string;
+        errorMessage?: string;
+        /** 'login' (420) | 'setup' (460) or pass cardClass. */
+        maxWidth?: 'login' | 'setup' | 'none';
+    }>(),
+    {
+        title: '',
+        subtitle: '',
+        errorMessage: '',
+        maxWidth: 'login',
     },
-    subtitle: {
-        type: String,
-        default: '',
-    },
-    errorMessage: {
-        type: String,
-        default: '',
-    },
-    /** 'login' (420) | 'setup' (460) or pass cardClass. */
-    maxWidth: {
-        type: String,
-        default: 'login',
-        validator: (v) => v === 'login' || v === 'setup' || v === 'none',
-    },
-});
+);
 
 const slots = useSlots();
 const hasHeader = computed(

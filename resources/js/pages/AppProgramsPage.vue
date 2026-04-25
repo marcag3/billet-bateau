@@ -43,13 +43,13 @@
                             </div>
                             <div class="col-12 col-sm-grow">
                                 <q-input
-                                    :model-value="slugDrafts[p.id] ?? (p.slug ?? '')"
+                                    :model-value="slugDrafts[String(p.id)] ?? (p.slug ?? '')"
                                     outlined
                                     dense
                                     :label="t('programsList.slug')"
                                     :hint="t('programsList.slugHint')"
                                     :disable="isPatching"
-                                    @update:model-value="(v) => (slugDrafts[p.id] = v)"
+                                    @update:model-value="(v) => (slugDrafts[String(p.id)] = String(v ?? ''))"
                                     @blur="() => onSlugCommit(p)"
                                 />
                             </div>
@@ -69,7 +69,7 @@
     </q-page>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
@@ -97,7 +97,7 @@ const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
 
 const isPatching = ref(false);
-const slugDrafts = reactive(/** @type {Record<string, string>} */ ({}));
+const slugDrafts = reactive<Record<string, string>>({});
 
 const myPrograms = useUserScopedCollection(programs, () => authStore.user?.id);
 
@@ -105,11 +105,7 @@ onMounted(() => {
     void ensureProgramsReady();
 });
 
-/**
- * @param {Record<string, unknown>} p
- * @param {boolean} isActive
- */
-function onToggleActive(p, isActive) {
+function onToggleActive(p: Record<string, unknown>, isActive: boolean) {
     void (async () => {
         isPatching.value = true;
         try {
@@ -122,10 +118,7 @@ function onToggleActive(p, isActive) {
     })();
 }
 
-/**
- * @param {Record<string, unknown>} p
- */
-function onSlugCommit(p) {
+function onSlugCommit(p: Record<string, unknown>) {
     const id = String(p.id);
     const raw = (slugDrafts[id] ?? p.slug ?? '').toString();
     const current = p.slug == null ? '' : String(p.slug).trim().toLowerCase();
@@ -154,10 +147,7 @@ function onSlugCommit(p) {
     })();
 }
 
-/**
- * @param {Record<string, unknown>} p
- */
-function copyPublicUrl(p) {
+function copyPublicUrl(p: Record<string, unknown>) {
     const path = '/programs/' + encodeURIComponent(String(p.slug ?? '').trim());
     const url = `${window.location.origin}${path}`;
     void navigator.clipboard.writeText(url);

@@ -9,13 +9,13 @@
     </q-list>
 </template>
 
-<script setup>
-defineProps({
-    listClass: {
-        type: String,
-        default: '',
-    },
-});
+<script setup lang="ts">
+withDefaults(
+    defineProps<{
+        listClass?: string;
+    }>(),
+    { listClass: '' },
+);
 </script>
 
 <style scoped>

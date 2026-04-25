@@ -154,12 +154,12 @@
     </q-page>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useForm } from 'vee-validate';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { createProgramCreateFormSchema } from '../models/programs/programs.validation';
+import { createProgramCreateFormSchema, type ProgramCreateFormValues } from '../models/programs/programs.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { usePrograms } from '../models/programs/programs.model';
 import mediaRoutes from '../routes/api/media';
@@ -177,8 +177,9 @@ const { createProgramWithOptionalAddress } = usePrograms();
 
 const errorMessage = ref('');
 
-const { handleSubmit, defineField, isSubmitting } = useForm({
-    validationSchema: createProgramCreateFormSchema(t),
+const programCreateSchema = createProgramCreateFormSchema(t);
+const { handleSubmit, defineField, isSubmitting } = useForm<ProgramCreateFormValues>({
+    validationSchema: programCreateSchema,
     initialValues: {
         name: '',
         description: '',
@@ -191,7 +192,7 @@ const { handleSubmit, defineField, isSubmitting } = useForm({
             country: '',
         },
         imagesModel: null,
-    },
+    } satisfies ProgramCreateFormValues,
 });
 
 const quasarField = createQuasarFieldBinder(defineField);
@@ -210,7 +211,7 @@ function goToProgramsList() {
     void router.push({ name: 'programs.list' });
 }
 
-const onFormSubmit = handleSubmit(async (values) => {
+const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
     errorMessage.value = '';
 
     try {

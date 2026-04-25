@@ -10,16 +10,16 @@
     </div>
 </template>
 
-<script setup>
-defineProps({
-    ready: {
-        type: Boolean,
-        default: false,
+<script setup lang="ts">
+withDefaults(
+    defineProps<{
+        ready?: boolean;
+        /** Optional wrapper class for the ready slot (e.g. `q-gutter-y-md`). */
+        contentClass?: string;
+    }>(),
+    {
+        ready: false,
+        contentClass: '',
     },
-    /** Optional wrapper class for the ready slot (e.g. `q-gutter-y-md`). */
-    contentClass: {
-        type: String,
-        default: '',
-    },
-});
+);
 </script>
