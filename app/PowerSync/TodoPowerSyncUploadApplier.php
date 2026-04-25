@@ -26,6 +26,11 @@ final class TodoPowerSyncUploadApplier
         }
 
         if ($op === 'PUT') {
+            $existing = Todo::query()->whereKey($id)->first();
+            if ($existing !== null && (int) $existing->user_id !== $userId) {
+                return;
+            }
+
             $title = isset($data['title']) && is_string($data['title']) ? $data['title'] : '';
             $completed = $this->normalizeCompleted($data['completed'] ?? false);
 

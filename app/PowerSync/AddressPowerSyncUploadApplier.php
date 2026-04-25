@@ -7,9 +7,9 @@ use App\Models\Program;
 
 /**
  * Address row mutations from PowerSync uploads.
- * Rows are not per-user; authorization is not via a user_id column. Any authenticated
- * uploader may apply op entries; the HTTP layer already enforces a logged-in user.
- * Clearing a row (empty PUT/PATCH or DELETE) removes the address and nulls programs.address_id.
+ * Rows are global (replicated to all users). DELETE and “clear” operations only null
+ * {@see Program::$address_id} for programs owned by the uploading user; the row is removed
+ * only when no program still references it.
  */
 final class AddressPowerSyncUploadApplier
 {

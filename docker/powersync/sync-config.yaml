@@ -2,7 +2,7 @@
 # See: https://docs.powersync.com/sync/streams/overview
 #
 # Semantics (replaces legacy sync-rules buckets):
-# - todos + programs: scoped to JWT user (auth.user_id())
+# - todos + programs: scoped to JWT user (auth.user_id()). SELECT * includes programs.address_id.
 # - addresses: global reference data for every authenticated user
 # - media: rows for programs owned by the user (Spatie morph on Program)
 

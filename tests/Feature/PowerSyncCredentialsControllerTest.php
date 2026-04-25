@@ -39,5 +39,12 @@ class PowerSyncCredentialsControllerTest extends TestCase
         $this->assertIsInt($decoded->iat);
         $this->assertIsInt($decoded->exp);
         $this->assertGreaterThan($decoded->iat, $decoded->exp);
+
+        $parts = explode('.', $token);
+        $this->assertCount(3, $parts);
+        /** @var object{alg?: string, typ?: string, kid?: string} $header */
+        $header = JWT::jsonDecode(JWT::urlsafeB64Decode($parts[0]));
+        $this->assertSame('HS256', $header->alg);
+        $this->assertSame((string) config('powersync.jwt_kid'), $header->kid);
     }
 }

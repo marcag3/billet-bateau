@@ -30,6 +30,11 @@ final class ProgramPowerSyncUploadApplier
         }
 
         if ($op === 'PUT') {
+            $existing = Program::query()->whereKey($id)->first();
+            if ($existing !== null && (int) $existing->user_id !== $userId) {
+                return;
+            }
+
             $name = isset($data['name']) && is_string($data['name']) ? trim($data['name']) : '';
             $description = isset($data['description']) && is_string($data['description']) ? $data['description'] : null;
             $themeColor = isset($data['theme_color']) && is_string($data['theme_color']) ? strtoupper(trim($data['theme_color'])) : '#000000';
@@ -45,7 +50,6 @@ final class ProgramPowerSyncUploadApplier
                 'theme_color' => $themeColor,
             ];
 
-            $existing = Program::query()->whereKey($id)->first();
             if (array_key_exists('address_id', $data)) {
                 $attributes['address_id'] = $this->resolveAddressId($id, $data['address_id'], $existing);
             }
