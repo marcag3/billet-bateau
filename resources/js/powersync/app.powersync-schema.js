@@ -14,6 +14,8 @@ const programsTable = new Table({
     name: column.text,
     description: column.text,
     theme_color: column.text,
+    is_active: column.integer,
+    slug: column.text,
     created_at: column.text,
     updated_at: column.text,
 });

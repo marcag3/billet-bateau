@@ -3,16 +3,22 @@
 namespace App\Models;
 
 use Database\Factories\ProgramFactory;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+
 class Program extends Model implements HasMedia
 {
     /** @use HasFactory<ProgramFactory> */
     use HasFactory;
+
     use InteractsWithMedia;
 
     public $incrementing = false;
@@ -26,6 +32,8 @@ class Program extends Model implements HasMedia
         'name',
         'description',
         'theme_color',
+        'is_active',
+        'slug',
         'created_at',
         'updated_at',
     ];
@@ -33,9 +41,16 @@ class Program extends Model implements HasMedia
     protected function casts(): array
     {
         return [
+            'is_active' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    #[Scope]
+    protected function active(Builder $query): void
+    {
+        $query->where('is_active', true);
     }
 
     protected static function booted(): void
@@ -66,5 +81,15 @@ class Program extends Model implements HasMedia
     public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'address_id');
+    }
+
+    /**
+     * @return Attribute<string, string|int|float|null|bool>
+     */
+    protected function slug(): Attribute
+    {
+        return Attribute::make(
+            set: static fn (mixed $value) => Str::lower(trim((string) $value)),
+        );
     }
 }

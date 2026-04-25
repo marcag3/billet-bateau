@@ -38,7 +38,7 @@ const noopApi = {
 export const programsModelDefinition = defineModel({
     name: 'programs',
     collectionId: 'programs',
-    persistenceSchemaVersion: 4,
+    persistenceSchemaVersion: 5,
     pickUpdatePayload: (changes) => ({ ...changes }),
     api: noopApi,
     orderBy: [
@@ -60,6 +60,24 @@ function normalizeThemeColor(hex) {
     }
 
     return '#000000';
+}
+
+/**
+ * @param {string} name
+ * @param {string} id
+ * @returns {string}
+ */
+function buildInitialProgramSlug(name, id) {
+    const t = String(name).trim().toLowerCase();
+    const kebab = t
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+    if (kebab.length > 0) {
+        return kebab.length > 200 ? kebab.slice(0, 200) : kebab;
+    }
+    const h = id.replace(/-/g, '');
+
+    return `p-${h.slice(0, 8)}`.toLowerCase();
 }
 
 export function usePrograms() {
@@ -121,6 +139,8 @@ export function usePrograms() {
             name: input.name.trim(),
             description: input.description.trim().length > 0 ? input.description.trim() : null,
             theme_color: themeColor,
+            is_active: 0,
+            slug: buildInitialProgramSlug(input.name, id),
             created_at: now,
             updated_at: now,
         });
@@ -135,10 +155,30 @@ export function usePrograms() {
         return id;
     }
 
+    /**
+     * @param {string} programId
+     * @param {(draft: Record<string, unknown>) => void} updateDraft
+     * @returns {Promise<void>}
+     */
+    async function patchProgramRow(programId, updateDraft) {
+        await ensureProgramsReady();
+        const programsCollection = programsCollectionRef.value;
+        if (!programsCollection) {
+            return;
+        }
+
+        programsCollection.update(programId, (draft) => {
+            updateDraft(draft);
+            draft.updated_at = new Date().toISOString();
+        });
+        void refreshOutboxSnapshot();
+    }
+
     return {
         programs,
         ensureProgramsReady,
         createProgramWithOptionalAddress,
+        patchProgramRow,
         refresh: bootstrapAppPowerSync,
         hasPrograms: computed(() => programs.value.length > 0),
     };

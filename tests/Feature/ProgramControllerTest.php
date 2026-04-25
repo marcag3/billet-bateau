@@ -31,6 +31,7 @@ class ProgramControllerTest extends TestCase
             'name' => 'Spring launch',
             'description' => 'Details',
             'theme_color' => '#00AAFF',
+            'slug' => 'spring-launch',
         ])->assertUnauthorized();
     }
 
@@ -46,6 +47,7 @@ class ProgramControllerTest extends TestCase
             'name' => 'Harbor week',
             'description' => 'Evening cruises',
             'theme_color' => '#aabbcc',
+            'slug' => 'harbor-week',
             'address' => [
                 'line_1' => '1 Wharf',
                 'city' => 'Portville',
@@ -69,6 +71,7 @@ class ProgramControllerTest extends TestCase
             'address_id' => $addressId,
             'name' => 'Harbor week',
             'theme_color' => '#AABBCC',
+            'slug' => 'harbor-week',
         ]);
 
         $this->assertDatabaseHas('addresses', [
@@ -81,7 +84,7 @@ class ProgramControllerTest extends TestCase
         $this->assertCount(1, $program->getMedia('images'));
     }
 
-    public function test_store_media_requires_owner(): void
+    public function test_store_media_allows_any_authenticated_user(): void
     {
         Storage::fake('public');
 
@@ -96,7 +99,10 @@ class ProgramControllerTest extends TestCase
             ->post('/api/programs/'.$program->getKey().'/media', [
                 'images' => [$image],
             ])
-            ->assertForbidden();
+            ->assertOk();
+
+        $program->refresh();
+        $this->assertCount(1, $program->getMedia('images'));
     }
 
     public function test_store_media_appends_images(): void

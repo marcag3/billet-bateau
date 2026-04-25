@@ -15,10 +15,11 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('theme_color', 7);
+            $table->boolean('is_active')->default(false);
+            $table->string('slug', 255)->unique();
             $table->timestamps();
 
             $table->index(['user_id', 'updated_at']);
         });
     }
-
 };

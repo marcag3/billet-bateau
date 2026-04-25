@@ -8,6 +8,8 @@ use Illuminate\Support\Str;
 
 final class ProgramPowerSyncUploadApplier
 {
+    private const SLUG_MAX_LENGTH = 200;
+
     /**
      * @param  array{op: string, type: string, id: string, data?: array<string, mixed>|null}  $entry
      */
@@ -43,11 +45,21 @@ final class ProgramPowerSyncUploadApplier
                 $themeColor = '#000000';
             }
 
+            $isActive = $this->coerceToBool($data['is_active'] ?? null) ?? false;
+
+            $displayName = $name !== '' ? $name : 'Untitled';
+            $proposedSlug = array_key_exists('slug', $data)
+                ? $this->normalizeSlugValue($data['slug'])
+                : $this->normalizeSlugValue($displayName);
+            $baseSlug = $proposedSlug !== null && $proposedSlug !== '' ? $proposedSlug : 'program';
+
             $attributes = [
                 'user_id' => $userId,
-                'name' => $name !== '' ? $name : 'Untitled',
+                'name' => $displayName,
                 'description' => $description,
                 'theme_color' => $themeColor,
+                'is_active' => $isActive,
+                'slug' => $this->assignUniqueSlug((string) $id, $baseSlug),
             ];
 
             if (array_key_exists('address_id', $data)) {
@@ -90,6 +102,21 @@ final class ProgramPowerSyncUploadApplier
                 }
             }
 
+            if (array_key_exists('is_active', $data)) {
+                $next = $this->coerceToBool($data['is_active']);
+                if ($next !== null) {
+                    $program->is_active = $next;
+                }
+            }
+
+            if (array_key_exists('slug', $data)) {
+                $proposed = $this->normalizeSlugValue($data['slug']);
+                $base = $proposed !== null && $proposed !== ''
+                    ? $proposed
+                    : ($this->normalizeSlugValue($program->name) ?? 'program');
+                $program->slug = $this->assignUniqueSlug((string) $id, $base);
+            }
+
             if (array_key_exists('address_id', $data)) {
                 $program->address_id = $this->resolveAddressId($id, $data['address_id'], $program);
             }
@@ -100,6 +127,135 @@ final class ProgramPowerSyncUploadApplier
         }
 
         throw new \RuntimeException('Unsupported PowerSync CRUD op for programs: '.$op);
+    }
+
+    private function normalizeSlugValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_string($value) && trim($value) === '') {
+            return null;
+        }
+
+        if (! is_scalar($value) && $value !== null) {
+            return null;
+        }
+
+        $asString = is_string($value) ? trim($value) : (string) $value;
+        if ($asString === '') {
+            return null;
+        }
+
+        $slug = Str::slug($asString);
+        if ($slug === '') {
+            return null;
+        }
+
+        if (mb_strlen($slug) > self::SLUG_MAX_LENGTH) {
+            $slug = Str::limit($slug, self::SLUG_MAX_LENGTH, '');
+        }
+
+        return Str::lower($slug);
+    }
+
+    private function assignUniqueSlug(string $programId, string $baseSlug): string
+    {
+        $base = Str::lower($baseSlug);
+        if ($base === '') {
+            $base = 'program';
+        }
+        if (mb_strlen($base) > 255) {
+            $base = Str::limit($base, 255, '');
+        }
+        if ($base === '') {
+            $base = 'program';
+        }
+
+        if (! $this->slugInUse($base, $programId)) {
+            return $base;
+        }
+
+        $n = 2;
+        while (true) {
+            $tail = (string) $n;
+            $room = 255 - strlen($tail) - 1;
+            if ($room < 1) {
+                return $this->appendUniqueToken($base, $programId);
+            }
+            $shortBase = mb_substr($base, 0, (int) $room);
+            $candidate = $shortBase.'-'.$n;
+            if (! $this->slugInUse($candidate, $programId)) {
+                return $candidate;
+            }
+            if ($n > 1000) {
+                return $this->appendUniqueToken($base, $programId);
+            }
+            $n++;
+        }
+    }
+
+    private function appendUniqueToken(string $base, string $programId): string
+    {
+        for ($i = 0; $i < 32; $i++) {
+            $token = Str::lower(Str::random(6));
+            $room = 255 - strlen($token) - 1;
+            if ($room < 1) {
+                continue;
+            }
+            $prefix = Str::limit($base, (int) $room, '');
+
+            $candidate = $prefix !== '' ? $prefix.'-'.$token : $token;
+
+            if (mb_strlen($candidate) > 255) {
+                $candidate = Str::limit($candidate, 255, '');
+            }
+
+            if (! $this->slugInUse($candidate, $programId)) {
+                return $candidate;
+            }
+        }
+
+        return $base.'-'.str_pad((string) hrtime(true) % 100_000, 5, '0', STR_PAD_LEFT);
+    }
+
+    private function slugInUse(string $slug, string $exceptId): bool
+    {
+        return Program::query()
+            ->where('slug', $slug)
+            ->where('id', '!=', $exceptId)
+            ->exists();
+    }
+
+    private function coerceToBool(mixed $value): ?bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_int($value)) {
+            if ($value === 0) {
+                return false;
+            }
+            if ($value === 1) {
+                return true;
+            }
+
+            return null;
+        }
+
+        if (is_string($value)) {
+            $l = Str::lower(trim($value));
+            if ($l === '1' || $l === 'true' || $l === 'on' || $l === 'yes') {
+                return true;
+            }
+            if ($l === '0' || $l === 'false' || $l === 'off' || $l === 'no' || $l === '') {
+                return false;
+            }
+        }
+
+        return null;
     }
 
     /**

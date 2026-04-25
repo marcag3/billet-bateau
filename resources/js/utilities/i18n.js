@@ -13,6 +13,7 @@ const messages = {
             reports: 'Reports',
             settings: 'Settings',
             newProgram: 'New program',
+            programs: 'Programs',
             logout: 'Logout',
             reauthenticate: 'Reauthenticate',
             openApp: 'Open App',
@@ -118,6 +119,29 @@ const messages = {
             minimalDescription:
                 'This public bundle stays minimal and avoids loading the feature-rich app modules.',
         },
+        publicLayout: {
+            catalog: 'Catalog',
+        },
+        publicHome: {
+            noPrograms: 'No programs are published yet.',
+            loadError: 'Unable to load programs. Please try again later.',
+        },
+        publicProgram: {
+            notFound: 'This program was not found.',
+            backToCatalog: 'Back to catalog',
+        },
+        programsList: {
+            title: 'Programs',
+            description:
+                'Set which programs appear on the public home page, short links, and copy a shareable URL.',
+            empty: 'No programs yet. Create one from "New program".',
+            isActive: 'List on public site',
+            slug: 'URL slug',
+            slugHint: 'Lowercase, letters, numbers, and hyphens. The public page is /programs/your-slug. The server will adjust duplicates.',
+            slugRequired: 'URL slug is required. Use a unique lowercase value.',
+            copyUrl: 'Copy public link',
+            copied: 'Link copied to clipboard',
+        },
         locale: {
             english: 'English',
             french: 'French',
@@ -131,6 +155,7 @@ const messages = {
             reports: 'Rapports',
             settings: 'Parametres',
             newProgram: 'Nouveau programme',
+            programs: 'Programmes',
             logout: 'Se deconnecter',
             reauthenticate: "Se reconnecter",
             openApp: "Ouvrir l'application",
@@ -239,6 +264,29 @@ const messages = {
         public: {
             minimalDescription:
                 "Ce bundle public reste minimal et evite de charger les modules riches de l'application.",
+        },
+        publicLayout: {
+            catalog: 'Catalogue',
+        },
+        publicHome: {
+            noPrograms: 'Aucun programme n’est publié pour le moment.',
+            loadError: 'Impossible de charger les programmes. Reessayez plus tard.',
+        },
+        publicProgram: {
+            notFound: 'Programme introuvable.',
+            backToCatalog: 'Retour au catalogue',
+        },
+        programsList: {
+            title: 'Programmes',
+            description:
+                'Indiquez quels programmes apparaissent sur l’accueil public, les liens courts, et copiez l’URL.',
+            empty: "Aucun programme pour l'instant. Creez-en un via « Nouveau programme ».",
+            isActive: 'Publie sur le site public',
+            slug: 'Identifiant d’URL',
+            slugHint: 'En minuscules, lettres, chiffres et tirets. La page publique est /programs/votre-identifiant. Les doublons seront ajustes.',
+            slugRequired: 'L’identifiant d’URL est obligatoire. Utilisez une valeur en minuscules, unique.',
+            copyUrl: 'Copier le lien public',
+            copied: 'Lien copie',
         },
         locale: {
             english: 'Anglais',

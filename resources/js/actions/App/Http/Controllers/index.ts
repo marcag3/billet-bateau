@@ -1,9 +1,9 @@
-import Auth from './Auth'
 import Api from './Api'
+import Auth from './Auth'
 
 const Controllers = {
-    Auth: Object.assign(Auth, Auth),
     Api: Object.assign(Api, Api),
+    Auth: Object.assign(Auth, Auth),
 }
 
 export default Controllers

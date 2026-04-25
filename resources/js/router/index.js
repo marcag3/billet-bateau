@@ -50,6 +50,14 @@ const routes = [
             requiresAuth: true,
         },
     },
+    {
+        path: '/programs',
+        name: 'programs.list',
+        component: () => import('../pages/AppProgramsPage.vue'),
+        meta: {
+            requiresAuth: true,
+        },
+    },
 ];
 
 const router = createRouter({

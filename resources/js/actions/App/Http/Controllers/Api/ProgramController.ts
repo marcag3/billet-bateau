@@ -35,7 +35,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\ProgramController::storeMedia
-* @see app/Http/Controllers/Api/ProgramController.php:59
+* @see app/Http/Controllers/Api/ProgramController.php:64
 * @route '/api/programs/{program}/media'
 */
 export const storeMedia = (args: { program: string | { id: string } } | [program: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -50,7 +50,7 @@ storeMedia.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ProgramController::storeMedia
-* @see app/Http/Controllers/Api/ProgramController.php:59
+* @see app/Http/Controllers/Api/ProgramController.php:64
 * @route '/api/programs/{program}/media'
 */
 storeMedia.url = (args: { program: string | { id: string } } | [program: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -83,7 +83,7 @@ storeMedia.url = (args: { program: string | { id: string } } | [program: string 
 
 /**
 * @see \App\Http\Controllers\Api\ProgramController::storeMedia
-* @see app/Http/Controllers/Api/ProgramController.php:59
+* @see app/Http/Controllers/Api/ProgramController.php:64
 * @route '/api/programs/{program}/media'
 */
 storeMedia.post = (args: { program: string | { id: string } } | [program: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({

@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Data\Programs\ProgramData;
 use App\Data\Programs\ProgramStoreData;
 use App\Http\Controllers\Controller;
-use App\Models\Program;
 use App\Models\Address;
+use App\Models\Program;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +43,8 @@ class ProgramController extends Controller
                 'name' => $data->name,
                 'description' => $data->description,
                 'theme_color' => $themeColor,
+                'is_active' => false,
+                'slug' => $data->slug,
             ]);
 
             if ($data->images !== null) {

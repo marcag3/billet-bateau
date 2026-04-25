@@ -5,10 +5,6 @@ use App\Http\Controllers\Auth\SessionController;
 use App\Http\Middleware\EnsureApplicationIsInstalled;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('public');
-});
-
 Route::middleware('guest')->group(function (): void {
     Route::get('/app/setup', function () {
         return view('app');
@@ -32,3 +28,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         return view('app');
     })->where('any', '.*');
 });
+
+Route::fallback(function () {
+    return view('public');
+})->name('public.spa');

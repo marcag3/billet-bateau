@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\ProgramController::store
-* @see app/Http/Controllers/Api/ProgramController.php:59
+* @see app/Http/Controllers/Api/ProgramController.php:64
 * @route '/api/programs/{program}/media'
 */
 export const store = (args: { program: string | { id: string } } | [program: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ProgramController::store
-* @see app/Http/Controllers/Api/ProgramController.php:59
+* @see app/Http/Controllers/Api/ProgramController.php:64
 * @route '/api/programs/{program}/media'
 */
 store.url = (args: { program: string | { id: string } } | [program: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ store.url = (args: { program: string | { id: string } } | [program: string | { i
 
 /**
 * @see \App\Http\Controllers\Api\ProgramController::store
-* @see app/Http/Controllers/Api/ProgramController.php:59
+* @see app/Http/Controllers/Api/ProgramController.php:64
 * @route '/api/programs/{program}/media'
 */
 store.post = (args: { program: string | { id: string } } | [program: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({

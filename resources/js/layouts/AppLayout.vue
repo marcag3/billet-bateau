@@ -19,6 +19,10 @@
                 >
                     <q-route-tab :label="t('common.dashboard')" to="/" />
                     <q-route-tab
+                        :label="t('common.programs')"
+                        to="/programs"
+                    />
+                    <q-route-tab
                         :label="t('common.newProgram')"
                         to="/programs/new"
                     />

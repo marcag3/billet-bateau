@@ -122,6 +122,8 @@ class PowerSyncUploadControllerTest extends TestCase
             'user_id' => $user->getAuthIdentifier(),
             'name' => 'Dockside',
             'theme_color' => '#FF00AA',
+            'is_active' => 0,
+            'slug' => 'dockside',
         ]);
     }
 
@@ -158,6 +160,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $this->assertDatabaseHas('programs', [
             'id' => $programId,
             'address_id' => $addressId,
+            'slug' => 'with-address',
         ]);
 
         $this->assertDatabaseHas('addresses', [
@@ -374,5 +377,52 @@ class PowerSyncUploadControllerTest extends TestCase
         ]);
         $ownersProgram->refresh();
         $this->assertSame($addressId, $ownersProgram->address_id);
+    }
+
+    public function test_put_program_uses_suffix_when_slug_conflicts_globally(): void
+    {
+        $u1 = User::factory()->create();
+        $u2 = User::factory()->create();
+        $id1 = (string) Str::uuid();
+        $id2 = (string) Str::uuid();
+
+        $this->actingAs($u1)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'programs',
+                    'id' => $id1,
+                    'data' => [
+                        'name' => 'First',
+                        'theme_color' => '#000000',
+                        'slug' => 'shared-slug',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->actingAs($u2)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'programs',
+                    'id' => $id2,
+                    'data' => [
+                        'name' => 'Second',
+                        'theme_color' => '#000000',
+                        'slug' => 'shared-slug',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('programs', [
+            'id' => $id1,
+            'slug' => 'shared-slug',
+        ]);
+        $this->assertDatabaseHas('programs', [
+            'id' => $id2,
+            'slug' => 'shared-slug-2',
+        ]);
     }
 }
