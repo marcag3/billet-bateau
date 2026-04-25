@@ -1,6 +1,18 @@
 Local-first pwa based on tanstack-db + powersync. Using quasar.dev components and laravel backend.
 Optimistic update.
 
+## Program admin contexts (edit, control, checkin)
+
+After a program is selected, staff work is split into **three contexts**. Each context is a separate route subtree under `/programs/:programId/` with its own **context layout** component in `resources/js/layouts/` (`AppProgramEditContextLayout.vue`, `AppProgramControlContextLayout.vue`, `AppProgramCheckinContextLayout.vue`). Those wrappers own **defaults** for shell behavior in that area—navigation grouping, header mode, program-switch rules—so `AppLayout.vue` stays a thin shell and child routes inherit context-level intent instead of repeating the same route meta everywhere.
+
+| Context | URL segment | Purpose |
+| -------- | ----------- | ------- |
+| **Edit** | `contexts/edit/` | Program configuration and catalog: boats, boat types, reports, settings, and program metadata editing. |
+| **Control** | `contexts/control-panel/` | Program **control panel**: operations-facing entry for that program. |
+| **Checkin** | `contexts/checkin/` | **Check-in manager** for the program (bookings / manifest workflows scoped to the program). |
+
+Program shell policy for the app chrome (e.g. in-place program switching) is set by the active context layout via the `appLayout` Pinia store while that layout is mounted, not from route meta. Add new pages under the context whose UX belongs with that group; use per-page overrides only when a single screen genuinely differs from its context defaults.
+
 # Implementation steps:
 
 ## Todo list

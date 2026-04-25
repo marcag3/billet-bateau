@@ -180,10 +180,20 @@ const messages = {
             deleteConfirmMessage: 'Remove "{name}"? Boats using this type will keep their link cleared.',
             errorGeneric: 'Something went wrong. Please try again.',
         },
+        programsControl: {
+            title: 'Control panel',
+            placeholderDescription:
+                'Live control and operations tools will be available here.',
+        },
+        programsCheckin: {
+            title: 'Check-in manager',
+            placeholderDescription:
+                'Check-in and arrival workflows will be available here.',
+        },
         programsList: {
             title: 'Programs',
             description:
-                'Use Active and Archived tabs for your workspace. Turn on List on public site for catalog visibility, edit details and slug on the edit page, and copy a shareable URL.',
+                'Use Active and Archived tabs for your workspace. Open Edit for program details and public listing; Control panel and Check-in manager for dedicated flows (placeholders for now). Copy a shareable URL anytime.',
             empty: 'No programs yet. Create one with the button above.',
             emptyActive: 'No programs in the Active tab.',
             emptyArchived: 'No archived programs.',
@@ -192,6 +202,8 @@ const messages = {
             tabArchived: 'Archived',
             openWorkspace: 'Open workspace',
             editProgram: 'Edit program',
+            controlPanel: 'Control panel',
+            checkinManager: 'Check-in manager',
             isActive: 'List on public site',
             slug: 'URL slug',
             slugHint: 'Lowercase, letters, numbers, and hyphens. The public page is /programs/your-slug. The server will adjust duplicates.',
@@ -389,10 +401,20 @@ const messages = {
                 'Supprimer « {name} » ? Les bateaux lies verront ce type efface.',
             errorGeneric: 'Une erreur est survenue. Veuillez reessayer.',
         },
+        programsControl: {
+            title: 'Panneau de contrôle',
+            placeholderDescription:
+                'Les outils de contrôle et d’exploitation en direct seront disponibles ici.',
+        },
+        programsCheckin: {
+            title: 'Gestion des enregistrements',
+            placeholderDescription:
+                'Les flux d’enregistrement et d’arrivée seront disponibles ici.',
+        },
         programsList: {
             title: 'Programmes',
             description:
-                'Utilisez les onglets Actifs et Archives pour votre espace. Activez Publie sur le site public pour le catalogue ; modifiez les details et l’URL sur la page d’edition ; copiez le lien partageable.',
+                'Utilisez les onglets Actifs et Archives pour votre espace. Ouvrez Modifier pour les détails du programme et la publication ; Panneau de contrôle et Gestion des enregistrements pour des parcours dédiés (ébauches pour l’instant). Copiez le lien partageable à tout moment.',
             empty: "Aucun programme pour l'instant. Utilisez le bouton ci-dessus pour en creer un.",
             emptyActive: "Aucun programme dans l’onglet Actifs.",
             emptyArchived: "Aucun programme archive.",
@@ -401,6 +423,8 @@ const messages = {
             tabArchived: 'Archives',
             openWorkspace: "Ouvrir l'espace de travail",
             editProgram: 'Modifier le programme',
+            controlPanel: 'Panneau de contrôle',
+            checkinManager: 'Gestion des enregistrements',
             isActive: 'Publie sur le site public',
             slug: 'Identifiant d’URL',
             slugHint: 'En minuscules, lettres, chiffres et tirets. La page publique est /programs/votre-identifiant. Les doublons seront ajustes.',

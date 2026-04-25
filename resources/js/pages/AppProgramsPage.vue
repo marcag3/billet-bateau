@@ -117,28 +117,10 @@
                             vertical
                         >
                             <q-btn
+                                icon="edit"
                                 color="primary"
-                                unelevated
-                                :label="t('programsList.openWorkspace')"
-                                :disable="isPatching"
-                                @click="() => openWorkspace(String(p.id))"
-                            />
-                            <q-toggle
-                                :model-value="
-                                    readReplicatedBoolean(
-                                        (p as Record<string, unknown>)
-                                            .is_active,
-                                    )
-                                "
-                                :label="t('programsList.isActive')"
-                                :disable="isPatching"
-                                @update:model-value="
-                                    (v) => onToggleActive(p, v)
-                                "
-                            />
-                            <q-btn
-                                color="primary"
-                                outline
+                                rounded
+                                no-caps
                                 :label="t('programsList.editProgram')"
                                 :to="{
                                     name: 'programs.edit',
@@ -146,8 +128,33 @@
                                 }"
                             />
                             <q-btn
+                                icon="dashboard"
                                 color="primary"
+                                rounded
+                                no-caps
+                                :label="t('programsList.controlPanel')"
+                                :to="{
+                                    name: 'programs.control',
+                                    params: { programId: String(p.id) },
+                                }"
+                            />
+                            <q-btn
+                                icon="check_circle"
+                                color="primary"
+                                rounded
+                                no-caps
+                                :label="t('programsList.checkinManager')"
+                                :to="{
+                                    name: 'programs.checkin',
+                                    params: { programId: String(p.id) },
+                                }"
+                            />
+                            <q-btn
+                                icon="link"
+                                color="primary"
+                                rounded
                                 outline
+                                no-caps
                                 :label="t('programsList.copyUrl')"
                                 @click="() => copyPublicUrl(p)"
                             />
@@ -163,7 +170,6 @@
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
-import { useRouter } from "vue-router";
 import { usePrograms } from "../models/programs/programs.model";
 import { useEntityList } from "../models/entity.queries";
 import {
@@ -177,13 +183,15 @@ import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 import { readReplicatedBoolean } from "../utilities/replicated-boolean";
+import { usePageLayout } from "../composables/usePageLayout";
 
 const PROGRAM_MODEL = "App\\Models\\Program";
 
 const { t } = useI18n();
+
+usePageLayout({ documentTitleKey: "programsList.title" });
 const $q = useQuasar();
-const router = useRouter();
-const { programs, ensureProgramsReady, patchProgramRow } = usePrograms();
+const { programs, ensureProgramsReady } = usePrograms();
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
@@ -206,7 +214,6 @@ const { data: mediaRows } = useEntityList({
     ],
 });
 
-const isPatching = ref(false);
 const programTab = ref<"active" | "archived">("active");
 
 const totalProgramCount = computed(() => (programs.value ?? []).length);
@@ -225,9 +232,7 @@ const filteredPrograms = computed(() => {
     return list.filter(
         (p) =>
             p != null &&
-            readReplicatedBoolean(
-                (p as Record<string, unknown>).is_archived,
-            ),
+            readReplicatedBoolean((p as Record<string, unknown>).is_archived),
     );
 });
 
@@ -244,14 +249,6 @@ const emptyListMessage = computed(() => {
 onMounted(() => {
     void ensureProgramsReady();
 });
-
-async function openWorkspace(programId: string) {
-    const id = String(programId ?? "").trim();
-    if (id.length === 0) {
-        return;
-    }
-    await router.push({ name: "boats.list", params: { programId: id } });
-}
 
 function findAddressForProgram(p: Record<string, unknown>) {
     const id = p.address_id;
@@ -334,19 +331,6 @@ function placeholderStyle(p: Record<string, unknown>) {
     const hex =
         typeof p.theme_color === "string" ? p.theme_color.trim() : "#e0e0e0";
     return { background: hex || "#e0e0e0" };
-}
-
-function onToggleActive(p: Record<string, unknown>, isActive: boolean) {
-    void (async () => {
-        isPatching.value = true;
-        try {
-            await patchProgramRow(String(p.id), (draft) => {
-                draft.is_active = isActive ? 1 : 0;
-            });
-        } finally {
-            isPatching.value = false;
-        }
-    })();
 }
 
 function copyPublicUrl(p: Record<string, unknown>) {

@@ -2,13 +2,16 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { setProgramSyncScopeId } from '../powersync/app-powersync.runtime';
 import { useAuthStore } from '../store/auth.store';
 
+const scopedProgramMeta = {
+    requiresAuth: true,
+    requiresSelectedProgram: true,
+} as const;
+
 const programScopeChildren: RouteRecordRaw[] = [
     {
         path: '',
         meta: {
-            requiresAuth: true,
-            /** Keeps program scope in the guard on first paint before redirect. */
-            requiresSelectedProgram: true,
+            ...scopedProgramMeta,
         },
         redirect: (to) => ({
             name: 'boats.list',
@@ -16,48 +19,81 @@ const programScopeChildren: RouteRecordRaw[] = [
         }),
     },
     {
-        path: 'boats',
-        name: 'boats.list',
-        component: () => import('../pages/AppBoatsPage.vue'),
+        path: 'contexts/edit',
+        component: () => import('../layouts/AppProgramEditContextLayout.vue'),
         meta: {
-            requiresAuth: true,
-            requiresSelectedProgram: true,
+            ...scopedProgramMeta,
         },
+        children: [
+            {
+                path: '',
+                meta: scopedProgramMeta,
+                redirect: (to) => ({
+                    name: 'boats.list',
+                    params: { programId: String(to.params.programId ?? '') },
+                }),
+            },
+            {
+                path: 'boats',
+                name: 'boats.list',
+                component: () => import('../pages/AppBoatsPage.vue'),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: 'boat-types',
+                name: 'boat-types.list',
+                component: () => import('../pages/AppBoatTypesPage.vue'),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: 'reports',
+                name: 'reports',
+                component: () => import('../pages/AppReportsPage.vue'),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: 'settings',
+                name: 'settings',
+                component: () => import('../pages/AppSettingsPage.vue'),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: 'edit',
+                name: 'programs.edit',
+                component: () => import('../pages/AppProgramEditPage.vue'),
+                meta: scopedProgramMeta,
+            },
+        ],
     },
     {
-        path: 'boat-types',
-        name: 'boat-types.list',
-        component: () => import('../pages/AppBoatTypesPage.vue'),
+        path: 'contexts/control-panel',
+        component: () => import('../layouts/AppProgramControlContextLayout.vue'),
         meta: {
-            requiresAuth: true,
-            requiresSelectedProgram: true,
+            ...scopedProgramMeta,
         },
+        children: [
+            {
+                path: '',
+                name: 'programs.control',
+                component: () => import('../pages/AppProgramControlPanelPage.vue'),
+                meta: scopedProgramMeta,
+            },
+        ],
     },
     {
-        path: 'reports',
-        name: 'reports',
-        component: () => import('../pages/AppReportsPage.vue'),
+        path: 'contexts/checkin',
+        component: () => import('../layouts/AppProgramCheckinContextLayout.vue'),
         meta: {
-            requiresAuth: true,
-            requiresSelectedProgram: true,
+            ...scopedProgramMeta,
         },
-    },
-    {
-        path: 'settings',
-        name: 'settings',
-        component: () => import('../pages/AppSettingsPage.vue'),
-        meta: {
-            requiresAuth: true,
-            requiresSelectedProgram: true,
-        },
-    },
-    {
-        path: 'edit',
-        name: 'programs.edit',
-        component: () => import('../pages/AppProgramEditPage.vue'),
-        meta: {
-            requiresAuth: true,
-        },
+        children: [
+            {
+                path: '',
+                name: 'programs.checkin',
+                component: () => import('../pages/AppProgramCheckinManagerPage.vue'),
+                meta: scopedProgramMeta,
+            },
+        ],
     },
 ];
 

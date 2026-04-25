@@ -14,7 +14,7 @@
                 />
                 <q-toolbar-title class="app-toolbar-title">
                     <q-btn-dropdown
-                        v-if="showAppNav && hasSelectedProgram"
+                        v-if="showAppNav && hasSelectedProgram && allowsInPlaceProgramIdSwitch"
                         flat
                         dense
                         color="white"
@@ -34,6 +34,12 @@
                             </q-item>
                         </q-list>
                     </q-btn-dropdown>
+                    <div
+                        v-else-if="showAppNav && hasSelectedProgram"
+                        class="text-body1 text-white text-weight-medium ellipsis"
+                    >
+                        {{ currentProgramLabel }}
+                    </div>
                 </q-toolbar-title>
 
                 <q-space />
@@ -93,20 +99,7 @@
 
                     <q-separator class="q-my-sm" />
 
-                    <q-item
-                        v-for="link in mainNavLinks"
-                        :key="link.key"
-                        v-ripple
-                        clickable
-                        :to="link.to"
-                        :exact="link.exact === true"
-                        active-class="app-nav-item--active"
-                    >
-                        <q-item-section avatar>
-                            <q-icon :name="link.icon" />
-                        </q-item-section>
-                        <q-item-section>{{ link.label }}</q-item-section>
-                    </q-item>
+                    <div :id="APP_PROGRAM_MAIN_NAV_TELEPORT_ID" />
                 </q-list>
             </q-scroll-area>
             <q-img
@@ -154,163 +147,62 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useAuthStore } from "../store/auth.store";
-import { usePrograms } from "../models/programs/programs.model";
+import { useAppLayoutStore } from "../store/app-layout.store";
+import { useProgramWorkspaceLayout } from "../composables/useProgramWorkspaceLayout";
+import { APP_PROGRAM_MAIN_NAV_TELEPORT_ID } from "../utilities/app-layout-nav";
 import AppOutboxToolbarMenu from "../components/AppOutboxToolbarMenu.vue";
 import { setLocale } from "../utilities/i18n";
-import { readReplicatedBoolean } from "../utilities/replicated-boolean";
 
 const router = useRouter();
-const route = useRoute();
 const $q = useQuasar();
 const authStore = useAuthStore();
+const layoutStore = useAppLayoutStore();
 const { t, locale } = useI18n();
-const { programs, ensureProgramsReady } = usePrograms();
-
 const leftDrawerOpen = ref(false);
 
-const showAppNav = computed(
-    () => authStore.isAuthenticated || authStore.canAccessProtectedRoute(),
-);
-
-const isProgramWorkspace = computed(() =>
-    route.matched.some((r) => r.meta.requiresSelectedProgram === true),
-);
-
-const workspaceProgramId = computed(() =>
-    isProgramWorkspace.value
-        ? String(route.params.programId ?? "").trim()
-        : "",
-);
-
-const hasSelectedProgram = isProgramWorkspace;
-
-const showSideNav = computed(
-    () => showAppNav.value && isProgramWorkspace.value,
-);
-
-const visibleProgramIds = computed(() =>
-    programs.value
-        .filter(
-            (p) =>
-                p != null &&
-                !readReplicatedBoolean(
-                    (p as Record<string, unknown>).is_archived,
-                ),
-        )
-        .map((p) => String(p.id)),
-);
-
-const programSwitcherOptions = computed(() =>
-    programs.value
-        .filter(
-            (p) =>
-                p != null &&
-                !readReplicatedBoolean(
-                    (p as Record<string, unknown>).is_archived,
-                ),
-        )
-        .map((p) => ({
-            label: String((p as Record<string, unknown>).name ?? ""),
-            value: String(p.id),
-        })),
-);
-
-const currentProgramLabel = computed(() => {
-    const id = workspaceProgramId.value;
-    if (id.length === 0) {
-        return t("common.programs");
-    }
-    const row = programs.value.find((p) => p != null && String(p.id) === id);
-    if (row) {
-        return String((row as Record<string, unknown>).name ?? id);
-    }
-    return id;
-});
-
-const mainNavLinks = computed(() => {
-    const programId = workspaceProgramId.value;
-    if (programId.length === 0) {
-        return [];
-    }
-    return [
-        {
-            key: "boats",
-            to: { name: "boats.list" as const, params: { programId } },
-            label: t("common.boats"),
-            icon: "directions_boat",
-            exact: true,
-        },
-        {
-            key: "boat-types",
-            to: { name: "boat-types.list" as const, params: { programId } },
-            label: t("common.boatTypes"),
-            icon: "category",
-            exact: true,
-        },
-        {
-            key: "reports",
-            to: { name: "reports" as const, params: { programId } },
-            label: t("common.reports"),
-            icon: "assessment",
-            exact: true,
-        },
-        {
-            key: "settings",
-            to: { name: "settings" as const, params: { programId } },
-            label: t("common.settings"),
-            icon: "settings",
-            exact: true,
-        },
-    ];
-});
-
-const WORKSPACE_ROUTE_NAMES = new Set([
-    "boats.list",
-    "boat-types.list",
-    "reports",
-    "settings",
-]);
+const baseDocumentTitle =
+    typeof document !== "undefined" ? document.title : "";
 
 watch(
-    [visibleProgramIds, () => route.params.programId, isProgramWorkspace],
-    ([ids]) => {
-        if (!isProgramWorkspace.value) {
+    [() => layoutStore.pageLayoutOverrides?.documentTitleKey, locale],
+    ([key]) => {
+        if (typeof document === "undefined") {
             return;
         }
-        const pid = String(route.params.programId ?? "").trim();
-        if (pid.length === 0) {
-            return;
-        }
-        if (ids.length === 0) {
-            void router.replace({ name: "programs.list" });
-            return;
-        }
-        if (!ids.includes(pid)) {
-            void router.replace({ name: "programs.list" });
+        if (key != null && String(key).length > 0) {
+            document.title = t(String(key));
+        } else {
+            document.title = baseDocumentTitle;
         }
     },
     { immediate: true },
 );
 
-watch(
-    () => route.fullPath,
-    () => {
-        if ($q.screen.lt.md) {
-            leftDrawerOpen.value = false;
-        }
-    },
+const {
+    isProgramWorkspace: hasSelectedProgram,
+    workspaceProgramId,
+    programSwitcherOptions,
+    currentProgramLabel,
+    allowsInPlaceProgramIdSwitch,
+    onSwitchProgram,
+} = useProgramWorkspaceLayout({
+    t,
+    layoutStore,
+    leftDrawerOpen,
+});
+
+const showAppNav = computed(
+    () => authStore.isAuthenticated || authStore.canAccessProtectedRoute(),
 );
 
-onMounted(() => {
-    if (authStore.canAccessProtectedRoute()) {
-        void ensureProgramsReady();
-    }
-});
+const showSideNav = computed(
+    () => showAppNav.value && hasSelectedProgram.value,
+);
 
 const localeOptions = computed(() => [
     { label: "EN", value: "en" },
@@ -323,35 +215,6 @@ const selectedLocale = computed({
         setLocale(value);
     },
 });
-
-/**
- * @param {string} programId
- */
-function onSwitchProgram(programId: string) {
-    const next = String(programId ?? "").trim();
-    if (next.length === 0) {
-        return;
-    }
-    if (next === workspaceProgramId.value) {
-        return;
-    }
-    const name = route.name;
-    if (name == null || typeof name !== "string") {
-        return;
-    }
-    if (!WORKSPACE_ROUTE_NAMES.has(name)) {
-        return;
-    }
-    void router.push({
-        name: name as
-            | "boats.list"
-            | "boat-types.list"
-            | "reports"
-            | "settings",
-        params: { ...route.params, programId: next },
-        query: route.query,
-    });
-}
 
 async function backToPrograms() {
     await router.push({ name: "programs.list" });

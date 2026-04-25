@@ -1,6 +1,6 @@
 ---
 description: Do not use user_id to scope models
-alwaysApply: true
+alwaysApply: false
 ---
 
 # No user_id scoping for fleet and program data
