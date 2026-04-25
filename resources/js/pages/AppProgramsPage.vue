@@ -124,22 +124,14 @@
                                     (v) => onToggleActive(p, v)
                                 "
                             />
-                            <q-input
-                                :model-value="
-                                    slugDrafts[String(p.id)] ?? p.slug ?? ''
-                                "
-                                outlined
-                                dense
-                                :label="t('programsList.slug')"
-                                :hint="t('programsList.slugHint')"
-                                :disable="isPatching"
-                                @update:model-value="
-                                    (v) =>
-                                        (slugDrafts[String(p.id)] = String(
-                                            v ?? '',
-                                        ))
-                                "
-                                @blur="() => onSlugCommit(p)"
+                            <q-btn
+                                color="primary"
+                                unelevated
+                                :label="t('programsList.editProgram')"
+                                :to="{
+                                    name: 'programs.edit',
+                                    params: { id: String(p.id) },
+                                }"
                             />
                             <q-btn
                                 color="primary"
@@ -156,10 +148,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
-import { safeParseProgramSlug } from "../models/programs/programs.validation";
 import { usePrograms } from "../models/programs/programs.model";
 import { useEntityList } from "../models/entity.queries";
 import {
@@ -201,7 +192,6 @@ const { data: mediaRows } = useEntityList({
 });
 
 const isPatching = ref(false);
-const slugDrafts = reactive<Record<string, string>>({});
 const programTab = ref<"active" | "archived">("active");
 
 /**
@@ -234,17 +224,48 @@ function programRowIsActive(p: Record<string, unknown>) {
     return false;
 }
 
+/**
+ * @param {Record<string, unknown>} p
+ * @returns {boolean}
+ */
+function programRowIsArchived(p: Record<string, unknown>) {
+    const v = p.is_archived;
+    if (v === true || v === 1) {
+        return true;
+    }
+    if (v === false || v === 0) {
+        return false;
+    }
+    if (typeof v === "string") {
+        const s = v.trim().toLowerCase();
+        if (s === "1" || s === "true" || s === "t") {
+            return true;
+        }
+        if (s === "0" || s === "false" || s === "f" || s.length === 0) {
+            return false;
+        }
+    }
+    const n = Number(v);
+    if (Number.isFinite(n)) {
+        return n === 1;
+    }
+    return false;
+}
+
 const totalProgramCount = computed(() => (programs.value ?? []).length);
 
 const filteredPrograms = computed(() => {
     const list = programs.value ?? [];
     if (programTab.value === "active") {
         return list.filter(
-            (p) => p != null && programRowIsActive(p as Record<string, unknown>),
+            (p) =>
+                p != null &&
+                !programRowIsArchived(p as Record<string, unknown>),
         );
     }
     return list.filter(
-        (p) => p != null && !programRowIsActive(p as Record<string, unknown>),
+        (p) =>
+            p != null && programRowIsArchived(p as Record<string, unknown>),
     );
 });
 
@@ -351,37 +372,6 @@ function onToggleActive(p: Record<string, unknown>, isActive: boolean) {
         try {
             await patchProgramRow(String(p.id), (draft) => {
                 draft.is_active = isActive ? 1 : 0;
-            });
-        } finally {
-            isPatching.value = false;
-        }
-    })();
-}
-
-function onSlugCommit(p: Record<string, unknown>) {
-    const id = String(p.id);
-    const raw = (slugDrafts[id] ?? p.slug ?? "").toString();
-    const current = p.slug == null ? "" : String(p.slug).trim().toLowerCase();
-    const parsed = safeParseProgramSlug(t, raw);
-    if (!parsed.success) {
-        $q.notify({
-            type: "negative",
-            message:
-                parsed.error.issues[0]?.message ??
-                t("programsList.slugRequired"),
-        });
-        slugDrafts[id] = current;
-        return;
-    }
-    const next = parsed.data;
-    if (next === current) {
-        return;
-    }
-    void (async () => {
-        isPatching.value = true;
-        try {
-            await patchProgramRow(id, (draft) => {
-                draft.slug = next;
             });
         } finally {
             isPatching.value = false;

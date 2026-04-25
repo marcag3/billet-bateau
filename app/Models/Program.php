@@ -35,6 +35,7 @@ class Program extends Model implements HasMedia
         'description',
         'theme_color',
         'is_active',
+        'is_archived',
         'slug',
         'created_at',
         'updated_at',
@@ -44,6 +45,7 @@ class Program extends Model implements HasMedia
     {
         return [
             'is_active' => 'boolean',
+            'is_archived' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -109,6 +111,22 @@ class Program extends Model implements HasMedia
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class, 'program_id');
+    }
+
+    /**
+     * Public program routes resolve by slug and exclude archived programs.
+     *
+     * @param  mixed  $value
+     * @param  string|null  $field
+     */
+    public function resolveRouteBinding($value, $field = null): ?static
+    {
+        $field ??= $this->getRouteKeyName();
+
+        return static::query()
+            ->where($field, $value)
+            ->where('is_archived', false)
+            ->first();
     }
 
     /**

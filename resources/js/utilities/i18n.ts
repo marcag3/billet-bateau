@@ -61,6 +61,16 @@ const messages = {
             title: 'Settings',
             isolatedDescription: 'Feature-specific settings remain isolated to the app bundle.',
         },
+        programsEdit: {
+            title: 'Edit program',
+            subtitle:
+                'Update details, URL slug, public visibility, and archive state. Changes sync through PowerSync; new images upload to the server.',
+            submit: 'Save changes',
+            success: 'Program updated.',
+            notFound: 'This program could not be loaded. It may have been removed or you may not have access.',
+            backToList: 'Back to programs',
+            isArchived: 'Archived (hidden from Active tab)',
+        },
         programsCreate: {
             title: 'Create program',
             subtitle: 'Program details sync through PowerSync; images upload to the server and sync as metadata.',
@@ -166,13 +176,14 @@ const messages = {
         programsList: {
             title: 'Programs',
             description:
-                'Set which programs appear on the public home page, short links, and copy a shareable URL.',
+                'Use Active and Archived tabs for your workspace. Turn on List on public site for catalog visibility, edit details and slug on the edit page, and copy a shareable URL.',
             empty: 'No programs yet. Create one with the button above.',
-            emptyActive: 'No active programs.',
+            emptyActive: 'No programs in the Active tab.',
             emptyArchived: 'No archived programs.',
             addProgram: 'New program',
             tabActive: 'Active',
             tabArchived: 'Archived',
+            editProgram: 'Edit program',
             isActive: 'List on public site',
             slug: 'URL slug',
             slugHint: 'Lowercase, letters, numbers, and hyphens. The public page is /programs/your-slug. The server will adjust duplicates.',
@@ -243,6 +254,17 @@ const messages = {
             title: 'Parametres',
             isolatedDescription:
                 "Les parametres specifiques restent isoles dans le bundle de l'application.",
+        },
+        programsEdit: {
+            title: 'Modifier le programme',
+            subtitle:
+                'Mettez a jour les details, l’identifiant d’URL, la visibilite publique et l’archivage. Les changements se synchronisent via PowerSync ; les nouvelles images sont envoyees au serveur.',
+            submit: 'Enregistrer',
+            success: 'Programme mis a jour.',
+            notFound:
+                'Impossible de charger ce programme. Il a peut-etre ete supprime ou vous n’y avez pas acces.',
+            backToList: 'Retour aux programmes',
+            isArchived: 'Archive (absent de l’onglet Actifs)',
         },
         programsCreate: {
             title: 'Creer un programme',
@@ -355,13 +377,14 @@ const messages = {
         programsList: {
             title: 'Programmes',
             description:
-                'Indiquez quels programmes apparaissent sur l’accueil public, les liens courts, et copiez l’URL.',
+                'Utilisez les onglets Actifs et Archives pour votre espace. Activez Publie sur le site public pour le catalogue ; modifiez les details et l’URL sur la page d’edition ; copiez le lien partageable.',
             empty: "Aucun programme pour l'instant. Utilisez le bouton ci-dessus pour en creer un.",
-            emptyActive: "Aucun programme actif.",
+            emptyActive: "Aucun programme dans l’onglet Actifs.",
             emptyArchived: "Aucun programme archive.",
             addProgram: 'Nouveau programme',
             tabActive: 'Actifs',
             tabArchived: 'Archives',
+            editProgram: 'Modifier le programme',
             isActive: 'Publie sur le site public',
             slug: 'Identifiant d’URL',
             slugHint: 'En minuscules, lettres, chiffres et tirets. La page publique est /programs/votre-identifiant. Les doublons seront ajustes.',

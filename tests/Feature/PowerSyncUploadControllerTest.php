@@ -59,12 +59,38 @@ class PowerSyncUploadControllerTest extends TestCase
             'name' => 'Dockside',
             'theme_color' => '#FF00AA',
             'is_active' => 0,
+            'is_archived' => 0,
             'slug' => 'dockside',
         ]);
 
         $this->assertDatabaseHas('program_user', [
             'program_id' => $id,
             'user_id' => $user->getAuthIdentifier(),
+        ]);
+    }
+
+    public function test_put_derives_slug_from_accented_name_when_slug_missing(): void
+    {
+        $user = User::factory()->create();
+        $id = (string) Str::uuid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'programs',
+                    'id' => $id,
+                    'data' => [
+                        'name' => 'Été Riviera',
+                        'theme_color' => '#000000',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('programs', [
+            'id' => $id,
+            'slug' => 'ete-riviera',
         ]);
     }
 

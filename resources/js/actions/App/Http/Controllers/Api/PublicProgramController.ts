@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PublicProgramController::show
-* @see app/Http/Controllers/Api/PublicProgramController.php:24
+* @see app/Http/Controllers/Api/PublicProgramController.php:25
 * @route '/api/public/programs/{program}'
 */
 export const show = (args: { program: string | { slug: string } } | [program: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -60,7 +60,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicProgramController::show
-* @see app/Http/Controllers/Api/PublicProgramController.php:24
+* @see app/Http/Controllers/Api/PublicProgramController.php:25
 * @route '/api/public/programs/{program}'
 */
 show.url = (args: { program: string | { slug: string } } | [program: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions) => {
@@ -93,7 +93,7 @@ show.url = (args: { program: string | { slug: string } } | [program: string | { 
 
 /**
 * @see \App\Http\Controllers\Api\PublicProgramController::show
-* @see app/Http/Controllers/Api/PublicProgramController.php:24
+* @see app/Http/Controllers/Api/PublicProgramController.php:25
 * @route '/api/public/programs/{program}'
 */
 show.get = (args: { program: string | { slug: string } } | [program: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -103,7 +103,7 @@ show.get = (args: { program: string | { slug: string } } | [program: string | { 
 
 /**
 * @see \App\Http\Controllers\Api\PublicProgramController::show
-* @see app/Http/Controllers/Api/PublicProgramController.php:24
+* @see app/Http/Controllers/Api/PublicProgramController.php:25
 * @route '/api/public/programs/{program}'
 */
 show.head = (args: { program: string | { slug: string } } | [program: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({

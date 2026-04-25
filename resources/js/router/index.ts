@@ -47,6 +47,14 @@ const routes: RouteRecordRaw[] = [
         },
     },
     {
+        path: '/programs/:id/edit',
+        name: 'programs.edit',
+        component: () => import('../pages/AppProgramEditPage.vue'),
+        meta: {
+            requiresAuth: true,
+        },
+    },
+    {
         path: '/programs',
         name: 'programs.list',
         component: () => import('../pages/AppProgramsPage.vue'),

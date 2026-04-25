@@ -28,10 +28,10 @@
                     :options="programOptions"
                     :label="t('boatsList.programRoster')"
                     :hint="t('boatsList.programRosterHint')"
-                    :disable="programs.length === 0"
+                    :disable="visiblePrograms.length === 0"
                 />
                 <q-banner
-                    v-if="programs.length === 0"
+                    v-if="visiblePrograms.length === 0"
                     class="bg-grey-2 q-mt-sm rounded-borders"
                     dense
                 >
@@ -233,15 +233,49 @@ const drafts = reactive<Record<string, Record<string, string>>>({});
 
 const selectedProgramId = ref('');
 
+/**
+ * @param {Record<string, unknown>} p
+ * @returns {boolean}
+ */
+function programRowIsArchived(p: Record<string, unknown>) {
+    const v = p.is_archived;
+    if (v === true || v === 1) {
+        return true;
+    }
+    if (v === false || v === 0) {
+        return false;
+    }
+    if (typeof v === 'string') {
+        const s = v.trim().toLowerCase();
+        if (s === '1' || s === 'true' || s === 't') {
+            return true;
+        }
+        if (s === '0' || s === 'false' || s === 'f' || s.length === 0) {
+            return false;
+        }
+    }
+    const n = Number(v);
+    if (Number.isFinite(n)) {
+        return n === 1;
+    }
+    return false;
+}
+
+const visiblePrograms = computed(() =>
+    programs.value.filter(
+        (p) => p != null && !programRowIsArchived(p as Record<string, unknown>),
+    ),
+);
+
 const programOptions = computed(() =>
-    programs.value.map((p) => ({
+    visiblePrograms.value.map((p) => ({
         label: String(p.name ?? ''),
         value: String(p.id),
     })),
 );
 
 watch(
-    programs,
+    visiblePrograms,
     (list) => {
         if (list.length === 0) {
             selectedProgramId.value = '';

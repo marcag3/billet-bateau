@@ -16,6 +16,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('theme_color', 7);
             $table->boolean('is_active')->default(false);
+            $table->boolean('is_archived')->default(false);
             $table->string('slug', 255)->unique();
             $table->timestamps();
 

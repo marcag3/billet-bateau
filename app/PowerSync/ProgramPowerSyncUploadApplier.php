@@ -50,6 +50,7 @@ final class ProgramPowerSyncUploadApplier
             }
 
             $isActive = $this->coerceToBool($data['is_active'] ?? null) ?? false;
+            $isArchived = $this->coerceToBool($data['is_archived'] ?? null) ?? false;
 
             $displayName = $name !== '' ? $name : 'Untitled';
             $proposedSlug = array_key_exists('slug', $data)
@@ -63,6 +64,7 @@ final class ProgramPowerSyncUploadApplier
                 'description' => $description,
                 'theme_color' => $themeColor,
                 'is_active' => $isActive,
+                'is_archived' => $isArchived,
                 'slug' => $this->assignUniqueSlug((string) $id, $baseSlug),
             ];
 
@@ -116,6 +118,13 @@ final class ProgramPowerSyncUploadApplier
                 }
             }
 
+            if (array_key_exists('is_archived', $data)) {
+                $next = $this->coerceToBool($data['is_archived']);
+                if ($next !== null) {
+                    $program->is_archived = $next;
+                }
+            }
+
             if (array_key_exists('slug', $data)) {
                 $proposed = $this->normalizeSlugValue($data['slug']);
                 $base = $proposed !== null && $proposed !== ''
@@ -162,7 +171,7 @@ final class ProgramPowerSyncUploadApplier
             return null;
         }
 
-        $slug = Str::slug($asString);
+        $slug = Str::slug(Str::ascii($asString));
         if ($slug === '') {
             return null;
         }

@@ -13,11 +13,12 @@ import {
     refreshOutboxSnapshot,
     waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
+import { foldUnicodeForProgramSlug } from '../../utilities/program-slug';
 
 export const programsModelDefinition = defineModel({
     name: 'programs',
     collectionId: 'programs',
-    persistenceSchemaVersion: 5,
+    persistenceSchemaVersion: 6,
     pickUpdatePayload: (changes) => ({ ...changes }),
     orderBy: [
         { key: 'updated_at', direction: 'desc' },
@@ -46,7 +47,7 @@ function normalizeThemeColor(hex) {
  * @returns {string}
  */
 function buildInitialProgramSlug(name, id) {
-    const t = String(name).trim().toLowerCase();
+    const t = foldUnicodeForProgramSlug(name).toLowerCase();
     const kebab = t
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
@@ -116,6 +117,7 @@ export function usePrograms() {
             description: input.description.trim().length > 0 ? input.description.trim() : null,
             theme_color: themeColor,
             is_active: input.isActive ? 1 : 0,
+            is_archived: 0,
             slug: buildInitialProgramSlug(input.name, id),
             created_at: now,
             updated_at: now,
@@ -129,6 +131,86 @@ export function usePrograms() {
         }
 
         return id;
+    }
+
+    /**
+     * @param {string} programId
+     * @param {{
+     *   name: string,
+     *   description: string,
+     *   themeColor: string,
+     *   slug: string,
+     *   isActive: boolean,
+     *   isArchived: boolean,
+     *   address: Record<string, string>,
+     * }} input
+     * @returns {Promise<void>}
+     */
+    async function updateProgramWithOptionalAddress(programId, input) {
+        await ensureProgramsReady();
+
+        const programsCollection = programsCollectionRef.value;
+        const addressesCollection = addressesCollectionRef.value;
+
+        if (!programsCollection || !addressesCollection) {
+            throw new Error('Program collections are not ready.');
+        }
+
+        const programRow = (programs.value ?? []).find((p) => p != null && String(p.id) === programId);
+        if (!programRow) {
+            throw new Error('Program not found.');
+        }
+
+        const themeColor = normalizeThemeColor(input.themeColor);
+        const now = new Date().toISOString();
+        const address = input.address ?? {};
+        const hasAddress = addressHasAny(address);
+
+        let nextAddressId =
+            programRow.address_id != null && String(programRow.address_id).length > 0
+                ? String(programRow.address_id)
+                : null;
+
+        if (hasAddress) {
+            if (nextAddressId) {
+                addressesCollection.update(nextAddressId, (draft) => {
+                    draft.line_1 = typeof address.line_1 === 'string' ? address.line_1.trim() || null : null;
+                    draft.line_2 = typeof address.line_2 === 'string' ? address.line_2.trim() || null : null;
+                    draft.city = typeof address.city === 'string' ? address.city.trim() || null : null;
+                    draft.postal_code =
+                        typeof address.postal_code === 'string' ? address.postal_code.trim() || null : null;
+                    draft.country = typeof address.country === 'string' ? address.country.trim() || null : null;
+                    draft.updated_at = now;
+                });
+            } else {
+                const newAddressId = crypto.randomUUID();
+                addressesCollection.insert(buildAddressInsertRow(newAddressId, address, now));
+                nextAddressId = newAddressId;
+            }
+        } else if (nextAddressId) {
+            addressesCollection.update(nextAddressId, (draft) => {
+                draft.line_1 = null;
+                draft.line_2 = null;
+                draft.city = null;
+                draft.postal_code = null;
+                draft.country = null;
+                draft.updated_at = now;
+            });
+            nextAddressId = null;
+        }
+
+        programsCollection.update(programId, (draft) => {
+            draft.name = input.name.trim();
+            draft.description = input.description.trim().length > 0 ? input.description.trim() : null;
+            draft.theme_color = themeColor;
+            draft.slug = input.slug;
+            draft.is_active = input.isActive ? 1 : 0;
+            draft.is_archived = input.isArchived ? 1 : 0;
+            draft.address_id = nextAddressId;
+            draft.updated_at = now;
+        });
+
+        void refreshOutboxSnapshot();
     }
 
     /**
@@ -154,6 +236,7 @@ export function usePrograms() {
         programs,
         ensureProgramsReady,
         createProgramWithOptionalAddress,
+        updateProgramWithOptionalAddress,
         patchProgramRow,
         refresh: bootstrapAppPowerSync,
         hasPrograms: computed(() => programs.value.length > 0),

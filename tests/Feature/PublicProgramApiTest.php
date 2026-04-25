@@ -61,6 +61,42 @@ class PublicProgramApiTest extends TestCase
         $r->assertJsonPath('data.0.path_segment', 'harbor-2026');
     }
 
+    public function test_index_excludes_archived_programs(): void
+    {
+        $u = User::factory()->create();
+
+        $listed = Program::factory()->for($u)->create([
+            'is_active' => true,
+            'is_archived' => false,
+            'name' => 'Listed',
+        ]);
+
+        Program::factory()->for($u)->create([
+            'is_active' => true,
+            'is_archived' => true,
+            'name' => 'Archived only',
+        ]);
+
+        $r = $this->getJson('/api/public/programs');
+        $r->assertOk();
+        $r->assertJsonPath('data.0.id', $listed->getKey());
+        $r->assertJsonCount(1, 'data');
+    }
+
+    public function test_show_returns_404_for_archived_program(): void
+    {
+        $u = User::factory()->create();
+        Program::factory()->for($u)->create([
+            'is_active' => true,
+            'is_archived' => true,
+            'name' => 'Gone',
+            'slug' => 'archived-slug',
+        ]);
+
+        $this->getJson('/api/public/programs/archived-slug')
+            ->assertNotFound();
+    }
+
     public function test_show_resolves_by_slug_and_does_not_require_is_active(): void
     {
         $u = User::factory()->create();

@@ -18,6 +18,7 @@ final class ProgramData extends Data
         public ?string $description,
         public string $theme_color,
         public bool $is_active,
+        public bool $is_archived,
         public string $slug,
         public ?AddressResponseData $address,
     ) {}
@@ -56,6 +57,7 @@ final class ProgramData extends Data
             description: $program->description,
             theme_color: (string) $program->theme_color,
             is_active: (bool) $program->is_active,
+            is_archived: (bool) $program->is_archived,
             slug: $program->slug,
             address: $address,
         );

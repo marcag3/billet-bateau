@@ -74,6 +74,7 @@ class ProgramControllerTest extends TestCase
             'theme_color' => '#AABBCC',
             'slug' => 'harbor-week',
             'is_active' => true,
+            'is_archived' => false,
         ]);
 
         $this->assertDatabaseHas('program_user', [

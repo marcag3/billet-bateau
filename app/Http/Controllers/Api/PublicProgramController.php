@@ -14,6 +14,7 @@ class PublicProgramController extends Controller
     {
         $programs = Program::query()
             ->active()
+            ->where('is_archived', false)
             ->with('media')
             ->orderBy('name')
             ->get();
