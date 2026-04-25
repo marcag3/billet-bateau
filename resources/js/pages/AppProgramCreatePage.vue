@@ -22,9 +22,17 @@
                     v-model="name"
                     v-bind="nameProps"
                     outlined
-                    :label="t('programsCreate.name')"
+                    label-slot
                     :disable="isSubmitting"
-                />
+                >
+                    <template #label>
+                        {{ t('programsCreate.name') }}
+                        <span
+                            class="text-negative"
+                            aria-hidden="true"
+                        >*</span>
+                    </template>
+                </q-input>
 
                 <q-input
                     v-model="description"
@@ -36,38 +44,39 @@
                     :disable="isSubmitting"
                 />
 
-                <div class="row q-col-gutter-md items-start">
-                    <div class="col-12 col-md-6">
-                        <div class="text-caption text-grey-7 q-mb-xs">
-                            {{ t('programsCreate.themeColor') }}
-                        </div>
-                        <q-input
-                            v-model="themeColor"
-                            v-bind="themeColorProps"
-                            outlined
-                            :disable="isSubmitting"
+                <q-input
+                    v-model="themeColor"
+                    v-bind="themeColorProps"
+                    outlined
+                    label-slot
+                    :disable="isSubmitting"
+                >
+                    <template #label>
+                        {{ t('programsCreate.themeColor') }}
+                        <span
+                            class="text-negative"
+                            aria-hidden="true"
+                        >*</span>
+                    </template>
+                    <template #append>
+                        <q-icon
+                            name="colorize"
+                            class="cursor-pointer"
                         >
-                            <template #append>
-                                <q-icon
-                                    name="colorize"
-                                    class="cursor-pointer"
-                                >
-                                    <q-popup-proxy
-                                        cover
-                                        transition-show="scale"
-                                        transition-hide="scale"
-                                    >
-                                        <q-color
-                                            v-model="themeColor"
-                                            format-model="hex"
-                                            default-view="palette"
-                                        />
-                                    </q-popup-proxy>
-                                </q-icon>
-                            </template>
-                        </q-input>
-                    </div>
-                </div>
+                            <q-popup-proxy
+                                cover
+                                transition-show="scale"
+                                transition-hide="scale"
+                            >
+                                <q-color
+                                    v-model="themeColor"
+                                    format-model="hex"
+                                    default-view="palette"
+                                />
+                            </q-popup-proxy>
+                        </q-icon>
+                    </template>
+                </q-input>
 
                 <q-expansion-item
                     :label="t('programsCreate.addressOptional')"
