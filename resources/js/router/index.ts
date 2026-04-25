@@ -34,6 +34,18 @@ const programScopeChildren: RouteRecordRaw[] = [
                 }),
             },
             {
+                path: 'boats/create',
+                name: 'boats.create',
+                component: () => import('../pages/AppBoatCreatePage.vue'),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: 'boats/:boatId/edit',
+                name: 'boats.edit',
+                component: () => import('../pages/AppBoatEditPage.vue'),
+                meta: scopedProgramMeta,
+            },
+            {
                 path: 'boats',
                 name: 'boats.list',
                 component: () => import('../pages/AppBoatsPage.vue'),

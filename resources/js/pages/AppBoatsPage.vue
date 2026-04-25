@@ -1,9 +1,71 @@
 <template>
-    <q-page class="q-pa-xl">
-        <AppPageHeader
-            :title="t('boatsList.title')"
-            :description="t('boatsList.description')"
-        />
+    <AppEntityIndexPageLayout>
+        <template #header>
+            <AppPageHeader
+                :title="t('boatsList.title')"
+                :description="t('boatsList.description')"
+            >
+                <template #actions>
+                    <q-btn
+                        color="primary"
+                        icon="add"
+                        :label="t('boatsList.addBoat')"
+                        :to="{ name: 'boats.create', params: { programId } }"
+                    />
+                </template>
+            </AppPageHeader>
+        </template>
+
+        <template #filters>
+            <AppCardSection :label="t('boatsList.filters')">
+                <AppFormRow>
+                    <q-input
+                        v-model="filterName"
+                        class="col-12 col-sm-6 col-md-3"
+                        outlined
+                        dense
+                        clearable
+                        :label="t('boatsList.filterName')"
+                    />
+                    <q-input
+                        v-model="filterCapacity"
+                        class="col-12 col-sm-6 col-md-2"
+                        outlined
+                        dense
+                        clearable
+                        :label="t('boatsList.filterCapacity')"
+                    />
+                    <q-input
+                        v-model="filterNotes"
+                        class="col-12 col-sm-6 col-md-3"
+                        outlined
+                        dense
+                        clearable
+                        :label="t('boatsList.filterNotes')"
+                    />
+                    <q-select
+                        v-model="filterBoatTypeId"
+                        class="col-12 col-sm-6 col-md-3"
+                        outlined
+                        dense
+                        clearable
+                        emit-value
+                        map-options
+                        :options="boatTypeOptions"
+                        :label="t('boatsList.filterBoatType')"
+                    />
+                    <div class="col-12 col-md-1 flex items-end">
+                        <q-btn
+                            flat
+                            color="primary"
+                            :label="t('boatsList.clearFilters')"
+                            :disable="!hasActiveFilters"
+                            @click="clearFilters"
+                        />
+                    </div>
+                </AppFormRow>
+            </AppCardSection>
+        </template>
 
         <AppAlertBanner
             v-if="hasOutboxCommitError"
@@ -19,207 +81,111 @@
             :ready="hasBootstrapped"
             content-class="q-gutter-y-md"
         >
-            <AppCardSection :label="t('boatsList.programRoster')">
+            <AppCardSection :label="t('boatsList.listProgramRoster')">
                 <p class="text-body2 text-grey-8 q-mb-none">
                     {{ t('boatsList.rosterForProgram', { name: selectedProgramName }) }}
                 </p>
             </AppCardSection>
 
-            <AppCardSection :label="t('boatsList.addNew')">
-                <q-form @submit.prevent="onCreateSubmit">
-                    <AppFormStack>
-                        <q-input
-                            v-model="createName"
-                            v-bind="createNameProps"
-                            outlined
-                            :label="t('boatsList.name')"
-                            :disable="isSubmitting"
-                        />
-                        <q-input
-                            v-model.number="createCapacity"
-                            v-bind="createCapacityProps"
-                            outlined
-                            type="number"
-                            :label="t('boatsList.capacity')"
-                            :hint="t('boatsList.capacityHint')"
-                            :disable="isSubmitting"
-                        />
-                        <q-input
-                            v-model="createNotes"
-                            v-bind="createNotesProps"
-                            type="textarea"
-                            autogrow
-                            outlined
-                            :label="t('boatsList.notes')"
-                            :disable="isSubmitting"
-                        />
-                        <q-select
-                            v-model="createBoatTypeId"
-                            v-bind="createBoatTypeIdProps"
-                            outlined
-                            emit-value
-                            map-options
-                            clearable
-                            :options="boatTypeOptions"
-                            :label="t('boatsList.boatType')"
-                            :disable="isSubmitting"
-                        />
-                        <q-btn
+            <q-infinite-scroll
+                :offset="400"
+                :disable="infiniteScrollDisabled"
+                @load="onLoadMore"
+            >
+                <AppEntityList>
+                    <AppEmptyListRow
+                        :show="filteredBoats.length === 0"
+                        :message="emptyListMessage"
+                    />
+                    <q-item
+                        v-for="b in visibleBoats"
+                        :key="String(b.id)"
+                        class="q-pa-md"
+                    >
+                        <q-item-section>
+                            <q-item-label class="text-h6">{{ b.name }}</q-item-label>
+                            <q-item-label
+                                v-if="b.notes"
+                                caption
+                                lines="2"
+                            >
+                                {{ b.notes }}
+                            </q-item-label>
+                        </q-item-section>
+                        <q-item-section side>
+                            <div class="row q-gutter-y-xs items-end" style="flex-direction: column">
+                                <q-item-label
+                                    v-if="b.capacity != null"
+                                    class="text-body2"
+                                >
+                                    {{ t('boatsList.capacity') }}: {{ b.capacity }}
+                                </q-item-label>
+                                <q-item-label
+                                    v-if="boatTypeLabelFor(b)"
+                                    class="text-body2"
+                                >
+                                    {{ t('boatsList.boatType') }}: {{ boatTypeLabelFor(b) }}
+                                </q-item-label>
+                                <q-btn
+                                    color="primary"
+                                    outline
+                                    dense
+                                    :label="t('boatsList.edit')"
+                                    :to="{
+                                        name: 'boats.edit',
+                                        params: { programId, boatId: String(b.id) },
+                                    }"
+                                />
+                            </div>
+                        </q-item-section>
+                    </q-item>
+                </AppEntityList>
+                <template #loading>
+                    <div class="row justify-center q-my-md">
+                        <q-spinner-dots
                             color="primary"
-                            type="submit"
-                            :label="t('boatsList.create')"
-                            :loading="isSubmitting"
-                            :disable="!meta.valid || isSubmitting || selectedProgramId.trim() === ''"
-                            class="self-start"
+                            size="40px"
                         />
-                    </AppFormStack>
-                </q-form>
-            </AppCardSection>
-
-            <AppEntityList>
-                <AppEmptyListRow
-                    :show="boats.length === 0"
-                    :message="t('boatsList.empty')"
-                />
-                <q-item
-                    v-for="b in boats"
-                    :key="b.id"
-                    class="q-pa-md"
-                    style="align-items: flex-start"
-                >
-                    <q-item-section>
-                        <q-item-label class="text-h6 q-mb-sm">{{ b.name }}</q-item-label>
-                        <div class="row q-col-gutter-sm q-mb-sm">
-                            <div class="col-12 col-sm-6">
-                                <q-input
-                                    :model-value="String(b.name ?? '')"
-                                    outlined
-                                    dense
-                                    :label="t('boatsList.name')"
-                                    :disable="patchingId === b.id"
-                                    @update:model-value="(v) => setFieldDraft(b.id, 'name', v)"
-                                    @blur="() => commitField(b, 'name')"
-                                />
-                            </div>
-                            <div class="col-12 col-sm-3">
-                                <q-input
-                                    :model-value="draftNumber(b, 'capacity')"
-                                    outlined
-                                    dense
-                                    type="number"
-                                    :label="t('boatsList.capacity')"
-                                    :disable="patchingId === b.id"
-                                    @update:model-value="(v) => setFieldDraft(b.id, 'capacity', v)"
-                                    @blur="() => commitCapacity(b)"
-                                />
-                            </div>
-                            <div class="col-12 col-sm-3">
-                                <q-select
-                                    :model-value="boatTypeSelectValue(b)"
-                                    outlined
-                                    dense
-                                    emit-value
-                                    map-options
-                                    clearable
-                                    :options="boatTypeOptions"
-                                    :label="t('boatsList.boatType')"
-                                    :disable="patchingId === b.id"
-                                    @update:model-value="(v) => onBoatTypeChange(b, v)"
-                                />
-                            </div>
-                        </div>
-                        <q-input
-                            :model-value="String(b.notes ?? '')"
-                            type="textarea"
-                            autogrow
-                            outlined
-                            dense
-                            class="q-mb-sm"
-                            :label="t('boatsList.notes')"
-                            :disable="patchingId === b.id"
-                            @update:model-value="(v) => setFieldDraft(b.id, 'notes', v)"
-                            @blur="() => commitField(b, 'notes')"
-                        />
-                        <q-btn
-                            flat
-                            color="negative"
-                            icon="delete"
-                            :label="t('boatsList.delete')"
-                            :disable="patchingId === b.id"
-                            @click="() => confirmDelete(b)"
-                        />
-                    </q-item-section>
-                </q-item>
-            </AppEntityList>
+                    </div>
+                </template>
+            </q-infinite-scroll>
         </AppBootstrapGate>
-    </q-page>
+    </AppEntityIndexPageLayout>
 </template>
 
 <script setup lang="ts">
-import { useForm } from 'vee-validate';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useQuasar } from 'quasar';
 import { useRoute } from 'vue-router';
 import { useBoats } from '../models/boats/boats.model';
-import { createBoatCreateFormSchema, type BoatCreateFormValues, safeParseBoatEntityName } from '../models/boats/boats.validation';
-import { parseOptionalNonNegativeInt } from '../validation/zod-fields';
-import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
-import { useBoatTypes } from '../models/boat-types/boat-types.model';
 import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox } from '../powersync/app-powersync.runtime';
+import { useBoatTypes } from '../models/boat-types/boat-types.model';
 import { usePrograms } from '../models/programs/programs.model';
-import { useConfirmDialog } from '../composables/useConfirmDialog';
-import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
-import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
+import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
 import AppBootstrapGate from '../components/ui/AppBootstrapGate.vue';
 import AppCardSection from '../components/ui/AppCardSection.vue';
-import AppFormStack from '../components/ui/AppFormStack.vue';
+import AppFormRow from '../components/ui/AppFormRow.vue';
 import AppEntityList from '../components/ui/AppEntityList.vue';
 import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
 
+const PAGE_SIZE = 20;
+
 const { t } = useI18n();
-const $q = useQuasar();
 const route = useRoute();
-const { boats, ensureBoatsReady, createBoatRow, patchBoatRow, deleteBoatRow } = useBoats();
+const { boats, ensureBoatsReady } = useBoats();
 const { programs, ensureProgramsReady } = usePrograms();
 const { boatTypes, ensureBoatTypesReady } = useBoatTypes();
-const { confirm } = useConfirmDialog();
-const { runWithNotify } = useNotifyAsyncAction();
-const { notifyError } = useNotifyErrorFromCatch();
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
 
-const boatCreateSchema = createBoatCreateFormSchema(t);
-const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm<BoatCreateFormValues>({
-    validationSchema: boatCreateSchema,
-    initialValues: {
-        name: '',
-        capacity: null,
-        notes: '',
-        boatTypeId: null,
-    } as unknown as BoatCreateFormValues,
-});
-
-const quasarField = createQuasarFieldBinder(defineField);
-
-const [createName, createNameProps] = quasarField('name');
-const [createCapacity, createCapacityProps] = quasarField('capacity');
-const [createNotes, createNotesProps] = quasarField('notes');
-const [createBoatTypeId, createBoatTypeIdProps] = quasarField('boatTypeId');
-
-const patchingId = ref('');
-const drafts = reactive<Record<string, Record<string, string>>>({});
-
-const selectedProgramId = computed(() =>
-    String(route.params.programId ?? '').trim(),
-);
+const programId = computed(() => String(route.params.programId ?? '').trim());
 
 const selectedProgramName = computed(() => {
-    const id = selectedProgramId.value;
+    const id = programId.value;
     if (id.length === 0) {
         return '';
     }
@@ -230,6 +196,13 @@ const selectedProgramName = computed(() => {
     return id;
 });
 
+const filterName = ref('');
+const filterCapacity = ref('');
+const filterNotes = ref('');
+const filterBoatTypeId = ref<string | null>(null);
+
+const visibleCount = ref(PAGE_SIZE);
+
 const boatTypeOptions = computed(() =>
     boatTypes.value.map((bt) => ({
         label: String(bt.name ?? ''),
@@ -237,142 +210,106 @@ const boatTypeOptions = computed(() =>
     })),
 );
 
+const hasActiveFilters = computed(() => {
+    return (
+        filterName.value.trim().length > 0 ||
+        filterCapacity.value.trim().length > 0 ||
+        filterNotes.value.trim().length > 0 ||
+        (filterBoatTypeId.value != null && String(filterBoatTypeId.value).length > 0)
+    );
+});
+
+const filteredBoats = computed(() => {
+    const nq = filterName.value.trim().toLowerCase();
+    const capq = filterCapacity.value.trim();
+    const notesq = filterNotes.value.trim().toLowerCase();
+    const typeId = filterBoatTypeId.value;
+
+    return boats.value.filter((b) => {
+        const name = String(b.name ?? '').toLowerCase();
+        const notes = String(b.notes ?? '').toLowerCase();
+        const cap = b.capacity == null || b.capacity === '' ? '' : String(b.capacity);
+
+        if (nq.length > 0 && !name.includes(nq)) {
+            return false;
+        }
+        if (notesq.length > 0 && !notes.includes(notesq)) {
+            return false;
+        }
+        if (capq.length > 0 && !cap.includes(capq)) {
+            return false;
+        }
+        if (typeId != null && String(typeId).length > 0) {
+            const bid = b.boat_type_id == null || String(b.boat_type_id) === '' ? null : String(b.boat_type_id);
+            if (bid !== String(typeId)) {
+                return false;
+            }
+        }
+        return true;
+    });
+});
+
+const visibleBoats = computed(() => filteredBoats.value.slice(0, visibleCount.value));
+
+const infiniteScrollDisabled = computed(
+    () => visibleBoats.value.length >= filteredBoats.value.length,
+);
+
+const emptyListMessage = computed(() => {
+    if (filteredBoats.value.length > 0) {
+        return '';
+    }
+    if (boats.value.length > 0 && hasActiveFilters.value) {
+        return t('boatsList.emptyFiltered');
+    }
+    return t('boatsList.empty');
+});
+
+function boatTypeLabelFor(b: Record<string, unknown>) {
+    const id = b.boat_type_id;
+    if (id == null || String(id) === '') {
+        return '';
+    }
+    const opt = boatTypeOptions.value.find((o) => o.value === String(id));
+    return opt?.label ?? '';
+}
+
+function clearFilters() {
+    filterName.value = '';
+    filterCapacity.value = '';
+    filterNotes.value = '';
+    filterBoatTypeId.value = null;
+}
+
+watch(
+    () => [filterName.value, filterCapacity.value, filterNotes.value, filterBoatTypeId.value],
+    () => {
+        visibleCount.value = PAGE_SIZE;
+    },
+);
+
+watch(
+    () => filteredBoats.value.length,
+    (len) => {
+        if (len < visibleCount.value) {
+            visibleCount.value = Math.max(PAGE_SIZE, len);
+        }
+    },
+);
+
+function onLoadMore(_index: number, done: (stop?: boolean) => void) {
+    if (visibleBoats.value.length >= filteredBoats.value.length) {
+        done(true);
+        return;
+    }
+    visibleCount.value += PAGE_SIZE;
+    const stop = visibleBoats.value.length >= filteredBoats.value.length;
+    done(stop);
+}
+
 onMounted(() => {
     void ensureProgramsReady();
     void ensureBoatTypesReady();
     void ensureBoatsReady();
 });
-
-function boatTypeSelectValue(b: Record<string, unknown>) {
-    const v = b.boat_type_id;
-    if (v == null || String(v).length === 0) {
-        return null;
-    }
-    return String(v);
-}
-
-function draftNumber(b: Record<string, unknown>, field: 'capacity') {
-    const id = String(b.id);
-    if (drafts[id]?.[field] !== undefined) {
-        return drafts[id][field];
-    }
-    const raw = b[field];
-    if (raw === null || raw === undefined || raw === '') {
-        return null;
-    }
-    return Number(raw);
-}
-
-function setFieldDraft(boatId: string, field: string, v: unknown) {
-    if (!drafts[boatId]) {
-        drafts[boatId] = {};
-    }
-    drafts[boatId][field] = String(v ?? '');
-}
-
-function commitField(b: Record<string, unknown>, field: 'name' | 'notes') {
-    const id = String(b.id);
-    const draft = drafts[id]?.[field];
-    const next = draft !== undefined ? String(draft).trim() : String(b[field] ?? '').trim();
-    const current = String(b[field] ?? '').trim();
-    if (next === current) {
-        return;
-    }
-    if (field === 'name') {
-        const parsed = safeParseBoatEntityName(t, next);
-        if (!parsed.success) {
-            $q.notify({
-                type: 'negative',
-                message: parsed.error.issues[0]?.message ?? t('boatsList.nameRequired'),
-            });
-            return;
-        }
-    }
-    void patchWith(id, (draft) => {
-        if (field === 'name') {
-            draft.name = next;
-        } else {
-            draft.notes = next.length > 0 ? next : null;
-        }
-    });
-}
-
-function commitCapacity(b: Record<string, unknown>) {
-    const id = String(b.id);
-    const raw = drafts[id]?.capacity;
-    const current =
-        b.capacity === null || b.capacity === undefined || b.capacity === '' ? null : Number(b.capacity);
-    const next = raw !== undefined ? parseOptionalNonNegativeInt(raw) : current;
-    if (next === current) {
-        if (raw !== undefined && drafts[id]) {
-            delete drafts[id].capacity;
-        }
-        return;
-    }
-    if (next === null) {
-        $q.notify({
-            type: 'negative',
-            message: t('boatsList.capacityRequired'),
-        });
-        if (drafts[id]) {
-            delete drafts[id].capacity;
-        }
-        return;
-    }
-    void patchWith(id, (draft) => {
-        draft.capacity = next;
-    });
-}
-
-function onBoatTypeChange(b: Record<string, unknown>, value: string | number | null) {
-    const id = String(b.id);
-    const next = value == null || value === '' ? null : String(value);
-    const current =
-        b.boat_type_id == null || String(b.boat_type_id).length === 0 ? null : String(b.boat_type_id);
-    if (next === current) {
-        return;
-    }
-    void patchWith(id, (draft) => {
-        draft.boat_type_id = next;
-    });
-}
-
-async function patchWith(id: string, fn: (draft: Record<string, unknown>) => void) {
-    patchingId.value = id;
-    try {
-        await patchBoatRow(id, fn);
-    } finally {
-        patchingId.value = '';
-    }
-}
-
-const onCreateSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
-    await runWithNotify(
-        async () => {
-            await createBoatRow({
-                name: values.name,
-                capacity: values.capacity,
-                notes: values.notes,
-                boatTypeId: values.boatTypeId,
-            });
-            resetForm();
-        },
-        { successMessage: t('boatsList.created'), errorGeneric: t('boatsList.errorGeneric') },
-    );
-});
-
-function confirmDelete(b: Record<string, unknown>) {
-    confirm({
-        title: t('boatsList.deleteConfirmTitle'),
-        message: t('boatsList.deleteConfirmMessage', { name: String(b.name ?? '') }),
-        onOk: async () => {
-            try {
-                await deleteBoatRow(String(b.id));
-                $q.notify({ type: 'positive', message: t('boatsList.deleted') });
-            } catch (e) {
-                notifyError(e, t('boatsList.errorGeneric'));
-            }
-        },
-    });
-}
 </script>

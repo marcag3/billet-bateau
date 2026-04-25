@@ -1,4 +1,4 @@
-import { computed } from 'vue';
+import { computed, toValue } from 'vue';
 import { defineRelations } from '../entity.relations';
 import { defineModel } from '../model.definition';
 import { useEntityList } from '../entity.queries';
@@ -184,6 +184,44 @@ export function useBoats() {
         void refreshOutboxSnapshot();
     }
 
+    /**
+     * @param {MaybeRefOrGetter<string | null | undefined>} boatId
+     * @returns {import('vue').ComputedRef<Record<string, unknown> | null>}
+     */
+    function useBoatById(boatId) {
+        return computed(() => {
+            const id = String(toValue(boatId) ?? '').trim();
+            if (id.length === 0) {
+                return null;
+            }
+            return boats.value.find((b) => String(b.id) === id) ?? null;
+        });
+    }
+
+    /**
+     * Previous/next boat ids in the current program roster, using the same order as `boats`.
+     *
+     * @param {MaybeRefOrGetter<string | null | undefined>} boatId
+     * @returns {import('vue').ComputedRef<{ prev: string | null, next: string | null, index: number, total: number }>}
+     */
+    function useBoatNeighborsInRoster(boatId) {
+        return computed(() => {
+            const id = String(toValue(boatId) ?? '').trim();
+            const list = boats.value;
+            const ids = list.map((b) => String(b.id));
+            const idx = id.length === 0 ? -1 : ids.indexOf(id);
+            if (idx < 0) {
+                return { prev: null, next: null, index: -1, total: ids.length };
+            }
+            return {
+                prev: idx > 0 ? String(ids[idx - 1]) : null,
+                next: idx < ids.length - 1 ? String(ids[idx + 1]) : null,
+                index: idx,
+                total: ids.length,
+            };
+        });
+    }
+
     return {
         boats,
         ensureBoatsReady,
@@ -192,5 +230,7 @@ export function useBoats() {
         deleteBoatRow,
         refresh: bootstrapAppPowerSync,
         hasBoats: computed(() => boats.value.length > 0),
+        useBoatById,
+        useBoatNeighborsInRoster,
     };
 }
