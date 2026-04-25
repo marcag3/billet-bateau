@@ -121,13 +121,6 @@ const showAppNav = computed(
 
 const navLinks = computed(() => [
     {
-        key: "dashboard",
-        to: "/",
-        label: t("common.dashboard"),
-        icon: "dashboard",
-        exact: true,
-    },
-    {
         key: "programs",
         to: "/programs",
         label: t("common.programs"),

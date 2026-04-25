@@ -20,11 +20,7 @@ const routes = [
     },
     {
         path: '/',
-        name: 'dashboard',
-        component: () => import('../pages/AppDashboardPage.vue'),
-        meta: {
-            requiresAuth: true,
-        },
+        redirect: '/programs',
     },
     {
         path: '/reports',
@@ -93,7 +89,7 @@ router.beforeEach(async (to) => {
 
     if (authStore.installRequired === false && to.name === 'setup') {
         if (authStore.canAccessProtectedRoute()) {
-            return { name: 'dashboard' };
+            return { name: 'programs.list' };
         }
 
         return { name: 'login' };
@@ -103,7 +99,7 @@ router.beforeEach(async (to) => {
     const guestOnly = to.meta.guestOnly === true;
 
     if (guestOnly && authStore.canAccessProtectedRoute()) {
-        return { name: 'dashboard' };
+        return { name: 'programs.list' };
     }
 
     if (!requiresAuth) {

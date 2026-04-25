@@ -176,6 +176,15 @@ class PowerSyncUploadControllerTest extends TestCase
         ])->assertUnprocessable();
     }
 
+    public function test_non_array_crud_returns_unprocessable_entity(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => 'not-an-array',
+        ])->assertUnprocessable();
+    }
+
     public function test_put_allows_authenticated_user_to_overwrite_another_users_program(): void
     {
         $owner = User::factory()->create();

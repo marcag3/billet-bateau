@@ -126,8 +126,8 @@
                     flat
                     color="primary"
                     :disable="isSubmitting"
-                    :label="t('common.dashboard')"
-                    @click="goHome"
+                    :label="t('common.programs')"
+                    @click="goToProgramsList"
                 />
             </div>
         </q-form>
@@ -178,8 +178,8 @@ function hexColorRule(val) {
     );
 }
 
-function goHome() {
-    void router.push({ name: "dashboard" });
+function goToProgramsList() {
+    void router.push({ name: "programs.list" });
 }
 
 /**
@@ -226,7 +226,7 @@ async function onSubmit() {
         }
 
         $q.notify({ type: "positive", message: t("programsCreate.success") });
-        await router.push({ name: "dashboard" });
+        await router.push({ name: "programs.list" });
     } catch (error) {
         errorMessage.value =
             error instanceof Error ? error.message : String(error);

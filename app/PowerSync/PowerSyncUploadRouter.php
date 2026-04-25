@@ -2,6 +2,8 @@
 
 namespace App\PowerSync;
 
+use App\Data\PowerSync\PowerSyncCrudEntryData;
+
 final class PowerSyncUploadRouter
 {
     public function __construct(
@@ -11,17 +13,15 @@ final class PowerSyncUploadRouter
         private readonly BoatTypePowerSyncUploadApplier $boatTypes,
     ) {}
 
-    /**
-     * @param  array{op: string, type: string, id: string, data?: array<string, mixed>|null}  $entry
-     */
-    public function apply(string $type, array $entry, int $userId): void
+    public function apply(PowerSyncCrudEntryData $entry, int $userId): void
     {
-        match ($type) {
-            'programs' => $this->programs->apply($entry, $userId),
-            'addresses' => $this->addresses->apply($entry, $userId),
-            'boats' => $this->boats->apply($entry, $userId),
-            'boat_types' => $this->boatTypes->apply($entry, $userId),
-            default => throw new \RuntimeException('Unsupported PowerSync CRUD type: '.$type),
+        $payload = $entry->toApplierPayload();
+
+        match ($entry->type) {
+            PowerSyncCrudType::Programs => $this->programs->apply($payload, $userId),
+            PowerSyncCrudType::Addresses => $this->addresses->apply($payload, $userId),
+            PowerSyncCrudType::Boats => $this->boats->apply($payload, $userId),
+            PowerSyncCrudType::BoatTypes => $this->boatTypes->apply($payload, $userId),
         };
     }
 }

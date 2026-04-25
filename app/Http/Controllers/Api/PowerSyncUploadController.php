@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Data\PowerSync\PowerSyncCrudEntryData;
+use App\Data\PowerSync\PowerSyncUploadBatchData;
 use App\Http\Controllers\Controller;
 use App\PowerSync\PowerSyncUploadRouter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class PowerSyncUploadController extends Controller
 {
@@ -26,20 +27,14 @@ class PowerSyncUploadController extends Controller
             abort(401);
         }
 
-        $validated = $request->validate([
-            'crud' => ['required', 'array', 'min:1'],
-            'crud.*.op' => ['required', Rule::in(['PUT', 'PATCH', 'DELETE'])],
-            'crud.*.type' => ['required', 'string', Rule::in(['programs', 'addresses', 'boats', 'boat_types'])],
-            'crud.*.id' => ['required', 'uuid'],
-            'crud.*.data' => ['nullable', 'array'],
-        ]);
+        $batch = PowerSyncUploadBatchData::from($request);
 
         $userId = (int) $user->getAuthIdentifier();
 
-        DB::transaction(function () use ($validated, $userId): void {
-            foreach ($validated['crud'] as $entry) {
-                /** @var array{op: string, type: string, id: string, data?: array<string, mixed>|null} $entry */
-                $this->router->apply((string) $entry['type'], $entry, $userId);
+        DB::transaction(function () use ($batch, $userId): void {
+            foreach ($batch->crud as $entryPayload) {
+                $entry = PowerSyncCrudEntryData::from($entryPayload);
+                $this->router->apply($entry, $userId);
             }
         });
 

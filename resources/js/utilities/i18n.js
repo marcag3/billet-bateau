@@ -9,7 +9,6 @@ const messages = {
         common: {
             appWorkspace: 'Application Workspace',
             publicExperience: 'Public Experience',
-            dashboard: 'Dashboard',
             reports: 'Reports',
             settings: 'Settings',
             newProgram: 'New program',
@@ -49,19 +48,6 @@ const messages = {
             completeSetup: 'Complete setup',
             requiredFields: 'Organization name, email, and password are required.',
             passwordMismatch: 'Password confirmation does not match.',
-        },
-        dashboard: {
-            title: 'Dashboard',
-            syncedDescription:
-                'Programs, boats, and related data stay on this device and sync through PowerSync and TanStack DB.',
-            programsHeading: 'Your programs',
-            loadingPrograms: 'Loading programs...',
-            noPrograms: 'No programs yet. Create one from Programs in the menu.',
-            managePrograms: 'Manage programs',
-            pendingOutboxLine: '{count} local change(s) waiting to sync to the server.',
-            updated: 'Updated {timestamp}',
-            justNow: 'just now',
-            recently: 'recently',
         },
         reports: {
             title: 'Reports',
@@ -190,7 +176,6 @@ const messages = {
         common: {
             appWorkspace: "Espace de l'application",
             publicExperience: 'Experience publique',
-            dashboard: 'Tableau de bord',
             reports: 'Rapports',
             settings: 'Parametres',
             newProgram: 'Nouveau programme',
@@ -231,19 +216,6 @@ const messages = {
             completeSetup: 'Terminer la configuration',
             requiredFields: "Le nom de l'organisation, l'e-mail et le mot de passe sont requis.",
             passwordMismatch: 'La confirmation du mot de passe ne correspond pas.',
-        },
-        dashboard: {
-            title: 'Tableau de bord',
-            syncedDescription:
-                'Programmes, bateaux et donnees associees restent sur cet appareil et se synchronisent via PowerSync et TanStack DB.',
-            programsHeading: 'Vos programmes',
-            loadingPrograms: 'Chargement des programmes...',
-            noPrograms: 'Aucun programme pour le moment. Creez-en un depuis Programmes dans le menu.',
-            managePrograms: 'Gerer les programmes',
-            pendingOutboxLine: '{count} modification(s) locale(s) en attente de synchronisation.',
-            updated: 'Mise a jour {timestamp}',
-            justNow: "a l'instant",
-            recently: 'recemment',
         },
         reports: {
             title: 'Rapports',
