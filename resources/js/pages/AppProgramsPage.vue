@@ -4,7 +4,18 @@
             variant="hero"
             :title="t('programsList.title')"
             :description="t('programsList.description')"
-        />
+        >
+            <template #actions>
+                <q-btn
+                    unelevated
+                    color="white"
+                    text-color="primary"
+                    icon="add"
+                    :label="t('programsList.addProgram')"
+                    :to="{ name: 'programs.create' }"
+                />
+            </template>
+        </AppPageHeader>
 
         <AppAlertBanner
             v-if="hasOutboxCommitError"
@@ -17,73 +28,150 @@
         </AppAlertBanner>
 
         <AppBootstrapGate :ready="hasBootstrapped">
-            <AppEntityList>
-                <AppEmptyListRow
-                    :show="programs.length === 0"
-                    :message="t('programsList.empty')"
+            <q-tabs
+                v-model="programTab"
+                class="q-mb-md"
+                active-color="primary"
+                align="left"
+                dense
+                no-caps
+            >
+                <q-tab
+                    name="active"
+                    :label="t('programsList.tabActive')"
                 />
-                <q-item
-                    v-for="p in programs"
-                    :key="p.id"
-                    class="q-pa-md"
-                    style="align-items: flex-start"
+                <q-tab
+                    name="archived"
+                    :label="t('programsList.tabArchived')"
+                />
+            </q-tabs>
+
+            <div class="row q-col-gutter-md">
+                <AppEmptyListRow
+                    class="col-12"
+                    :show="filteredPrograms.length === 0"
+                    :message="emptyListMessage"
+                />
+                <div
+                    v-for="p in filteredPrograms"
+                    :key="String(p.id)"
+                    class="col-12 col-sm-6 col-md-4"
                 >
-                    <q-item-section>
-                        <q-item-label class="text-h6">
-                            {{ p.name }}
-                        </q-item-label>
-                        <div class="row q-col-gutter-sm q-mt-sm items-center">
-                            <div class="col-12 col-sm-auto">
-                                <q-toggle
-                                    :model-value="Number(p.is_active) === 1"
-                                    :label="t('programsList.isActive')"
-                                    :disable="isPatching"
-                                    @update:model-value="(v) => onToggleActive(p, v)"
-                                />
-                            </div>
-                            <div class="col-12 col-sm-grow">
-                                <q-input
-                                    :model-value="slugDrafts[String(p.id)] ?? (p.slug ?? '')"
-                                    outlined
-                                    dense
-                                    :label="t('programsList.slug')"
-                                    :hint="t('programsList.slugHint')"
-                                    :disable="isPatching"
-                                    @update:model-value="(v) => (slugDrafts[String(p.id)] = String(v ?? ''))"
-                                    @blur="() => onSlugCommit(p)"
-                                />
-                            </div>
-                            <div class="col-12 col-sm-auto self-center">
-                                <q-btn
-                                    color="primary"
-                                    outline
-                                    :label="t('programsList.copyUrl')"
-                                    @click="() => copyPublicUrl(p)"
-                                />
-                            </div>
+                    <q-card
+                        flat
+                        bordered
+                        class="app-program-card full-height column"
+                    >
+                        <div
+                            v-if="primaryImageFor(String(p.id))"
+                            class="app-program-card__media"
+                        >
+                            <q-img
+                                :src="primaryImageFor(String(p.id))"
+                                ratio="4/3"
+                                fit="cover"
+                            />
                         </div>
-                    </q-item-section>
-                </q-item>
-            </AppEntityList>
+                        <div
+                            v-else
+                            class="app-program-card__media app-program-card__media--placeholder"
+                            :style="placeholderStyle(p)"
+                        />
+                        <q-card-section class="col-grow">
+                            <div class="text-h6 text-weight-bold q-mb-xs">
+                                {{ p.name }}
+                            </div>
+                            <p
+                                v-if="programDescription(p)"
+                                class="text-body2 text-grey-8 q-mb-sm q-mt-none"
+                            >
+                                {{ programDescription(p) }}
+                            </p>
+                            <p
+                                v-else
+                                class="text-caption text-grey-6 q-mb-sm q-mt-none"
+                            >
+                                {{ t('programsList.noDescription') }}
+                            </p>
+                            <div
+                                v-if="addressDisplayLines(p).length"
+                                class="row no-wrap items-start text-body2 text-grey-7 q-gutter-sm"
+                            >
+                                <q-icon
+                                    name="place"
+                                    size="sm"
+                                    class="q-pt-xs"
+                                />
+                                <div>
+                                    <div
+                                        v-for="(line, i) in addressDisplayLines(p)"
+                                        :key="`addr-${String(p.id)}-${i}`"
+                                    >
+                                        {{ line }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                v-else
+                                class="text-caption text-grey-6"
+                            >
+                                {{ t('programsList.noAddress') }}
+                            </div>
+                        </q-card-section>
+                        <q-separator />
+                        <q-card-actions
+                            class="q-pa-md q-pt-sm column items-stretch"
+                            vertical
+                        >
+                            <q-toggle
+                                :model-value="Number(p.is_active) === 1"
+                                :label="t('programsList.isActive')"
+                                :disable="isPatching"
+                                @update:model-value="(v) => onToggleActive(p, v)"
+                            />
+                            <q-input
+                                :model-value="slugDrafts[String(p.id)] ?? (p.slug ?? '')"
+                                outlined
+                                dense
+                                :label="t('programsList.slug')"
+                                :hint="t('programsList.slugHint')"
+                                :disable="isPatching"
+                                @update:model-value="(v) => (slugDrafts[String(p.id)] = String(v ?? ''))"
+                                @blur="() => onSlugCommit(p)"
+                            />
+                            <q-btn
+                                color="primary"
+                                outline
+                                :label="t('programsList.copyUrl')"
+                                @click="() => copyPublicUrl(p)"
+                            />
+                        </q-card-actions>
+                    </q-card>
+                </div>
+            </div>
         </AppBootstrapGate>
     </q-page>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { safeParseProgramSlug } from '../models/programs/programs.validation';
 import { usePrograms } from '../models/programs/programs.model';
+import { useEntityList } from '../models/entity.queries';
 import {
     getAppPowerSyncBootstrappedRef,
+    getAddressesCollectionRef,
+    getMediaCollectionRef,
     useAppPowerSyncOutbox,
 } from '../powersync/app-powersync.runtime';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
-import AppEntityList from '../components/ui/AppEntityList.vue';
 import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
 import AppBootstrapGate from '../components/ui/AppBootstrapGate.vue';
+
+const PROGRAM_MODEL = 'App\\Models\\Program';
 
 const { t } = useI18n();
 const $q = useQuasar();
@@ -93,12 +181,130 @@ const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
 
+const { data: addressRows } = useEntityList({
+    enabledRef: hasBootstrapped,
+    alias: 'addresses',
+    collection: getAddressesCollectionRef(),
+    orderBy: [],
+});
+
+const { data: mediaRows } = useEntityList({
+    enabledRef: hasBootstrapped,
+    alias: 'media',
+    collection: getMediaCollectionRef(),
+    orderBy: [
+        { key: 'order_column', direction: 'asc' },
+        { key: 'created_at', direction: 'asc' },
+    ],
+});
+
 const isPatching = ref(false);
 const slugDrafts = reactive<Record<string, string>>({});
+const programTab = ref<'active' | 'archived'>('active');
+
+const totalProgramCount = computed(
+    () => (programs.value ?? []).length,
+);
+
+const filteredPrograms = computed(() => {
+    const list = programs.value ?? [];
+    if (programTab.value === 'active') {
+        return list.filter((p) => Number(p.is_active) === 1);
+    }
+    return list.filter((p) => Number(p.is_active) !== 1);
+});
+
+const emptyListMessage = computed(() => {
+    if (totalProgramCount.value === 0) {
+        return t('programsList.empty');
+    }
+    if (programTab.value === 'active') {
+        return t('programsList.emptyActive');
+    }
+    return t('programsList.emptyArchived');
+});
 
 onMounted(() => {
     void ensureProgramsReady();
 });
+
+function findAddressForProgram(p: Record<string, unknown>) {
+    const id = p.address_id;
+    if (id == null || String(id).length === 0) {
+        return null;
+    }
+    const rows = addressRows.value ?? [];
+    return (
+        rows.find((a) => a != null && String((a as Record<string, unknown>).id) === String(id)) ??
+        null
+    );
+}
+
+function programDescription(p: Record<string, unknown>): string {
+    const d = p.description;
+    if (d == null) {
+        return '';
+    }
+    const s = String(d).trim();
+
+    return s;
+}
+
+function addressDisplayLines(p: Record<string, unknown>): string[] {
+    const a = findAddressForProgram(p) as Record<string, unknown> | null;
+    if (!a) {
+        return [];
+    }
+    const lines: string[] = [];
+    const l1 = a.line_1 != null ? String(a.line_1).trim() : '';
+    const l2 = a.line_2 != null ? String(a.line_2).trim() : '';
+    if (l1.length > 0) {
+        lines.push(l1);
+    }
+    if (l2.length > 0) {
+        lines.push(l2);
+    }
+    const city = a.city != null ? String(a.city).trim() : '';
+    const pc = a.postal_code != null ? String(a.postal_code).trim() : '';
+    const cityLine = [city, pc].filter((x) => x.length > 0).join(', ');
+    if (cityLine.length > 0) {
+        lines.push(cityLine);
+    }
+    const country = a.country != null ? String(a.country).trim() : '';
+    if (country.length > 0) {
+        lines.push(country);
+    }
+
+    return lines;
+}
+
+function primaryImageFor(programId: string) {
+    const rows = mediaRows.value ?? [];
+    const match = rows.find(
+        (m) =>
+            m != null &&
+            String((m as Record<string, unknown>).model_type) === PROGRAM_MODEL &&
+            String((m as Record<string, unknown>).model_id) === programId &&
+            String((m as Record<string, unknown>).collection_name) === 'images',
+    ) as Record<string, unknown> | undefined;
+    if (!match) {
+        return undefined;
+    }
+    const name = match.name;
+    if (typeof name !== 'string' || name.length === 0) {
+        return undefined;
+    }
+    const fileName = typeof match.file_name === 'string' ? match.file_name : '';
+    if (fileName.length === 0) {
+        return undefined;
+    }
+    return `/storage/${String(match.id ?? '')}/${fileName}`;
+}
+
+function placeholderStyle(p: Record<string, unknown>) {
+    const hex = typeof p.theme_color === 'string' ? p.theme_color.trim() : '#e0e0e0';
+    return { background: hex || '#e0e0e0' };
+}
 
 function onToggleActive(p: Record<string, unknown>, isActive: boolean) {
     void (async () => {
@@ -153,5 +359,20 @@ function copyPublicUrl(p: Record<string, unknown>) {
 <style scoped>
 .app-programs-page {
     padding-top: 2rem;
+}
+
+.app-program-card {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.app-program-card__media {
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+}
+
+.app-program-card__media--placeholder {
+    min-height: 10.5rem;
+    opacity: 0.9;
 }
 </style>

@@ -128,13 +128,6 @@ const navLinks = computed(() => [
         exact: true,
     },
     {
-        key: "programs-new",
-        to: "/programs/new",
-        label: t("common.newProgram"),
-        icon: "add_circle_outline",
-        exact: true,
-    },
-    {
         key: "boats",
         to: "/boats",
         label: t("common.boats"),
