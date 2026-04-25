@@ -34,10 +34,13 @@
         "@tanstack/db": "^0.6.5",
         "@tanstack/powersync-db-collection": "^0.1.43",
         "@tanstack/vue-db": "^0.0.116",
+        "@vee-validate/zod": "^4.15.1",
         "pinia": "^3.0.4",
         "quasar": "^2.19.3",
+        "vee-validate": "^4.15.1",
         "vue": "^3.5.32",
         "vue-i18n": "^11.3.2",
-        "vue-router": "^4.6.4"
+        "vue-router": "^4.6.4",
+        "zod": "^4.3.6"
     }
 }

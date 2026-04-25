@@ -29,6 +29,7 @@ RUN apt-get update \
         git \
         gnupg \
         nano \
+        openssh-client \
         postgresql-client \
         redis-tools \
         sqlite3 \
@@ -63,9 +64,8 @@ RUN groupadd --force -g "${WWWGROUP}" sail \
     && mkdir -p /home/sail/.composer \
     && chown -R sail:sail /composer /home/sail /var/www/html
 
-RUN git config --global --add safe.directory /var/www/html
-
 USER sail
+RUN git config --global --add safe.directory /var/www/html
 
 ############################################
 # Production build stages

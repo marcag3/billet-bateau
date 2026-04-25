@@ -38,6 +38,8 @@ const messages = {
             unableVerifySession: 'Unable to verify the current session.',
             unableSignInCreds: 'Unable to sign in with the provided credentials.',
             unableCompleteSetup: 'Unable to complete setup.',
+            validationRequired: 'This field is required.',
+            validationEmail: 'Enter a valid email address.',
         },
         setup: {
             title: 'First-time setup',
@@ -48,6 +50,7 @@ const messages = {
             completeSetup: 'Complete setup',
             requiredFields: 'Organization name, email, and password are required.',
             passwordMismatch: 'Password confirmation does not match.',
+            validationRequired: 'This field is required.',
         },
         reports: {
             title: 'Reports',
@@ -206,6 +209,8 @@ const messages = {
             unableVerifySession: 'Impossible de verifier la session en cours.',
             unableSignInCreds: "Impossible de se connecter avec les identifiants fournis.",
             unableCompleteSetup: 'Impossible de terminer la configuration.',
+            validationRequired: 'Ce champ est requis.',
+            validationEmail: 'Entrez une adresse e-mail valide.',
         },
         setup: {
             title: 'Configuration initiale',
@@ -216,6 +221,7 @@ const messages = {
             completeSetup: 'Terminer la configuration',
             requiredFields: "Le nom de l'organisation, l'e-mail et le mot de passe sont requis.",
             passwordMismatch: 'La confirmation du mot de passe ne correspond pas.',
+            validationRequired: 'Ce champ est requis.',
         },
         reports: {
             title: 'Rapports',

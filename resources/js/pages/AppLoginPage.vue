@@ -14,6 +14,7 @@
                 <q-form class="q-gutter-md" @submit.prevent="submitLogin">
                     <q-input
                         v-model="email"
+                        v-bind="emailProps"
                         type="email"
                         outlined
                         dense
@@ -24,6 +25,7 @@
 
                     <q-input
                         v-model="password"
+                        v-bind="passwordProps"
                         type="password"
                         outlined
                         dense
@@ -49,9 +51,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { useForm } from 'vee-validate';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
+import { ref } from 'vue';
+import { createLoginFormSchema } from '../models/auth.validation';
+import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useAuthStore } from '../store/auth.store';
 
 const authStore = useAuthStore();
@@ -59,28 +64,29 @@ const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 
-const email = ref(import.meta.env.DEV ? 'test@example.com' : '');
-const password = ref(import.meta.env.DEV ? 'password' : '');
 const remember = ref(true);
-const isSubmitting = ref(false);
 const errorMessage = ref('');
 
-async function submitLogin() {
-    const normalizedEmail = email.value.trim();
-    const normalizedPassword = password.value;
+const { handleSubmit, defineField, isSubmitting } = useForm({
+    validationSchema: createLoginFormSchema(t),
+    initialValues: {
+        email: import.meta.env.DEV ? 'test@example.com' : '',
+        password: import.meta.env.DEV ? 'password' : '',
+    },
+});
 
-    if (normalizedEmail.length === 0 || normalizedPassword.length === 0) {
-        errorMessage.value = t('auth.emailPasswordRequired');
-        return;
-    }
+const quasarField = createQuasarFieldBinder(defineField);
 
-    isSubmitting.value = true;
+const [email, emailProps] = quasarField('email');
+const [password, passwordProps] = quasarField('password');
+
+const submitLogin = handleSubmit(async (values) => {
     errorMessage.value = '';
 
     try {
         await authStore.login({
-            email: normalizedEmail,
-            password: normalizedPassword,
+            email: values.email.trim(),
+            password: values.password,
             remember: remember.value,
         });
 
@@ -88,10 +94,8 @@ async function submitLogin() {
         await router.replace(redirectTarget);
     } catch (error) {
         errorMessage.value = error instanceof Error ? error.message : t('auth.unableAuthenticate');
-    } finally {
-        isSubmitting.value = false;
     }
-}
+});
 </script>
 
 <style scoped>

@@ -26,43 +26,52 @@
         <div v-if="hasBootstrapped" class="q-gutter-y-md">
             <q-card flat bordered class="bg-white rounded-borders q-pa-md">
                 <div class="text-subtitle2 q-mb-md">{{ t('boatsList.addNew') }}</div>
-                <div class="q-gutter-md">
-                    <q-input v-model="form.name" outlined :label="t('boatsList.name')" :disable="isSaving" />
+                <q-form class="q-gutter-md" @submit.prevent="onCreateSubmit">
                     <q-input
-                        v-model.number="form.capacity"
+                        v-model="createName"
+                        v-bind="createNameProps"
+                        outlined
+                        :label="t('boatsList.name')"
+                        :disable="isSubmitting"
+                    />
+                    <q-input
+                        v-model.number="createCapacity"
+                        v-bind="createCapacityProps"
                         outlined
                         type="number"
                         :label="t('boatsList.capacity')"
                         :hint="t('boatsList.capacityHint')"
                         clearable
-                        :disable="isSaving"
+                        :disable="isSubmitting"
                     />
                     <q-input
-                        v-model="form.notes"
+                        v-model="createNotes"
+                        v-bind="createNotesProps"
                         type="textarea"
                         autogrow
                         outlined
                         :label="t('boatsList.notes')"
-                        :disable="isSaving"
+                        :disable="isSubmitting"
                     />
                     <q-select
-                        v-model="form.boatTypeId"
+                        v-model="createBoatTypeId"
+                        v-bind="createBoatTypeIdProps"
                         outlined
                         emit-value
                         map-options
                         clearable
                         :options="boatTypeOptions"
                         :label="t('boatsList.boatType')"
-                        :disable="isSaving"
+                        :disable="isSubmitting"
                     />
                     <q-btn
                         color="primary"
+                        type="submit"
                         :label="t('boatsList.create')"
-                        :loading="isSaving"
-                        :disable="form.name.trim().length === 0"
-                        @click="onCreateBoat"
+                        :loading="isSubmitting"
+                        :disable="!meta.valid || isSubmitting"
                     />
-                </div>
+                </q-form>
             </q-card>
 
             <q-list bordered separator class="bg-white rounded-borders">
@@ -147,11 +156,15 @@
 </template>
 
 <script setup>
+import { useForm } from 'vee-validate';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from '../store/auth.store';
-import { useBoats } from '../models/boats/boats.model';
+import { parseOptionalCapacity, useBoats } from '../models/boats/boats.model';
+import { createBoatCreateFormSchema } from '../models/boats/boats.validation';
+import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
+import { safeParseBoatEntityName } from '../models/boats/boats.validation';
 import { useBoatTypes } from '../models/boat-types/boat-types.model';
 import {
     getAppPowerSyncBootstrappedRef,
@@ -168,14 +181,23 @@ const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
 
-const form = reactive({
-    name: '',
-    capacity: null,
-    notes: '',
-    boatTypeId: null,
+const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm({
+    validationSchema: createBoatCreateFormSchema(t),
+    initialValues: {
+        name: '',
+        capacity: null,
+        notes: '',
+        boatTypeId: null,
+    },
 });
 
-const isSaving = ref(false);
+const quasarField = createQuasarFieldBinder(defineField);
+
+const [createName, createNameProps] = quasarField('name');
+const [createCapacity, createCapacityProps] = quasarField('capacity');
+const [createNotes, createNotesProps] = quasarField('notes');
+const [createBoatTypeId, createBoatTypeIdProps] = quasarField('boatTypeId');
+
 const patchingId = ref('');
 /** @type {import('vue').Reactive<Record<string, Record<string, string>>>} */
 const drafts = reactive({});
@@ -261,9 +283,15 @@ function commitField(b, field) {
     if (next === current) {
         return;
     }
-    if (field === 'name' && next.length === 0) {
-        $q.notify({ type: 'negative', message: t('boatsList.nameRequired') });
-        return;
+    if (field === 'name') {
+        const parsed = safeParseBoatEntityName(t, next);
+        if (!parsed.success) {
+            $q.notify({
+                type: 'negative',
+                message: parsed.error.issues[0]?.message ?? t('boatsList.nameRequired'),
+            });
+            return;
+        }
     }
     void patchWith(id, (draft) => {
         if (field === 'name') {
@@ -280,12 +308,8 @@ function commitField(b, field) {
 function commitCapacity(b) {
     const id = String(b.id);
     const raw = drafts[id]?.capacity;
-    const parsed =
-        raw === undefined || raw === '' || raw === null
-            ? null
-            : Number.parseInt(String(raw), 10);
     const current = b.capacity === null || b.capacity === undefined ? null : Number(b.capacity);
-    const next = Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+    const next = parseOptionalCapacity(raw);
     if (next === current) {
         return;
     }
@@ -324,33 +348,23 @@ async function patchWith(id, fn) {
     }
 }
 
-async function onCreateBoat() {
-    const name = form.name.trim();
-    if (name.length === 0) {
-        return;
-    }
-    isSaving.value = true;
+const onCreateSubmit = handleSubmit(async (values) => {
     try {
         await createBoatRow({
-            name,
-            capacity: form.capacity,
-            notes: form.notes,
-            boatTypeId: form.boatTypeId,
+            name: values.name,
+            capacity: values.capacity,
+            notes: values.notes,
+            boatTypeId: values.boatTypeId,
         });
-        form.name = '';
-        form.capacity = null;
-        form.notes = '';
-        form.boatTypeId = null;
+        resetForm();
         $q.notify({ type: 'positive', message: t('boatsList.created') });
     } catch (e) {
         $q.notify({
             type: 'negative',
             message: e instanceof Error ? e.message : t('boatsList.errorGeneric'),
         });
-    } finally {
-        isSaving.value = false;
     }
-}
+});
 
 /**
  * @param {Record<string, unknown>} b

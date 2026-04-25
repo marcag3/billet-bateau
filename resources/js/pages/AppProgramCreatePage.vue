@@ -13,16 +13,17 @@
             {{ errorMessage }}
         </q-banner>
 
-        <q-form class="q-gutter-md" @submit.prevent="onSubmit">
+        <q-form class="q-gutter-md" @submit.prevent="onFormSubmit">
             <q-input
                 v-model="name"
+                v-bind="nameProps"
                 outlined
                 :label="t('programsCreate.name')"
-                :rules="[requiredRule]"
             />
 
             <q-input
                 v-model="description"
+                v-bind="descriptionProps"
                 type="textarea"
                 outlined
                 autogrow
@@ -36,9 +37,9 @@
                     </div>
                     <q-input
                         v-model="themeColor"
+                        v-bind="themeColorProps"
                         outlined
                         dense
-                        :rules="[hexColorRule]"
                     >
                         <template #append>
                             <q-icon name="colorize" class="cursor-pointer">
@@ -67,13 +68,15 @@
             >
                 <div class="q-pa-md q-gutter-y-md">
                     <q-input
-                        v-model="address.line_1"
+                        v-model="line1"
+                        v-bind="line1Props"
                         outlined
                         dense
                         :label="t('programsCreate.line1')"
                     />
                     <q-input
-                        v-model="address.line_2"
+                        v-model="line2"
+                        v-bind="line2Props"
                         outlined
                         dense
                         :label="t('programsCreate.line2')"
@@ -81,7 +84,8 @@
                     <div class="row q-col-gutter-sm">
                         <div class="col-12 col-sm-6">
                             <q-input
-                                v-model="address.city"
+                                v-model="city"
+                                v-bind="cityProps"
                                 outlined
                                 dense
                                 :label="t('programsCreate.city')"
@@ -89,7 +93,8 @@
                         </div>
                         <div class="col-12 col-sm-6">
                             <q-input
-                                v-model="address.postal_code"
+                                v-model="postalCode"
+                                v-bind="postalCodeProps"
                                 outlined
                                 dense
                                 :label="t('programsCreate.postalCode')"
@@ -97,7 +102,8 @@
                         </div>
                     </div>
                     <q-input
-                        v-model="address.country"
+                        v-model="country"
+                        v-bind="countryProps"
                         outlined
                         dense
                         :label="t('programsCreate.country')"
@@ -107,6 +113,7 @@
 
             <q-file
                 v-model="imagesModel"
+                v-bind="imagesModelProps"
                 outlined
                 multiple
                 use-chips
@@ -135,48 +142,52 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { useForm } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
+import { createProgramCreateFormSchema } from "../models/programs/programs.validation";
+import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
 import { usePrograms } from "../models/programs/programs.model";
 import mediaRoutes from "../routes/api/media";
 import { requestFormData } from "../services/http.client";
+import { ref } from "vue";
 
 const { t } = useI18n();
 const router = useRouter();
 const $q = useQuasar();
 const { createProgramWithOptionalAddress } = usePrograms();
 
-const name = ref("");
-const description = ref("");
-const themeColor = ref("#0F766E");
-const address = reactive({
-    line_1: "",
-    line_2: "",
-    city: "",
-    postal_code: "",
-    country: "",
-});
-/** @type {import('vue').Ref<File | File[] | null>} */
-const imagesModel = ref(null);
-
 const errorMessage = ref("");
-const isSubmitting = ref(false);
 
-function requiredRule(val) {
-    return (
-        (typeof val === "string" && val.trim().length > 0) ||
-        t("programsCreate.validationRequired")
-    );
-}
+const { handleSubmit, defineField, isSubmitting } = useForm({
+    validationSchema: createProgramCreateFormSchema(t),
+    initialValues: {
+        name: "",
+        description: "",
+        themeColor: "#0F766E",
+        address: {
+            line_1: "",
+            line_2: "",
+            city: "",
+            postal_code: "",
+            country: "",
+        },
+        imagesModel: null,
+    },
+});
 
-function hexColorRule(val) {
-    return (
-        /^#[0-9A-Fa-f]{6}$/.test(String(val ?? "")) ||
-        t("programsCreate.validationHex")
-    );
-}
+const quasarField = createQuasarFieldBinder(defineField);
+
+const [name, nameProps] = quasarField("name");
+const [description, descriptionProps] = quasarField("description");
+const [themeColor, themeColorProps] = quasarField("themeColor");
+const [line1, line1Props] = quasarField("address.line_1");
+const [line2, line2Props] = quasarField("address.line_2");
+const [city, cityProps] = quasarField("address.city");
+const [postalCode, postalCodeProps] = quasarField("address.postal_code");
+const [country, countryProps] = quasarField("address.country");
+const [imagesModel, imagesModelProps] = quasarField("imagesModel");
 
 function goToProgramsList() {
     void router.push({ name: "programs.list" });
@@ -197,19 +208,18 @@ function normalizeFiles(value) {
     return value instanceof File ? [value] : [];
 }
 
-async function onSubmit() {
+const onFormSubmit = handleSubmit(async (values) => {
     errorMessage.value = "";
-    isSubmitting.value = true;
 
     try {
         const programId = await createProgramWithOptionalAddress({
-            name: name.value,
-            description: description.value,
-            themeColor: themeColor.value,
-            address: { ...address },
+            name: values.name,
+            description: values.description,
+            themeColor: values.themeColor,
+            address: { ...values.address },
         });
 
-        const files = normalizeFiles(imagesModel.value);
+        const files = normalizeFiles(values.imagesModel);
         if (files.length > 0) {
             const formData = new FormData();
             for (const file of files) {
@@ -230,8 +240,6 @@ async function onSubmit() {
     } catch (error) {
         errorMessage.value =
             error instanceof Error ? error.message : String(error);
-    } finally {
-        isSubmitting.value = false;
     }
-}
+});
 </script>

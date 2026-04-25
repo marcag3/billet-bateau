@@ -14,6 +14,7 @@
                 <q-form class="q-gutter-md" @submit.prevent="submitSetup">
                     <q-input
                         v-model="organizationName"
+                        v-bind="organizationNameProps"
                         outlined
                         dense
                         :label="t('setup.organizationName')"
@@ -22,6 +23,7 @@
 
                     <q-input
                         v-model="email"
+                        v-bind="emailProps"
                         type="email"
                         outlined
                         dense
@@ -32,6 +34,7 @@
 
                     <q-input
                         v-model="password"
+                        v-bind="passwordProps"
                         type="password"
                         outlined
                         dense
@@ -42,6 +45,7 @@
 
                     <q-input
                         v-model="passwordConfirmation"
+                        v-bind="passwordConfirmationProps"
                         type="password"
                         outlined
                         dense
@@ -65,53 +69,52 @@
 </template>
 
 <script setup>
+import { useForm } from 'vee-validate';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import { createSetupFormSchema } from '../models/auth.validation';
+import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useAuthStore } from '../store/auth.store';
 
 const authStore = useAuthStore();
 const router = useRouter();
 const { t } = useI18n();
 
-const organizationName = ref('');
-const email = ref('');
-const password = ref('');
-const passwordConfirmation = ref('');
-const isSubmitting = ref(false);
 const errorMessage = ref('');
 
-async function submitSetup() {
-    const normalizedOrganizationName = organizationName.value.trim();
-    const normalizedEmail = email.value.trim();
+const { handleSubmit, defineField, isSubmitting } = useForm({
+    validationSchema: createSetupFormSchema(t),
+    initialValues: {
+        organizationName: '',
+        email: '',
+        password: '',
+        passwordConfirmation: '',
+    },
+});
 
-    if (normalizedOrganizationName.length === 0 || normalizedEmail.length === 0 || password.value.length === 0) {
-        errorMessage.value = t('setup.requiredFields');
-        return;
-    }
+const quasarField = createQuasarFieldBinder(defineField);
 
-    if (password.value !== passwordConfirmation.value) {
-        errorMessage.value = t('setup.passwordMismatch');
-        return;
-    }
+const [organizationName, organizationNameProps] = quasarField('organizationName');
+const [email, emailProps] = quasarField('email');
+const [password, passwordProps] = quasarField('password');
+const [passwordConfirmation, passwordConfirmationProps] = quasarField('passwordConfirmation');
 
-    isSubmitting.value = true;
+const submitSetup = handleSubmit(async (values) => {
     errorMessage.value = '';
 
     try {
         await authStore.completeSetup({
-            organizationName: normalizedOrganizationName,
-            email: normalizedEmail,
-            password: password.value,
-            passwordConfirmation: passwordConfirmation.value,
+            organizationName: values.organizationName.trim(),
+            email: values.email.trim(),
+            password: values.password,
+            passwordConfirmation: values.passwordConfirmation,
         });
         await router.replace({ name: 'login' });
     } catch (error) {
         errorMessage.value = error instanceof Error ? error.message : t('auth.unableCompleteSetup');
-    } finally {
-        isSubmitting.value = false;
     }
-}
+});
 </script>
 
 <style scoped>

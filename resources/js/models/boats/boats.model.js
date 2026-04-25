@@ -29,7 +29,8 @@ export const boatsModelDefinition = defineModel({
  * @param {unknown} v
  * @returns {number | null}
  */
-function parseOptionalCapacity(v) {
+//TODO: capacity should not be optional
+export function parseOptionalCapacity(v) {
     if (v === null || v === undefined || v === '') {
         return null;
     }

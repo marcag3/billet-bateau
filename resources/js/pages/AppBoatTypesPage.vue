@@ -26,27 +26,27 @@
         <div v-if="hasBootstrapped" class="q-gutter-y-md">
             <q-card flat bordered class="bg-white rounded-borders q-pa-md">
                 <div class="text-subtitle2 q-mb-sm">{{ t('boatTypesList.addNew') }}</div>
-                <div class="row q-col-gutter-sm items-end">
+                <q-form class="row q-col-gutter-sm items-end" @submit.prevent="onCreateSubmit">
                     <div class="col-12 col-sm-grow">
                         <q-input
-                            v-model="newName"
+                            v-model="createName"
+                            v-bind="createNameProps"
                             outlined
                             dense
                             :label="t('boatTypesList.name')"
-                            :disable="isCreating"
-                            @keyup.enter="onCreateBoatType"
+                            :disable="isSubmitting"
                         />
                     </div>
                     <div class="col-12 col-sm-auto">
                         <q-btn
+                            type="submit"
                             color="primary"
                             :label="t('boatTypesList.create')"
-                            :loading="isCreating"
-                            :disable="newName.trim().length === 0"
-                            @click="onCreateBoatType"
+                            :loading="isSubmitting"
+                            :disable="!meta.valid || isSubmitting"
                         />
                     </div>
-                </div>
+                </q-form>
             </q-card>
 
             <q-list bordered separator class="bg-white rounded-borders">
@@ -113,10 +113,14 @@
 </template>
 
 <script setup>
+import { useForm } from 'vee-validate';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from '../store/auth.store';
+import { createBoatTypeFormSchema } from '../models/boat-types/boat-types.validation';
+import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
+import { safeParseBoatEntityName } from '../models/boats/boats.validation';
 import { useBoatTypes } from '../models/boat-types/boat-types.model';
 import { useEntityList } from '../models/entity.queries';
 import {
@@ -154,8 +158,16 @@ const { data: mediaRows } = useEntityList({
     ],
 });
 
-const newName = ref('');
-const isCreating = ref(false);
+const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm({
+    validationSchema: createBoatTypeFormSchema(t),
+    initialValues: {
+        name: '',
+    },
+});
+
+const quasarField = createQuasarFieldBinder(defineField);
+const [createName, createNameProps] = quasarField('name');
+
 const patchingId = ref('');
 const uploadingId = ref('');
 /** @type {import('vue').Reactive<Record<string, string>>} */
@@ -212,14 +224,25 @@ function commitName(bt) {
     const id = String(bt.id);
     const next = (nameDrafts[id] ?? String(bt.name ?? '')).trim();
     const current = String(bt.name ?? '').trim();
-    if (next === current || next.length === 0) {
+    if (next === current) {
+        return;
+    }
+    if (next.length === 0) {
+        return;
+    }
+    const parsed = safeParseBoatEntityName(t, next);
+    if (!parsed.success) {
+        $q.notify({
+            type: 'negative',
+            message: parsed.error.issues[0]?.message ?? t('boatsList.nameRequired'),
+        });
         return;
     }
     void (async () => {
         patchingId.value = id;
         try {
             await patchBoatTypeRow(id, (draft) => {
-                draft.name = next;
+                draft.name = parsed.data;
             });
         } finally {
             patchingId.value = '';
@@ -227,25 +250,18 @@ function commitName(bt) {
     })();
 }
 
-async function onCreateBoatType() {
-    const name = newName.value.trim();
-    if (name.length === 0) {
-        return;
-    }
-    isCreating.value = true;
+const onCreateSubmit = handleSubmit(async (values) => {
     try {
-        await createBoatTypeRow(name);
-        newName.value = '';
+        await createBoatTypeRow(values.name);
+        resetForm();
         $q.notify({ type: 'positive', message: t('boatTypesList.created') });
     } catch (e) {
         $q.notify({
             type: 'negative',
             message: e instanceof Error ? e.message : t('boatTypesList.errorGeneric'),
         });
-    } finally {
-        isCreating.value = false;
     }
-}
+});
 
 /**
  * @param {string} boatTypeId

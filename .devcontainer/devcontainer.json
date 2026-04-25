@@ -39,6 +39,7 @@
     // "runServices": [],
     // "shutdownAction": "none",
     "mounts": [
-        "source=${localEnv:HOME}/.ssh,target=/home/sail/.ssh,type=bind,consistency=cached"
+        "source=${localEnv:HOME}/.ssh,target=/home/sail/.ssh,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/.gitconfig,target=/home/sail/.gitconfig,type=bind,consistency=cached"
     ]
 }

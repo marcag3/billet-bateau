@@ -77,6 +77,7 @@ import { onMounted, computed, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
 import { useAuthStore } from "../store/auth.store";
+import { safeParseProgramSlug } from "../models/programs/programs.validation";
 import { usePrograms } from "../models/programs/programs.model";
 import {
     getAppPowerSyncBootstrappedRef,
@@ -132,14 +133,19 @@ function onToggleActive(p, isActive) {
  */
 function onSlugCommit(p) {
     const id = String(p.id);
-    const next = (slugDrafts[id] ?? p.slug ?? "").toString().trim().toLowerCase();
+    const raw = (slugDrafts[id] ?? p.slug ?? "").toString();
     const current = (p.slug == null ? "" : String(p.slug).trim().toLowerCase());
-    if (next === current) {
+    const parsed = safeParseProgramSlug(t, raw);
+    if (!parsed.success) {
+        $q.notify({
+            type: "negative",
+            message: parsed.error.issues[0]?.message ?? t("programsList.slugRequired"),
+        });
+        slugDrafts[id] = current;
         return;
     }
-    if (next.length === 0) {
-        $q.notify({ type: "negative", message: t("programsList.slugRequired") });
-        slugDrafts[id] = current;
+    const next = parsed.data;
+    if (next === current) {
         return;
     }
     void (async () => {

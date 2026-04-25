@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import { configure } from 'vee-validate';
 import { Quasar, Notify, Dialog } from 'quasar';
 import { setCssVar } from 'quasar';
 import '@quasar/extras/material-icons/material-icons.css';
@@ -14,6 +15,14 @@ import { APP_AUTH_EXPIRED_EVENT } from './utilities/events';
 
 const APP_SW_URL = '/app-sw.js';
 const APP_SW_SCOPE = '/app/';
+
+// Vee-validate: single global policy for all forms (override per `useForm` if needed).
+configure({
+    validateOnBlur: true,
+    validateOnChange: false,
+    validateOnInput: false,
+    validateOnModelUpdate: true,
+});
 
 const app = createApp(AppLayout);
 const pinia = createPinia();
