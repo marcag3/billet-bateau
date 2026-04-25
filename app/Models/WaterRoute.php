@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
-use Database\Factories\BoatFactory;
+use Clickbar\Magellan\Data\Geometries\LineString;
+use Database\Factories\WaterRouteFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Boat extends Model
+class WaterRoute extends Model
 {
-    /** @use HasFactory<BoatFactory> */
+    /** @use HasFactory<WaterRouteFactory> */
     use HasFactory;
 
     public $incrementing = false;
@@ -20,10 +21,9 @@ class Boat extends Model
     protected $fillable = [
         'id',
         'user_id',
-        'boat_type_id',
         'name',
-        'capacity',
-        'notes',
+        'trace',
+        'duration_minutes',
         'created_at',
         'updated_at',
     ];
@@ -31,7 +31,8 @@ class Boat extends Model
     protected function casts(): array
     {
         return [
-            'capacity' => 'integer',
+            'trace' => LineString::class,
+            'duration_minutes' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -42,13 +43,13 @@ class Boat extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function boatType(): BelongsTo
+    public function trips(): HasMany
     {
-        return $this->belongsTo(BoatType::class, 'boat_type_id');
+        return $this->hasMany(Trip::class, 'water_route_id');
     }
 
-    public function voyages(): BelongsToMany
+    public function voyages(): HasMany
     {
-        return $this->belongsToMany(Voyage::class, 'voyage_boat')->withTimestamps();
+        return $this->hasMany(Voyage::class, 'water_route_id');
     }
 }

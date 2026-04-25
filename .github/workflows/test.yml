@@ -10,10 +10,10 @@ jobs:
     timeout-minutes: 20
     container: ubuntu:22.04
     env:
-      extensions: mbstring, dom, fileinfo, pgsql, redis, bcmath, gd, pdo_sqlite
+      extensions: mbstring, dom, fileinfo, pgsql, redis, bcmath, gd
     services:
       postgres:
-        image: postgres:18-alpine
+        image: postgis/postgis:18-3.6
         env:
           POSTGRES_USER: root
           POSTGRES_PASSWORD: root
@@ -37,6 +37,8 @@ jobs:
           PGPASSWORD=root psql -h postgres -U root -d postgres -c "SELECT datname FROM pg_database"
           PGPASSWORD=root psql -h postgres -U root -d postgres -c "CREATE DATABASE testing"
           PGPASSWORD=root psql -h postgres -U root -d postgres -c "CREATE DATABASE testing_mom"
+          PGPASSWORD=root psql -h postgres -U root -d testing -c "CREATE EXTENSION IF NOT EXISTS postgis"
+          PGPASSWORD=root psql -h postgres -U root -d testing_mom -c "CREATE EXTENSION IF NOT EXISTS postgis"
 
       - uses: actions/checkout@v4
 
@@ -85,4 +87,11 @@ jobs:
         run: mkdir -p storage/tmp
 
       - name: Execute tests (Unit and Feature tests) via PHPUnit
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: postgres
+          DB_PORT: "5432"
+          DB_DATABASE: testing
+          DB_USERNAME: root
+          DB_PASSWORD: root
         run: vendor/bin/phpunit --testsuite Unit,Feature

@@ -3,50 +3,121 @@ Optimistic update.
 
 # Implementation steps:
 
-## Priority:
+## Todo list
 
-[x] Design architecture for separating responsability cleanly in the frontend
-[x] Install powersync
-[x] Programs (base: name, description, theme, address, media; admin create; synced)
-[] Public program link + booking flow (no account required; **v1: no payment** — reserve/hold or confirm only)
-[] Booking questions at checkout: collect name, email, country, plus admin-defined personalized questions per trip/program
-[] Ticket types per program (title, price, PWYC, min/max per purchase, inventory per **trip**)
-[] **Companion / ratio rules** between ticket types (see below)
-[] **Trips** as bookable units (date, capacity, link to a **template** or ad-hoc description)
-[] Template day with defined trips (reusable “what runs on a typical day”)
-[] Assign template days to calendar days
-[] Manually add trips to calendar day
-[] On-water: **WaterRoute** / _Parcours_ (PostGIS + Magellan, map draw), **Voyage** / _Départ_, check-in, ops board (see below)
-[] On-water: **fleet** (boat hulls by type), guides (optional `user_id`), **offline** admin bundle + PowerSync
+Checkboxes mirror the working roadmap; high-level domain notes stay in sections below (_Ticket types & ratio_, _On-water operations_, etc.).
 
-## Later:
+### Completed
 
-[] User can create weekly schedule. Assign a start and end date. Assign template days or individual trips.
-[] User can override weekly schedule with template days (e.g. holidays)
-[] Extras: electronic ticket, thank-you email, advanced settings
+- [x] Design architecture for separating responsibility cleanly in the frontend
+- [x] Install PowerSync
+- [x] Programs (base: name, description, theme, address, media; admin create; synced)
+
+### Public booking
+
+- [ ] Shareable program link / slug (no login to view and book)
+- [ ] Booking flow: trip / date / quantities; **v1: no payment** — reserve/hold or confirm-only
+- [ ] Laravel public routes and policies (guest-readable catalog; authenticated or guest writes per your booking rules)
+
+### Checkout
+
+- [ ] Collect name, email, country (baseline required fields)
+- [ ] Admin-defined questions per trip/program; persist answers; validate
+
+### Ticket types
+
+- [ ] Per program: title, price, PWYC, min/max per purchase
+- [ ] Inventory caps **per trip** (not only at program level)
+
+### Companion / ratio rules
+
+- [ ] Data model: anchor + dependent ticket types; `numerator` / `denominator` (per program or template)
+- [ ] Admin UI: pick two types + ratio (no hard-coded adult/child labels)
+- [ ] Cart/checkout validation and **server** re-validation (start with same-order + same-date if simpler)
+
+### Trips and calendar
+
+- [ ] **Trips** (_Sortie_ in UI): bookable unit — date, **`scheduled_departure_at`**, capacity, `program_id`; link to template **or** ad-hoc description
+- [ ] Trips expose `boat_type_id` and `water_route_id` before trip-linked voyages are meaningful
+- [ ] **Template day**: reusable “typical day” with defined trips / slots
+- [ ] Assign template days to calendar dates
+- [ ] Manually add or adjust trips on a calendar day
+
+### Backend — on-water data model
+
+- [ ] PostGIS + Magellan in Docker/CI; `water_routes`: `name`, `trace` (LineString), `duration_minutes` — **reusable** rows (no departure columns; same geometry across many `trips`)
+- [ ] `boats`: as implemented today (`name`, `boat_type_id`, `user_id`, capacity, notes, …) — physical hull in fleet CRUD / sync
+- [ ] `trips`: `scheduled_departure_at`, `boat_type_id`, `water_route_id`, …
+- [ ] `voyages`: nullable `trip_id`, **`water_route_id` NOT NULL** (actual path may differ from `trips.water_route_id`), `started_at`, `arrived_at`, `status`; optional `scheduled_departure_at` **only** when `trip_id` is null; **no** `boat_id`
+- [ ] `voyage_boat` pivot; `guides` + `voyage_guide` (multi-select at start)
+- [ ] `check_ins`: one per booking, `voyage_id`; **`passengers`**: one row per person on the `voyages` row (booked + walk-ons)
+- [ ] Pax on board: count / group **`passengers`**; align with ticket-type per row when booking types exist
+
+### API and state
+
+- [ ] Policies v1: **guest vs authenticated staff** only (no staff role matrix); include `POST /api/powersync/upload` where relevant
+- [ ] `startVoyage`: idempotent; `underway`; persist boats + guides; ETA = (**`trips.scheduled_departure_at`** if `trip_id` set, else ad-hoc departure on **`voyages`**) **+** **`water_routes.duration_minutes`** via **`voyages.water_route_id`** (may differ from `trips.water_route_id` — v1)
+- [ ] `markArrived` / complete; status transitions (`draft` \| `ready` \| `underway` \| `completed` \| `cancelled` — tune names)
+- [ ] Audit: who started / closed the voyage
+
+### PowerSync and admin client
+
+- [ ] Sync: `water_routes` (+ GeoJSON when online), `boats`, `boat_types`, `trips`, `voyages`, pivots, `guides`, `check_ins`, **`passengers`**, **bookings** needed for check-in
+- [ ] Uplink and **conflict** rules (e.g. single-writer per voyage; queue retries; keep v1 simple)
+- [ ] TanStack DB: optimistic start/arrive; reconcile on reconnect; document offline-allowed vs forbidden actions
+
+### Admin UI (Quasar)
+
+- [ ] **Parcours** editor: draw LineString, duration, name; save to API (map authoring online v1 is OK)
+- [ ] Ops board: ready/underway voyages; program/trip label, route, departure, ETA, pax, boats, guides; Start / Mark arrived
+- [ ] Start **départ** modal: multi boats (filter by trip’s boat type), multi guides, notes
+- [ ] Check-in: attach bookings to voyage (`check_ins`); manifest as **`passengers`** (one row per person); **offline** per sync design
+
+### Fleet and sequencing notes
+
+- [ ] Fleet: boat types / hulls CRUD; guides (optional `user_id`); admin + sync
+- [ ] Optional: **Voyage** with `trip_id` null first for field tests; then end-to-end with bookings
+
+### Testing
+
+- [ ] PHPUnit: voyage lifecycle, policies, ETA = trip departure + **voyage** route duration (or ad-hoc); PostGIS in CI
+- [ ] Feature tests: `startVoyage` with N boats and M guides
+
+### Cross-cutting
+
+- [ ] French-first i18n for _Sortie_ / _Départ_ / _Parcours_ / _Embarcation_ (see terminology table below)
+
+### Later
+
+- [ ] Weekly schedule: start/end date; template days or individual trips
+- [ ] Overrides: e.g. holidays with template days
+- [ ] Extras: electronic ticket, thank-you email, advanced settings (Zeffy-style parity)
 
 ## Naming notes
 
+- **Database:** all **table** and **column** names are **English** (`snake_case`). French product words (_Sortie_, _Parcours_, _Départ_, …) appear in **UI and i18n only**, never as SQL identifiers.
 - Use **Program** as the main container term (instead of campaign).
 - A Program can represent a season or a special event.
 - Keep **Trip** as the bookable unit under a Program.
 - Program names are user-defined and should not be constrained by a code-level naming pattern.
 - Typical user naming combines a base/origin context with a season/date context.
-- **WaterRoute** = geographic path (model / `water_routes` table; aligns with _route_ in **GTFS**, but a distinct name avoids clashing with Laravel’s `Route` and facades).
+- **WaterRoute** = geographic path (model / `water_routes` table; aligns with _route_ in **GTFS**, but a distinct name avoids clashing with Laravel’s `Route` and facades). Rows are **reusable** across trips; **`scheduled_departure_at`** lives on **`trips`** (and on **`voyages`** only when `trip_id` is null). Every **`voyages`** row has a required **`water_route_id`** (actual run); it may differ from **`trips.water_route_id`** (planned).
 - **Voyage** = on-water execution; **Trip** = what you book; hull assignment happens **at voyage start**, not at booking.
+- **Manifest** table **`passengers`** + model **`Passenger`**: one **row per person** on the **`voyages`** row.
 - **French (primary) product terminology** (below) is the **locked** mapping from code to user-facing copy.
 
 ## French (primary) product terminology
 
-UI, marketing, and support copy are **French-first**. Models/tables/PHP stay in English; **i18n keys and all user-visible strings** use the French column.
+UI, marketing, and support copy are **French-first**. **Models, PHP, SQL tables, and SQL columns** use **English** identifiers only. **i18n keys and user-visible strings** use French (second column is the usual Fr label).
 
-| Code (model) | French (UI)            |
+| Code (model) | Typical Fr (i18n)      |
 | ------------ | ---------------------- |
 | `Boat`       | **Embarcation**        |
 | `BoatType`   | **Type d'embarcation** |
 | `WaterRoute` | **Parcours**           |
 | `Voyage`     | **Départ**             |
 | `Trip`       | **Sortie**             |
+| `Passenger`  | _(French label in i18n)_ |
 
 _Examples:_ "Démarrer le départ", "Sorties du jour", "Nouveau parcours", "Sélectionner l'embarcation".
 
@@ -80,65 +151,66 @@ This keeps the admin UI to: pick two types + set ratio, without hard-coding “a
 
 # On-water operations (WaterRoute, Trip, Voyage, ops board)
 
-> **UI (Fr):** see **French (primary) product terminology** — _Parcours_ · _Sortie_ · _Départ_ · _Embarcation_ / _Type d'embarcation_.
+> **UI (Fr):** see **French (primary) product terminology** — _Parcours_ · _Sortie_ · _Départ_ · _Embarcation_ / _Type d'embarcation_. **`Passenger`** / **`passengers`** stay English in SQL; French strings live in i18n.
 
 > **Naming:** the geographic entity matches _route_ in **GTFS** semantically, but the codebase uses **`WaterRoute`** and table **`water_routes`** (and `water_route_id` FKs) to avoid clashing with Laravel’s `Route` and routing.
 
 > **Domain terms** (code)
 >
-> - **WaterRoute** — named path: **trace** (PostGIS + [Magellan](https://github.com/MatanYadaev/laravel-magellan) `LineString`), **duration** (drives ETA with departure time). Authoring: **map drawn** in admin. **UI:** _Parcours_.
-> - **Trip** (bookable unit) — belongs to a program; has **boat type** (what customers book against) and is tied to a **water route** (and schedule/capacity). **No specific hull** at booking time. **UI:** _Sortie_.
-> - **Voyage** — one run on the water. **Optional** `trip_id` (ad-hoc without a _sortie_ is possible). **Manual start only** (no auto-start). **One or many** `Boat` records (embarcations); chosen **at départ start** (multi-select). Same moment for **guide(s)**. **UI:** _Départ_ (not _voyage_ in French, to avoid ambiguity).
+> - **WaterRoute** — `water_routes`: reusable geometry; columns include `name`, `trace` (PostGIS + [Magellan](https://github.com/MatanYadaev/laravel-magellan) `LineString`), **`duration_minutes`** (no departure columns on this table). Authoring: map in admin. **UI:** _Parcours_.
+> - **Trip** — `trips`: `program_id`, `boat_type_id`, planned `water_route_id`, **`scheduled_departure_at`**, capacity, etc. **UI:** _Sortie_.
+> - **Voyage** — `voyages`: optional `trip_id`; required `water_route_id` (actual path; may differ from `trips.water_route_id`); `started_at`, `arrived_at`, `status`; optional `scheduled_departure_at` when `trip_id` is null. Boats via `voyage_boat`; guides via `voyage_guide`. **UI:** _Départ_.
 
 ## Locked product decisions (v1)
 
 - **Staff / admin access:** v1 has **no user roles** (no super-admin vs guide vs read-only, etc.). **Any** authenticated back-office user may perform **all** admin operations. Policies and tests should only distinguish **guest vs authenticated** staff, not role tiers. **`POST /api/powersync/upload` follows the same rule** (no owner-only mutation gates for staff-managed synced rows such as programs, boat types, boats, addresses).
 - **Voyage ↔ boats:** multiple hulls per voyage is **common** — `voyage_boat` (or similar pivot), not a single `boat_id`.
 - **Voyage ↔ trip:** `trip_id` nullable; a voyage is linked to zero or one bookable trip.
-- **Check-in:** **one check-in per booking (family = one booking).** A check-in **terminal/flow** can **adjust the real person count** vs sold tickets. Check-ins **fill** the voyage; **manual pax / manifest lines** (walk-ons, corrections) are allowed in addition to check-ins.
+- **Voyage ↔ water route:** **`water_route_id` is required** on every voyage — records the **actual** path/duration for that run; staff may pick a route different from the trip’s planned `water_route_id`.
+- **Check-in:** **one check-in per booking (family = one booking)** — attaches the booking to a **voyage**. **Manifest** is table **`passengers`**: **one row per person** on the boat (everyone counted that way, including walk-ons and corrections vs sold tickets).
 - **Payment:** **out of scope for v1** (simplifies booking; voyages and ops are still the core).
 - **Start:** only **human** “start voyage” — no automatic start from schedule.
-- **ETA:** `departure time` + the linked **water route’s** `duration` (no live GPS in v1).
+- **ETA:** use **`trips.scheduled_departure_at`** when `trip_id` is set, else **`voyages.scheduled_departure_at`**; add **`water_routes.duration_minutes`** for **`voyages.water_route_id`** (not necessarily the trip’s planned `water_route_id`; no live GPS in v1).
 - **Admin UI:** **Quasar** — **public** bundle and **admin** bundle; the **admin bundle must work offline** (PowerSync: sync is **crucial** for operations data, not nice-to-have).
 
 ## Data model (backend) — step by step
 
-1. **PostGIS + Magellan** in Docker/CI + PHP: enable `geometry` columns, migrations for **`water_routes`**: `name`, `trace` (`LineString`), `duration` (e.g. minutes or `interval`).
-2. **`boat_types`** — as today for trip catalog; **trips** reference `boat_type_id` and **`water_route_id`** (and schedule/capacity fields as you build the bookable model).
-3. **`boats`** — physical hull: label, `boat_type_id`, registration, etc.
-4. **`voyages`** — `trip_id` nullable, **`water_route_id`** (if no trip, required; if trip, inherit or denormalize from trip per your preference), `scheduled_departure_at` (or time + date fields), `started_at` / `arrived_at`, `status` (`draft | ready | underway | completed | cancelled` — tune names), `eta_cached_at` optional. **Do not** set `boat_id` on the voyage as single source: use pivot (step 5).
+1. **PostGIS + Magellan** in Docker/CI + PHP: enable `geometry` columns, migrations for **`water_routes`**: `name`, `trace` (`LineString`), **`duration_minutes`** (unsigned int or as you prefer) — **no** departure columns; rows are **reused** across **`trips`**.
+2. **`boat_types`** — as today for trip catalog; **trips** reference `boat_type_id`, **`water_route_id`**, **`scheduled_departure_at`** (and capacity / calendar fields as you build the bookable model).
+3. **`boats`** — as implemented: `boat_type_id`, `user_id`, `name`, optional `capacity`, `notes`, etc.
+4. **`voyages`** — nullable `trip_id`, **`water_route_id` NOT NULL** (actual path for this row; may differ from `trips.water_route_id`), `started_at`, `arrived_at`, `status` (`draft` \| `ready` \| `underway` \| `completed` \| `cancelled` — tune names), optional `eta_cached_at`. Optional **`scheduled_departure_at`** only when **`trip_id`** is null; when **`trip_id`** is non-null, use **`trips.scheduled_departure_at`** for departure. **No** `boat_id` — use step 5.
 5. **`voyage_boat`** — `voyage_id`, `boat_id` (and optional sort/`is_lead` if needed). Created/updated when staff **starts** the voyage (or edit before underway).
-6. **`guides`** — display name, contact, **`user_id` optional** (guide without login = null).
+6. **`guides`** — e.g. **`display_name`**, **`email`**, **`phone`** (nullable as needed), nullable **`user_id`** (staff link).
 7. **`voyage_guide`** (or order column on a pivot) — which guides for this voyage, set at start via **multi-select**.
-8. **Check-in / manifest** — `check_ins`: `booking_id` (or equivalent), `voyage_id` once attached, **adjusted** adult/child (or type breakdown) counts, timestamps; support **extra manifest rows** not tied to a booking (manual entries) linked to the same voyage. One row per booking for the “family” rule; line items can still roll up counts for the ops board.
-9. **Pax on board** — roll up from check-ins + manual lines for the voyage; keep consistent with **ticket types** (ratio rules) when booking exists.
+8. **Check-in / manifest** — `check_ins`: one row per **`bookings`**, `voyage_id`, timestamps, optional `notes` / state. **`passengers`**: one row per person (`voyage_id`, e.g. **`display_name`**, optional **`booking_id`**, optional **`check_in_id`**, optional **`ticket_type_id`**, **`notes`**).
+9. **Pax on board** — count / aggregate **`passengers`** for the voyage (by ticket type when available); keep consistent with **ticket types** (ratio rules) when booking exists.
 
 ## API & state machine
 
 10. **Policies** — v1: any authenticated staff user may start/complete voyages and manage programs; use policies to reject **unauthenticated** access and for validation rules, not for staff role matrices.
-11. **Transitions** — e.g. `startVoyage`: idempotent, sets `started_at`, status `underway`, persists **boats** + **guides** from the form; recompute `eta` = `scheduled_departure_at` + the resolved **`water_routes.duration`** (v1: not `started_at`). `markArrived` → `arrived_at`, `completed`.
+11. **Transitions** — e.g. `startVoyage`: idempotent, sets `started_at`, status `underway`, persists boats + guides; recompute ETA from **`trips.scheduled_departure_at`** or **`voyages.scheduled_departure_at`**, plus **`water_routes.duration_minutes`** for **`voyages.water_route_id`** (v1: not `started_at`). `markArrived` → set `arrived_at`, `completed`.
 12. **Audit** — who started / who closed the voyage, for support.
 
 ## PowerSync & offline (v1 = first-class)
 
-13. **Tables to sync to admin clients** (minimum): **`water_routes`** (+ GeoJSON for map when online), `boats`, `boat_types`, `voyages`, `voyage_boat`, `guides`, `voyage_guide`, `check_ins` / manifest lines, and anything the **bookings domain** needs for check-in. Define **uplink** (writes from device) and **conflict** rules (e.g. start voyage: single-writer per voyage, queue retries; or CRDT for counters — keep v1 **simple and explicit**).
+13. **Tables to sync to admin clients** (minimum): **`water_routes`** (+ GeoJSON for map when online), `boats`, `boat_types`, **`trips`**, `voyages`, `voyage_boat`, `guides`, `voyage_guide`, `check_ins`, **`passengers`**, and anything the **bookings domain** needs for check-in. Define **uplink** (writes from device) and **conflict** rules (e.g. start voyage: single-writer per voyage, queue retries; or CRDT for counters — keep v1 **simple and explicit**).
 14. **TanStack DB** in admin: optimistic start/arrive; reconcile when sync reconnects. Document which actions are **allowed offline** (e.g. start voyage offline → queue until server confirms) vs **forbidden** if you need server inventory checks.
 15. **Map draw** for **`water_routes`** may require **online** authoring in v1, while **read** of trace works offline on the board after sync.
 
 ## Admin UI (Quasar, admin bundle)
 
-16. **Water route editor** — draw `LineString` on map, set duration, name; save to API, syncs down.
-17. **Ops board** — voyages with `status` in (ready/boarding, underway): trip/program label, **water route** name, **departure time**, **ETA** (= scheduled departure + **`water_routes.duration`**, v1), pax rollups, **boat** names, **guide** names, **Start voyage** / **Mark arrived**.
+16. **Water route editor** — draw `LineString` on map, set **`duration_minutes`**, **`name`**; save to API, syncs down.
+17. **Ops board** — `voyages` with `status` in (ready/boarding, underway): trip/program label, `water_routes.name` for **`voyages.water_route_id`**, departure from **`trips.scheduled_departure_at`** or ad-hoc **`voyages.scheduled_departure_at`**, ETA + **`duration_minutes`**, headcount from **`passengers`**, boat and guide names, **Start voyage** / **Mark arrived**.
 18. **Start voyage** modal — **multi-select boats** (filtered by trip’s `boat_type` or all of type), **multi-select guides**, optional notes; no payment step in v1.
-19. **Check-in** — associating bookings to a **voyage**, adjusted counts, manual rows as needed; works **offline** per sync design.
+19. **Check-in** — associating bookings to a **voyage** (`check_ins`); add/edit **`passengers`** (one row per person, including walk-ons); works **offline** per sync design.
 
 ## Testing
 
-20. **PHPUnit** — voyage lifecycle, policy, **ETA = scheduled_departure + water route `duration`**; PostGIS in CI. **Feature tests** for `startVoyage` with N boats and M guides.
+20. **PHPUnit** — voyage lifecycle, policy, **ETA = `scheduled_departure_at` + `duration_minutes`** (trip vs ad-hoc per rules above; **`voyages.water_route_id`** always set); PostGIS in CI. **Feature tests** for `startVoyage` with N boats and M guides.
 
 ## Order relative to the priority list above
 
-- **Trips** must expose **boat type** + **water route** before voyages that reference a trip are meaningful; **Voyage** with `trip_id` null can be built first for field testing.
-- **Check-in** model depends on **bookings** existing (even without payment) — at least a booking + line items.
-- **Ratio rules** and displayed PAX should share the same notion of “adult/child” (or ticket-type buckets).
+- **`trips`** must expose **`boat_type_id`**, **`water_route_id`**, **`scheduled_departure_at`** before **`voyages.trip_id`** links are meaningful; every **`voyages`** row still needs **`water_route_id`** (UI may default to `trips.water_route_id`; ops may change). **`trip_id`** null: supply **`scheduled_departure_at`** + **`water_route_id`** on **`voyages`** for ETA.
+- **Check-in** model depends on **bookings** existing (even without payment) — at least a booking + line items; **pax on board** comes from **`passengers`** rows.
+- **Ratio rules** and displayed PAX should share the same notion of “adult/child” (or ticket-type buckets), aligned **per `passengers` row** when types exist.
 - **Water routes** (PostGIS) and **Voyage** CRUD can proceed in parallel with a minimal booking stub, then connect end-to-end.

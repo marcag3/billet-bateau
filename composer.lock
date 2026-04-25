@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cc435ba92ce0d88f42f45d21f96a4582",
+    "content-hash": "7db453d7e9054416c48a1856376dd602",
     "packages": [
         {
             "name": "brick/math",
@@ -134,6 +134,91 @@
                 }
             ],
             "time": "2024-02-09T16:56:22+00:00"
+        },
+        {
+            "name": "clickbar/laravel-magellan",
+            "version": "2.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/clickbar/laravel-magellan.git",
+                "reference": "cc16837c97bd6ddce3a85b2d7a4abe801c0f1360"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/clickbar/laravel-magellan/zipball/cc16837c97bd6ddce3a85b2d7a4abe801c0f1360",
+                "reference": "cc16837c97bd6ddce3a85b2d7a4abe801c0f1360",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/console": "^11.0|^12.0|^13.0",
+                "illuminate/contracts": "^11.0|^12.0|^13.0",
+                "illuminate/database": "^11.0|^12.0|^13.0",
+                "illuminate/support": "^11.0|^12.0|^13.0",
+                "php": "^8.2",
+                "spatie/laravel-package-tools": "^1.14.0"
+            },
+            "require-dev": {
+                "larastan/larastan": "^3.1",
+                "laravel/pint": "1.29.0",
+                "nunomaduro/collision": "^v8.1",
+                "orchestra/testbench": "^9.0|^10.0|^11.0",
+                "pestphp/pest": "^3.7|^4.4",
+                "pestphp/pest-plugin-laravel": "^3.1|^4.1",
+                "phpstan/extension-installer": "^1.4",
+                "phpstan/phpstan-deprecation-rules": "^2.0",
+                "phpstan/phpstan-phpunit": "^2.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "WKBParser": "Clickbar\\Magellan\\Facades\\WKBParser",
+                        "WKTParser": "Clickbar\\Magellan\\Facades\\WKTParser",
+                        "WKBGenerator": "Clickbar\\Magellan\\Facades\\WKBGenerator",
+                        "WKTGenerator": "Clickbar\\Magellan\\Facades\\WKTGenerator",
+                        "GeojsonParser": "Clickbar\\Magellan\\Facades\\GeojsonParser",
+                        "GeojsonGenerator": "Clickbar\\Magellan\\Facades\\GeojsonGenerator"
+                    },
+                    "providers": [
+                        "Clickbar\\Magellan\\MagellanServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Clickbar\\Magellan\\": "src",
+                    "Clickbar\\Magellan\\Database\\Factories\\": "database/factories"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Adrian Hawlitschek",
+                    "email": "ah@clickbar.dev",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Tobias Kröll",
+                    "email": "tk@clickbar.dev",
+                    "role": "Developer"
+                }
+            ],
+            "description": "This package provides functionality for working with the postgis extension in Laravel.",
+            "homepage": "https://github.com/clickbar/laravel-magellan",
+            "keywords": [
+                "clickbar",
+                "laravel",
+                "magellan",
+                "postgis"
+            ],
+            "support": {
+                "issues": "https://github.com/clickbar/laravel-magellan/issues",
+                "source": "https://github.com/clickbar/laravel-magellan/tree/2.1.0"
+            },
+            "time": "2026-03-17T08:29:27+00:00"
         },
         {
             "name": "composer/semver",

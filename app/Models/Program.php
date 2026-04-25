@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
@@ -81,6 +82,16 @@ class Program extends Model implements HasMedia
     public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'address_id');
+    }
+
+    public function trips(): HasMany
+    {
+        return $this->hasMany(Trip::class, 'program_id');
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'program_id');
     }
 
     /**

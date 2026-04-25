@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
-use Database\Factories\BoatFactory;
+use Database\Factories\GuideFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Boat extends Model
+class Guide extends Model
 {
-    /** @use HasFactory<BoatFactory> */
+    /** @use HasFactory<GuideFactory> */
     use HasFactory;
 
     public $incrementing = false;
@@ -20,10 +20,8 @@ class Boat extends Model
     protected $fillable = [
         'id',
         'user_id',
-        'boat_type_id',
         'name',
-        'capacity',
-        'notes',
+        'staff_user_id',
         'created_at',
         'updated_at',
     ];
@@ -31,7 +29,6 @@ class Boat extends Model
     protected function casts(): array
     {
         return [
-            'capacity' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -42,13 +39,13 @@ class Boat extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function boatType(): BelongsTo
+    public function staffUser(): BelongsTo
     {
-        return $this->belongsTo(BoatType::class, 'boat_type_id');
+        return $this->belongsTo(User::class, 'staff_user_id');
     }
 
     public function voyages(): BelongsToMany
     {
-        return $this->belongsToMany(Voyage::class, 'voyage_boat')->withTimestamps();
+        return $this->belongsToMany(Voyage::class, 'voyage_guide')->withTimestamps();
     }
 }

@@ -52,4 +52,9 @@ class BoatType extends Model implements HasMedia
     {
         return $this->hasMany(Boat::class, 'boat_type_id');
     }
+
+    public function trips(): HasMany
+    {
+        return $this->hasMany(Trip::class, 'boat_type_id');
+    }
 }

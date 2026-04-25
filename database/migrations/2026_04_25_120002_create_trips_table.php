@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('trips', function (Blueprint $table): void {
+            $table->uuid('id')->primary();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('program_id')->constrained('programs')->cascadeOnDelete();
+            $table->foreignUuid('boat_type_id')->nullable()->constrained('boat_types')->nullOnDelete();
+            $table->foreignUuid('water_route_id')->nullable()->constrained('water_routes')->nullOnDelete();
+            $table->string('title')->nullable();
+            $table->dateTimeTz('scheduled_departure_at');
+            $table->unsignedInteger('capacity')->nullable();
+            $table->timestamps();
+
+            $table->index(['user_id', 'updated_at']);
+            $table->index(['program_id', 'scheduled_departure_at']);
+        });
+    }
+};

@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
-import { Quasar } from 'quasar';
+import { Quasar, Notify, Dialog } from 'quasar';
 import { setCssVar } from 'quasar';
 import '@quasar/extras/material-icons/material-icons.css';
 import 'quasar/src/css/index.sass';
@@ -20,7 +20,12 @@ const pinia = createPinia();
 
 app.use(pinia);
 app.use(router);
-app.use(Quasar);
+app.use(Quasar, {
+    plugins: {
+        Notify,
+        Dialog,
+    },
+});
 app.use(i18n);
 
 setCssVar('primary', '#ea1d2c');

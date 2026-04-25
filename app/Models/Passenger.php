@@ -2,15 +2,14 @@
 
 namespace App\Models;
 
-use Database\Factories\BoatFactory;
+use Database\Factories\PassengerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Boat extends Model
+class Passenger extends Model
 {
-    /** @use HasFactory<BoatFactory> */
+    /** @use HasFactory<PassengerFactory> */
     use HasFactory;
 
     public $incrementing = false;
@@ -19,10 +18,10 @@ class Boat extends Model
 
     protected $fillable = [
         'id',
-        'user_id',
-        'boat_type_id',
+        'voyage_id',
         'name',
-        'capacity',
+        'booking_id',
+        'check_in_id',
         'notes',
         'created_at',
         'updated_at',
@@ -31,24 +30,23 @@ class Boat extends Model
     protected function casts(): array
     {
         return [
-            'capacity' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
     }
 
-    public function user(): BelongsTo
+    public function voyage(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Voyage::class, 'voyage_id');
     }
 
-    public function boatType(): BelongsTo
+    public function booking(): BelongsTo
     {
-        return $this->belongsTo(BoatType::class, 'boat_type_id');
+        return $this->belongsTo(Booking::class, 'booking_id');
     }
 
-    public function voyages(): BelongsToMany
+    public function checkIn(): BelongsTo
     {
-        return $this->belongsToMany(Voyage::class, 'voyage_boat')->withTimestamps();
+        return $this->belongsTo(CheckIn::class, 'check_in_id');
     }
 }
