@@ -72,6 +72,11 @@ const messages = {
             backToList: 'Back to programs',
             isArchived: 'Archived (hidden from Active tab)',
         },
+        notFoundPage: {
+            title: 'Page not found',
+            description: 'This page does not exist or the link may be incorrect.',
+            backHome: 'Back home',
+        },
         programsCreate: {
             title: 'Create program',
             subtitle: 'Program details sync through PowerSync; images upload to the server and sync as metadata.',
@@ -269,6 +274,11 @@ const messages = {
                 'Impossible de charger ce programme. Il a peut-etre ete supprime ou vous n’y avez pas acces.',
             backToList: 'Retour aux programmes',
             isArchived: 'Archive (absent de l’onglet Actifs)',
+        },
+        notFoundPage: {
+            title: 'Page introuvable',
+            description: "Cette page n'existe pas ou le lien est incorrect.",
+            backHome: "Retour a l'accueil",
         },
         programsCreate: {
             title: 'Creer un programme',

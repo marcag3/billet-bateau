@@ -29,36 +29,6 @@ export const programsModelDefinition = defineModel({
 });
 
 /**
- * Replicated `is_archived` (PG boolean / int / text) and local writes.
- *
- * @param {Record<string, unknown>} p
- * @returns {boolean}
- */
-export function programRowIsArchived(p) {
-    const v = p.is_archived;
-    if (v === true || v === 1) {
-        return true;
-    }
-    if (v === false || v === 0) {
-        return false;
-    }
-    if (typeof v === 'string') {
-        const s = v.trim().toLowerCase();
-        if (s === '1' || s === 'true' || s === 't') {
-            return true;
-        }
-        if (s === '0' || s === 'false' || s === 'f' || s.length === 0) {
-            return false;
-        }
-    }
-    const n = Number(v);
-    if (Number.isFinite(n)) {
-        return n === 1;
-    }
-    return false;
-}
-
-/**
  * @param {string} hex
  * @returns {string}
  */

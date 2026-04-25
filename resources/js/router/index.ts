@@ -106,6 +106,11 @@ const routes: RouteRecordRaw[] = [
             requiresAuth: true,
         },
     },
+    {
+        path: '/:pathMatch(.*)*',
+        name: 'not-found',
+        component: () => import('../pages/AppNotFoundPage.vue'),
+    },
 ];
 
 const router = createRouter({

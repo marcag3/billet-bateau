@@ -208,6 +208,7 @@ import {
 import mediaRoutes from "../routes/api/media";
 import { requestFormData } from "../services/http.client";
 import { normalizeImageFiles } from "../utilities/image-files";
+import { readReplicatedBoolean } from "../utilities/replicated-boolean";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
@@ -244,62 +245,6 @@ const showNotFound = computed(() => {
     const list = programs.value ?? [];
     return !list.some((p) => p != null && String(p.id) === id);
 });
-
-/**
- * @param {Record<string, unknown>} p
- * @returns {boolean}
- */
-function programRowIsActive(p: Record<string, unknown>) {
-    const v = p.is_active;
-    if (v === true || v === 1) {
-        return true;
-    }
-    if (v === false || v === 0) {
-        return false;
-    }
-    if (typeof v === "string") {
-        const s = v.trim().toLowerCase();
-        if (s === "1" || s === "true" || s === "t") {
-            return true;
-        }
-        if (s === "0" || s === "false" || s === "f" || s.length === 0) {
-            return false;
-        }
-    }
-    const n = Number(v);
-    if (Number.isFinite(n)) {
-        return n === 1;
-    }
-    return false;
-}
-
-/**
- * @param {Record<string, unknown>} p
- * @returns {boolean}
- */
-function programRowIsArchived(p: Record<string, unknown>) {
-    const v = p.is_archived;
-    if (v === true || v === 1) {
-        return true;
-    }
-    if (v === false || v === 0) {
-        return false;
-    }
-    if (typeof v === "string") {
-        const s = v.trim().toLowerCase();
-        if (s === "1" || s === "true" || s === "t") {
-            return true;
-        }
-        if (s === "0" || s === "false" || s === "f" || s.length === 0) {
-            return false;
-        }
-    }
-    const n = Number(v);
-    if (Number.isFinite(n)) {
-        return n === 1;
-    }
-    return false;
-}
 
 /**
  * @param {Record<string, unknown>} p
@@ -404,8 +349,8 @@ watch(
                 slug: String(p.slug ?? "")
                     .trim()
                     .toLowerCase(),
-                isActive: programRowIsActive(p),
-                isArchived: programRowIsArchived(p),
+                isActive: readReplicatedBoolean(p.is_active),
+                isArchived: readReplicatedBoolean(p.is_archived),
                 address: {
                     line_1:
                         a && typeof a.line_1 === "string"

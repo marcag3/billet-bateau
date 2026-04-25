@@ -124,7 +124,12 @@
                                 @click="() => openWorkspace(String(p.id))"
                             />
                             <q-toggle
-                                :model-value="programRowIsActive(p as Record<string, unknown>)"
+                                :model-value="
+                                    readReplicatedBoolean(
+                                        (p as Record<string, unknown>)
+                                            .is_active,
+                                    )
+                                "
                                 :label="t('programsList.isActive')"
                                 :disable="isPatching"
                                 @update:model-value="
@@ -171,6 +176,7 @@ import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
+import { readReplicatedBoolean } from "../utilities/replicated-boolean";
 
 const PROGRAM_MODEL = "App\\Models\\Program";
 
@@ -203,64 +209,6 @@ const { data: mediaRows } = useEntityList({
 const isPatching = ref(false);
 const programTab = ref<"active" | "archived">("active");
 
-/**
- * Replicated `is_active` (PG boolean / int / text) and local writes (`0` / `1`).
- *
- * @param {Record<string, unknown>} p
- * @returns {boolean}
- */
-function programRowIsActive(p: Record<string, unknown>) {
-    const v = p.is_active;
-    if (v === true || v === 1) {
-        return true;
-    }
-    if (v === false || v === 0) {
-        return false;
-    }
-    if (typeof v === "string") {
-        const t = v.trim().toLowerCase();
-        if (t === "1" || t === "true" || t === "t") {
-            return true;
-        }
-        if (t === "0" || t === "false" || t === "f" || t.length === 0) {
-            return false;
-        }
-    }
-    const n = Number(v);
-    if (Number.isFinite(n)) {
-        return n === 1;
-    }
-    return false;
-}
-
-/**
- * @param {Record<string, unknown>} p
- * @returns {boolean}
- */
-function programRowIsArchived(p: Record<string, unknown>) {
-    const v = p.is_archived;
-    if (v === true || v === 1) {
-        return true;
-    }
-    if (v === false || v === 0) {
-        return false;
-    }
-    if (typeof v === "string") {
-        const s = v.trim().toLowerCase();
-        if (s === "1" || s === "true" || s === "t") {
-            return true;
-        }
-        if (s === "0" || s === "false" || s === "f" || s.length === 0) {
-            return false;
-        }
-    }
-    const n = Number(v);
-    if (Number.isFinite(n)) {
-        return n === 1;
-    }
-    return false;
-}
-
 const totalProgramCount = computed(() => (programs.value ?? []).length);
 
 const filteredPrograms = computed(() => {
@@ -269,12 +217,17 @@ const filteredPrograms = computed(() => {
         return list.filter(
             (p) =>
                 p != null &&
-                !programRowIsArchived(p as Record<string, unknown>),
+                !readReplicatedBoolean(
+                    (p as Record<string, unknown>).is_archived,
+                ),
         );
     }
     return list.filter(
         (p) =>
-            p != null && programRowIsArchived(p as Record<string, unknown>),
+            p != null &&
+            readReplicatedBoolean(
+                (p as Record<string, unknown>).is_archived,
+            ),
     );
 });
 

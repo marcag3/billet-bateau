@@ -159,12 +159,10 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useAuthStore } from "../store/auth.store";
-import {
-    programRowIsArchived,
-    usePrograms,
-} from "../models/programs/programs.model";
+import { usePrograms } from "../models/programs/programs.model";
 import AppOutboxToolbarMenu from "../components/AppOutboxToolbarMenu.vue";
 import { setLocale } from "../utilities/i18n";
+import { readReplicatedBoolean } from "../utilities/replicated-boolean";
 
 const router = useRouter();
 const route = useRoute();
@@ -200,7 +198,9 @@ const visibleProgramIds = computed(() =>
         .filter(
             (p) =>
                 p != null &&
-                !programRowIsArchived(p as Record<string, unknown>),
+                !readReplicatedBoolean(
+                    (p as Record<string, unknown>).is_archived,
+                ),
         )
         .map((p) => String(p.id)),
 );
@@ -210,7 +210,9 @@ const programSwitcherOptions = computed(() =>
         .filter(
             (p) =>
                 p != null &&
-                !programRowIsArchived(p as Record<string, unknown>),
+                !readReplicatedBoolean(
+                    (p as Record<string, unknown>).is_archived,
+                ),
         )
         .map((p) => ({
             label: String((p as Record<string, unknown>).name ?? ""),
