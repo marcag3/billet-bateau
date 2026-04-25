@@ -63,6 +63,7 @@ const messages = {
         programsCreate: {
             title: 'Create program',
             subtitle: 'Program details sync through PowerSync; images upload to the server and sync as metadata.',
+            formSection: 'Program details',
             name: 'Name',
             description: 'Description',
             themeColor: 'Theme color',
@@ -236,6 +237,7 @@ const messages = {
             title: 'Creer un programme',
             subtitle:
                 'Les details de programme sont synchronises via PowerSync ; les images sont envoyees au serveur puis leurs metadonnees sont synchronisees.',
+            formSection: 'Details du programme',
             name: 'Nom',
             description: 'Description',
             themeColor: 'Couleur du theme',

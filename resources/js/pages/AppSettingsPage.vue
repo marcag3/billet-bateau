@@ -1,12 +1,15 @@
 <template>
     <q-page class="q-pa-xl">
-        <h1 class="text-h4 q-mb-md">{{ t('settings.title') }}</h1>
-        <p class="text-body1">{{ t('settings.isolatedDescription') }}</p>
+        <AppPageHeader
+            :title="t('settings.title')"
+            :description="t('settings.isolatedDescription')"
+        />
     </q-page>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n';
+import AppPageHeader from '../components/ui/AppPageHeader.vue';
 
 const { t } = useI18n();
 </script>

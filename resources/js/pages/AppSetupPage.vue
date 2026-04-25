@@ -1,71 +1,66 @@
 <template>
-    <q-page class="row items-center justify-center q-pa-md">
-        <q-card class="app-setup-card q-pa-lg">
-            <q-card-section class="q-pb-sm">
-                <div class="text-h5">{{ t('setup.title') }}</div>
-                <div class="text-body2 text-grey-7">{{ t('setup.subtitle') }}</div>
-            </q-card-section>
+    <AppAuthFormLayout
+        max-width="setup"
+        :title="t('setup.title')"
+        :subtitle="t('setup.subtitle')"
+        :error-message="errorMessage"
+    >
+        <q-form
+            class="q-gutter-md"
+            @submit.prevent="submitSetup"
+        >
+            <q-input
+                v-model="organizationName"
+                v-bind="organizationNameProps"
+                outlined
+                dense
+                :label="t('setup.organizationName')"
+                :disable="isSubmitting"
+            />
 
-            <q-card-section>
-                <q-banner v-if="errorMessage.length > 0" class="bg-red-1 text-negative q-mb-md" rounded>
-                    {{ errorMessage }}
-                </q-banner>
+            <q-input
+                v-model="email"
+                v-bind="emailProps"
+                type="email"
+                outlined
+                dense
+                autocomplete="username"
+                :label="t('setup.adminEmail')"
+                :disable="isSubmitting"
+            />
 
-                <q-form class="q-gutter-md" @submit.prevent="submitSetup">
-                    <q-input
-                        v-model="organizationName"
-                        v-bind="organizationNameProps"
-                        outlined
-                        dense
-                        :label="t('setup.organizationName')"
-                        :disable="isSubmitting"
-                    />
+            <q-input
+                v-model="password"
+                v-bind="passwordProps"
+                type="password"
+                outlined
+                dense
+                autocomplete="new-password"
+                :label="t('auth.password')"
+                :disable="isSubmitting"
+            />
 
-                    <q-input
-                        v-model="email"
-                        v-bind="emailProps"
-                        type="email"
-                        outlined
-                        dense
-                        autocomplete="username"
-                        :label="t('setup.adminEmail')"
-                        :disable="isSubmitting"
-                    />
+            <q-input
+                v-model="passwordConfirmation"
+                v-bind="passwordConfirmationProps"
+                type="password"
+                outlined
+                dense
+                autocomplete="new-password"
+                :label="t('setup.confirmPassword')"
+                :disable="isSubmitting"
+            />
 
-                    <q-input
-                        v-model="password"
-                        v-bind="passwordProps"
-                        type="password"
-                        outlined
-                        dense
-                        autocomplete="new-password"
-                        :label="t('auth.password')"
-                        :disable="isSubmitting"
-                    />
-
-                    <q-input
-                        v-model="passwordConfirmation"
-                        v-bind="passwordConfirmationProps"
-                        type="password"
-                        outlined
-                        dense
-                        autocomplete="new-password"
-                        :label="t('setup.confirmPassword')"
-                        :disable="isSubmitting"
-                    />
-
-                    <q-btn
-                        type="submit"
-                        color="primary"
-                        :label="t('setup.completeSetup')"
-                        :loading="isSubmitting"
-                        :disable="isSubmitting"
-                        class="full-width"
-                    />
-                </q-form>
-            </q-card-section>
-        </q-card>
-    </q-page>
+            <q-btn
+                type="submit"
+                color="primary"
+                :label="t('setup.completeSetup')"
+                :loading="isSubmitting"
+                :disable="isSubmitting"
+                class="full-width"
+            />
+        </q-form>
+    </AppAuthFormLayout>
 </template>
 
 <script setup>
@@ -76,6 +71,7 @@ import { useRouter } from 'vue-router';
 import { createSetupFormSchema } from '../models/auth.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useAuthStore } from '../store/auth.store';
+import AppAuthFormLayout from '../components/ui/AppAuthFormLayout.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -116,10 +112,3 @@ const submitSetup = handleSubmit(async (values) => {
     }
 });
 </script>
-
-<style scoped>
-.app-setup-card {
-    width: 100%;
-    max-width: 460px;
-}
-</style>

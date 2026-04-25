@@ -1,32 +1,29 @@
 <template>
     <q-page class="q-pa-xl">
-        <h1 class="text-h4 q-mb-sm">{{ t('boatsList.title') }}</h1>
-        <p class="text-body1 text-grey-8 q-mb-lg">
-            {{ t('boatsList.description') }}
-        </p>
+        <AppPageHeader
+            :title="t('boatsList.title')"
+            :description="t('boatsList.description')"
+        />
 
-        <q-banner
+        <AppAlertBanner
             v-if="hasOutboxCommitError"
-            class="bg-amber-1 text-dark q-mb-md"
-            rounded
+            variant="warning"
+            dismissible
+            :dismiss-label="t('common.dismiss')"
+            @dismiss="dismissOutboxCommitError"
         >
             {{ outboxCommitError }}
-            <template #action>
-                <q-btn
-                    flat
-                    color="primary"
-                    :label="t('common.dismiss')"
-                    @click="dismissOutboxCommitError"
-                />
-            </template>
-        </q-banner>
+        </AppAlertBanner>
 
-        <q-inner-loading :showing="!hasBootstrapped" />
-
-        <div v-if="hasBootstrapped" class="q-gutter-y-md">
-            <q-card flat bordered class="bg-white rounded-borders q-pa-md">
-                <div class="text-subtitle2 q-mb-md">{{ t('boatsList.addNew') }}</div>
-                <q-form class="q-gutter-md" @submit.prevent="onCreateSubmit">
+        <AppBootstrapGate
+            :ready="hasBootstrapped"
+            content-class="q-gutter-y-md"
+        >
+            <AppCardSection :label="t('boatsList.addNew')">
+                <q-form
+                    class="q-gutter-md"
+                    @submit.prevent="onCreateSubmit"
+                >
                     <q-input
                         v-model="createName"
                         v-bind="createNameProps"
@@ -72,14 +69,13 @@
                         :disable="!meta.valid || isSubmitting"
                     />
                 </q-form>
-            </q-card>
+            </AppCardSection>
 
-            <q-list bordered separator class="bg-white rounded-borders">
-                <q-item v-if="myBoats.length === 0">
-                    <q-item-section>
-                        <q-item-label>{{ t('boatsList.empty') }}</q-item-label>
-                    </q-item-section>
-                </q-item>
+            <AppEntityList>
+                <AppEmptyListRow
+                    :show="myBoats.length === 0"
+                    :message="t('boatsList.empty')"
+                />
                 <q-item
                     v-for="b in myBoats"
                     :key="b.id"
@@ -150,8 +146,8 @@
                         />
                     </q-item-section>
                 </q-item>
-            </q-list>
-        </div>
+            </AppEntityList>
+        </AppBootstrapGate>
     </q-page>
 </template>
 
@@ -170,12 +166,25 @@ import {
     getAppPowerSyncBootstrappedRef,
     useAppPowerSyncOutbox,
 } from '../powersync/app-powersync.runtime';
+import { useUserScopedCollection } from '../composables/useUserScopedCollection';
+import { useConfirmDialog } from '../composables/useConfirmDialog';
+import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
+import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
+import AppPageHeader from '../components/ui/AppPageHeader.vue';
+import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
+import AppBootstrapGate from '../components/ui/AppBootstrapGate.vue';
+import AppCardSection from '../components/ui/AppCardSection.vue';
+import AppEntityList from '../components/ui/AppEntityList.vue';
+import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
 
 const { t } = useI18n();
 const $q = useQuasar();
 const authStore = useAuthStore();
 const { boats, ensureBoatsReady, createBoatRow, patchBoatRow, deleteBoatRow } = useBoats();
 const { boatTypes, ensureBoatTypesReady } = useBoatTypes();
+const { confirm } = useConfirmDialog();
+const { runWithNotify } = useNotifyAsyncAction();
+const { notifyError } = useNotifyErrorFromCatch();
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
@@ -202,23 +211,9 @@ const patchingId = ref('');
 /** @type {import('vue').Reactive<Record<string, Record<string, string>>>} */
 const drafts = reactive({});
 
-const myBoats = computed(() => {
-    const uid = authStore.user?.id;
-    if (uid === undefined || uid === null) {
-        return [];
-    }
-    const s = String(uid);
-    return boats.value.filter((row) => row != null && String(row.user_id) === s);
-});
+const myBoats = useUserScopedCollection(boats, () => authStore.user?.id);
 
-const myBoatTypes = computed(() => {
-    const uid = authStore.user?.id;
-    if (uid === undefined || uid === null) {
-        return [];
-    }
-    const s = String(uid);
-    return boatTypes.value.filter((row) => row != null && String(row.user_id) === s);
-});
+const myBoatTypes = useUserScopedCollection(boatTypes, () => authStore.user?.id);
 
 const boatTypeOptions = computed(() =>
     myBoatTypes.value.map((bt) => ({
@@ -349,44 +344,35 @@ async function patchWith(id, fn) {
 }
 
 const onCreateSubmit = handleSubmit(async (values) => {
-    try {
-        await createBoatRow({
-            name: values.name,
-            capacity: values.capacity,
-            notes: values.notes,
-            boatTypeId: values.boatTypeId,
-        });
-        resetForm();
-        $q.notify({ type: 'positive', message: t('boatsList.created') });
-    } catch (e) {
-        $q.notify({
-            type: 'negative',
-            message: e instanceof Error ? e.message : t('boatsList.errorGeneric'),
-        });
-    }
+    await runWithNotify(
+        async () => {
+            await createBoatRow({
+                name: values.name,
+                capacity: values.capacity,
+                notes: values.notes,
+                boatTypeId: values.boatTypeId,
+            });
+            resetForm();
+        },
+        { successMessage: t('boatsList.created'), errorGeneric: t('boatsList.errorGeneric') },
+    );
 });
 
 /**
  * @param {Record<string, unknown>} b
  */
 function confirmDelete(b) {
-    $q.dialog({
+    confirm({
         title: t('boatsList.deleteConfirmTitle'),
         message: t('boatsList.deleteConfirmMessage', { name: String(b.name ?? '') }),
-        cancel: true,
-        persistent: true,
-    }).onOk(() => {
-        void (async () => {
+        onOk: async () => {
             try {
                 await deleteBoatRow(String(b.id));
                 $q.notify({ type: 'positive', message: t('boatsList.deleted') });
             } catch (e) {
-                $q.notify({
-                    type: 'negative',
-                    message: e instanceof Error ? e.message : t('boatsList.errorGeneric'),
-                });
+                notifyError(e, t('boatsList.errorGeneric'));
             }
-        })();
+        },
     });
 }
 </script>

@@ -1,53 +1,51 @@
 <template>
-    <q-page class="row items-center justify-center q-pa-md">
-        <q-card class="app-login-card q-pa-lg">
-            <q-card-section class="q-pb-sm">
-                <div class="text-h5">{{ t('auth.signIn') }}</div>
-                <div class="text-body2 text-grey-7">{{ t('auth.authenticateWorkspace') }}</div>
-            </q-card-section>
+    <AppAuthFormLayout
+        :title="t('auth.signIn')"
+        :subtitle="t('auth.authenticateWorkspace')"
+        :error-message="errorMessage"
+    >
+        <q-form
+            class="q-gutter-md"
+            @submit.prevent="submitLogin"
+        >
+            <q-input
+                v-model="email"
+                v-bind="emailProps"
+                type="email"
+                outlined
+                dense
+                autocomplete="username"
+                :label="t('auth.email')"
+                :disable="isSubmitting"
+            />
 
-            <q-card-section>
-                <q-banner v-if="errorMessage.length > 0" class="bg-red-1 text-negative q-mb-md" rounded>
-                    {{ errorMessage }}
-                </q-banner>
+            <q-input
+                v-model="password"
+                v-bind="passwordProps"
+                type="password"
+                outlined
+                dense
+                autocomplete="current-password"
+                :label="t('auth.password')"
+                :disable="isSubmitting"
+            />
 
-                <q-form class="q-gutter-md" @submit.prevent="submitLogin">
-                    <q-input
-                        v-model="email"
-                        v-bind="emailProps"
-                        type="email"
-                        outlined
-                        dense
-                        autocomplete="username"
-                        :label="t('auth.email')"
-                        :disable="isSubmitting"
-                    />
+            <q-checkbox
+                v-model="remember"
+                :label="t('auth.rememberMe')"
+                :disable="isSubmitting"
+            />
 
-                    <q-input
-                        v-model="password"
-                        v-bind="passwordProps"
-                        type="password"
-                        outlined
-                        dense
-                        autocomplete="current-password"
-                        :label="t('auth.password')"
-                        :disable="isSubmitting"
-                    />
-
-                    <q-checkbox v-model="remember" :label="t('auth.rememberMe')" :disable="isSubmitting" />
-
-                    <q-btn
-                        type="submit"
-                        color="primary"
-                        :label="t('auth.signIn')"
-                        :loading="isSubmitting"
-                        :disable="isSubmitting"
-                        class="full-width"
-                    />
-                </q-form>
-            </q-card-section>
-        </q-card>
-    </q-page>
+            <q-btn
+                type="submit"
+                color="primary"
+                :label="t('auth.signIn')"
+                :loading="isSubmitting"
+                :disable="isSubmitting"
+                class="full-width"
+            />
+        </q-form>
+    </AppAuthFormLayout>
 </template>
 
 <script setup>
@@ -58,6 +56,7 @@ import { ref } from 'vue';
 import { createLoginFormSchema } from '../models/auth.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useAuthStore } from '../store/auth.store';
+import AppAuthFormLayout from '../components/ui/AppAuthFormLayout.vue';
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -97,10 +96,3 @@ const submitLogin = handleSubmit(async (values) => {
     }
 });
 </script>
-
-<style scoped>
-.app-login-card {
-    width: 100%;
-    max-width: 420px;
-}
-</style>

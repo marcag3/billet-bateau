@@ -1,0 +1,11 @@
+/**
+ * App-wide design tokens (complement Quasar + app.scss).
+ */
+:root {
+    --app-radius-lg: 1.15rem;
+    --app-radius-md: 0.9rem;
+    --app-radius-banner: 0.75rem;
+    --app-page-padding-xl: 2.5rem;
+    --app-content-max: 70rem;
+    --app-hero-shadow: 0 20px 40px rgba(0, 22, 77, 0.19);
+}

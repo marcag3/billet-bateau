@@ -1,32 +1,29 @@
 <template>
     <q-page class="q-pa-xl">
-        <h1 class="text-h4 q-mb-sm">{{ t('boatTypesList.title') }}</h1>
-        <p class="text-body1 text-grey-8 q-mb-lg">
-            {{ t('boatTypesList.description') }}
-        </p>
+        <AppPageHeader
+            :title="t('boatTypesList.title')"
+            :description="t('boatTypesList.description')"
+        />
 
-        <q-banner
+        <AppAlertBanner
             v-if="hasOutboxCommitError"
-            class="bg-amber-1 text-dark q-mb-md"
-            rounded
+            variant="warning"
+            dismissible
+            :dismiss-label="t('common.dismiss')"
+            @dismiss="dismissOutboxCommitError"
         >
             {{ outboxCommitError }}
-            <template #action>
-                <q-btn
-                    flat
-                    color="primary"
-                    :label="t('common.dismiss')"
-                    @click="dismissOutboxCommitError"
-                />
-            </template>
-        </q-banner>
+        </AppAlertBanner>
 
-        <q-inner-loading :showing="!hasBootstrapped" />
-
-        <div v-if="hasBootstrapped" class="q-gutter-y-md">
-            <q-card flat bordered class="bg-white rounded-borders q-pa-md">
-                <div class="text-subtitle2 q-mb-sm">{{ t('boatTypesList.addNew') }}</div>
-                <q-form class="row q-col-gutter-sm items-end" @submit.prevent="onCreateSubmit">
+        <AppBootstrapGate
+            :ready="hasBootstrapped"
+            content-class="q-gutter-y-md"
+        >
+            <AppCardSection :label="t('boatTypesList.addNew')">
+                <q-form
+                    class="row q-col-gutter-sm items-end"
+                    @submit.prevent="onCreateSubmit"
+                >
                     <div class="col-12 col-sm-grow">
                         <q-input
                             v-model="createName"
@@ -47,14 +44,13 @@
                         />
                     </div>
                 </q-form>
-            </q-card>
+            </AppCardSection>
 
-            <q-list bordered separator class="bg-white rounded-borders">
-                <q-item v-if="myBoatTypes.length === 0">
-                    <q-item-section>
-                        <q-item-label>{{ t('boatTypesList.empty') }}</q-item-label>
-                    </q-item-section>
-                </q-item>
+            <AppEntityList>
+                <AppEmptyListRow
+                    :show="myBoatTypes.length === 0"
+                    :message="t('boatTypesList.empty')"
+                />
                 <q-item
                     v-for="bt in myBoatTypes"
                     :key="bt.id"
@@ -75,7 +71,10 @@
                         />
                         <div class="row q-col-gutter-md items-start q-mb-sm">
                             <div class="col-12 col-md-6">
-                                <div v-if="primaryImageFor(bt.id)" class="q-mb-xs">
+                                <div
+                                    v-if="primaryImageFor(bt.id)"
+                                    class="q-mb-xs"
+                                >
                                     <q-img
                                         :src="primaryImageFor(bt.id)"
                                         ratio="16/9"
@@ -107,14 +106,14 @@
                         />
                     </q-item-section>
                 </q-item>
-            </q-list>
-        </div>
+            </AppEntityList>
+        </AppBootstrapGate>
     </q-page>
 </template>
 
 <script setup>
 import { useForm } from 'vee-validate';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from '../store/auth.store';
@@ -130,12 +129,26 @@ import {
 } from '../powersync/app-powersync.runtime';
 import mediaRoutes from '../routes/api/media';
 import { requestFormData } from '../services/http.client';
+import { normalizeImageFiles } from '../utilities/image-files';
+import { useUserScopedCollection } from '../composables/useUserScopedCollection';
+import { useConfirmDialog } from '../composables/useConfirmDialog';
+import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
+import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
+import AppPageHeader from '../components/ui/AppPageHeader.vue';
+import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
+import AppBootstrapGate from '../components/ui/AppBootstrapGate.vue';
+import AppCardSection from '../components/ui/AppCardSection.vue';
+import AppEntityList from '../components/ui/AppEntityList.vue';
+import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
 
 const BOAT_TYPE_MODEL = 'App\\Models\\BoatType';
 
 const { t } = useI18n();
 const $q = useQuasar();
 const authStore = useAuthStore();
+const { confirm } = useConfirmDialog();
+const { runWithNotify } = useNotifyAsyncAction();
+const { notifyError } = useNotifyErrorFromCatch();
 const {
     boatTypes,
     ensureBoatTypesReady,
@@ -173,14 +186,7 @@ const uploadingId = ref('');
 /** @type {import('vue').Reactive<Record<string, string>>} */
 const nameDrafts = reactive({});
 
-const myBoatTypes = computed(() => {
-    const uid = authStore.user?.id;
-    if (uid === undefined || uid === null) {
-        return [];
-    }
-    const s = String(uid);
-    return boatTypes.value.filter((row) => row != null && String(row.user_id) === s);
-});
+const myBoatTypes = useUserScopedCollection(boatTypes, () => authStore.user?.id);
 
 onMounted(() => {
     void ensureBoatTypesReady();
@@ -251,16 +257,13 @@ function commitName(bt) {
 }
 
 const onCreateSubmit = handleSubmit(async (values) => {
-    try {
-        await createBoatTypeRow(values.name);
-        resetForm();
-        $q.notify({ type: 'positive', message: t('boatTypesList.created') });
-    } catch (e) {
-        $q.notify({
-            type: 'negative',
-            message: e instanceof Error ? e.message : t('boatTypesList.errorGeneric'),
-        });
-    }
+    await runWithNotify(
+        async () => {
+            await createBoatTypeRow(values.name);
+            resetForm();
+        },
+        { successMessage: t('boatTypesList.created'), errorGeneric: t('boatTypesList.errorGeneric') },
+    );
 });
 
 /**
@@ -268,7 +271,7 @@ const onCreateSubmit = handleSubmit(async (values) => {
  * @param {File | File[] | null} value
  */
 async function onPickImages(boatTypeId, value) {
-    const files = normalizeFiles(value);
+    const files = normalizeImageFiles(value);
     if (files.length === 0) {
         return;
     }
@@ -293,40 +296,20 @@ async function onPickImages(boatTypeId, value) {
 }
 
 /**
- * @param {File | File[] | null} value
- * @returns {File[]}
- */
-function normalizeFiles(value) {
-    if (value == null) {
-        return [];
-    }
-    if (Array.isArray(value)) {
-        return value.filter((f) => f instanceof File);
-    }
-    return value instanceof File ? [value] : [];
-}
-
-/**
  * @param {Record<string, unknown>} bt
  */
 function confirmDelete(bt) {
-    $q.dialog({
+    confirm({
         title: t('boatTypesList.deleteConfirmTitle'),
         message: t('boatTypesList.deleteConfirmMessage', { name: String(bt.name ?? '') }),
-        cancel: true,
-        persistent: true,
-    }).onOk(() => {
-        void (async () => {
+        onOk: async () => {
             try {
                 await deleteBoatTypeRow(String(bt.id));
                 $q.notify({ type: 'positive', message: t('boatTypesList.deleted') });
             } catch (e) {
-                $q.notify({
-                    type: 'negative',
-                    message: e instanceof Error ? e.message : t('boatTypesList.errorGeneric'),
-                });
+                notifyError(e, t('boatTypesList.errorGeneric'));
             }
-        })();
+        },
     });
 }
 </script>
