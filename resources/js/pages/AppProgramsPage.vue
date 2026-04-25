@@ -117,7 +117,7 @@
                             vertical
                         >
                             <q-toggle
-                                :model-value="Number(p.is_active) === 1"
+                                :model-value="programRowIsActive(p as Record<string, unknown>)"
                                 :label="t('programsList.isActive')"
                                 :disable="isPatching"
                                 @update:model-value="
@@ -204,14 +204,48 @@ const isPatching = ref(false);
 const slugDrafts = reactive<Record<string, string>>({});
 const programTab = ref<"active" | "archived">("active");
 
+/**
+ * Replicated `is_active` (PG boolean / int / text) and local writes (`0` / `1`).
+ *
+ * @param {Record<string, unknown>} p
+ * @returns {boolean}
+ */
+function programRowIsActive(p: Record<string, unknown>) {
+    const v = p.is_active;
+    if (v === true || v === 1) {
+        return true;
+    }
+    if (v === false || v === 0) {
+        return false;
+    }
+    if (typeof v === "string") {
+        const t = v.trim().toLowerCase();
+        if (t === "1" || t === "true" || t === "t") {
+            return true;
+        }
+        if (t === "0" || t === "false" || t === "f" || t.length === 0) {
+            return false;
+        }
+    }
+    const n = Number(v);
+    if (Number.isFinite(n)) {
+        return n === 1;
+    }
+    return false;
+}
+
 const totalProgramCount = computed(() => (programs.value ?? []).length);
 
 const filteredPrograms = computed(() => {
     const list = programs.value ?? [];
     if (programTab.value === "active") {
-        return list.filter((p) => Number(p.is_active) === 1);
+        return list.filter(
+            (p) => p != null && programRowIsActive(p as Record<string, unknown>),
+        );
     }
-    return list.filter((p) => Number(p.is_active) !== 1);
+    return list.filter(
+        (p) => p != null && !programRowIsActive(p as Record<string, unknown>),
+    );
 });
 
 const emptyListMessage = computed(() => {

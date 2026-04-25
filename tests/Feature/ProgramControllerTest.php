@@ -47,6 +47,7 @@ class ProgramControllerTest extends TestCase
             'name' => 'Harbor week',
             'description' => 'Evening cruises',
             'theme_color' => '#aabbcc',
+            'is_active' => true,
             'slug' => 'harbor-week',
             'address' => [
                 'line_1' => '1 Wharf',
@@ -72,6 +73,7 @@ class ProgramControllerTest extends TestCase
             'name' => 'Harbor week',
             'theme_color' => '#AABBCC',
             'slug' => 'harbor-week',
+            'is_active' => true,
         ]);
 
         $this->assertDatabaseHas('program_user', [

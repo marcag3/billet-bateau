@@ -63,6 +63,13 @@
                     </template>
                 </q-input>
 
+                <q-toggle
+                    v-model="isActive"
+                    v-bind="isActiveProps"
+                    :label="t('programsList.isActive')"
+                    :disable="isSubmitting"
+                />
+
                 <q-expansion-item
                     :label="t('programsCreate.addressOptional')"
                     icon="place"
@@ -182,6 +189,7 @@ const { handleSubmit, defineField, isSubmitting } =
             name: "",
             description: "",
             themeColor: "#0F766E",
+            isActive: true,
             address: {
                 line_1: "",
                 line_2: "",
@@ -198,6 +206,7 @@ const quasarField = createQuasarFieldBinder(defineField);
 const [name, nameProps] = quasarField("name");
 const [description, descriptionProps] = quasarField("description");
 const [themeColor, themeColorProps] = quasarField("themeColor");
+const [isActive, isActiveProps] = quasarField("isActive");
 const [line1, line1Props] = quasarField("address.line_1");
 const [line2, line2Props] = quasarField("address.line_2");
 const [city, cityProps] = quasarField("address.city");
@@ -217,6 +226,7 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
             name: values.name,
             description: values.description,
             themeColor: values.themeColor,
+            isActive: values.isActive,
             address: { ...values.address },
         });
 

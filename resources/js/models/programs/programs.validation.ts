@@ -35,6 +35,7 @@ function createProgramCreateZodSchema(t: Translator) {
         name: zRequiredTrimmedString(t('programsCreate.validationRequired')),
         description: z.string(),
         themeColor: zHexColorSix(t('programsCreate.validationHex')),
+        isActive: z.boolean(),
         address: programAddressObjectSchema,
         imagesModel: imagesFieldSchema,
     });

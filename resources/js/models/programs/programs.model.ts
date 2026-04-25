@@ -81,7 +81,7 @@ export function usePrograms() {
     }
 
     /**
-     * @param {{ name: string, description: string, themeColor: string, address?: Record<string, string> }} input
+     * @param {{ name: string, description: string, themeColor: string, isActive: boolean, address?: Record<string, string> }} input
      * @returns {Promise<string>} program id
      */
     async function createProgramWithOptionalAddress(input) {
@@ -115,7 +115,7 @@ export function usePrograms() {
             name: input.name.trim(),
             description: input.description.trim().length > 0 ? input.description.trim() : null,
             theme_color: themeColor,
-            is_active: 1,
+            is_active: input.isActive ? 1 : 0,
             slug: buildInitialProgramSlug(input.name, id),
             created_at: now,
             updated_at: now,

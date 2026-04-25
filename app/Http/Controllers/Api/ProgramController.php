@@ -43,7 +43,7 @@ class ProgramController extends Controller
                 'name' => $data->name,
                 'description' => $data->description,
                 'theme_color' => $themeColor,
-                'is_active' => false,
+                'is_active' => $data->is_active,
                 'slug' => $data->slug,
             ]);
 
