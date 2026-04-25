@@ -69,7 +69,7 @@
 import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { fetchPublicJson } from '../services/publicApi.js';
+import { fetchPublicJson } from '../services/publicApi';
 
 type PublicProgramCard = {
     id?: string | number;

@@ -1,7 +1,7 @@
 /**
  * Central bootstrap for domain models (PowerSync-backed TanStack DB collections).
  */
-import { bootstrapAppPowerSync } from '../powersync/app-powersync.runtime.js';
+import { bootstrapAppPowerSync } from '../powersync/app-powersync.runtime';
 
 /**
  * Ordered domain model bootstraps.

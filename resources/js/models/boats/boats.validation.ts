@@ -1,6 +1,6 @@
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
-import { parseOptionalCapacity } from './boats.model.js';
+import { parseOptionalCapacity } from './boats.model';
 import { coerceStringInput, zRequiredTrimmedString } from '../../validation/zod-fields';
 
 export type Translator = (key: string) => string;

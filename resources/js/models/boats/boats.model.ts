@@ -1,7 +1,7 @@
 import { computed } from 'vue';
-import { defineRelations } from '../entity.relations.js';
-import { defineModel } from '../model.definition.js';
-import { useEntityList } from '../entity.queries.js';
+import { defineRelations } from '../entity.relations';
+import { defineModel } from '../model.definition';
+import { useEntityList } from '../entity.queries';
 import {
     bootstrapAppPowerSync,
     getAppPowerSyncBootstrappedRef,
@@ -10,7 +10,7 @@ import {
     getPowerSyncDbRef,
     refreshOutboxSnapshot,
     waitForUploadQueueDrained,
-} from '../../powersync/app-powersync.runtime.js';
+} from '../../powersync/app-powersync.runtime';
 
 export const boatsModelDefinition = defineModel({
     name: 'boats',

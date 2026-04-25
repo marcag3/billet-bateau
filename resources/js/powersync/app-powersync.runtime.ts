@@ -12,8 +12,8 @@ import {
     appProgramsPowerSyncTable,
     appMediaPowerSyncTable,
     appPowerSyncSchema,
-} from './app.powersync-schema.js';
-import { translate } from '../utilities/i18n.js';
+} from './app.powersync-schema';
+import { translate } from '../utilities/i18n';
 
 const DB_FILENAME = 'billbateau-app-v8.db';
 
@@ -147,11 +147,12 @@ async function resolveAuthenticatedUserId() {
     }
 
     const session = await fetchCurrentSession();
-    if (!session.isAuthenticated || session.user?.id === undefined || session.user?.id === null) {
+    const u = session.user as { id?: string | number } | null | undefined;
+    if (!session.isAuthenticated || u == null || u.id === undefined || u.id === null) {
         throw new Error('Missing authenticated user id.');
     }
 
-    return String(session.user.id);
+    return String(u.id);
 }
 
 /**

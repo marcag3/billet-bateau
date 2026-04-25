@@ -1,17 +1,13 @@
 import { useQuasar } from 'quasar';
 
-/**
- * @param {unknown} error
- * @param {string} genericMessage
- */
-export function getErrorMessageForNotify(error, genericMessage) {
+export function getErrorMessageForNotify(error: unknown, genericMessage: string): string {
     return error instanceof Error ? error.message : genericMessage;
 }
 
 export function useNotifyErrorFromCatch() {
     const $q = useQuasar();
 
-    function notifyError(error, genericMessage) {
+    function notifyError(error: unknown, genericMessage: string): void {
         $q.notify({
             type: 'negative',
             message: getErrorMessageForNotify(error, genericMessage),

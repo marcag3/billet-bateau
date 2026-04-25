@@ -4,7 +4,7 @@ import { applyAppQuasarTheme } from './utilities/app-quasar-theme';
 import '@quasar/extras/material-icons/material-icons.css';
 import 'quasar/src/css/index.sass';
 import '../css/public.css';
-import publicRouter from './router/public.js';
+import publicRouter from './router/public';
 import PublicEntry from './PublicEntry.vue';
 import { i18n } from './utilities/i18n';
 

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { createSingleFlightQueueFlusher } from '../../services/sync.queue.js';
+import { createSingleFlightQueueFlusher } from '../../services/sync.queue';
 
 test('createSingleFlightQueueFlusher keeps recoverable failures queued', async () => {
     const writes = [];

@@ -1,11 +1,9 @@
 import { buildJsonHeaders } from './http.client';
 
-/**
- * @param {string} path  Relative path starting with /api/...
- * @param {{ signal?: AbortSignal }} [options]
- * @returns {Promise<unknown>}
- */
-export function fetchPublicJson(path, options = {}) {
+export function fetchPublicJson(
+    path: string,
+    options: { signal?: AbortSignal } = {},
+): Promise<unknown> {
     if (path.startsWith('/api/') !== true) {
         return Promise.reject(new Error('[publicApi] path must be under /api/'));
     }
@@ -20,9 +18,7 @@ export function fetchPublicJson(path, options = {}) {
         signal: options.signal,
     }).then(async (response) => {
         if (!response.ok) {
-            const err = new Error(`HTTP ${response.status}`);
-            err.cause = response;
-            throw err;
+            throw new Error(`HTTP ${response.status}`, { cause: response });
         }
         return response.json();
     });

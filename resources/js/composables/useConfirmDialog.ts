@@ -1,12 +1,15 @@
 import { useQuasar } from 'quasar';
 
+export type ConfirmDialogOptions = {
+    title: string;
+    message: string;
+    onOk: () => void | Promise<void>;
+};
+
 export function useConfirmDialog() {
     const $q = useQuasar();
 
-    /**
-     * @param {{ title: string, message: string, onOk: () => void | Promise<void> }} options
-     */
-    function confirm(options) {
+    function confirm(options: ConfirmDialogOptions): void {
         $q.dialog({
             title: options.title,
             message: options.message,

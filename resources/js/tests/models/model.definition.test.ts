@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { defineModel } from '../../models/model.definition.js';
+import { defineModel } from '../../models/model.definition';
 
 function createApi() {
     return {

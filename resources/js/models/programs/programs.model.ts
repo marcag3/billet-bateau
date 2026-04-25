@@ -1,8 +1,8 @@
 import { computed } from 'vue';
-import { addressHasAny, buildAddressInsertRow } from '../addresses/addresses.model.js';
-import { defineRelations } from '../entity.relations.js';
-import { defineModel } from '../model.definition.js';
-import { useEntityList } from '../entity.queries.js';
+import { addressHasAny, buildAddressInsertRow } from '../addresses/addresses.model';
+import { defineRelations } from '../entity.relations';
+import { defineModel } from '../model.definition';
+import { useEntityList } from '../entity.queries';
 import {
     bootstrapAppPowerSync,
     getAppPowerSyncBootstrappedRef,
@@ -12,7 +12,7 @@ import {
     getPowerSyncDbRef,
     refreshOutboxSnapshot,
     waitForUploadQueueDrained,
-} from '../../powersync/app-powersync.runtime.js';
+} from '../../powersync/app-powersync.runtime';
 
 export const programsModelDefinition = defineModel({
     name: 'programs',

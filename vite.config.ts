@@ -1,11 +1,11 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import { wayfinder } from '@laravel/vite-plugin-wayfinder';
-
-const wayfinderDisabled = process.env.VITEST === 'true' || process.env.DISABLE_WAYFINDER === 'true';
 import vue from '@vitejs/plugin-vue';
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 import { VitePWA } from 'vite-plugin-pwa';
+
+const wayfinderDisabled = process.env.VITEST === 'true' || process.env.DISABLE_WAYFINDER === 'true';
 
 export default defineConfig({
     // PowerSync / WA-SQLite ship web workers + WASM; pre-bundling them breaks `db.init()` in dev (hangs forever).
@@ -21,7 +21,7 @@ export default defineConfig({
                   wayfinder(),
               ]),
         laravel({
-            input: ['resources/js/public.main.js', 'resources/js/app.main.js'],
+            input: ['resources/js/public.main.ts', 'resources/js/app.main.ts'],
             refresh: true,
         }),
         vue({
@@ -74,6 +74,6 @@ export default defineConfig({
         globals: true,
         // simulate DOM with happy-dom
         // (requires installing happy-dom as a peer dependency)
-        environment: 'happy-dom'
+        environment: 'happy-dom',
     },
 });

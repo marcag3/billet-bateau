@@ -1,8 +1,9 @@
 import { createI18n } from 'vue-i18n';
 
 export const LOCALE_STORAGE_KEY = 'app.locale';
-export const SUPPORTED_LOCALES = ['en', 'fr'];
-export const DEFAULT_LOCALE = 'en';
+export const SUPPORTED_LOCALES = ['en', 'fr'] as const;
+export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
+export const DEFAULT_LOCALE: AppLocale = 'en';
 
 const messages = {
     en: {
@@ -355,14 +356,18 @@ const messages = {
     },
 };
 
-function normalizeLocale(value) {
+function normalizeLocale(value: unknown): AppLocale {
     if (typeof value !== 'string' || value.length === 0) {
         return DEFAULT_LOCALE;
     }
 
     const baseLocale = value.toLowerCase().split('-')[0];
 
-    return SUPPORTED_LOCALES.includes(baseLocale) ? baseLocale : DEFAULT_LOCALE;
+    if (baseLocale === 'en' || baseLocale === 'fr') {
+        return baseLocale;
+    }
+
+    return DEFAULT_LOCALE;
 }
 
 function resolveInitialLocale() {
@@ -387,7 +392,7 @@ export const i18n = createI18n({
     messages,
 });
 
-export function setLocale(locale) {
+export function setLocale(locale: unknown) {
     const nextLocale = normalizeLocale(locale);
     i18n.global.locale.value = nextLocale;
 
@@ -396,6 +401,6 @@ export function setLocale(locale) {
     }
 }
 
-export function translate(key, values = {}) {
+export function translate(key: string, values: Record<string, unknown> = {}) {
     return i18n.global.t(key, values);
 }

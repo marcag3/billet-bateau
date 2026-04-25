@@ -6,7 +6,9 @@ const API_HEADERS = {
     Accept: 'application/json',
 };
 
-let inflightCsrfRefreshPromise = null;
+type JsonRequestOptions = RequestInit & { withCsrf?: boolean };
+
+let inflightCsrfRefreshPromise: Promise<boolean> | null = null;
 
 function dispatchAuthExpiredEvent() {
     if (typeof window === 'undefined') {
@@ -20,7 +22,7 @@ function getCsrfTokenFromMeta() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 }
 
-function setCsrfTokenMeta(token) {
+function setCsrfTokenMeta(token: string) {
     if (!token) {
         return;
     }
@@ -37,8 +39,8 @@ function setCsrfTokenMeta(token) {
     document.head.append(metaTag);
 }
 
-export function getCsrfHeaders() {
-    const headers = {};
+export function getCsrfHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {};
     const csrfToken = getCsrfTokenFromMeta();
     const xsrfToken = readCookieValue('XSRF-TOKEN');
 
@@ -53,7 +55,10 @@ export function getCsrfHeaders() {
     return headers;
 }
 
-export function buildJsonHeaders(extraHeaders = {}, { includeRequestedWith = false } = {}) {
+export function buildJsonHeaders(
+    extraHeaders: Record<string, string> = {},
+    { includeRequestedWith = false } = {},
+) {
     return {
         ...API_HEADERS,
         ...(includeRequestedWith ? { 'X-Requested-With': 'XMLHttpRequest' } : {}),
@@ -121,8 +126,8 @@ export async function refreshCsrfSource() {
     return inflightCsrfRefreshPromise;
 }
 
-export async function parseJsonPayload(response) {
-    return response.json().catch(() => ({}));
+export async function parseJsonPayload(response: Response): Promise<Record<string, unknown>> {
+    return response.json().catch(() => ({})) as Promise<Record<string, unknown>>;
 }
 
 /**
@@ -133,7 +138,7 @@ export async function parseJsonPayload(response) {
  * @param {boolean} [hasRetried]
  * @returns {Promise<Response>}
  */
-export async function fetchWith419Retry(url, init = {}, hasRetried = false) {
+export async function fetchWith419Retry(url: string, init: RequestInit = {}, hasRetried = false) {
     const response = await fetch(url, {
         credentials: 'same-origin',
         ...init,
@@ -149,15 +154,26 @@ export async function fetchWith419Retry(url, init = {}, hasRetried = false) {
     return response;
 }
 
-export async function requestJson(url, options = {}) {
-    const withCsrf = options.withCsrf === true;
-    const fetchOptions = { ...options };
-    delete fetchOptions.withCsrf;
+function headersInitToRecord(headers: HeadersInit | undefined): Record<string, string> {
+    if (headers == null) {
+        return {};
+    }
+    if (headers instanceof Headers) {
+        return Object.fromEntries(headers.entries());
+    }
+    if (Array.isArray(headers)) {
+        return Object.fromEntries(headers);
+    }
+    return { ...headers };
+}
+
+export async function requestJson(url: string, options: JsonRequestOptions = {}) {
+    const { withCsrf, ...fetchOptions } = options;
 
     const response = await fetchWith419Retry(url, {
         ...fetchOptions,
         headers: buildJsonHeaders({
-            ...fetchOptions.headers,
+            ...headersInitToRecord(fetchOptions.headers),
             ...(withCsrf ? getCsrfHeaders() : {}),
         }),
     });
@@ -169,7 +185,9 @@ export async function requestJson(url, options = {}) {
             dispatchAuthExpiredEvent();
         }
 
-        const message = payload?.message ?? `Request to ${url} failed with ${response.status}`;
+        const message = String(
+            (payload as { message?: unknown })?.message ?? `Request to ${url} failed with ${response.status}`,
+        );
         throw new Error(message);
     }
 
@@ -184,7 +202,13 @@ export async function requestJson(url, options = {}) {
  * @param {{ withCsrf?: boolean }} [options]
  * @returns {Promise<Record<string, unknown>>}
  */
-export async function requestFormData(url, formData, options = {}) {
+type FormDataRequestOptions = { withCsrf?: boolean };
+
+export async function requestFormData(
+    url: string,
+    formData: FormData,
+    options: FormDataRequestOptions = {},
+) {
     const withCsrf = options.withCsrf === true;
 
     const response = await fetchWith419Retry(url, {
@@ -204,7 +228,9 @@ export async function requestFormData(url, formData, options = {}) {
             dispatchAuthExpiredEvent();
         }
 
-        const message = payload?.message ?? `Request to ${url} failed with ${response.status}`;
+        const message = String(
+            (payload as { message?: unknown })?.message ?? `Request to ${url} failed with ${response.status}`,
+        );
         throw new Error(message);
     }
 

@@ -24,17 +24,15 @@ export default tseslint.config(
         },
     },
     {
-        files: ['resources/js/**/*.js'],
-        languageOptions: {
-            globals: { ...globals.browser },
-            ecmaVersion: 2022,
-            sourceType: 'module',
-        },
-    },
-    {
         files: ['resources/js/**/*.ts', 'resources/js/**/*.vue'],
         languageOptions: {
             globals: { ...globals.browser },
+        },
+    },
+    {
+        files: ['resources/js/service-worker/app-sw.ts'],
+        rules: {
+            '@typescript-eslint/ban-ts-comment': 'off',
         },
     },
 );

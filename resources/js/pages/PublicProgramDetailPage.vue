@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { fetchPublicJson } from '../services/publicApi.js';
+import { fetchPublicJson } from '../services/publicApi';
 
 const props = defineProps<{
     identifier: string;

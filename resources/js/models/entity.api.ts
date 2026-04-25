@@ -1,11 +1,11 @@
 import { requestJson } from '../services/http.client';
 
-/**
- * @param {string} url
- * @param {string} method
- * @param {{ body?: unknown, idempotencyKey?: string }} [opts]
- */
-function jsonRequest(url, method, opts = {}) {
+type JsonRequestOpts = {
+    body?: unknown;
+    idempotencyKey?: string;
+};
+
+function jsonRequest(url: string, method: string, opts: JsonRequestOpts = {}) {
     const { body, idempotencyKey } = opts;
     /** @type {Record<string, string>} */
     const headers = {};
@@ -26,41 +26,27 @@ function jsonRequest(url, method, opts = {}) {
     });
 }
 
-/**
- * @param {{
- *   createUrl: () => string,
- *   updateUrl: (id: string) => string,
- *   deleteUrl: (id: string) => string,
- * }} routes
- */
-export function createEntityApi(routes) {
+type EntityRoutes = {
+    createUrl: () => string;
+    updateUrl: (id: string) => string;
+    deleteUrl: (id: string) => string;
+};
+
+export function createEntityApi(routes: EntityRoutes) {
     return {
-        /**
-         * @param {Record<string, unknown>} payload
-         * @param {{ idempotencyKey?: string }} [options]
-         */
-        create(payload, options = {}) {
+        create(payload: Record<string, unknown>, options: { idempotencyKey?: string } = {}) {
             return jsonRequest(routes.createUrl(), 'POST', {
                 body: payload,
                 idempotencyKey: options.idempotencyKey,
             });
         },
-        /**
-         * @param {string} id
-         * @param {Record<string, unknown>} payload
-         * @param {{ idempotencyKey?: string }} [options]
-         */
-        update(id, payload, options = {}) {
+        update(id: string, payload: Record<string, unknown>, options: { idempotencyKey?: string } = {}) {
             return jsonRequest(routes.updateUrl(id), 'PUT', {
                 body: payload,
                 idempotencyKey: options.idempotencyKey,
             });
         },
-        /**
-         * @param {string} id
-         * @param {{ idempotencyKey?: string }} [options]
-         */
-        remove(id, options = {}) {
+        remove(id: string, options: { idempotencyKey?: string } = {}) {
             return jsonRequest(routes.deleteUrl(id), 'DELETE', {
                 idempotencyKey: options.idempotencyKey,
             });

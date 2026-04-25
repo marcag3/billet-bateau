@@ -9,6 +9,11 @@ import {
     parseJsonPayload,
 } from '../services/http.client';
 
+type LaravelErrorPayload = {
+    message?: string;
+    errors?: Record<string, string[] | undefined>;
+};
+
 export async function fetchSetupStatus() {
     const response = await fetch(setupStatus.url(), {
         method: 'GET',
@@ -100,11 +105,12 @@ export async function login({
     const payload = await parseJsonPayload(response);
 
     if (!response.ok) {
-        const message = payload?.message ?? payload?.errors?.email?.[0] ?? translate('auth.unableSignInCreds');
+        const p = payload as LaravelErrorPayload;
+        const message = p.message ?? p.errors?.email?.[0] ?? translate('auth.unableSignInCreds');
         throw new Error(message);
     }
 
-    return payload.user ?? null;
+    return (payload as { user?: unknown }).user ?? null;
 }
 
 export async function completeSetup({
@@ -135,16 +141,17 @@ export async function completeSetup({
     const payload = await parseJsonPayload(response);
 
     if (!response.ok) {
+        const p = payload as LaravelErrorPayload;
         const message =
-            payload?.message ??
-            payload?.errors?.organization_name?.[0] ??
-            payload?.errors?.email?.[0] ??
-            payload?.errors?.password?.[0] ??
+            p.message ??
+            p.errors?.organization_name?.[0] ??
+            p.errors?.email?.[0] ??
+            p.errors?.password?.[0] ??
             translate('auth.unableCompleteSetup');
         throw new Error(message);
     }
 
-    return payload.user ?? null;
+    return (payload as { user?: unknown }).user ?? null;
 }
 
 export async function logout() {

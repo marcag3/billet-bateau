@@ -1,3 +1,4 @@
+// @ts-nocheck — build-time `self` is a service worker; project `lib` is DOM, not webworker
 import { clientsClaim } from 'workbox-core';
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
 
