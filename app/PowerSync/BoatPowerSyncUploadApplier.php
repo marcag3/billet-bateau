@@ -5,6 +5,7 @@ namespace App\PowerSync;
 use App\Models\Boat;
 use App\Models\BoatType;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 final class BoatPowerSyncUploadApplier
 {
@@ -25,7 +26,7 @@ final class BoatPowerSyncUploadApplier
 
             return;
         }
-
+        // TODO: how can we simplify, maybe existing packages? maybe use dto?
         if ($op === 'PUT') {
             $existing = Boat::query()->whereKey($id)->first();
 
@@ -39,6 +40,12 @@ final class BoatPowerSyncUploadApplier
             $boatTypeId = array_key_exists('boat_type_id', $data)
                 ? $this->resolveBoatTypeId($data['boat_type_id'], $existing)
                 : $existing?->boat_type_id;
+
+            if ($capacity === null) {
+                throw ValidationException::withMessages([
+                    'data.capacity' => 'Boat capacity is required.',
+                ]);
+            }
 
             Boat::query()->updateOrCreate(
                 ['id' => $id],
@@ -73,7 +80,8 @@ final class BoatPowerSyncUploadApplier
             }
 
             if (array_key_exists('capacity', $data)) {
-                $boat->capacity = $this->readCapacity($data['capacity'], $boat);
+                $resolved = $this->readCapacity($data['capacity'], $boat);
+                $boat->capacity = $resolved === null ? (int) $boat->capacity : $resolved;
             }
 
             if (array_key_exists('boat_type_id', $data)) {

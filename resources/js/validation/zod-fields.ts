@@ -8,6 +8,21 @@ export function coerceStringInput(raw: unknown): string {
 }
 
 /**
+ * Parse optional non-negative integers from form controls (empty → null, invalid → null).
+ * Accepts numbers or digit strings; rejects negatives and non-finite values.
+ */
+export function parseOptionalNonNegativeInt(raw: unknown): number | null {
+    if (raw === null || raw === undefined || raw === '') {
+        return null;
+    }
+    const n = typeof raw === 'number' ? raw : Number.parseInt(String(raw), 10);
+    if (!Number.isFinite(n) || n < 0) {
+        return null;
+    }
+    return n;
+}
+
+/**
  * Required non-empty string after trim.
  */
 export function zRequiredTrimmedString(requiredMessage: string): z.ZodString {

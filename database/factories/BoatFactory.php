@@ -25,7 +25,7 @@ class BoatFactory extends Factory
             'user_id' => User::factory(),
             'boat_type_id' => null,
             'name' => fake()->words(2, true),
-            'capacity' => fake()->optional()->numberBetween(1, 500),
+            'capacity' => fake()->numberBetween(1, 500),
             'notes' => fake()->optional()->sentence(),
         ];
     }

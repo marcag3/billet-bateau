@@ -42,7 +42,6 @@
                             type="number"
                             :label="t('boatsList.capacity')"
                             :hint="t('boatsList.capacityHint')"
-                            clearable
                             :disable="isSubmitting"
                         />
                         <q-input
@@ -109,7 +108,6 @@
                                     dense
                                     type="number"
                                     :label="t('boatsList.capacity')"
-                                    clearable
                                     :disable="patchingId === b.id"
                                     @update:model-value="(v) => setFieldDraft(b.id, 'capacity', v)"
                                     @blur="() => commitCapacity(b)"
@@ -163,8 +161,9 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRoute } from 'vue-router';
-import { parseOptionalCapacity, useBoats } from '../models/boats/boats.model';
+import { useBoats } from '../models/boats/boats.model';
 import { createBoatCreateFormSchema, type BoatCreateFormValues, safeParseBoatEntityName } from '../models/boats/boats.validation';
+import { parseOptionalNonNegativeInt } from '../validation/zod-fields';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useBoatTypes } from '../models/boat-types/boat-types.model';
 import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox } from '../powersync/app-powersync.runtime';
@@ -202,7 +201,7 @@ const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm<Boa
         capacity: null,
         notes: '',
         boatTypeId: null,
-    } satisfies BoatCreateFormValues,
+    } as unknown as BoatCreateFormValues,
 });
 
 const quasarField = createQuasarFieldBinder(defineField);
@@ -301,9 +300,23 @@ function commitField(b: Record<string, unknown>, field: 'name' | 'notes') {
 function commitCapacity(b: Record<string, unknown>) {
     const id = String(b.id);
     const raw = drafts[id]?.capacity;
-    const current = b.capacity === null || b.capacity === undefined ? null : Number(b.capacity);
-    const next = parseOptionalCapacity(raw);
+    const current =
+        b.capacity === null || b.capacity === undefined || b.capacity === '' ? null : Number(b.capacity);
+    const next = raw !== undefined ? parseOptionalNonNegativeInt(raw) : current;
     if (next === current) {
+        if (raw !== undefined && drafts[id]) {
+            delete drafts[id].capacity;
+        }
+        return;
+    }
+    if (next === null) {
+        $q.notify({
+            type: 'negative',
+            message: t('boatsList.capacityRequired'),
+        });
+        if (drafts[id]) {
+            delete drafts[id].capacity;
+        }
         return;
     }
     void patchWith(id, (draft) => {

@@ -1,7 +1,6 @@
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
-import { parseOptionalCapacity } from './boats.model';
-import { coerceStringInput, zRequiredTrimmedString } from '../../validation/zod-fields';
+import { coerceStringInput, parseOptionalNonNegativeInt, zRequiredTrimmedString } from '../../validation/zod-fields';
 
 export type Translator = (key: string) => string;
 
@@ -24,10 +23,12 @@ const boatTypeIdValueSchema = z.preprocess(
 function createBoatCreateZodSchema(t: Translator) {
     return z.object({
         name: boatEntityNameSchema(t),
-        capacity: z.preprocess(
-            (v) => parseOptionalCapacity(v),
-            z.union([z.number().int().min(0), z.null()]),
-        ),
+        capacity: z
+            .preprocess(
+                (v) => parseOptionalNonNegativeInt(v),
+                z.union([z.number().int().min(0), z.null()]),
+            )
+            .refine((v): v is number => v !== null, { message: t('boatsList.capacityRequired') }),
         notes: z.string(),
         boatTypeId: boatTypeIdValueSchema,
     });

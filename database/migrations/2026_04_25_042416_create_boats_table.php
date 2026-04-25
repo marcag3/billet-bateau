@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignUuid('boat_type_id')->nullable()->constrained('boat_types')->nullOnDelete();
             $table->string('name');
-            $table->unsignedInteger('capacity')->nullable();
+            $table->unsignedInteger('capacity');
             $table->text('notes')->nullable();
             $table->timestamps();
 

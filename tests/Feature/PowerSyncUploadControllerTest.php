@@ -413,6 +413,7 @@ class PowerSyncUploadControllerTest extends TestCase
                     'id' => $boatId,
                     'data' => [
                         'name' => 'Stolen link',
+                        'capacity' => 8,
                         'boat_type_id' => $boatType->getKey(),
                     ],
                 ],
@@ -424,7 +425,29 @@ class PowerSyncUploadControllerTest extends TestCase
             'user_id' => $intruder->getAuthIdentifier(),
             'boat_type_id' => $boatType->getKey(),
             'name' => 'Stolen link',
+            'capacity' => 8,
         ]);
+    }
+
+    public function test_put_new_boat_without_capacity_is_unprocessable(): void
+    {
+        $user = User::factory()->create();
+        $boatId = (string) Str::uuid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'boats',
+                    'id' => $boatId,
+                    'data' => [
+                        'name' => 'No room',
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseMissing('boats', ['id' => $boatId]);
     }
 
     public function test_patch_updates_owned_boat_type(): void

@@ -13,6 +13,7 @@ import {
     refreshOutboxSnapshot,
     waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
+import { parseOptionalNonNegativeInt } from '../../validation/zod-fields';
 
 export const boatsModelDefinition = defineModel({
     name: 'boats',
@@ -26,22 +27,6 @@ export const boatsModelDefinition = defineModel({
     ],
     relations: defineRelations([]),
 });
-
-/**
- * @param {unknown} v
- * @returns {number | null}
- */
-//TODO: capacity should not be optional
-export function parseOptionalCapacity(v) {
-    if (v === null || v === undefined || v === '') {
-        return null;
-    }
-    const n = typeof v === 'number' ? v : Number.parseInt(String(v), 10);
-    if (!Number.isFinite(n) || n < 0) {
-        return null;
-    }
-    return n;
-}
 
 export function useBoats() {
     const hasBootstrappedCollection = getAppPowerSyncBootstrappedRef();
@@ -91,7 +76,7 @@ export function useBoats() {
     }
 
     /**
-     * @param {{ name: string, capacity: number | null, notes: string, boatTypeId: string | null }} input
+     * @param {{ name: string, capacity: number, notes: string, boatTypeId: string | null }} input
      * @returns {Promise<string>} boat id
      */
     async function createBoatRow(input) {
@@ -119,7 +104,10 @@ export function useBoats() {
         const now = new Date().toISOString();
         const name = String(input.name).trim();
         const notes = String(input.notes ?? '').trim();
-        const capacity = parseOptionalCapacity(input.capacity);
+        const capacity = parseOptionalNonNegativeInt(input.capacity);
+        if (capacity === null) {
+            throw new Error('Boat capacity is required.');
+        }
         const boatTypeId =
             input.boatTypeId != null && String(input.boatTypeId).length > 0 ? String(input.boatTypeId) : null;
 
@@ -128,7 +116,7 @@ export function useBoats() {
             user_id: userId,
             boat_type_id: boatTypeId,
             name: name.length > 0 ? name : 'Untitled',
-            capacity: capacity === null ? null : capacity,
+            capacity,
             notes: notes.length > 0 ? notes : null,
             created_at: now,
             updated_at: now,
