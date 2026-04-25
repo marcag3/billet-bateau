@@ -1,13 +1,5 @@
 import { column, Schema, Table } from '@powersync/web';
 
-const todosTable = new Table({
-    user_id: column.integer,
-    title: column.text,
-    completed: column.integer,
-    created_at: column.text,
-    updated_at: column.text,
-});
-
 const programsTable = new Table({
     user_id: column.integer,
     address_id: column.text,
@@ -70,16 +62,12 @@ const mediaTable = new Table({
 });
 
 export const appPowerSyncSchema = new Schema({
-    todos: todosTable,
     programs: programsTable,
     addresses: addressesTable,
     boat_types: boatTypesTable,
     boats: boatsTable,
     media: mediaTable,
 });
-
-/** @type {import('@powersync/web').Table} */
-export const appTodosPowerSyncTable = appPowerSyncSchema.props.todos;
 
 /** @type {import('@powersync/web').Table} */
 export const appProgramsPowerSyncTable = appPowerSyncSchema.props.programs;

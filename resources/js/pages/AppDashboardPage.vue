@@ -13,62 +13,49 @@
             {{ persistenceLimitedMessage }}
         </q-banner>
 
-        <q-form class="row q-col-gutter-sm q-mb-lg" @submit.prevent="submitTodo">
-            <div class="col">
-                <q-input
-                    v-model="draftTitle"
-                    outlined
-                    dense
-                    :label="t('dashboard.newTodo')"
-                    :placeholder="t('dashboard.newTodoPlaceholder')"
-                    :disable="isWorking"
-                />
-            </div>
+        <q-card flat bordered class="q-mb-lg bg-grey-1">
+            <q-card-section>
+                <div class="text-subtitle2 q-mb-xs">{{ t('sync.outboxTitle') }}</div>
+                <p class="text-body2 q-mb-none">
+                    <template v-if="hasPendingOutboxWrites">
+                        {{ t('dashboard.pendingOutboxLine', { count: outboxPendingCount }) }}
+                    </template>
+                    <template v-else>{{ t('sync.outboxEmpty') }}</template>
+                </p>
+                <p v-if="hasOutboxCommitError" class="text-negative text-body2 q-mt-sm q-mb-none">
+                    {{ outboxCommitError }}
+                </p>
+            </q-card-section>
+        </q-card>
 
-            <div class="col-auto">
-                <q-btn color="primary" type="submit" :label="t('dashboard.add')" :loading="isWorking" />
-            </div>
-        </q-form>
+        <div class="row items-center justify-between q-mb-md">
+            <h2 class="text-h6 q-my-none">{{ t('dashboard.programsHeading') }}</h2>
+            <q-btn
+                :to="{ name: 'programs.list' }"
+                color="primary"
+                outline
+                :label="t('dashboard.managePrograms')"
+            />
+        </div>
 
         <q-list bordered separator class="bg-white rounded-borders">
             <q-item v-if="isLoading">
-                <q-item-section>{{ t('dashboard.loadingTodos') }}</q-item-section>
+                <q-item-section>{{ t('dashboard.loadingPrograms') }}</q-item-section>
             </q-item>
 
-            <q-item v-else-if="todos.length === 0">
-                <q-item-section>{{ t('dashboard.noSyncedTodos') }}</q-item-section>
+            <q-item v-else-if="programs.length === 0">
+                <q-item-section>{{ t('dashboard.noPrograms') }}</q-item-section>
             </q-item>
 
-            <q-item v-for="todo in todos" :key="todo.id">
-                <q-item-section side>
-                    <q-checkbox
-                        :model-value="Boolean(todo.completed)"
-                        :disable="isWorking"
-                        @update:model-value="toggle(todo)"
-                    />
-                </q-item-section>
-
+            <q-item v-for="program in programs" :key="program.id">
                 <q-item-section>
-                    <q-item-label :class="{ 'text-strike text-grey-6': todo.completed }">
-                        {{ todo.title }}
-                    </q-item-label>
+                    <q-item-label>{{ program.name }}</q-item-label>
                     <q-item-label caption>
-                        {{ t('dashboard.updated', { timestamp: formatTimestamp(todo.updated_at) }) }}
+                        {{ t('dashboard.updated', { timestamp: formatTimestamp(program.updated_at) }) }}
                     </q-item-label>
-                    <q-item-label v-if="todo.$synced === false" caption class="text-amber-9">
+                    <q-item-label v-if="program.$synced === false" caption class="text-amber-9">
                         {{ t('sync.rowPendingSync') }}
                     </q-item-label>
-                </q-item-section>
-
-                <q-item-section side>
-                    <q-btn
-                        flat
-                        round
-                        color="negative"
-                        icon="delete"
-                        :disable="isWorking"
-                        @click="remove(todo)"
-                    />
                 </q-item-section>
             </q-item>
         </q-list>
@@ -76,26 +63,33 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useTodos } from '../models/todos/todos.model';
+import { usePrograms } from '../models/programs/programs.model';
+import {
+    getAppPowerSyncErrorMessageRef,
+    getAppPowerSyncLoadingRef,
+    getAppPowerSyncPersistenceUnavailableRef,
+    getPersistenceLimitedMessage,
+    useAppPowerSyncOutbox,
+} from '../powersync/app-powersync.runtime';
 
-const draftTitle = ref('');
-const isWorking = ref(false);
 const { t, locale } = useI18n();
 
+const { programs, refresh } = usePrograms();
+
 const {
-    todos,
-    isLoading,
-    errorMessage,
-    hasError,
-    persistenceUnavailable,
-    persistenceLimitedMessage,
-    createTodo,
-    toggleTodo,
-    removeTodo,
-    refresh,
-} = useTodos();
+    outboxPendingCount,
+    outboxCommitError,
+    hasOutboxCommitError,
+    hasPendingOutboxWrites,
+} = useAppPowerSyncOutbox();
+
+const isLoading = getAppPowerSyncLoadingRef();
+const errorMessage = getAppPowerSyncErrorMessageRef();
+const persistenceUnavailable = getAppPowerSyncPersistenceUnavailableRef();
+const hasError = computed(() => errorMessage.value.length > 0);
+const persistenceLimitedMessage = getPersistenceLimitedMessage();
 
 onMounted(() => {
     void refresh();
@@ -113,42 +107,5 @@ function formatTimestamp(value) {
     }
 
     return new Date(timestamp).toLocaleString(locale.value);
-}
-
-async function submitTodo() {
-    const nextTitle = draftTitle.value.trim();
-
-    if (nextTitle.length === 0) {
-        return;
-    }
-
-    isWorking.value = true;
-
-    try {
-        await createTodo(nextTitle);
-        draftTitle.value = '';
-    } finally {
-        isWorking.value = false;
-    }
-}
-
-async function toggle(todo) {
-    isWorking.value = true;
-
-    try {
-        await toggleTodo(todo);
-    } finally {
-        isWorking.value = false;
-    }
-}
-
-async function remove(todo) {
-    isWorking.value = true;
-
-    try {
-        await removeTodo(todo);
-    } finally {
-        isWorking.value = false;
-    }
 }
 </script>

@@ -4,7 +4,7 @@
  *   collectionId: string,
  *   persistenceSchemaVersion: number,
  *   idKey?: string,
- *   api: {
+ *   api?: {
  *     create: (payload: Record<string, unknown>, options?: { idempotencyKey?: string }) => Promise<Record<string, unknown>>,
  *     update: (id: string, payload: Record<string, unknown>, options?: { idempotencyKey?: string }) => Promise<Record<string, unknown>>,
  *     remove: (id: string, options?: { idempotencyKey?: string }) => Promise<Record<string, unknown>>,
@@ -32,13 +32,16 @@ export function defineModel(definition) {
         throw new Error('[models] Model definition requires a non-empty "collectionId".');
     }
 
-    if (!definition || typeof definition.api !== 'object') {
-        throw new Error(`[models] Model "${normalizedName}" requires an "api" contract.`);
-    }
+    const apiContract = definition.api;
+    if (apiContract !== undefined && apiContract !== null) {
+        if (typeof apiContract !== 'object' || Array.isArray(apiContract)) {
+            throw new Error(`[models] Model "${normalizedName}" requires "api" to be an object when provided.`);
+        }
 
-    const { create, update, remove } = definition.api;
-    if (typeof create !== 'function' || typeof update !== 'function' || typeof remove !== 'function') {
-        throw new Error(`[models] Model "${normalizedName}" must define api.create/api.update/api.remove.`);
+        const { create, update, remove } = apiContract;
+        if (typeof create !== 'function' || typeof update !== 'function' || typeof remove !== 'function') {
+            throw new Error(`[models] Model "${normalizedName}" must define api.create/api.update/api.remove.`);
+        }
     }
 
     const schemaVersion = definition.persistenceSchemaVersion;

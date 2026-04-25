@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Todo;
+use App\Models\Program;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -21,10 +21,9 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        Todo::factory()
-            ->count(3)
+        Program::factory()
+            ->count(2)
             ->for($user)
-            ->state(fn () => ['completed' => fake()->boolean(30)])
             ->create();
     }
 }

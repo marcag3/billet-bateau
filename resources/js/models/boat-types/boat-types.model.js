@@ -12,33 +12,11 @@ import {
     waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime.js';
 
-const noopApi = {
-    /**
-     * @returns {Promise<Record<string, unknown>>}
-     */
-    async create() {
-        throw new Error('[boat_types] HTTP create is not used; writes go through PowerSync.');
-    },
-    /**
-     * @returns {Promise<Record<string, unknown>>}
-     */
-    async update() {
-        throw new Error('[boat_types] HTTP update is not used; writes go through PowerSync.');
-    },
-    /**
-     * @returns {Promise<Record<string, unknown>>}
-     */
-    async remove() {
-        throw new Error('[boat_types] HTTP delete is not used; writes go through PowerSync.');
-    },
-};
-
 export const boatTypesModelDefinition = defineModel({
     name: 'boat_types',
     collectionId: 'boat_types',
     persistenceSchemaVersion: 1,
     pickUpdatePayload: (changes) => ({ ...changes }),
-    api: noopApi,
     orderBy: [
         { key: 'updated_at', direction: 'desc' },
         { key: 'created_at', direction: 'desc' },

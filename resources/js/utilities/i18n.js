@@ -52,12 +52,13 @@ const messages = {
         },
         dashboard: {
             title: 'Dashboard',
-            syncedDescription: 'Local todos are synced through PowerSync and TanStack DB.',
-            newTodo: 'New todo',
-            newTodoPlaceholder: 'Write next task...',
-            add: 'Add',
-            loadingTodos: 'Loading todos...',
-            noSyncedTodos: 'No synced todos yet.',
+            syncedDescription:
+                'Programs, boats, and related data stay on this device and sync through PowerSync and TanStack DB.',
+            programsHeading: 'Your programs',
+            loadingPrograms: 'Loading programs...',
+            noPrograms: 'No programs yet. Create one from Programs in the menu.',
+            managePrograms: 'Manage programs',
+            pendingOutboxLine: '{count} local change(s) waiting to sync to the server.',
             updated: 'Updated {timestamp}',
             justNow: 'just now',
             recently: 'recently',
@@ -90,9 +91,9 @@ const messages = {
         },
         sync: {
             syncRequestFailed: 'Sync request failed.',
-            unableLoadTodoSync: 'Unable to load todo sync.',
+            unableLoadSync: 'Unable to load local sync.',
             persistenceLimited:
-                'Browser storage (OPFS/SQLite) is unavailable. Todos work online only until you use a supported browser.',
+                'Browser storage (OPFS/SQLite) is unavailable. The workspace works online only until you use a supported browser.',
             outboxTitle: 'Pending sync',
             outboxEmpty: 'No pending writes.',
             rowPendingSync: 'Pending server sync',
@@ -233,12 +234,13 @@ const messages = {
         },
         dashboard: {
             title: 'Tableau de bord',
-            syncedDescription: 'Les taches locales sont synchronisees via PowerSync et TanStack DB.',
-            newTodo: 'Nouvelle tache',
-            newTodoPlaceholder: 'Ecrivez la prochaine tache...',
-            add: 'Ajouter',
-            loadingTodos: 'Chargement des taches...',
-            noSyncedTodos: 'Aucune tache synchronisee pour le moment.',
+            syncedDescription:
+                'Programmes, bateaux et donnees associees restent sur cet appareil et se synchronisent via PowerSync et TanStack DB.',
+            programsHeading: 'Vos programmes',
+            loadingPrograms: 'Chargement des programmes...',
+            noPrograms: 'Aucun programme pour le moment. Creez-en un depuis Programmes dans le menu.',
+            managePrograms: 'Gerer les programmes',
+            pendingOutboxLine: '{count} modification(s) locale(s) en attente de synchronisation.',
             updated: 'Mise a jour {timestamp}',
             justNow: "a l'instant",
             recently: 'recemment',
@@ -273,9 +275,9 @@ const messages = {
         },
         sync: {
             syncRequestFailed: 'La requete de synchronisation a echoue.',
-            unableLoadTodoSync: 'Impossible de charger la synchronisation des taches.',
+            unableLoadSync: 'Impossible de charger la synchronisation locale.',
             persistenceLimited:
-                "Le stockage du navigateur (OPFS/SQLite) n'est pas disponible. Les taches ne fonctionnent qu'en ligne avec ce navigateur.",
+                "Le stockage du navigateur (OPFS/SQLite) n'est pas disponible. L'espace de travail ne fonctionne qu'en ligne avec ce navigateur.",
             outboxTitle: 'Synchronisation en attente',
             outboxEmpty: 'Aucune ecriture en attente.',
             rowPendingSync: 'En attente du serveur',

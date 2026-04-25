@@ -12,13 +12,12 @@ import {
     appProgramsPowerSyncTable,
     appMediaPowerSyncTable,
     appPowerSyncSchema,
-    appTodosPowerSyncTable,
 } from './app.powersync-schema.js';
 import { translate } from '../utilities/i18n.js';
 
-const DB_FILENAME = 'billbateau-app-v7.db';
+const DB_FILENAME = 'billbateau-app-v8.db';
 
-const loadFailedMessage = translate('sync.unableLoadTodoSync');
+const loadFailedMessage = translate('sync.unableLoadSync');
 const persistenceLimitedMessage = translate('sync.persistenceLimited');
 
 /**
@@ -106,7 +105,6 @@ const currentUserIdRef = ref('');
 let powerSyncStatusUnsubscribe = null;
 
 const collectionRefs = {
-    todos: shallowRef(null),
     programs: shallowRef(null),
     addresses: shallowRef(null),
     boat_types: shallowRef(null),
@@ -115,7 +113,6 @@ const collectionRefs = {
 };
 
 const tableByName = {
-    todos: appTodosPowerSyncTable,
     programs: appProgramsPowerSyncTable,
     addresses: appAddressesPowerSyncTable,
     boat_types: appBoatTypesPowerSyncTable,
@@ -304,10 +301,6 @@ export function useAppPowerSyncOutbox() {
 
 export function getPowerSyncDbRef() {
     return powerSyncDbRef;
-}
-
-export function getTodosCollectionRef() {
-    return collectionRefs.todos;
 }
 
 export function getProgramsCollectionRef() {

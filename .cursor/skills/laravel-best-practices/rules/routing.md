@@ -36,18 +36,28 @@ Route::get('/users/{user}/posts/{post}', function (User $user, Post $post) {
 })->scopeBindings();
 ```
 
-## Use `Route::apiResource()`
+## PowerSync vs classic REST
 
-Use `Route::apiResource()` for RESTful API endpoints.
+This app syncs many entities through **PowerSync**, not per-model REST CRUD:
+
+- **Upload path**: authenticated `POST /powersync/upload` validates a `crud` array and runs each entry in a transaction. Extend `PowerSyncUploadRouter` and add a `*PowerSyncUploadApplier` for new synced `type` values — that is the primary mutation surface for those tables.
+- **Credentials**: invokable controller issuing token + endpoint for the PowerSync client.
+- **Other API routes** (e.g. media upload, one-off `store`): dedicated routes/controllers are correct; they are not required to mirror `index`/`show`/`update`/`destroy` for PowerSync-backed models.
+
+Do not refactor PowerSync flows into `Route::apiResource()` unless you are intentionally adding a parallel REST API.
+
+## Use `Route::apiResource()` for classic REST only
+
+When you expose a **non–PowerSync-synced** resource as full REST, use `Route::apiResource()`.
 
 ```php
 // In routes/api.php — the /api prefix is applied automatically
 Route::apiResource('posts', Api\PostController::class);
 ```
 
-## Keep Exactly 5 Controller Methods
+## Resource controllers: five methods
 
-API resource controllers should define exactly these methods:
+For a controller backing `apiResource()`, define exactly:
 
 - `index`
 - `store`
@@ -55,7 +65,7 @@ API resource controllers should define exactly these methods:
 - `update`
 - `destroy`
 
-Do not add `create` or `edit` methods in API-only controllers.
+Do not add `create` or `edit` methods in API-only resource controllers. Invokable controllers, upload appliers, and single-action endpoints are outside this rule.
 
 ## Keep Controllers Thin
 

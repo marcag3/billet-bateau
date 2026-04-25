@@ -88,7 +88,6 @@ const $q = useQuasar();
 const authStore = useAuthStore();
 const { programs, ensureProgramsReady, patchProgramRow } = usePrograms();
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
-getAppPowerSyncErrorMessageRef;
 
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();

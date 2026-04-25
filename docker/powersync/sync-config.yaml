@@ -2,7 +2,7 @@
 # See: https://docs.powersync.com/sync/streams/overview
 #
 # Semantics (replaces legacy sync-rules buckets):
-# - todos + programs + boat_types + boats: scoped to JWT user (auth.user_id()).
+# - programs + boat_types + boats: scoped to JWT user (auth.user_id()).
 # - addresses: global reference data for every authenticated user
 # - media: rows for programs and boat types owned by the user (Spatie morph)
 
@@ -10,10 +10,9 @@ config:
   edition: 3
 
 streams:
-  user_todos_programs:
+  user_programs_boats:
     auto_subscribe: true
     queries:
-      - SELECT * FROM todos WHERE user_id = auth.user_id()
       - SELECT * FROM programs WHERE user_id = auth.user_id()
       - SELECT * FROM boat_types WHERE user_id = auth.user_id()
       - SELECT * FROM boats WHERE user_id = auth.user_id()

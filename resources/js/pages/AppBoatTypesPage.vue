@@ -198,7 +198,6 @@ function primaryImageFor(boatTypeId) {
     if (!match || typeof match.name !== 'string') {
         return undefined;
     }
-    const disk = typeof match.disk === 'string' ? match.disk : 'public';
     const fileName = typeof match.file_name === 'string' ? match.file_name : '';
     if (fileName.length === 0) {
         return undefined;

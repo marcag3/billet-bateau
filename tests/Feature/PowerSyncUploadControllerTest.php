@@ -6,7 +6,6 @@ use App\Models\Address;
 use App\Models\Boat;
 use App\Models\BoatType;
 use App\Models\Program;
-use App\Models\Todo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -22,81 +21,15 @@ class PowerSyncUploadControllerTest extends TestCase
             'crud' => [
                 [
                     'op' => 'PUT',
-                    'type' => 'todos',
+                    'type' => 'programs',
                     'id' => (string) Str::uuid(),
-                    'data' => ['title' => 'x', 'completed' => 0],
+                    'data' => [
+                        'name' => 'Guest probe',
+                        'theme_color' => '#000000',
+                    ],
                 ],
             ],
         ])->assertUnauthorized();
-    }
-
-    public function test_put_creates_todo_for_current_user(): void
-    {
-        $user = User::factory()->create();
-        $id = (string) Str::uuid();
-
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'PUT',
-                    'type' => 'todos',
-                    'id' => $id,
-                    'data' => [
-                        'title' => 'Write upload spec',
-                        'completed' => 0,
-                    ],
-                ],
-            ],
-        ])->assertOk();
-
-        $this->assertDatabaseHas('todos', [
-            'id' => $id,
-            'user_id' => $user->getAuthIdentifier(),
-            'title' => 'Write upload spec',
-        ]);
-    }
-
-    public function test_patch_updates_existing_todo(): void
-    {
-        $user = User::factory()->create();
-        $todo = Todo::factory()->for($user)->create(['title' => 'Old', 'completed' => false]);
-
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'PATCH',
-                    'type' => 'todos',
-                    'id' => $todo->id,
-                    'data' => [
-                        'title' => 'New',
-                        'completed' => 1,
-                    ],
-                ],
-            ],
-        ])->assertOk();
-
-        $todo->refresh();
-
-        $this->assertSame('New', $todo->title);
-        $this->assertTrue($todo->completed);
-    }
-
-    public function test_delete_removes_owned_todo(): void
-    {
-        $user = User::factory()->create();
-        $todo = Todo::factory()->for($user)->create();
-
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'DELETE',
-                    'type' => 'todos',
-                    'id' => $todo->id,
-                ],
-            ],
-        ])->assertOk();
-
-        $this->assertDatabaseMissing('todos', ['id' => $todo->id]);
     }
 
     public function test_put_creates_program_for_current_user(): void
@@ -206,7 +139,7 @@ class PowerSyncUploadControllerTest extends TestCase
             'crud' => [
                 [
                     'op' => 'INVALID',
-                    'type' => 'todos',
+                    'type' => 'programs',
                     'id' => (string) Str::uuid(),
                 ],
             ],
@@ -236,73 +169,11 @@ class PowerSyncUploadControllerTest extends TestCase
             'crud' => [
                 [
                     'op' => 'PUT',
-                    'type' => 'todos',
+                    'type' => 'programs',
                     'id' => 'not-a-uuid',
                 ],
             ],
         ])->assertUnprocessable();
-    }
-
-    public function test_put_does_not_steal_other_users_todo(): void
-    {
-        $owner = User::factory()->create();
-        $intruder = User::factory()->create();
-        $todo = Todo::factory()->for($owner)->create(['title' => 'Mine']);
-
-        $this->actingAs($intruder)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'PUT',
-                    'type' => 'todos',
-                    'id' => $todo->id,
-                    'data' => ['title' => 'Stolen', 'completed' => 0],
-                ],
-            ],
-        ])->assertOk();
-
-        $todo->refresh();
-        $this->assertSame('Mine', $todo->title);
-        $this->assertSame((int) $owner->getAuthIdentifier(), (int) $todo->user_id);
-    }
-
-    public function test_patch_does_not_update_other_users_todo(): void
-    {
-        $owner = User::factory()->create();
-        $intruder = User::factory()->create();
-        $todo = Todo::factory()->for($owner)->create(['title' => 'Original']);
-
-        $this->actingAs($intruder)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'PATCH',
-                    'type' => 'todos',
-                    'id' => $todo->id,
-                    'data' => ['title' => 'Hacked'],
-                ],
-            ],
-        ])->assertOk();
-
-        $todo->refresh();
-        $this->assertSame('Original', $todo->title);
-    }
-
-    public function test_delete_does_not_remove_other_users_todo(): void
-    {
-        $owner = User::factory()->create();
-        $intruder = User::factory()->create();
-        $todo = Todo::factory()->for($owner)->create();
-
-        $this->actingAs($intruder)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'DELETE',
-                    'type' => 'todos',
-                    'id' => $todo->id,
-                ],
-            ],
-        ])->assertOk();
-
-        $this->assertDatabaseHas('todos', ['id' => $todo->id]);
     }
 
     public function test_put_does_not_overwrite_other_users_program(): void
