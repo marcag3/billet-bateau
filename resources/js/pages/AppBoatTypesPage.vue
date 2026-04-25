@@ -124,7 +124,7 @@ import {
     getMediaCollectionRef,
     useAppPowerSyncOutbox,
 } from '../powersync/app-powersync.runtime';
-import boatTypesRoutes from '../routes/api/boat-types';
+import mediaRoutes from '../routes/api/media';
 import { requestFormData } from '../services/http.client';
 
 const BOAT_TYPE_MODEL = 'App\\Models\\BoatType';
@@ -262,7 +262,7 @@ async function onPickImages(boatTypeId, value) {
         for (const file of files) {
             formData.append('images[]', file);
         }
-        await requestFormData(boatTypesRoutes.media.store.url({ boatType: boatTypeId }), formData, {
+        await requestFormData(mediaRoutes.store.url({ type: 'boat_type', id: boatTypeId }), formData, {
             withCsrf: true,
         });
         $q.notify({ type: 'positive', message: t('boatTypesList.imagesUploaded') });

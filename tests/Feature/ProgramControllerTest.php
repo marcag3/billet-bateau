@@ -80,6 +80,8 @@ class ProgramControllerTest extends TestCase
             'city' => 'Portville',
         ]);
 
+        $response->assertJsonMissingPath('data.images');
+
         $program = Program::query()->with('address')->findOrFail($id);
         $this->assertCount(1, $program->getMedia('images'));
     }
@@ -96,10 +98,11 @@ class ProgramControllerTest extends TestCase
         $image = $this->fakePngUpload('x.png');
 
         $this->actingAs($other)
-            ->post('/api/programs/'.$program->getKey().'/media', [
+            ->post('/api/media/program/'.$program->getKey(), [
                 'images' => [$image],
             ])
-            ->assertOk();
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'x');
 
         $program->refresh();
         $this->assertCount(1, $program->getMedia('images'));
@@ -115,12 +118,41 @@ class ProgramControllerTest extends TestCase
         $image = $this->fakePngUpload('a.png');
 
         $this->actingAs($user)
-            ->post('/api/programs/'.$program->getKey().'/media', [
+            ->post('/api/media/program/'.$program->getKey(), [
+                'images' => [$image],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'a');
+
+        $program->refresh();
+        $this->assertCount(1, $program->getMedia('images'));
+    }
+
+    public function test_guest_cannot_list_program_media(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->for($user)->create();
+
+        $this->getJson('/api/media/program/'.$program->getKey())->assertUnauthorized();
+    }
+
+    public function test_index_media_lists_program_images(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $program = Program::factory()->for($user)->create();
+        $image = $this->fakePngUpload('list.png');
+
+        $this->actingAs($user)
+            ->post('/api/media/program/'.$program->getKey(), [
                 'images' => [$image],
             ])
             ->assertOk();
 
-        $program->refresh();
-        $this->assertCount(1, $program->getMedia('images'));
+        $this->actingAs($user)
+            ->getJson('/api/media/program/'.$program->getKey())
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'list');
     }
 }

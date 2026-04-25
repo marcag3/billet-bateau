@@ -92,7 +92,7 @@ This keeps the admin UI to: pick two types + set ratio, without hard-coding “a
 
 ## Locked product decisions (v1)
 
-- **Staff / admin access:** v1 has **no user roles** (no super-admin vs guide vs read-only, etc.). **Any** authenticated back-office user may perform **all** admin operations. Policies and tests should only distinguish **guest vs authenticated** staff, not role tiers.
+- **Staff / admin access:** v1 has **no user roles** (no super-admin vs guide vs read-only, etc.). **Any** authenticated back-office user may perform **all** admin operations. Policies and tests should only distinguish **guest vs authenticated** staff, not role tiers. **`POST /api/powersync/upload` follows the same rule** (no owner-only mutation gates for staff-managed synced rows such as programs, boat types, boats, addresses).
 - **Voyage ↔ boats:** multiple hulls per voyage is **common** — `voyage_boat` (or similar pivot), not a single `boat_id`.
 - **Voyage ↔ trip:** `trip_id` nullable; a voyage is linked to zero or one bookable trip.
 - **Check-in:** **one check-in per booking (family = one booking).** A check-in **terminal/flow** can **adjust the real person count** vs sold tickets. Check-ins **fill** the voyage; **manual pax / manifest lines** (walk-ons, corrections) are allowed in addition to check-ins.

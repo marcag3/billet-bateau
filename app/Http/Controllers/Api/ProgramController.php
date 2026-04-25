@@ -60,24 +60,4 @@ class ProgramController extends Controller
             'data' => ProgramData::fromModel($program),
         ], 201);
     }
-
-    public function storeMedia(Request $request, Program $program): JsonResponse
-    {
-        $this->authorize('update', $program);
-
-        $validated = $request->validate([
-            'images' => ['required', 'array', 'min:1', 'max:12'],
-            'images.*' => ['file', 'image', 'max:12288'],
-        ]);
-
-        DB::transaction(function () use ($program, $validated): void {
-            foreach ($validated['images'] as $file) {
-                $program->addMedia($file)->toMediaCollection('images');
-            }
-        });
-
-        return response()->json([
-            'data' => ProgramData::fromModel($program->fresh(['address'])),
-        ]);
-    }
 }

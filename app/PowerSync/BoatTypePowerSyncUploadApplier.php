@@ -17,10 +17,7 @@ final class BoatTypePowerSyncUploadApplier
         $data = $entry['data'] ?? [];
 
         if ($op === 'DELETE') {
-            $boatType = BoatType::query()
-                ->whereKey($id)
-                ->where('user_id', $userId)
-                ->first();
+            $boatType = BoatType::query()->whereKey($id)->first();
 
             $boatType?->delete();
 
@@ -29,9 +26,6 @@ final class BoatTypePowerSyncUploadApplier
 
         if ($op === 'PUT') {
             $existing = BoatType::query()->whereKey($id)->first();
-            if ($existing !== null && (int) $existing->user_id !== $userId) {
-                return;
-            }
 
             $name = isset($data['name']) && is_string($data['name']) ? trim($data['name']) : '';
 
@@ -47,10 +41,7 @@ final class BoatTypePowerSyncUploadApplier
         }
 
         if ($op === 'PATCH') {
-            $boatType = BoatType::query()
-                ->whereKey($id)
-                ->where('user_id', $userId)
-                ->first();
+            $boatType = BoatType::query()->whereKey($id)->first();
 
             if ($boatType === null) {
                 return;

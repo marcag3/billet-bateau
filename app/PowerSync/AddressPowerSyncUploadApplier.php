@@ -7,9 +7,9 @@ use App\Models\Program;
 
 /**
  * Address row mutations from PowerSync uploads.
- * Rows are global (replicated to all users). DELETE and “clear” operations only null
- * {@see Program::$address_id} for programs owned by the uploading user; the row is removed
- * only when no program still references it.
+ * Rows are global (replicated to all users). DELETE and “clear” operations null
+ * {@see Program::$address_id} for all programs referencing the address; the address row
+ * is removed when no program still references it.
  */
 final class AddressPowerSyncUploadApplier
 {
@@ -24,7 +24,7 @@ final class AddressPowerSyncUploadApplier
         $data = $entry['data'] ?? [];
 
         if ($op === 'DELETE') {
-            $this->nullProgramsReferencingForUser($addressId, $userId);
+            $this->nullProgramsReferencing($addressId);
             $this->deleteAddressIfOrphaned($addressId);
 
             return;
@@ -34,7 +34,7 @@ final class AddressPowerSyncUploadApplier
             $row = $this->normalizeAddressRow($data);
 
             if (! $this->rowHasAny($row)) {
-                $this->nullProgramsReferencingForUser($addressId, $userId);
+                $this->nullProgramsReferencing($addressId);
                 $this->deleteAddressIfOrphaned($addressId);
 
                 return;
@@ -73,7 +73,7 @@ final class AddressPowerSyncUploadApplier
             }
 
             if (! $this->modelHasAny($address)) {
-                $this->nullProgramsReferencingForUser($addressId, $userId);
+                $this->nullProgramsReferencing($addressId);
                 if (Program::query()->where('address_id', $addressId)->exists()) {
                     $address->save();
                 } else {
@@ -91,9 +91,9 @@ final class AddressPowerSyncUploadApplier
         throw new \RuntimeException('Unsupported PowerSync CRUD op for addresses: '.$op);
     }
 
-    private function nullProgramsReferencingForUser(string $addressId, int $userId): void
+    private function nullProgramsReferencing(string $addressId): void
     {
-        Program::query()->where('address_id', $addressId)->where('user_id', $userId)->update(['address_id' => null]);
+        Program::query()->where('address_id', $addressId)->update(['address_id' => null]);
     }
 
     private function deleteAddressIfOrphaned(string $addressId): void

@@ -140,7 +140,7 @@ import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { usePrograms } from "../models/programs/programs.model";
-import programsRoutes from "../routes/api/programs";
+import mediaRoutes from "../routes/api/media";
 import { requestFormData } from "../services/http.client";
 
 const { t } = useI18n();
@@ -217,7 +217,7 @@ async function onSubmit() {
             }
 
             await requestFormData(
-                programsRoutes.media.store.url({ program: programId }),
+                mediaRoutes.store.url({ type: "program", id: programId }),
                 formData,
                 {
                     withCsrf: true,

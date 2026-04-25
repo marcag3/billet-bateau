@@ -19,10 +19,7 @@ final class BoatPowerSyncUploadApplier
         $data = $entry['data'] ?? [];
 
         if ($op === 'DELETE') {
-            $boat = Boat::query()
-                ->whereKey($id)
-                ->where('user_id', $userId)
-                ->first();
+            $boat = Boat::query()->whereKey($id)->first();
 
             $boat?->delete();
 
@@ -31,9 +28,6 @@ final class BoatPowerSyncUploadApplier
 
         if ($op === 'PUT') {
             $existing = Boat::query()->whereKey($id)->first();
-            if ($existing !== null && (int) $existing->user_id !== $userId) {
-                return;
-            }
 
             $name = isset($data['name']) && is_string($data['name']) ? trim($data['name']) : '';
             $notes = array_key_exists('notes', $data)
@@ -43,7 +37,7 @@ final class BoatPowerSyncUploadApplier
                 ? $this->readCapacity($data['capacity'], $existing)
                 : $existing?->capacity;
             $boatTypeId = array_key_exists('boat_type_id', $data)
-                ? $this->resolveBoatTypeId($data['boat_type_id'], $userId, $existing)
+                ? $this->resolveBoatTypeId($data['boat_type_id'], $existing)
                 : $existing?->boat_type_id;
 
             Boat::query()->updateOrCreate(
@@ -61,10 +55,7 @@ final class BoatPowerSyncUploadApplier
         }
 
         if ($op === 'PATCH') {
-            $boat = Boat::query()
-                ->whereKey($id)
-                ->where('user_id', $userId)
-                ->first();
+            $boat = Boat::query()->whereKey($id)->first();
 
             if ($boat === null) {
                 return;
@@ -86,7 +77,7 @@ final class BoatPowerSyncUploadApplier
             }
 
             if (array_key_exists('boat_type_id', $data)) {
-                $boat->boat_type_id = $this->resolveBoatTypeId($data['boat_type_id'], $userId, $boat);
+                $boat->boat_type_id = $this->resolveBoatTypeId($data['boat_type_id'], $boat);
             }
 
             $boat->save();
@@ -149,7 +140,7 @@ final class BoatPowerSyncUploadApplier
         return $value;
     }
 
-    private function resolveBoatTypeId(mixed $value, int $userId, ?Boat $existing): ?string
+    private function resolveBoatTypeId(mixed $value, ?Boat $existing): ?string
     {
         if ($value === null) {
             return null;
@@ -163,12 +154,7 @@ final class BoatPowerSyncUploadApplier
             return $existing?->boat_type_id;
         }
 
-        $owned = BoatType::query()
-            ->whereKey($value)
-            ->where('user_id', $userId)
-            ->exists();
-
-        if (! $owned) {
+        if (! BoatType::query()->whereKey($value)->exists()) {
             return $existing?->boat_type_id;
         }
 

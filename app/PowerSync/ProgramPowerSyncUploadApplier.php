@@ -21,10 +21,7 @@ final class ProgramPowerSyncUploadApplier
         $data = $entry['data'] ?? [];
 
         if ($op === 'DELETE') {
-            $program = Program::query()
-                ->whereKey($id)
-                ->where('user_id', $userId)
-                ->first();
+            $program = Program::query()->whereKey($id)->first();
 
             $program?->delete();
 
@@ -33,9 +30,6 @@ final class ProgramPowerSyncUploadApplier
 
         if ($op === 'PUT') {
             $existing = Program::query()->whereKey($id)->first();
-            if ($existing !== null && (int) $existing->user_id !== $userId) {
-                return;
-            }
 
             $name = isset($data['name']) && is_string($data['name']) ? trim($data['name']) : '';
             $description = isset($data['description']) && is_string($data['description']) ? $data['description'] : null;
@@ -75,10 +69,7 @@ final class ProgramPowerSyncUploadApplier
         }
 
         if ($op === 'PATCH') {
-            $program = Program::query()
-                ->whereKey($id)
-                ->where('user_id', $userId)
-                ->first();
+            $program = Program::query()->whereKey($id)->first();
 
             if ($program === null) {
                 return;
