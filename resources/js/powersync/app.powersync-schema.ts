@@ -1,6 +1,7 @@
 import { column, Schema, Table } from '@powersync/web';
 
 const programsTable = new Table({
+    id: column.text,
     user_id: column.integer,
     address_id: column.text,
     name: column.text,

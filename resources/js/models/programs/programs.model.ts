@@ -115,7 +115,7 @@ export function usePrograms() {
             name: input.name.trim(),
             description: input.description.trim().length > 0 ? input.description.trim() : null,
             theme_color: themeColor,
-            is_active: 0,
+            is_active: 1,
             slug: buildInitialProgramSlug(input.name, id),
             created_at: now,
             updated_at: now,

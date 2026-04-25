@@ -36,14 +36,8 @@
                 dense
                 no-caps
             >
-                <q-tab
-                    name="active"
-                    :label="t('programsList.tabActive')"
-                />
-                <q-tab
-                    name="archived"
-                    :label="t('programsList.tabArchived')"
-                />
+                <q-tab name="active" :label="t('programsList.tabActive')" />
+                <q-tab name="archived" :label="t('programsList.tabArchived')" />
             </q-tabs>
 
             <div class="row q-col-gutter-md">
@@ -91,7 +85,7 @@
                                 v-else
                                 class="text-caption text-grey-6 q-mb-sm q-mt-none"
                             >
-                                {{ t('programsList.noDescription') }}
+                                {{ t("programsList.noDescription") }}
                             </p>
                             <div
                                 v-if="addressDisplayLines(p).length"
@@ -104,18 +98,17 @@
                                 />
                                 <div>
                                     <div
-                                        v-for="(line, i) in addressDisplayLines(p)"
+                                        v-for="(line, i) in addressDisplayLines(
+                                            p,
+                                        )"
                                         :key="`addr-${String(p.id)}-${i}`"
                                     >
                                         {{ line }}
                                     </div>
                                 </div>
                             </div>
-                            <div
-                                v-else
-                                class="text-caption text-grey-6"
-                            >
-                                {{ t('programsList.noAddress') }}
+                            <div v-else class="text-caption text-grey-6">
+                                {{ t("programsList.noAddress") }}
                             </div>
                         </q-card-section>
                         <q-separator />
@@ -127,16 +120,25 @@
                                 :model-value="Number(p.is_active) === 1"
                                 :label="t('programsList.isActive')"
                                 :disable="isPatching"
-                                @update:model-value="(v) => onToggleActive(p, v)"
+                                @update:model-value="
+                                    (v) => onToggleActive(p, v)
+                                "
                             />
                             <q-input
-                                :model-value="slugDrafts[String(p.id)] ?? (p.slug ?? '')"
+                                :model-value="
+                                    slugDrafts[String(p.id)] ?? p.slug ?? ''
+                                "
                                 outlined
                                 dense
                                 :label="t('programsList.slug')"
                                 :hint="t('programsList.slugHint')"
                                 :disable="isPatching"
-                                @update:model-value="(v) => (slugDrafts[String(p.id)] = String(v ?? ''))"
+                                @update:model-value="
+                                    (v) =>
+                                        (slugDrafts[String(p.id)] = String(
+                                            v ?? '',
+                                        ))
+                                "
                                 @blur="() => onSlugCommit(p)"
                             />
                             <q-btn
@@ -154,24 +156,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useQuasar } from 'quasar';
-import { safeParseProgramSlug } from '../models/programs/programs.validation';
-import { usePrograms } from '../models/programs/programs.model';
-import { useEntityList } from '../models/entity.queries';
+import { computed, onMounted, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { useQuasar } from "quasar";
+import { safeParseProgramSlug } from "../models/programs/programs.validation";
+import { usePrograms } from "../models/programs/programs.model";
+import { useEntityList } from "../models/entity.queries";
 import {
     getAppPowerSyncBootstrappedRef,
     getAddressesCollectionRef,
     getMediaCollectionRef,
     useAppPowerSyncOutbox,
-} from '../powersync/app-powersync.runtime';
-import AppPageHeader from '../components/ui/AppPageHeader.vue';
-import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
-import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
-import AppBootstrapGate from '../components/ui/AppBootstrapGate.vue';
+} from "../powersync/app-powersync.runtime";
+import AppPageHeader from "../components/ui/AppPageHeader.vue";
+import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
+import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
+import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 
-const PROGRAM_MODEL = 'App\\Models\\Program';
+const PROGRAM_MODEL = "App\\Models\\Program";
 
 const { t } = useI18n();
 const $q = useQuasar();
@@ -183,32 +185,30 @@ const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
 
 const { data: addressRows } = useEntityList({
     enabledRef: hasBootstrapped,
-    alias: 'addresses',
+    alias: "addresses",
     collection: getAddressesCollectionRef(),
     orderBy: [],
 });
 
 const { data: mediaRows } = useEntityList({
     enabledRef: hasBootstrapped,
-    alias: 'media',
+    alias: "media",
     collection: getMediaCollectionRef(),
     orderBy: [
-        { key: 'order_column', direction: 'asc' },
-        { key: 'created_at', direction: 'asc' },
+        { key: "order_column", direction: "asc" },
+        { key: "created_at", direction: "asc" },
     ],
 });
 
 const isPatching = ref(false);
 const slugDrafts = reactive<Record<string, string>>({});
-const programTab = ref<'active' | 'archived'>('active');
+const programTab = ref<"active" | "archived">("active");
 
-const totalProgramCount = computed(
-    () => (programs.value ?? []).length,
-);
+const totalProgramCount = computed(() => (programs.value ?? []).length);
 
 const filteredPrograms = computed(() => {
     const list = programs.value ?? [];
-    if (programTab.value === 'active') {
+    if (programTab.value === "active") {
         return list.filter((p) => Number(p.is_active) === 1);
     }
     return list.filter((p) => Number(p.is_active) !== 1);
@@ -216,12 +216,12 @@ const filteredPrograms = computed(() => {
 
 const emptyListMessage = computed(() => {
     if (totalProgramCount.value === 0) {
-        return t('programsList.empty');
+        return t("programsList.empty");
     }
-    if (programTab.value === 'active') {
-        return t('programsList.emptyActive');
+    if (programTab.value === "active") {
+        return t("programsList.emptyActive");
     }
-    return t('programsList.emptyArchived');
+    return t("programsList.emptyArchived");
 });
 
 onMounted(() => {
@@ -235,15 +235,18 @@ function findAddressForProgram(p: Record<string, unknown>) {
     }
     const rows = addressRows.value ?? [];
     return (
-        rows.find((a) => a != null && String((a as Record<string, unknown>).id) === String(id)) ??
-        null
+        rows.find(
+            (a) =>
+                a != null &&
+                String((a as Record<string, unknown>).id) === String(id),
+        ) ?? null
     );
 }
 
 function programDescription(p: Record<string, unknown>): string {
     const d = p.description;
     if (d == null) {
-        return '';
+        return "";
     }
     const s = String(d).trim();
 
@@ -256,21 +259,21 @@ function addressDisplayLines(p: Record<string, unknown>): string[] {
         return [];
     }
     const lines: string[] = [];
-    const l1 = a.line_1 != null ? String(a.line_1).trim() : '';
-    const l2 = a.line_2 != null ? String(a.line_2).trim() : '';
+    const l1 = a.line_1 != null ? String(a.line_1).trim() : "";
+    const l2 = a.line_2 != null ? String(a.line_2).trim() : "";
     if (l1.length > 0) {
         lines.push(l1);
     }
     if (l2.length > 0) {
         lines.push(l2);
     }
-    const city = a.city != null ? String(a.city).trim() : '';
-    const pc = a.postal_code != null ? String(a.postal_code).trim() : '';
-    const cityLine = [city, pc].filter((x) => x.length > 0).join(', ');
+    const city = a.city != null ? String(a.city).trim() : "";
+    const pc = a.postal_code != null ? String(a.postal_code).trim() : "";
+    const cityLine = [city, pc].filter((x) => x.length > 0).join(", ");
     if (cityLine.length > 0) {
         lines.push(cityLine);
     }
-    const country = a.country != null ? String(a.country).trim() : '';
+    const country = a.country != null ? String(a.country).trim() : "";
     if (country.length > 0) {
         lines.push(country);
     }
@@ -283,27 +286,29 @@ function primaryImageFor(programId: string) {
     const match = rows.find(
         (m) =>
             m != null &&
-            String((m as Record<string, unknown>).model_type) === PROGRAM_MODEL &&
+            String((m as Record<string, unknown>).model_type) ===
+                PROGRAM_MODEL &&
             String((m as Record<string, unknown>).model_id) === programId &&
-            String((m as Record<string, unknown>).collection_name) === 'images',
+            String((m as Record<string, unknown>).collection_name) === "images",
     ) as Record<string, unknown> | undefined;
     if (!match) {
         return undefined;
     }
     const name = match.name;
-    if (typeof name !== 'string' || name.length === 0) {
+    if (typeof name !== "string" || name.length === 0) {
         return undefined;
     }
-    const fileName = typeof match.file_name === 'string' ? match.file_name : '';
+    const fileName = typeof match.file_name === "string" ? match.file_name : "";
     if (fileName.length === 0) {
         return undefined;
     }
-    return `/storage/${String(match.id ?? '')}/${fileName}`;
+    return `/storage/${String(match.id ?? "")}/${fileName}`;
 }
 
 function placeholderStyle(p: Record<string, unknown>) {
-    const hex = typeof p.theme_color === 'string' ? p.theme_color.trim() : '#e0e0e0';
-    return { background: hex || '#e0e0e0' };
+    const hex =
+        typeof p.theme_color === "string" ? p.theme_color.trim() : "#e0e0e0";
+    return { background: hex || "#e0e0e0" };
 }
 
 function onToggleActive(p: Record<string, unknown>, isActive: boolean) {
@@ -321,13 +326,15 @@ function onToggleActive(p: Record<string, unknown>, isActive: boolean) {
 
 function onSlugCommit(p: Record<string, unknown>) {
     const id = String(p.id);
-    const raw = (slugDrafts[id] ?? p.slug ?? '').toString();
-    const current = p.slug == null ? '' : String(p.slug).trim().toLowerCase();
+    const raw = (slugDrafts[id] ?? p.slug ?? "").toString();
+    const current = p.slug == null ? "" : String(p.slug).trim().toLowerCase();
     const parsed = safeParseProgramSlug(t, raw);
     if (!parsed.success) {
         $q.notify({
-            type: 'negative',
-            message: parsed.error.issues[0]?.message ?? t('programsList.slugRequired'),
+            type: "negative",
+            message:
+                parsed.error.issues[0]?.message ??
+                t("programsList.slugRequired"),
         });
         slugDrafts[id] = current;
         return;
@@ -349,10 +356,10 @@ function onSlugCommit(p: Record<string, unknown>) {
 }
 
 function copyPublicUrl(p: Record<string, unknown>) {
-    const path = '/programs/' + encodeURIComponent(String(p.slug ?? '').trim());
+    const path = "/programs/" + encodeURIComponent(String(p.slug ?? "").trim());
     const url = `${window.location.origin}${path}`;
     void navigator.clipboard.writeText(url);
-    $q.notify({ type: 'positive', message: t('programsList.copied') });
+    $q.notify({ type: "positive", message: t("programsList.copied") });
 }
 </script>
 

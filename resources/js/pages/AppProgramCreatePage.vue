@@ -7,17 +7,11 @@
         />
 
         <AppCardSection :label="t('programsCreate.formSection')">
-            <AppAlertBanner
-                v-if="errorMessage.length > 0"
-                variant="error"
-            >
+            <AppAlertBanner v-if="errorMessage.length > 0" variant="error">
                 {{ errorMessage }}
             </AppAlertBanner>
 
-            <q-form
-                class="q-gutter-md"
-                @submit.prevent="onFormSubmit"
-            >
+            <q-form class="q-gutter-md" @submit.prevent="onFormSubmit">
                 <q-input
                     v-model="name"
                     v-bind="nameProps"
@@ -26,11 +20,8 @@
                     :disable="isSubmitting"
                 >
                     <template #label>
-                        {{ t('programsCreate.name') }}
-                        <span
-                            class="text-negative"
-                            aria-hidden="true"
-                        >*</span>
+                        {{ t("programsCreate.name") }}
+                        <span class="text-negative" aria-hidden="true">*</span>
                     </template>
                 </q-input>
 
@@ -52,17 +43,11 @@
                     :disable="isSubmitting"
                 >
                     <template #label>
-                        {{ t('programsCreate.themeColor') }}
-                        <span
-                            class="text-negative"
-                            aria-hidden="true"
-                        >*</span>
+                        {{ t("programsCreate.themeColor") }}
+                        <span class="text-negative" aria-hidden="true">*</span>
                     </template>
                     <template #append>
-                        <q-icon
-                            name="colorize"
-                            class="cursor-pointer"
-                        >
+                        <q-icon name="colorize" class="cursor-pointer">
                             <q-popup-proxy
                                 cover
                                 transition-show="scale"
@@ -164,64 +149,68 @@
 </template>
 
 <script setup lang="ts">
-import { useForm } from 'vee-validate';
-import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
-import { useQuasar } from 'quasar';
-import { createProgramCreateFormSchema, type ProgramCreateFormValues } from '../models/programs/programs.validation';
-import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
-import { usePrograms } from '../models/programs/programs.model';
-import mediaRoutes from '../routes/api/media';
-import { requestFormData } from '../services/http.client';
-import { ref } from 'vue';
-import { normalizeImageFiles } from '../utilities/image-files';
-import AppPageHeader from '../components/ui/AppPageHeader.vue';
-import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
-import AppCardSection from '../components/ui/AppCardSection.vue';
+import { useForm } from "vee-validate";
+import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
+import { useQuasar } from "quasar";
+import {
+    createProgramCreateFormSchema,
+    type ProgramCreateFormValues,
+} from "../models/programs/programs.validation";
+import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
+import { usePrograms } from "../models/programs/programs.model";
+import mediaRoutes from "../routes/api/media";
+import { requestFormData } from "../services/http.client";
+import { ref } from "vue";
+import { normalizeImageFiles } from "../utilities/image-files";
+import AppPageHeader from "../components/ui/AppPageHeader.vue";
+import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
+import AppCardSection from "../components/ui/AppCardSection.vue";
 
 const { t } = useI18n();
 const router = useRouter();
 const $q = useQuasar();
 const { createProgramWithOptionalAddress } = usePrograms();
 
-const errorMessage = ref('');
+const errorMessage = ref("");
 
 const programCreateSchema = createProgramCreateFormSchema(t);
-const { handleSubmit, defineField, isSubmitting } = useForm<ProgramCreateFormValues>({
-    validationSchema: programCreateSchema,
-    initialValues: {
-        name: '',
-        description: '',
-        themeColor: '#0F766E',
-        address: {
-            line_1: '',
-            line_2: '',
-            city: '',
-            postal_code: '',
-            country: '',
-        },
-        imagesModel: null,
-    } satisfies ProgramCreateFormValues,
-});
+const { handleSubmit, defineField, isSubmitting } =
+    useForm<ProgramCreateFormValues>({
+        validationSchema: programCreateSchema,
+        initialValues: {
+            name: "",
+            description: "",
+            themeColor: "#0F766E",
+            address: {
+                line_1: "",
+                line_2: "",
+                city: "",
+                postal_code: "",
+                country: "",
+            },
+            imagesModel: null,
+        } satisfies ProgramCreateFormValues,
+    });
 
 const quasarField = createQuasarFieldBinder(defineField);
 
-const [name, nameProps] = quasarField('name');
-const [description, descriptionProps] = quasarField('description');
-const [themeColor, themeColorProps] = quasarField('themeColor');
-const [line1, line1Props] = quasarField('address.line_1');
-const [line2, line2Props] = quasarField('address.line_2');
-const [city, cityProps] = quasarField('address.city');
-const [postalCode, postalCodeProps] = quasarField('address.postal_code');
-const [country, countryProps] = quasarField('address.country');
-const [imagesModel, imagesModelProps] = quasarField('imagesModel');
+const [name, nameProps] = quasarField("name");
+const [description, descriptionProps] = quasarField("description");
+const [themeColor, themeColorProps] = quasarField("themeColor");
+const [line1, line1Props] = quasarField("address.line_1");
+const [line2, line2Props] = quasarField("address.line_2");
+const [city, cityProps] = quasarField("address.city");
+const [postalCode, postalCodeProps] = quasarField("address.postal_code");
+const [country, countryProps] = quasarField("address.country");
+const [imagesModel, imagesModelProps] = quasarField("imagesModel");
 
 function goToProgramsList() {
-    void router.push({ name: 'programs.list' });
+    void router.push({ name: "programs.list" });
 }
 
 const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
-    errorMessage.value = '';
+    errorMessage.value = "";
 
     try {
         const programId = await createProgramWithOptionalAddress({
@@ -235,11 +224,11 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
         if (files.length > 0) {
             const formData = new FormData();
             for (const file of files) {
-                formData.append('images[]', file);
+                formData.append("images[]", file);
             }
 
             await requestFormData(
-                mediaRoutes.store.url({ type: 'program', id: programId }),
+                mediaRoutes.store.url({ type: "program", id: programId }),
                 formData,
                 {
                     withCsrf: true,
@@ -247,10 +236,11 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
             );
         }
 
-        $q.notify({ type: 'positive', message: t('programsCreate.success') });
-        await router.push({ name: 'programs.list' });
+        $q.notify({ type: "positive", message: t("programsCreate.success") });
+        await router.push({ name: "programs.list" });
     } catch (error) {
-        errorMessage.value = error instanceof Error ? error.message : String(error);
+        errorMessage.value =
+            error instanceof Error ? error.message : String(error);
     }
 });
 </script>
