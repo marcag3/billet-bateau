@@ -7,6 +7,7 @@ import {
     logout as logoutRequest,
 } from '../models/auth.api';
 import { translate } from '../utilities/i18n';
+import { setProgramSyncScopeId } from '../powersync/app-powersync.runtime';
 
 const AUTH_MARKER_STORAGE_KEY = 'app.hasAuthenticatedOnce';
 
@@ -150,6 +151,8 @@ export const useAuthStore = defineStore('auth', {
                 passwordConfirmation,
             });
 
+            void setProgramSyncScopeId('');
+
             this.isAuthenticated = false;
             this.user = null;
             this.hasAuthenticatedBefore = false;
@@ -161,6 +164,8 @@ export const useAuthStore = defineStore('auth', {
         },
         async logout() {
             await logoutRequest();
+
+            void setProgramSyncScopeId('');
 
             this.isAuthenticated = false;
             this.user = null;

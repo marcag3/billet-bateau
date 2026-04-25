@@ -8,7 +8,6 @@ export const DEFAULT_LOCALE: AppLocale = 'en';
 const messages = {
     en: {
         common: {
-            appWorkspace: 'Application Workspace',
             publicExperience: 'Public Experience',
             reports: 'Reports',
             settings: 'Settings',
@@ -22,6 +21,8 @@ const messages = {
             language: 'Language',
             welcome: 'Welcome',
             dismiss: 'Dismiss',
+            backToPrograms: 'Back to programs',
+            switchProgram: 'Switch program',
         },
         auth: {
             signIn: 'Sign in',
@@ -154,6 +155,7 @@ const messages = {
             errorGeneric: 'Something went wrong. Please try again.',
             programRoster: 'Program roster',
             programRosterHint: 'Pick which program this boat list belongs to. Boats sync for that program only.',
+            rosterForProgram: 'Roster: {name}',
             noProgramsForBoats: 'Create a program first, then choose it here to manage boats for that roster.',
         },
         boatTypesList: {
@@ -183,6 +185,7 @@ const messages = {
             addProgram: 'New program',
             tabActive: 'Active',
             tabArchived: 'Archived',
+            openWorkspace: 'Open workspace',
             editProgram: 'Edit program',
             isActive: 'List on public site',
             slug: 'URL slug',
@@ -200,7 +203,6 @@ const messages = {
     },
     fr: {
         common: {
-            appWorkspace: "Espace de l'application",
             publicExperience: 'Experience publique',
             reports: 'Rapports',
             settings: 'Parametres',
@@ -214,6 +216,8 @@ const messages = {
             language: 'Langue',
             welcome: 'Bienvenue',
             dismiss: 'Fermer',
+            backToPrograms: 'Retour aux programmes',
+            switchProgram: 'Changer de programme',
         },
         auth: {
             signIn: 'Se connecter',
@@ -352,6 +356,7 @@ const messages = {
             programRoster: 'Programme (liste)',
             programRosterHint:
                 'Choisissez le programme auquel rattacher cette liste. Les bateaux se synchronisent pour ce programme seulement.',
+            rosterForProgram: 'Liste : {name}',
             noProgramsForBoats:
                 "Creez d'abord un programme, puis selectionnez-le pour gerer ses bateaux.",
         },
@@ -384,6 +389,7 @@ const messages = {
             addProgram: 'Nouveau programme',
             tabActive: 'Actifs',
             tabArchived: 'Archives',
+            openWorkspace: "Ouvrir l'espace de travail",
             editProgram: 'Modifier le programme',
             isActive: 'Publie sur le site public',
             slug: 'Identifiant d’URL',

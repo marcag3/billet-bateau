@@ -116,6 +116,13 @@
                             class="q-pa-md q-pt-sm column items-stretch"
                             vertical
                         >
+                            <q-btn
+                                color="primary"
+                                unelevated
+                                :label="t('programsList.openWorkspace')"
+                                :disable="isPatching"
+                                @click="() => openWorkspace(String(p.id))"
+                            />
                             <q-toggle
                                 :model-value="programRowIsActive(p as Record<string, unknown>)"
                                 :label="t('programsList.isActive')"
@@ -126,11 +133,11 @@
                             />
                             <q-btn
                                 color="primary"
-                                unelevated
+                                outline
                                 :label="t('programsList.editProgram')"
                                 :to="{
                                     name: 'programs.edit',
-                                    params: { id: String(p.id) },
+                                    params: { programId: String(p.id) },
                                 }"
                             />
                             <q-btn
@@ -151,6 +158,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
+import { useRouter } from "vue-router";
 import { usePrograms } from "../models/programs/programs.model";
 import { useEntityList } from "../models/entity.queries";
 import {
@@ -168,6 +176,7 @@ const PROGRAM_MODEL = "App\\Models\\Program";
 
 const { t } = useI18n();
 const $q = useQuasar();
+const router = useRouter();
 const { programs, ensureProgramsReady, patchProgramRow } = usePrograms();
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 
@@ -282,6 +291,14 @@ const emptyListMessage = computed(() => {
 onMounted(() => {
     void ensureProgramsReady();
 });
+
+async function openWorkspace(programId: string) {
+    const id = String(programId ?? "").trim();
+    if (id.length === 0) {
+        return;
+    }
+    await router.push({ name: "boats.list", params: { programId: id } });
+}
 
 function findAddressForProgram(p: Record<string, unknown>) {
     const id = p.address_id;

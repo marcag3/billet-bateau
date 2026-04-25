@@ -1,5 +1,65 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
+import { setProgramSyncScopeId } from '../powersync/app-powersync.runtime';
 import { useAuthStore } from '../store/auth.store';
+
+const programScopeChildren: RouteRecordRaw[] = [
+    {
+        path: '',
+        meta: {
+            requiresAuth: true,
+            /** Keeps program scope in the guard on first paint before redirect. */
+            requiresSelectedProgram: true,
+        },
+        redirect: (to) => ({
+            name: 'boats.list',
+            params: { programId: String(to.params.programId ?? '') },
+        }),
+    },
+    {
+        path: 'boats',
+        name: 'boats.list',
+        component: () => import('../pages/AppBoatsPage.vue'),
+        meta: {
+            requiresAuth: true,
+            requiresSelectedProgram: true,
+        },
+    },
+    {
+        path: 'boat-types',
+        name: 'boat-types.list',
+        component: () => import('../pages/AppBoatTypesPage.vue'),
+        meta: {
+            requiresAuth: true,
+            requiresSelectedProgram: true,
+        },
+    },
+    {
+        path: 'reports',
+        name: 'reports',
+        component: () => import('../pages/AppReportsPage.vue'),
+        meta: {
+            requiresAuth: true,
+            requiresSelectedProgram: true,
+        },
+    },
+    {
+        path: 'settings',
+        name: 'settings',
+        component: () => import('../pages/AppSettingsPage.vue'),
+        meta: {
+            requiresAuth: true,
+            requiresSelectedProgram: true,
+        },
+    },
+    {
+        path: 'edit',
+        name: 'programs.edit',
+        component: () => import('../pages/AppProgramEditPage.vue'),
+        meta: {
+            requiresAuth: true,
+        },
+    },
+];
 
 const routes: RouteRecordRaw[] = [
     {
@@ -23,22 +83,6 @@ const routes: RouteRecordRaw[] = [
         redirect: '/programs',
     },
     {
-        path: '/reports',
-        name: 'reports',
-        component: () => import('../pages/AppReportsPage.vue'),
-        meta: {
-            requiresAuth: true,
-        },
-    },
-    {
-        path: '/settings',
-        name: 'settings',
-        component: () => import('../pages/AppSettingsPage.vue'),
-        meta: {
-            requiresAuth: true,
-        },
-    },
-    {
         path: '/programs/new',
         name: 'programs.create',
         component: () => import('../pages/AppProgramCreatePage.vue'),
@@ -47,33 +91,17 @@ const routes: RouteRecordRaw[] = [
         },
     },
     {
-        path: '/programs/:id/edit',
-        name: 'programs.edit',
-        component: () => import('../pages/AppProgramEditPage.vue'),
+        path: '/programs/:programId',
+        component: () => import('../layouts/AppProgramScopeLayout.vue'),
         meta: {
             requiresAuth: true,
         },
+        children: programScopeChildren,
     },
     {
         path: '/programs',
         name: 'programs.list',
         component: () => import('../pages/AppProgramsPage.vue'),
-        meta: {
-            requiresAuth: true,
-        },
-    },
-    {
-        path: '/boats',
-        name: 'boats.list',
-        component: () => import('../pages/AppBoatsPage.vue'),
-        meta: {
-            requiresAuth: true,
-        },
-    },
-    {
-        path: '/boat-types',
-        name: 'boat-types.list',
-        component: () => import('../pages/AppBoatTypesPage.vue'),
         meta: {
             requiresAuth: true,
         },
@@ -115,6 +143,17 @@ router.beforeEach(async (to) => {
     }
 
     if (authStore.canAccessProtectedRoute()) {
+        const needsProgram = to.matched.some((r) => r.meta.requiresSelectedProgram === true);
+        if (needsProgram) {
+            const programId = String(to.params.programId ?? '').trim();
+            if (programId.length === 0) {
+                return { name: 'programs.list' };
+            }
+            await setProgramSyncScopeId(programId);
+        } else {
+            await setProgramSyncScopeId('');
+        }
+
         return true;
     }
 

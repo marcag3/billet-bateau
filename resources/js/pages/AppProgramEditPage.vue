@@ -224,7 +224,7 @@ const errorMessage = ref("");
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const lastHydratedSignature = ref("");
 
-const programId = computed(() => String(route.params.id ?? "").trim());
+const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const { data: addressRows } = useEntityList({
     enabledRef: hasBootstrapped,
@@ -358,7 +358,7 @@ const [country, countryProps] = quasarField("address.country");
 const [imagesModel, imagesModelProps] = quasarField("imagesModel");
 
 watch(
-    () => route.params.id,
+    () => route.params.programId,
     (next, prev) => {
         if (String(next ?? "") !== String(prev ?? "")) {
             lastHydratedSignature.value = "";

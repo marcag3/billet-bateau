@@ -20,23 +20,9 @@
             content-class="q-gutter-y-md"
         >
             <AppCardSection :label="t('boatsList.programRoster')">
-                <q-select
-                    v-model="selectedProgramId"
-                    outlined
-                    emit-value
-                    map-options
-                    :options="programOptions"
-                    :label="t('boatsList.programRoster')"
-                    :hint="t('boatsList.programRosterHint')"
-                    :disable="visiblePrograms.length === 0"
-                />
-                <q-banner
-                    v-if="visiblePrograms.length === 0"
-                    class="bg-grey-2 q-mt-sm rounded-borders"
-                    dense
-                >
-                    {{ t('boatsList.noProgramsForBoats') }}
-                </q-banner>
+                <p class="text-body2 text-grey-8 q-mb-none">
+                    {{ t('boatsList.rosterForProgram', { name: selectedProgramName }) }}
+                </p>
             </AppCardSection>
 
             <AppCardSection :label="t('boatsList.addNew')">
@@ -173,18 +159,15 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate';
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
+import { useRoute } from 'vue-router';
 import { parseOptionalCapacity, useBoats } from '../models/boats/boats.model';
 import { createBoatCreateFormSchema, type BoatCreateFormValues, safeParseBoatEntityName } from '../models/boats/boats.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useBoatTypes } from '../models/boat-types/boat-types.model';
-import {
-    getAppPowerSyncBootstrappedRef,
-    setProgramSyncScopeId,
-    useAppPowerSyncOutbox,
-} from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox } from '../powersync/app-powersync.runtime';
 import { usePrograms } from '../models/programs/programs.model';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
@@ -199,6 +182,7 @@ import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
 
 const { t } = useI18n();
 const $q = useQuasar();
+const route = useRoute();
 const { boats, ensureBoatsReady, createBoatRow, patchBoatRow, deleteBoatRow } = useBoats();
 const { programs, ensureProgramsReady } = usePrograms();
 const { boatTypes, ensureBoatTypesReady } = useBoatTypes();
@@ -231,70 +215,20 @@ const [createBoatTypeId, createBoatTypeIdProps] = quasarField('boatTypeId');
 const patchingId = ref('');
 const drafts = reactive<Record<string, Record<string, string>>>({});
 
-const selectedProgramId = ref('');
-
-/**
- * @param {Record<string, unknown>} p
- * @returns {boolean}
- */
-function programRowIsArchived(p: Record<string, unknown>) {
-    const v = p.is_archived;
-    if (v === true || v === 1) {
-        return true;
-    }
-    if (v === false || v === 0) {
-        return false;
-    }
-    if (typeof v === 'string') {
-        const s = v.trim().toLowerCase();
-        if (s === '1' || s === 'true' || s === 't') {
-            return true;
-        }
-        if (s === '0' || s === 'false' || s === 'f' || s.length === 0) {
-            return false;
-        }
-    }
-    const n = Number(v);
-    if (Number.isFinite(n)) {
-        return n === 1;
-    }
-    return false;
-}
-
-const visiblePrograms = computed(() =>
-    programs.value.filter(
-        (p) => p != null && !programRowIsArchived(p as Record<string, unknown>),
-    ),
+const selectedProgramId = computed(() =>
+    String(route.params.programId ?? '').trim(),
 );
 
-const programOptions = computed(() =>
-    visiblePrograms.value.map((p) => ({
-        label: String(p.name ?? ''),
-        value: String(p.id),
-    })),
-);
-
-watch(
-    visiblePrograms,
-    (list) => {
-        if (list.length === 0) {
-            selectedProgramId.value = '';
-            void setProgramSyncScopeId('');
-            return;
-        }
-        const current = selectedProgramId.value.trim();
-        if (list.some((p) => String(p.id) === current)) {
-            void setProgramSyncScopeId(current);
-            return;
-        }
-        selectedProgramId.value = String(list[0].id);
-        void setProgramSyncScopeId(selectedProgramId.value);
-    },
-    { immediate: true },
-);
-
-watch(selectedProgramId, (v) => {
-    void setProgramSyncScopeId(v);
+const selectedProgramName = computed(() => {
+    const id = selectedProgramId.value;
+    if (id.length === 0) {
+        return '';
+    }
+    const row = programs.value.find((p) => p != null && String(p.id) === id);
+    if (row) {
+        return String((row as Record<string, unknown>).name ?? id);
+    }
+    return id;
 });
 
 const boatTypeOptions = computed(() =>
