@@ -59,8 +59,8 @@ const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 
-const email = ref('');
-const password = ref('');
+const email = ref(import.meta.env.DEV ? 'test@example.com' : '');
+const password = ref(import.meta.env.DEV ? 'password' : '');
 const remember = ref(true);
 const isSubmitting = ref(false);
 const errorMessage = ref('');

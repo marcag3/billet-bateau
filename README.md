@@ -10,20 +10,20 @@ Optimistic update.
 [x] Programs (base: name, description, theme, address, media; admin create; synced)
 [] Public program link + booking flow (no account required; **v1: no payment** — reserve/hold or confirm only)
 [] Booking questions at checkout: collect name, email, country, plus admin-defined personalized questions per trip/program
-[] Ticket types per program (Zeffy-like: title, price, PWYC, min/max per purchase, inventory per **trip**)
+[] Ticket types per program (title, price, PWYC, min/max per purchase, inventory per **trip**)
 [] **Companion / ratio rules** between ticket types (see below)
 [] **Trips** as bookable units (date, capacity, link to a **template** or ad-hoc description)
 [] Template day with defined trips (reusable “what runs on a typical day”)
 [] Assign template days to calendar days
 [] Manually add trips to calendar day
-[] On-water: **WaterRoute** / *Parcours* (PostGIS + Magellan, map draw), **Voyage** / *Départ*, check-in, ops board (see below)
+[] On-water: **WaterRoute** / _Parcours_ (PostGIS + Magellan, map draw), **Voyage** / _Départ_, check-in, ops board (see below)
 [] On-water: **fleet** (boat hulls by type), guides (optional `user_id`), **offline** admin bundle + PowerSync
 
 ## Later:
 
 [] User can create weekly schedule. Assign a start and end date. Assign template days or individual trips.
 [] User can override weekly schedule with template days (e.g. holidays)
-[] Extras: electronic ticket, thank-you email, advanced settings (Zeffy parity)
+[] Extras: electronic ticket, thank-you email, advanced settings
 
 ## Naming notes
 
@@ -32,7 +32,7 @@ Optimistic update.
 - Keep **Trip** as the bookable unit under a Program.
 - Program names are user-defined and should not be constrained by a code-level naming pattern.
 - Typical user naming combines a base/origin context with a season/date context.
-- **WaterRoute** = geographic path (model / `water_routes` table; aligns with *route* in **GTFS**, but a distinct name avoids clashing with Laravel’s `Route` and facades).
+- **WaterRoute** = geographic path (model / `water_routes` table; aligns with _route_ in **GTFS**, but a distinct name avoids clashing with Laravel’s `Route` and facades).
 - **Voyage** = on-water execution; **Trip** = what you book; hull assignment happens **at voyage start**, not at booking.
 - **French (primary) product terminology** (below) is the **locked** mapping from code to user-facing copy.
 
@@ -40,21 +40,21 @@ Optimistic update.
 
 UI, marketing, and support copy are **French-first**. Models/tables/PHP stay in English; **i18n keys and all user-visible strings** use the French column.
 
-| Code (model)      | French (UI)            |
-| ----------------- | ---------------------- |
-| `Boat`            | **Embarcation**        |
-| `BoatType`        | **Type d'embarcation** |
-| `WaterRoute`      | **Parcours**           |
-| `Voyage`          | **Départ**             |
-| `Trip`            | **Sortie**             |
+| Code (model) | French (UI)            |
+| ------------ | ---------------------- |
+| `Boat`       | **Embarcation**        |
+| `BoatType`   | **Type d'embarcation** |
+| `WaterRoute` | **Parcours**           |
+| `Voyage`     | **Départ**             |
+| `Trip`       | **Sortie**             |
 
-*Examples:* "Démarrer le départ", "Sorties du jour", "Nouveau parcours", "Sélectionner l'embarcation".
+_Examples:_ "Démarrer le départ", "Sorties du jour", "Nouveau parcours", "Sélectionner l'embarcation".
 
 ---
 
 ## Ticket types & ratio (boat trips)
 
-Zeffy-style “at least one adult with a child” is a **1:1 companion** rule. For rabaska / boat trips you often need a **configurable ratio**.
+“at least one adult with a child” is a **1:1 companion** rule. For rabaska / boat trips you often need a **configurable ratio**.
 
 **Suggested rule model (per program or per template):**
 
@@ -80,24 +80,25 @@ This keeps the admin UI to: pick two types + set ratio, without hard-coding “a
 
 # On-water operations (WaterRoute, Trip, Voyage, ops board)
 
-> **UI (Fr):** see **French (primary) product terminology** — *Parcours* · *Sortie* · *Départ* · *Embarcation* / *Type d'embarcation*.
+> **UI (Fr):** see **French (primary) product terminology** — _Parcours_ · _Sortie_ · _Départ_ · _Embarcation_ / _Type d'embarcation_.
 
-> **Naming:** the geographic entity matches *route* in **GTFS** semantically, but the codebase uses **`WaterRoute`** and table **`water_routes`** (and `water_route_id` FKs) to avoid clashing with Laravel’s `Route` and routing.
+> **Naming:** the geographic entity matches _route_ in **GTFS** semantically, but the codebase uses **`WaterRoute`** and table **`water_routes`** (and `water_route_id` FKs) to avoid clashing with Laravel’s `Route` and routing.
 
-> **Domain terms** (code)  
-> - **WaterRoute** — named path: **trace** (PostGIS + [Magellan](https://github.com/MatanYadaev/laravel-magellan) `LineString`), **duration** (drives ETA with departure time). Authoring: **map drawn** in admin. **UI:** *Parcours*.  
-> - **Trip** (bookable unit) — belongs to a program; has **boat type** (what customers book against) and is tied to a **water route** (and schedule/capacity). **No specific hull** at booking time. **UI:** *Sortie*.  
-> - **Voyage** — one run on the water. **Optional** `trip_id` (ad-hoc without a *sortie* is possible). **Manual start only** (no auto-start). **One or many** `Boat` records (embarcations); chosen **at départ start** (multi-select). Same moment for **guide(s)**. **UI:** *Départ* (not *voyage* in French, to avoid ambiguity).
+> **Domain terms** (code)
+>
+> - **WaterRoute** — named path: **trace** (PostGIS + [Magellan](https://github.com/MatanYadaev/laravel-magellan) `LineString`), **duration** (drives ETA with departure time). Authoring: **map drawn** in admin. **UI:** _Parcours_.
+> - **Trip** (bookable unit) — belongs to a program; has **boat type** (what customers book against) and is tied to a **water route** (and schedule/capacity). **No specific hull** at booking time. **UI:** _Sortie_.
+> - **Voyage** — one run on the water. **Optional** `trip_id` (ad-hoc without a _sortie_ is possible). **Manual start only** (no auto-start). **One or many** `Boat` records (embarcations); chosen **at départ start** (multi-select). Same moment for **guide(s)**. **UI:** _Départ_ (not _voyage_ in French, to avoid ambiguity).
 
 ## Locked product decisions (v1)
 
 - **Staff / admin access:** v1 has **no user roles** (no super-admin vs guide vs read-only, etc.). **Any** authenticated back-office user may perform **all** admin operations. Policies and tests should only distinguish **guest vs authenticated** staff, not role tiers.
 - **Voyage ↔ boats:** multiple hulls per voyage is **common** — `voyage_boat` (or similar pivot), not a single `boat_id`.
 - **Voyage ↔ trip:** `trip_id` nullable; a voyage is linked to zero or one bookable trip.
-- **Check-in:** **one check-in per booking (family = one booking).** A check-in **terminal/flow** can **adjust the real person count** vs sold tickets. Check-ins **fill** the voyage; **manual pax / manifest lines** (walk-ons, corrections) are allowed in addition to check-ins.  
-- **Payment:** **out of scope for v1** (simplifies booking; voyages and ops are still the core).  
-- **Start:** only **human** “start voyage” — no automatic start from schedule.  
-- **ETA:** `departure time` + the linked **water route’s** `duration` (no live GPS in v1).  
+- **Check-in:** **one check-in per booking (family = one booking).** A check-in **terminal/flow** can **adjust the real person count** vs sold tickets. Check-ins **fill** the voyage; **manual pax / manifest lines** (walk-ons, corrections) are allowed in addition to check-ins.
+- **Payment:** **out of scope for v1** (simplifies booking; voyages and ops are still the core).
+- **Start:** only **human** “start voyage” — no automatic start from schedule.
+- **ETA:** `departure time` + the linked **water route’s** `duration` (no live GPS in v1).
 - **Admin UI:** **Quasar** — **public** bundle and **admin** bundle; the **admin bundle must work offline** (PowerSync: sync is **crucial** for operations data, not nice-to-have).
 
 ## Data model (backend) — step by step
@@ -127,7 +128,7 @@ This keeps the admin UI to: pick two types + set ratio, without hard-coding “a
 ## Admin UI (Quasar, admin bundle)
 
 16. **Water route editor** — draw `LineString` on map, set duration, name; save to API, syncs down.
-17. **Ops board** — voyages with `status` in (ready/boarding, underway): trip/program label, **water route** name, **departure time**, **ETA** (= scheduled departure + **`water_routes.duration`**, v1), pax rollups, **boat** names, **guide** names, **Start voyage** / **Mark arrived**.  
+17. **Ops board** — voyages with `status` in (ready/boarding, underway): trip/program label, **water route** name, **departure time**, **ETA** (= scheduled departure + **`water_routes.duration`**, v1), pax rollups, **boat** names, **guide** names, **Start voyage** / **Mark arrived**.
 18. **Start voyage** modal — **multi-select boats** (filtered by trip’s `boat_type` or all of type), **multi-select guides**, optional notes; no payment step in v1.
 19. **Check-in** — associating bookings to a **voyage**, adjusted counts, manual rows as needed; works **offline** per sync design.
 
@@ -138,6 +139,6 @@ This keeps the admin UI to: pick two types + set ratio, without hard-coding “a
 ## Order relative to the priority list above
 
 - **Trips** must expose **boat type** + **water route** before voyages that reference a trip are meaningful; **Voyage** with `trip_id` null can be built first for field testing.
-- **Check-in** model depends on **bookings** existing (even without payment) — at least a booking + line items.  
-- **Ratio rules** and displayed PAX should share the same notion of “adult/child” (or ticket-type buckets).  
+- **Check-in** model depends on **bookings** existing (even without payment) — at least a booking + line items.
+- **Ratio rules** and displayed PAX should share the same notion of “adult/child” (or ticket-type buckets).
 - **Water routes** (PostGIS) and **Voyage** CRUD can proceed in parallel with a minimal booking stub, then connect end-to-end.

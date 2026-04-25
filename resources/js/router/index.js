@@ -58,6 +58,22 @@ const routes = [
             requiresAuth: true,
         },
     },
+    {
+        path: '/boats',
+        name: 'boats.list',
+        component: () => import('../pages/AppBoatsPage.vue'),
+        meta: {
+            requiresAuth: true,
+        },
+    },
+    {
+        path: '/boat-types',
+        name: 'boat-types.list',
+        component: () => import('../pages/AppBoatTypesPage.vue'),
+        meta: {
+            requiresAuth: true,
+        },
+    },
 ];
 
 const router = createRouter({

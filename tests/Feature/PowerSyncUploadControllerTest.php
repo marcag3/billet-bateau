@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Address;
+use App\Models\Boat;
+use App\Models\BoatType;
 use App\Models\Program;
 use App\Models\Todo;
 use App\Models\User;
@@ -424,5 +426,170 @@ class PowerSyncUploadControllerTest extends TestCase
             'id' => $id2,
             'slug' => 'shared-slug-2',
         ]);
+    }
+
+    public function test_put_creates_boat_type_for_current_user(): void
+    {
+        $user = User::factory()->create();
+        $id = (string) Str::uuid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'boat_types',
+                    'id' => $id,
+                    'data' => [
+                        'name' => 'RIB',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('boat_types', [
+            'id' => $id,
+            'user_id' => $user->getAuthIdentifier(),
+            'name' => 'RIB',
+        ]);
+    }
+
+    public function test_put_creates_boat_with_owned_boat_type(): void
+    {
+        $user = User::factory()->create();
+        $boatType = BoatType::factory()->for($user)->create();
+        $boatId = (string) Str::uuid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'boats',
+                    'id' => $boatId,
+                    'data' => [
+                        'name' => 'Sea Star',
+                        'capacity' => 12,
+                        'notes' => 'Morning runs',
+                        'boat_type_id' => $boatType->getKey(),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('boats', [
+            'id' => $boatId,
+            'user_id' => $user->getAuthIdentifier(),
+            'boat_type_id' => $boatType->getKey(),
+            'name' => 'Sea Star',
+            'capacity' => 12,
+            'notes' => 'Morning runs',
+        ]);
+    }
+
+    public function test_put_boat_ignores_other_users_boat_type_id(): void
+    {
+        $owner = User::factory()->create();
+        $intruder = User::factory()->create();
+        $boatType = BoatType::factory()->for($owner)->create();
+        $boatId = (string) Str::uuid();
+
+        $this->actingAs($intruder)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'boats',
+                    'id' => $boatId,
+                    'data' => [
+                        'name' => 'Stolen link',
+                        'boat_type_id' => $boatType->getKey(),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('boats', [
+            'id' => $boatId,
+            'user_id' => $intruder->getAuthIdentifier(),
+            'boat_type_id' => null,
+            'name' => 'Stolen link',
+        ]);
+    }
+
+    public function test_patch_updates_owned_boat_type(): void
+    {
+        $user = User::factory()->create();
+        $boatType = BoatType::factory()->for($user)->create(['name' => 'Old']);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'boat_types',
+                    'id' => $boatType->getKey(),
+                    'data' => ['name' => 'New label'],
+                ],
+            ],
+        ])->assertOk();
+
+        $boatType->refresh();
+        $this->assertSame('New label', $boatType->name);
+    }
+
+    public function test_delete_removes_owned_boat(): void
+    {
+        $user = User::factory()->create();
+        $boat = Boat::factory()->for($user)->create();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'DELETE',
+                    'type' => 'boats',
+                    'id' => $boat->getKey(),
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('boats', ['id' => $boat->getKey()]);
+    }
+
+    public function test_put_does_not_overwrite_other_users_boat_type(): void
+    {
+        $owner = User::factory()->create();
+        $intruder = User::factory()->create();
+        $boatType = BoatType::factory()->for($owner)->create(['name' => 'Owners']);
+
+        $this->actingAs($intruder)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'boat_types',
+                    'id' => $boatType->getKey(),
+                    'data' => ['name' => 'Hijacked'],
+                ],
+            ],
+        ])->assertOk();
+
+        $boatType->refresh();
+        $this->assertSame('Owners', $boatType->name);
+        $this->assertSame((int) $owner->getAuthIdentifier(), (int) $boatType->user_id);
+    }
+
+    public function test_delete_does_not_remove_other_users_boat(): void
+    {
+        $owner = User::factory()->create();
+        $intruder = User::factory()->create();
+        $boat = Boat::factory()->for($owner)->create();
+
+        $this->actingAs($intruder)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'DELETE',
+                    'type' => 'boats',
+                    'id' => $boat->getKey(),
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('boats', ['id' => $boat->getKey()]);
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\BoatTypeController;
 use App\Http\Controllers\Api\PowerSyncCredentialsController;
 use App\Http\Controllers\Api\PowerSyncUploadController;
 use App\Http\Controllers\Api\ProgramController;
@@ -25,4 +26,5 @@ Route::middleware(['web', 'auth:sanctum', 'throttle:60,1'])->group(function (): 
     Route::apiResource('todos', TodoController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::post('/programs', [ProgramController::class, 'store'])->name('api.programs.store');
     Route::post('/programs/{program}/media', [ProgramController::class, 'storeMedia'])->name('api.programs.media.store');
+    Route::post('/boat-types/{boatType}/media', [BoatTypeController::class, 'storeMedia'])->name('api.boat-types.media.store');
 });

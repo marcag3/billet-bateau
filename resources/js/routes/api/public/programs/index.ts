@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PublicProgramController::index
-* @see app/Http/Controllers/Api/PublicProgramController.php:15
+* @see app/Http/Controllers/Api/PublicProgramController.php:13
 * @route '/api/public/programs'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicProgramController::index
-* @see app/Http/Controllers/Api/PublicProgramController.php:15
+* @see app/Http/Controllers/Api/PublicProgramController.php:13
 * @route '/api/public/programs'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PublicProgramController::index
-* @see app/Http/Controllers/Api/PublicProgramController.php:15
+* @see app/Http/Controllers/Api/PublicProgramController.php:13
 * @route '/api/public/programs'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PublicProgramController::index
-* @see app/Http/Controllers/Api/PublicProgramController.php:15
+* @see app/Http/Controllers/Api/PublicProgramController.php:13
 * @route '/api/public/programs'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,10 +45,10 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PublicProgramController::show
-* @see app/Http/Controllers/Api/PublicProgramController.php:26
+* @see app/Http/Controllers/Api/PublicProgramController.php:24
 * @route '/api/public/programs/{program}'
 */
-export const show = (args: { program: string | number | { slug: string | number } } | [program: string | number | { slug: string | number } ] | string | number | { slug: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+export const show = (args: { program: string | { slug: string } } | [program: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
@@ -60,10 +60,10 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicProgramController::show
-* @see app/Http/Controllers/Api/PublicProgramController.php:26
+* @see app/Http/Controllers/Api/PublicProgramController.php:24
 * @route '/api/public/programs/{program}'
 */
-show.url = (args: { program: string | number | { slug: string | number } } | [program: string | number | { slug: string | number } ] | string | number | { slug: string | number }, options?: RouteQueryOptions) => {
+show.url = (args: { program: string | { slug: string } } | [program: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { program: args }
     }
@@ -93,20 +93,20 @@ show.url = (args: { program: string | number | { slug: string | number } } | [pr
 
 /**
 * @see \App\Http\Controllers\Api\PublicProgramController::show
-* @see app/Http/Controllers/Api/PublicProgramController.php:26
+* @see app/Http/Controllers/Api/PublicProgramController.php:24
 * @route '/api/public/programs/{program}'
 */
-show.get = (args: { program: string | number | { slug: string | number } } | [program: string | number | { slug: string | number } ] | string | number | { slug: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+show.get = (args: { program: string | { slug: string } } | [program: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
 
 /**
 * @see \App\Http\Controllers\Api\PublicProgramController::show
-* @see app/Http/Controllers/Api/PublicProgramController.php:26
+* @see app/Http/Controllers/Api/PublicProgramController.php:24
 * @route '/api/public/programs/{program}'
 */
-show.head = (args: { program: string | number | { slug: string | number } } | [program: string | number | { slug: string | number } ] | string | number | { slug: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+show.head = (args: { program: string | { slug: string } } | [program: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: show.url(args, options),
     method: 'head',
 })

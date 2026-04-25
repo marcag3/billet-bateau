@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import { Quasar } from 'quasar';
+import { setCssVar } from 'quasar';
 import '@quasar/extras/material-icons/material-icons.css';
 import 'quasar/src/css/index.sass';
 import '../css/app.scss';
@@ -21,6 +22,12 @@ app.use(pinia);
 app.use(router);
 app.use(Quasar);
 app.use(i18n);
+
+setCssVar('primary', '#ea1d2c');
+setCssVar('secondary', '#00164d');
+setCssVar('accent', '#9ca3af');
+setCssVar('positive', '#0f766e');
+setCssVar('warning', '#b45309');
 
 const authStore = useAuthStore(pinia);
 

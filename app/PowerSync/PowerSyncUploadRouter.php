@@ -8,6 +8,8 @@ final class PowerSyncUploadRouter
         private readonly TodoPowerSyncUploadApplier $todos,
         private readonly ProgramPowerSyncUploadApplier $programs,
         private readonly AddressPowerSyncUploadApplier $addresses,
+        private readonly BoatPowerSyncUploadApplier $boats,
+        private readonly BoatTypePowerSyncUploadApplier $boatTypes,
     ) {}
 
     /**
@@ -19,6 +21,8 @@ final class PowerSyncUploadRouter
             'todos' => $this->todos->apply($entry, $userId),
             'programs' => $this->programs->apply($entry, $userId),
             'addresses' => $this->addresses->apply($entry, $userId),
+            'boats' => $this->boats->apply($entry, $userId),
+            'boat_types' => $this->boatTypes->apply($entry, $userId),
             default => throw new \RuntimeException('Unsupported PowerSync CRUD type: '.$type),
         };
     }

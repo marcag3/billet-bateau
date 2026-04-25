@@ -1,48 +1,64 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
-import program from './program'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
-* @see routes/web.php:8
-* @route '/'
+* @see routes/web.php:32
+* @route '/{fallbackPlaceholder}'
 */
-export const home = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: home.url(options),
+export const spa = (args: { fallbackPlaceholder: string | number } | [fallbackPlaceholder: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: spa.url(args, options),
     method: 'get',
 })
 
-home.definition = {
+spa.definition = {
     methods: ["get","head"],
-    url: '/',
+    url: '/{fallbackPlaceholder}',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:8
-* @route '/'
+* @see routes/web.php:32
+* @route '/{fallbackPlaceholder}'
 */
-home.url = (options?: RouteQueryOptions) => {
-    return home.definition.url + queryParams(options)
+spa.url = (args: { fallbackPlaceholder: string | number } | [fallbackPlaceholder: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { fallbackPlaceholder: args }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            fallbackPlaceholder: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        fallbackPlaceholder: args.fallbackPlaceholder,
+    }
+
+    return spa.definition.url
+            .replace('{fallbackPlaceholder}', parsedArgs.fallbackPlaceholder.toString())
+            .replace(/\/+$/, '') + queryParams(options)
 }
 
 /**
-* @see routes/web.php:8
-* @route '/'
+* @see routes/web.php:32
+* @route '/{fallbackPlaceholder}'
 */
-home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: home.url(options),
+spa.get = (args: { fallbackPlaceholder: string | number } | [fallbackPlaceholder: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: spa.url(args, options),
     method: 'get',
 })
 
 /**
-* @see routes/web.php:8
-* @route '/'
+* @see routes/web.php:32
+* @route '/{fallbackPlaceholder}'
 */
-home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: home.url(options),
+spa.head = (args: { fallbackPlaceholder: string | number } | [fallbackPlaceholder: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: spa.url(args, options),
     method: 'head',
 })
 
 const publicMethod = {
-    home: Object.assign(home, home),
-    program: Object.assign(program, program),
+    spa: Object.assign(spa, spa),
 }
 
 export default publicMethod

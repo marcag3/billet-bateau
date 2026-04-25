@@ -7,6 +7,8 @@ import { useAuthStore } from '../store/auth.store';
 import { createAppPowerSyncConnector } from '../services/powersync.connector';
 import {
     appAddressesPowerSyncTable,
+    appBoatTypesPowerSyncTable,
+    appBoatsPowerSyncTable,
     appProgramsPowerSyncTable,
     appMediaPowerSyncTable,
     appPowerSyncSchema,
@@ -14,7 +16,7 @@ import {
 } from './app.powersync-schema.js';
 import { translate } from '../utilities/i18n.js';
 
-const DB_FILENAME = 'billbateau-app-v6.db';
+const DB_FILENAME = 'billbateau-app-v7.db';
 
 const loadFailedMessage = translate('sync.unableLoadTodoSync');
 const persistenceLimitedMessage = translate('sync.persistenceLimited');
@@ -107,6 +109,8 @@ const collectionRefs = {
     todos: shallowRef(null),
     programs: shallowRef(null),
     addresses: shallowRef(null),
+    boat_types: shallowRef(null),
+    boats: shallowRef(null),
     media: shallowRef(null),
 };
 
@@ -114,6 +118,8 @@ const tableByName = {
     todos: appTodosPowerSyncTable,
     programs: appProgramsPowerSyncTable,
     addresses: appAddressesPowerSyncTable,
+    boat_types: appBoatTypesPowerSyncTable,
+    boats: appBoatsPowerSyncTable,
     media: appMediaPowerSyncTable,
 };
 
@@ -310,6 +316,14 @@ export function getProgramsCollectionRef() {
 
 export function getAddressesCollectionRef() {
     return collectionRefs.addresses;
+}
+
+export function getBoatTypesCollectionRef() {
+    return collectionRefs.boat_types;
+}
+
+export function getBoatsCollectionRef() {
+    return collectionRefs.boats;
 }
 
 export function getMediaCollectionRef() {

@@ -29,7 +29,7 @@ class PowerSyncUploadController extends Controller
         $validated = $request->validate([
             'crud' => ['required', 'array', 'min:1'],
             'crud.*.op' => ['required', Rule::in(['PUT', 'PATCH', 'DELETE'])],
-            'crud.*.type' => ['required', 'string', Rule::in(['todos', 'programs', 'addresses'])],
+            'crud.*.type' => ['required', 'string', Rule::in(['todos', 'programs', 'addresses', 'boats', 'boat_types'])],
             'crud.*.id' => ['required', 'uuid'],
             'crud.*.data' => ['nullable', 'array'],
         ]);

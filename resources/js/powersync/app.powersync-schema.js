@@ -31,7 +31,25 @@ const addressesTable = new Table({
     updated_at: column.text,
 });
 
+const boatTypesTable = new Table({
+    user_id: column.integer,
+    name: column.text,
+    created_at: column.text,
+    updated_at: column.text,
+});
+
+const boatsTable = new Table({
+    user_id: column.integer,
+    boat_type_id: column.text,
+    name: column.text,
+    capacity: column.integer,
+    notes: column.text,
+    created_at: column.text,
+    updated_at: column.text,
+});
+
 const mediaTable = new Table({
+    id: column.integer,
     model_type: column.text,
     model_id: column.text,
     uuid: column.text,
@@ -55,6 +73,8 @@ export const appPowerSyncSchema = new Schema({
     todos: todosTable,
     programs: programsTable,
     addresses: addressesTable,
+    boat_types: boatTypesTable,
+    boats: boatsTable,
     media: mediaTable,
 });
 
@@ -66,6 +86,12 @@ export const appProgramsPowerSyncTable = appPowerSyncSchema.props.programs;
 
 /** @type {import('@powersync/web').Table} */
 export const appAddressesPowerSyncTable = appPowerSyncSchema.props.addresses;
+
+/** @type {import('@powersync/web').Table} */
+export const appBoatTypesPowerSyncTable = appPowerSyncSchema.props.boat_types;
+
+/** @type {import('@powersync/web').Table} */
+export const appBoatsPowerSyncTable = appPowerSyncSchema.props.boats;
 
 /** @type {import('@powersync/web').Table} */
 export const appMediaPowerSyncTable = appPowerSyncSchema.props.media;

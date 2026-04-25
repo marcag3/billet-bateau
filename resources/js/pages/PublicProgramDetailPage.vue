@@ -1,5 +1,5 @@
 <template>
-    <q-page class="q-pa-md q-pa-sm-md" padding>
+    <q-page class="q-pa-md q-pa-sm-md public-program-page" padding>
         <q-btn
             flat
             no-caps
@@ -18,25 +18,27 @@
         </div>
 
         <template v-else-if="program">
-            <h1 class="text-h4 q-mb-sm">{{ program.name }}</h1>
-            <p v-if="program.description" class="text-body1 text-grey-8" style="white-space: pre-wrap">
-                {{ program.description }}
-            </p>
-            <div v-if="(program.images ?? []).length" class="row q-col-gutter-sm q-my-md">
-                <div
-                    v-for="img in program.images"
-                    :key="img.uuid"
-                    class="col-6 col-sm-4 col-md-3"
-                >
-                    <q-img
-                        v-if="img.url"
-                        :src="img.url"
-                        :alt="img.name"
-                        class="rounded-borders"
-                        fit="cover"
-                    />
+            <section class="program-surface">
+                <h1 class="text-h4 q-mb-sm text-weight-bold">{{ program.name }}</h1>
+                <p v-if="program.description" class="text-body1 text-grey-8 program-description">
+                    {{ program.description }}
+                </p>
+                <div v-if="(program.images ?? []).length" class="row q-col-gutter-sm q-my-md">
+                    <div
+                        v-for="img in program.images"
+                        :key="img.uuid"
+                        class="col-6 col-sm-4 col-md-3"
+                    >
+                        <q-img
+                            v-if="img.url"
+                            :src="img.url"
+                            :alt="img.name"
+                            class="rounded-borders"
+                            fit="cover"
+                        />
+                    </div>
                 </div>
-            </div>
+            </section>
         </template>
     </q-page>
 </template>
@@ -87,3 +89,21 @@ watch(
     { immediate: true },
 );
 </script>
+
+<style scoped>
+.public-program-page {
+    padding-top: 2rem;
+}
+
+.program-surface {
+    background: #ffffff;
+    border: 1px solid rgba(0, 22, 77, 0.12);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 14px 28px rgba(0, 22, 77, 0.08);
+}
+
+.program-description {
+    white-space: pre-wrap;
+}
+</style>

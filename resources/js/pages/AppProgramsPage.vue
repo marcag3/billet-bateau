@@ -1,9 +1,11 @@
 <template>
-    <q-page class="q-pa-xl">
-        <h1 class="text-h4 q-mb-sm">{{ t('programsList.title') }}</h1>
-        <p class="text-body1 text-grey-8 q-mb-lg">
-            {{ t('programsList.description') }}
-        </p>
+    <q-page class="q-pa-xl app-programs-page">
+        <section class="programs-hero q-mb-lg">
+            <h1 class="text-h4 q-mb-sm text-weight-bold">{{ t('programsList.title') }}</h1>
+            <p class="text-body1 q-mb-none programs-hero-copy">
+                {{ t('programsList.description') }}
+            </p>
+        </section>
 
         <q-banner
             v-if="hasOutboxCommitError"
@@ -23,7 +25,7 @@
 
         <q-inner-loading :showing="!hasBootstrapped" />
 
-        <q-list v-if="hasBootstrapped" bordered separator class="bg-white rounded-borders">
+        <q-list v-if="hasBootstrapped" bordered separator class="bg-white rounded-borders programs-list">
             <q-item v-if="myPrograms.length === 0">
                 <q-item-section>
                     <q-item-label>{{ t("programsList.empty") }}</q-item-label>
@@ -163,3 +165,25 @@ function copyPublicUrl(p) {
     $q.notify({ type: "positive", message: t("programsList.copied") });
 }
 </script>
+
+<style scoped>
+.app-programs-page {
+    padding-top: 2rem;
+}
+
+.programs-hero {
+    border-radius: 1.15rem;
+    padding: 1.5rem;
+    background: linear-gradient(122deg, rgba(0, 22, 77, 0.95) 0%, rgba(8, 44, 116, 0.94) 64%, rgba(234, 29, 44, 0.9) 100%);
+    color: #ffffff;
+    box-shadow: 0 20px 40px rgba(0, 22, 77, 0.19);
+}
+
+.programs-hero-copy {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.programs-list {
+    border-color: rgba(0, 22, 77, 0.12);
+}
+</style>

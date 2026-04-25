@@ -1,11 +1,11 @@
 <template>
-    <q-page class="q-pa-md q-pa-sm-md" padding>
-        <div class="text-center q-mb-lg" style="max-width: 44rem; margin: 0 auto">
-            <div class="text-h3 q-mb-sm">{{ t('common.welcome') }}</div>
-            <p class="text-body1 q-mb-none">
+    <q-page class="public-home-page q-pa-md q-pa-sm-md" padding>
+        <section class="hero-wrap text-center q-mb-lg">
+            <div class="text-h3 q-mb-sm text-weight-bold">{{ t('common.welcome') }}</div>
+            <p class="text-body1 q-mb-none hero-copy">
                 {{ t('public.minimalDescription') }}
             </p>
-        </div>
+        </section>
 
         <q-banner v-if="errorMessage" class="bg-red-1 text-negative q-mb-md" rounded>
             {{ errorMessage }}
@@ -19,10 +19,7 @@
             <p v-if="items.length === 0" class="text-body1 text-center q-mb-md">
                 {{ t('publicHome.noPrograms') }}
             </p>
-            <div
-                v-else
-                class="row q-col-gutter-md q-justify-center"
-            >
+            <div v-else class="row q-col-gutter-md q-justify-center">
                 <div
                     v-for="p in items"
                     :key="p.id"
@@ -128,5 +125,32 @@ onMounted(() => {
 }
 .public-program-card {
     min-height: 6rem;
+    border-radius: 1rem;
+    border-color: rgba(0, 22, 77, 0.12);
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.public-program-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 30px rgba(0, 22, 77, 0.15);
+    border-color: rgba(234, 29, 44, 0.36);
+}
+
+.public-home-page {
+    padding-top: 2rem;
+}
+
+.hero-wrap {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    border-radius: 1.25rem;
+    background: linear-gradient(130deg, rgba(0, 22, 77, 0.94) 0%, rgba(12, 50, 131, 0.92) 60%, rgba(234, 29, 44, 0.92) 100%);
+    color: #ffffff;
+    box-shadow: 0 20px 38px rgba(0, 22, 77, 0.2);
+}
+
+.hero-copy {
+    color: rgba(255, 255, 255, 0.88);
 }
 </style>
