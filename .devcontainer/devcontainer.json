@@ -35,15 +35,15 @@
     },
     "remoteUser": "sail",
     "postCreateCommand": "chown -R 1000:1000 /var/www/html && npm ci",
-    "forwardPorts": [5173],
+    // "forwardPorts": [5173]
     // "runServices": [],
     // "shutdownAction": "none",
-    "containerEnv": {
-        "SSH_AUTH_SOCK": "/tmp/bitwarden-ssh-agent.sock"
-    },
+    // "containerEnv": {
+    //     "SSH_AUTH_SOCK": "/tmp/bitwarden-ssh-agent.sock"
+    // },
     "mounts": [
-        "source=${localEnv:HOME}/.ssh,target=/home/sail/.ssh,type=bind,consistency=cached",
+    //     "source=${localEnv:HOME}/.ssh,target=/home/sail/.ssh,type=bind,consistency=cached",
         "source=${localEnv:HOME}/.gitconfig,target=/home/sail/.gitconfig,type=bind,consistency=cached",
-        "source=${localEnv:SSH_AUTH_SOCK},target=/tmp/host-ssh-auth.sock,type=bind,consistency=cached"
+    //     "source=${localEnv:SSH_AUTH_SOCK},target=/tmp/host-ssh-auth.sock,type=bind,consistency=cached"
     ]
 }
