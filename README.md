@@ -5,11 +5,11 @@ Optimistic update.
 
 After a program is selected, staff work is split into **three contexts**. Each context is a separate route subtree under `/programs/:programId/` with its own **context layout** component in `resources/js/layouts/` (`AppProgramEditContextLayout.vue`, `AppProgramControlContextLayout.vue`, `AppProgramCheckinContextLayout.vue`). Those wrappers own **defaults** for shell behavior in that area—navigation grouping, header mode, program-switch rules—so `AppLayout.vue` stays a thin shell and child routes inherit context-level intent instead of repeating the same route meta everywhere.
 
-| Context | URL segment | Purpose |
-| -------- | ----------- | ------- |
-| **Edit** | `contexts/edit/` | Program configuration and catalog: boats, boat types, reports, settings, and program metadata editing. |
-| **Control** | `contexts/control-panel/` | Program **control panel**: operations-facing entry for that program. |
-| **Checkin** | `contexts/checkin/` | **Check-in manager** for the program (bookings / manifest workflows scoped to the program). |
+| Context     | URL segment               | Purpose                                                                                                |
+| ----------- | ------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Edit**    | `contexts/edit/`          | Program configuration and catalog: boats, boat types, reports, settings, and program metadata editing. |
+| **Control** | `contexts/control-panel/` | Program **control panel**: operations-facing entry for that program.                                   |
+| **Checkin** | `contexts/checkin/`       | **Check-in manager** for the program (bookings / manifest workflows scoped to the program).            |
 
 Program shell policy for the app chrome (e.g. in-place program switching) is set by the active context layout via the `appLayout` Pinia store while that layout is mounted, not from route meta. Add new pages under the context whose UX belongs with that group; use per-page overrides only when a single screen genuinely differs from its context defaults.
 
@@ -58,7 +58,7 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 ### Backend — on-water data model
 
 - [ ] PostGIS + Magellan in Docker/CI; `water_routes`: `name`, `trace` (LineString), `duration_minutes` — **reusable** rows (no departure columns; same geometry across many `trips`)
-- [ ] `boats`: as implemented today (`name`, `boat_type_id`, optional `user_id` for audit, capacity, notes, …) — physical hull in fleet CRUD / sync; not per-user scoping
+- [x] `boats`: as implemented today (`name`, `boat_type_id`, optional `user_id` for audit, capacity, notes, …) — physical hull in fleet CRUD / sync; not per-user scoping
 - [ ] `trips`: `scheduled_departure_at`, `boat_type_id`, `water_route_id`, …
 - [ ] `voyages`: nullable `trip_id`, **`water_route_id` NOT NULL** (actual path may differ from `trips.water_route_id`), `started_at`, `arrived_at`, `status`; optional `scheduled_departure_at` **only** when `trip_id` is null; **no** `boat_id`
 - [ ] `voyage_boat` pivot; `guides` + `voyage_guide` (multi-select at start)
@@ -122,13 +122,13 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 
 UI, marketing, and support copy are **French-first**. **Models, PHP, SQL tables, and SQL columns** use **English** identifiers only. **i18n keys and user-visible strings** use French (second column is the usual Fr label).
 
-| Code (model) | Typical Fr (i18n)      |
-| ------------ | ---------------------- |
-| `Boat`       | **Embarcation**        |
-| `BoatType`   | **Type d'embarcation** |
-| `WaterRoute` | **Parcours**           |
-| `Voyage`     | **Départ**             |
-| `Trip`       | **Sortie**             |
+| Code (model) | Typical Fr (i18n)        |
+| ------------ | ------------------------ |
+| `Boat`       | **Embarcation**          |
+| `BoatType`   | **Type d'embarcation**   |
+| `WaterRoute` | **Parcours**             |
+| `Voyage`     | **Départ**               |
+| `Trip`       | **Sortie**               |
 | `Passenger`  | _(French label in i18n)_ |
 
 _Examples:_ "Démarrer le départ", "Sorties du jour", "Nouveau parcours", "Sélectionner l'embarcation".
