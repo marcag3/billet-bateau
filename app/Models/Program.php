@@ -108,6 +108,11 @@ class Program extends Model implements HasMedia
         return $this->hasMany(Trip::class, 'program_id');
     }
 
+    public function waterRoutes(): HasMany
+    {
+        return $this->hasMany(WaterRoute::class, 'program_id');
+    }
+
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class, 'program_id');

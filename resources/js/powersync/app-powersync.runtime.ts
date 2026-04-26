@@ -18,7 +18,7 @@ import {
 } from './app.powersync-schema';
 import { translate } from '../utilities/i18n';
 
-const DB_FILENAME = 'billbateau-app-v10.db';
+const DB_FILENAME = 'billbateau-app-v11.db';
 
 const loadFailedMessage = translate('sync.unableLoadSync');
 const persistenceLimitedMessage = translate('sync.persistenceLimited');
@@ -136,7 +136,7 @@ const programSyncScopeIdRef = ref('');
 let programScopeSubscription = null;
 
 /**
- * Active program id for `program_scope` PowerSync stream (boats + boat_program roster + trips).
+ * Active program id for `program_scope` PowerSync stream (boats + boat_program roster + trips + water_routes).
  *
  * @returns {import('vue').Ref<string>}
  */

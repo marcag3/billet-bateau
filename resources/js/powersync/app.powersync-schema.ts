@@ -60,7 +60,8 @@ const tripsTable = new Table({
 });
 
 const waterRoutesTable = new Table({
-    user_id: column.integer,
+    id: column.text,
+    program_id: column.text,
     name: column.text,
     trace: column.text,
     duration_minutes: column.integer,

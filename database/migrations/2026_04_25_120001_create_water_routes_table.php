@@ -10,13 +10,13 @@ return new class extends Migration
     {
         Schema::create('water_routes', function (Blueprint $table): void {
             $table->uuid('id')->primary();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('program_id')->constrained('programs')->cascadeOnDelete();
             $table->string('name');
             $table->geometry('trace', subtype: 'LINESTRING', srid: 4326);
             $table->unsignedInteger('duration_minutes');
             $table->timestamps();
 
-            $table->index(['user_id', 'updated_at']);
+            $table->index(['program_id', 'updated_at']);
         });
     }
 };

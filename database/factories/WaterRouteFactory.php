@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
+use App\Models\Program;
 use App\Models\WaterRoute;
 use Clickbar\Magellan\Data\Geometries\LineString;
 use Clickbar\Magellan\Data\Geometries\Point;
@@ -28,7 +28,7 @@ class WaterRouteFactory extends Factory
 
         return [
             'id' => (string) Str::uuid(),
-            'user_id' => User::factory(),
+            'program_id' => Program::factory(),
             'name' => fake()->words(3, true),
             'trace' => $trace,
             'duration_minutes' => fake()->numberBetween(30, 240),

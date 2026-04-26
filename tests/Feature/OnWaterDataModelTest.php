@@ -85,9 +85,8 @@ class OnWaterDataModelTest extends TestCase
     public function estimated_arrival_follows_trip_departure_plus_voyage_route_duration(): void
     {
         $program = Program::factory()->create();
-        $ownerId = $program->user_id;
         $plannedRoute = WaterRoute::factory()->create([
-            'user_id' => $ownerId,
+            'program_id' => $program->getKey(),
             'duration_minutes' => 45,
         ]);
         $trip = Trip::factory()->forProgram($program)->create([
@@ -96,7 +95,7 @@ class OnWaterDataModelTest extends TestCase
         ]);
 
         $actualRoute = WaterRoute::factory()->create([
-            'user_id' => $ownerId,
+            'program_id' => $program->getKey(),
             'duration_minutes' => 120,
         ]);
 

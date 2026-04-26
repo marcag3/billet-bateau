@@ -13,6 +13,7 @@ final class PowerSyncUploadRouter
         private readonly BoatTypePowerSyncUploadApplier $boatTypes,
         private readonly BoatProgramPowerSyncUploadApplier $boatProgram,
         private readonly TripPowerSyncUploadApplier $trips,
+        private readonly WaterRoutePowerSyncUploadApplier $waterRoutes,
     ) {}
 
     public function apply(PowerSyncCrudEntryData $entry, int $userId): void
@@ -26,6 +27,7 @@ final class PowerSyncUploadRouter
             PowerSyncCrudType::BoatTypes => $this->boatTypes->apply($payload, $userId),
             PowerSyncCrudType::BoatProgram => $this->boatProgram->apply($payload, $userId),
             PowerSyncCrudType::Trips => $this->trips->apply($payload, $userId),
+            PowerSyncCrudType::WaterRoutes => $this->waterRoutes->apply($payload, $userId),
         };
     }
 }

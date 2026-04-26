@@ -20,7 +20,7 @@ class WaterRoute extends Model
 
     protected $fillable = [
         'id',
-        'user_id',
+        'program_id',
         'name',
         'trace',
         'duration_minutes',
@@ -38,9 +38,9 @@ class WaterRoute extends Model
         ];
     }
 
-    public function user(): BelongsTo
+    public function program(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Program::class, 'program_id');
     }
 
     public function trips(): HasMany

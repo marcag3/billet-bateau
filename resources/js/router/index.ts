@@ -58,6 +58,12 @@ const programScopeChildren: RouteRecordRaw[] = [
                 meta: scopedProgramMeta,
             },
             {
+                path: 'water-routes',
+                name: 'water-routes.list',
+                component: () => import('../pages/AppWaterRoutesPage.vue'),
+                meta: scopedProgramMeta,
+            },
+            {
                 path: 'trips/create',
                 name: 'trips.create',
                 component: () => import('../pages/AppTripCreatePage.vue'),

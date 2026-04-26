@@ -18,16 +18,6 @@ class VoyageFactory extends Factory
 {
     protected $model = Voyage::class;
 
-    public function configure(): static
-    {
-        return $this->afterCreating(function (Voyage $voyage): void {
-            $route = $voyage->waterRoute;
-            if ($route !== null && (string) $route->user_id !== (string) $voyage->user_id) {
-                $route->forceFill(['user_id' => $voyage->user_id])->save();
-            }
-        });
-    }
-
     /**
      * @return array<string, mixed>
      */
@@ -50,8 +40,11 @@ class VoyageFactory extends Factory
         return $this->state(function () use ($trip, $waterRoute): array {
             $programUserId = Program::query()->whereKey($trip->program_id)->value('user_id');
             $route = $waterRoute ?? WaterRoute::factory()->create([
-                'user_id' => $programUserId,
+                'program_id' => $trip->program_id,
             ]);
+            if ((string) $route->program_id !== (string) $trip->program_id) {
+                $route->forceFill(['program_id' => $trip->program_id])->save();
+            }
 
             return [
                 'user_id' => $programUserId,

@@ -114,6 +114,8 @@ final class TripPowerSyncUploadApplier
             ? $this->resolveOptionalFkUuid($data['water_route_id'], WaterRoute::class)
             : $existing?->water_route_id;
 
+        $this->assertWaterRouteBelongsToProgram($waterRouteId, $programId);
+
         Trip::query()->updateOrCreate(
             ['id' => $id],
             [
@@ -175,10 +177,27 @@ final class TripPowerSyncUploadApplier
         }
 
         if (array_key_exists('water_route_id', $data)) {
-            $trip->water_route_id = $this->resolveOptionalFkUuid($data['water_route_id'], WaterRoute::class);
+            $resolved = $this->resolveOptionalFkUuid($data['water_route_id'], WaterRoute::class);
+            $this->assertWaterRouteBelongsToProgram($resolved, (string) $trip->program_id);
+            $trip->water_route_id = $resolved;
         }
 
         $trip->save();
+    }
+
+    private function assertWaterRouteBelongsToProgram(?string $waterRouteId, string $programId): void
+    {
+        if ($waterRouteId === null) {
+            return;
+        }
+
+        $route = WaterRoute::query()->whereKey($waterRouteId)->first();
+
+        if ($route === null || (string) $route->program_id !== $programId) {
+            throw ValidationException::withMessages([
+                'data.water_route_id' => 'Water route must belong to the same program.',
+            ]);
+        }
     }
 
     private function readUuid(mixed $value): ?string

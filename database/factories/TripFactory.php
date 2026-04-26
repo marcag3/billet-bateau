@@ -41,12 +41,11 @@ class TripFactory extends Factory
     public function withWaterRoute(?WaterRoute $waterRoute = null): static
     {
         return $this->afterCreating(function (Trip $trip) use ($waterRoute): void {
-            $program = Program::query()->whereKey($trip->program_id)->first();
-            $ownerId = $program?->user_id;
+            $programId = (string) $trip->program_id;
 
             if ($waterRoute !== null) {
-                if ($ownerId !== null && (string) $waterRoute->user_id !== (string) $ownerId) {
-                    $waterRoute->forceFill(['user_id' => $ownerId])->save();
+                if ((string) $waterRoute->program_id !== $programId) {
+                    $waterRoute->forceFill(['program_id' => $programId])->save();
                 }
                 $trip->update(['water_route_id' => $waterRoute->getKey()]);
 
@@ -54,7 +53,7 @@ class TripFactory extends Factory
             }
 
             $route = WaterRoute::factory()->create([
-                'user_id' => $ownerId,
+                'program_id' => $programId,
             ]);
             $trip->update(['water_route_id' => $route->getKey()]);
         });
