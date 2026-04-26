@@ -13,10 +13,12 @@ import {
     appProgramsPowerSyncTable,
     appMediaPowerSyncTable,
     appPowerSyncSchema,
+    appTripsPowerSyncTable,
+    appWaterRoutesPowerSyncTable,
 } from './app.powersync-schema';
 import { translate } from '../utilities/i18n';
 
-const DB_FILENAME = 'billbateau-app-v9.db';
+const DB_FILENAME = 'billbateau-app-v10.db';
 
 const loadFailedMessage = translate('sync.unableLoadSync');
 const persistenceLimitedMessage = translate('sync.persistenceLimited');
@@ -111,6 +113,8 @@ const collectionRefs = {
     boat_types: shallowRef(null),
     boats: shallowRef(null),
     boat_program: shallowRef(null),
+    trips: shallowRef(null),
+    water_routes: shallowRef(null),
     media: shallowRef(null),
 };
 
@@ -120,6 +124,8 @@ const tableByName = {
     boat_types: appBoatTypesPowerSyncTable,
     boats: appBoatsPowerSyncTable,
     boat_program: appBoatProgramPowerSyncTable,
+    trips: appTripsPowerSyncTable,
+    water_routes: appWaterRoutesPowerSyncTable,
     media: appMediaPowerSyncTable,
 };
 
@@ -130,7 +136,7 @@ const programSyncScopeIdRef = ref('');
 let programScopeSubscription = null;
 
 /**
- * Active program id for `program_scope` PowerSync stream (boats + boat_program roster).
+ * Active program id for `program_scope` PowerSync stream (boats + boat_program roster + trips).
  *
  * @returns {import('vue').Ref<string>}
  */
@@ -378,6 +384,14 @@ export function getBoatsCollectionRef() {
 
 export function getBoatProgramCollectionRef() {
     return collectionRefs.boat_program;
+}
+
+export function getTripsCollectionRef() {
+    return collectionRefs.trips;
+}
+
+export function getWaterRoutesCollectionRef() {
+    return collectionRefs.water_routes;
 }
 
 export function getMediaCollectionRef() {

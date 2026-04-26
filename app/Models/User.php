@@ -38,11 +38,6 @@ class User extends Authenticatable
         return $this->hasMany(WaterRoute::class);
     }
 
-    public function trips(): HasMany
-    {
-        return $this->hasMany(Trip::class);
-    }
-
     public function voyages(): HasMany
     {
         return $this->hasMany(Voyage::class);

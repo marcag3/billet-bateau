@@ -24,6 +24,10 @@ streams:
     auto_subscribe: true
     query: SELECT * FROM programs
 
+  global_water_routes:
+    auto_subscribe: true
+    query: SELECT * FROM water_routes
+
   # Client supplies program_id; JWT proves staff session. IN staff_program_ids ties subscription to auth (PowerSync requirement).
   # Shared staff data: programs are not scoped by row user_id — any authenticated bearer gets all program ids in the CTE.
   program_scope:
@@ -44,3 +48,7 @@ streams:
           WHERE program_id = subscription.parameter('program_id')
             AND program_id IN staff_program_ids
         )
+      - |
+        SELECT * FROM trips
+        WHERE program_id = subscription.parameter('program_id')
+          AND program_id IN staff_program_ids

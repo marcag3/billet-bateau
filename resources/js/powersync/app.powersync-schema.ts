@@ -49,6 +49,25 @@ const boatProgramTable = new Table({
     updated_at: column.text,
 });
 
+const tripsTable = new Table({
+    program_id: column.text,
+    boat_type_id: column.text,
+    water_route_id: column.text,
+    scheduled_departure_at: column.text,
+    capacity: column.integer,
+    created_at: column.text,
+    updated_at: column.text,
+});
+
+const waterRoutesTable = new Table({
+    user_id: column.integer,
+    name: column.text,
+    trace: column.text,
+    duration_minutes: column.integer,
+    created_at: column.text,
+    updated_at: column.text,
+});
+
 const mediaTable = new Table({
     id: column.integer,
     model_type: column.text,
@@ -76,6 +95,8 @@ export const appPowerSyncSchema = new Schema({
     boat_types: boatTypesTable,
     boats: boatsTable,
     boat_program: boatProgramTable,
+    trips: tripsTable,
+    water_routes: waterRoutesTable,
     media: mediaTable,
 });
 
@@ -93,6 +114,12 @@ export const appBoatsPowerSyncTable = appPowerSyncSchema.props.boats;
 
 /** @type {import('@powersync/web').Table} */
 export const appBoatProgramPowerSyncTable = appPowerSyncSchema.props.boat_program;
+
+/** @type {import('@powersync/web').Table} */
+export const appTripsPowerSyncTable = appPowerSyncSchema.props.trips;
+
+/** @type {import('@powersync/web').Table} */
+export const appWaterRoutesPowerSyncTable = appPowerSyncSchema.props.water_routes;
 
 /** @type {import('@powersync/web').Table} */
 export const appMediaPowerSyncTable = appPowerSyncSchema.props.media;

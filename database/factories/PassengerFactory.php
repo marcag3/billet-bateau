@@ -22,7 +22,7 @@ class PassengerFactory extends Factory
         return [
             'id' => (string) Str::uuid(),
             'voyage_id' => Voyage::factory(),
-            'display_name' => fake()->name(),
+            'name' => fake()->name(),
             'booking_id' => null,
             'check_in_id' => null,
             'notes' => fake()->optional()->sentence(),

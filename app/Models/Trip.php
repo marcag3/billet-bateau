@@ -19,11 +19,9 @@ class Trip extends Model
 
     protected $fillable = [
         'id',
-        'user_id',
         'program_id',
         'boat_type_id',
         'water_route_id',
-        'title',
         'scheduled_departure_at',
         'capacity',
         'created_at',
@@ -38,11 +36,6 @@ class Trip extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     public function program(): BelongsTo

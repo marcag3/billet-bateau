@@ -7,7 +7,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\ServiceProvider;
-use Lorisleiva\Actions\ActionManager;
+use Lorisleiva\Actions\Facades\Actions;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,8 +28,8 @@ class AppServiceProvider extends ServiceProvider
 
         Model::shouldBeStrict(! $this->app->isProduction());
 
-        if ($this->app->runningInConsole()) {
-            $this->app->make(ActionManager::class)->registerCommands();
+        if ($this->app->runningInConsole() && is_dir(app_path('Actions'))) {
+            Actions::registerCommands();
         }
     }
 }

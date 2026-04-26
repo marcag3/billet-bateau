@@ -35,7 +35,7 @@
     },
     "remoteUser": "sail",
     "postCreateCommand": "chown -R 1000:1000 /var/www/html && npm ci",
-    // "forwardPorts": [5173]
+    "forwardPorts": [5173],
     // "runServices": [],
     // "shutdownAction": "none",
     // "containerEnv": {

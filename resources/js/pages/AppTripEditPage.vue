@@ -1,0 +1,382 @@
+<template>
+    <AppEntityEditPageLayout
+        :ready="hasBootstrapped"
+        :title="t('tripsList.editPageTitle')"
+        :description="t('tripsList.editPageDescription')"
+        :back-to="backTo"
+        :back-label="t('tripsList.backToList')"
+    >
+        <template #alerts>
+            <AppAlertBanner
+                v-if="hasOutboxCommitError"
+                variant="warning"
+                dismissible
+                :dismiss-label="t('common.dismiss')"
+                @dismiss="dismissOutboxCommitError"
+            >
+                {{ outboxCommitError }}
+            </AppAlertBanner>
+        </template>
+
+        <template
+            v-if="currentTrip && tripSwitcherOptions.length > 0"
+            #quickNav
+        >
+            <AppCardSection :label="t('tripsList.quickNavLabel')">
+                <div class="row q-col-gutter-sm items-center">
+                    <div class="col-12 col-sm-auto">
+                        <q-btn
+                            flat
+                            round
+                            dense
+                            icon="chevron_left"
+                            :aria-label="t('tripsList.previousTrip')"
+                            :disable="!neighbors.prev"
+                            @click="goPrev"
+                        />
+                    </div>
+                    <q-select
+                        class="col-12 col-sm"
+                        :model-value="String(tripId)"
+                        :options="tripSwitcherOptions"
+                        emit-value
+                        map-options
+                        dense
+                        outlined
+                        :label="t('tripsList.scheduledDeparture')"
+                        @update:model-value="onSwitchTrip"
+                    />
+                    <div class="col-12 col-sm-auto">
+                        <q-btn
+                            flat
+                            round
+                            dense
+                            icon="chevron_right"
+                            :aria-label="t('tripsList.nextTrip')"
+                            :disable="!neighbors.next"
+                            @click="goNext"
+                        />
+                    </div>
+                    <div
+                        v-if="neighbors.total > 0 && neighbors.index >= 0"
+                        class="col-12 text-caption text-grey-8"
+                    >
+                        {{
+                            t('tripsList.positionInList', {
+                                index: neighbors.index + 1,
+                                total: neighbors.total,
+                            })
+                        }}
+                    </div>
+                </div>
+            </AppCardSection>
+        </template>
+
+        <q-banner
+            v-if="showNotFound"
+            class="bg-warning text-dark q-mb-md"
+            rounded
+        >
+            {{ t('tripsList.notFound') }}
+            <template #action>
+                <q-btn
+                    color="primary"
+                    flat
+                    :label="t('tripsList.backToList')"
+                    :to="backTo"
+                />
+            </template>
+        </q-banner>
+
+        <AppCardSection
+            v-else-if="currentTrip"
+            :label="t('tripsList.editSection')"
+        >
+            <q-form @submit.prevent="onSaveSubmit">
+                <AppFormStack>
+                    <q-input
+                        v-model="editScheduled"
+                        v-bind="editScheduledProps"
+                        outlined
+                        type="datetime-local"
+                        :label="t('tripsList.scheduledDeparture')"
+                        :disable="isSubmitting || isDeleting"
+                    />
+                    <q-input
+                        v-model.number="editCapacity"
+                        v-bind="editCapacityProps"
+                        outlined
+                        type="number"
+                        :label="t('tripsList.capacity')"
+                        :hint="t('tripsList.capacityHint')"
+                        :disable="isSubmitting || isDeleting"
+                    />
+                    <q-select
+                        v-model="editBoatTypeId"
+                        v-bind="editBoatTypeIdProps"
+                        outlined
+                        emit-value
+                        map-options
+                        clearable
+                        :options="boatTypeOptions"
+                        :label="t('tripsList.boatType')"
+                        :disable="isSubmitting || isDeleting"
+                    />
+                    <q-select
+                        v-model="editWaterRouteId"
+                        v-bind="editWaterRouteIdProps"
+                        outlined
+                        emit-value
+                        map-options
+                        clearable
+                        :options="waterRouteOptions"
+                        :label="t('tripsList.waterRoute')"
+                        :disable="isSubmitting || isDeleting"
+                    />
+                    <div class="row q-gutter-sm">
+                        <q-btn
+                            color="primary"
+                            type="submit"
+                            :label="t('tripsList.saveChanges')"
+                            :loading="isSubmitting"
+                            :disable="!meta.valid || isDeleting"
+                        />
+                        <q-btn
+                            flat
+                            color="negative"
+                            icon="delete"
+                            :label="t('tripsList.delete')"
+                            :disable="isSubmitting || isDeleting"
+                            @click="confirmDelete"
+                        />
+                    </div>
+                </AppFormStack>
+            </q-form>
+        </AppCardSection>
+    </AppEntityEditPageLayout>
+</template>
+
+<script setup lang="ts">
+import { useForm } from 'vee-validate';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useQuasar } from 'quasar';
+import { useRoute, useRouter } from 'vue-router';
+import { createTripUpsertFormSchema, type TripUpsertFormValues } from '../models/trips/trips.validation';
+import { isoToLocalDatetimeInputValue, localDatetimeInputValueToIso } from '../utilities/datetime-input';
+import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
+import { useTrips } from '../models/trips/trips.model';
+import { useBoatTypes } from '../models/boat-types/boat-types.model';
+import { useWaterRoutes } from '../models/water-routes/water-routes.model';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox } from '../powersync/app-powersync.runtime';
+import { useConfirmDialog } from '../composables/useConfirmDialog';
+import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
+import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
+import { parsePositiveInt } from '../validation/zod-fields';
+import AppEntityEditPageLayout from '../layouts/AppEntityEditPageLayout.vue';
+import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
+import AppCardSection from '../components/ui/AppCardSection.vue';
+import AppFormStack from '../components/ui/AppFormStack.vue';
+
+const { t, locale } = useI18n();
+const $q = useQuasar();
+const route = useRoute();
+const router = useRouter();
+const { confirm } = useConfirmDialog();
+const { runWithNotify } = useNotifyAsyncAction();
+const { notifyError } = useNotifyErrorFromCatch();
+const {
+    trips,
+    ensureTripsReady,
+    patchTripRow,
+    deleteTripRow,
+    useTripById,
+    useTripNeighborsInProgram,
+} = useTrips();
+const { boatTypes, ensureBoatTypesReady } = useBoatTypes();
+const { waterRoutes, ensureWaterRoutesReady } = useWaterRoutes();
+
+const hasBootstrapped = getAppPowerSyncBootstrappedRef();
+const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
+    useAppPowerSyncOutbox();
+
+const isDeleting = ref(false);
+
+const programId = computed(() => String(route.params.programId ?? '').trim());
+const tripId = computed(() => String(route.params.tripId ?? '').trim());
+
+const backTo = computed(() => ({ name: 'trips.list' as const, params: { programId: programId.value } }));
+
+const currentTrip = useTripById(tripId);
+const neighbors = useTripNeighborsInProgram(tripId);
+
+const showNotFound = computed(
+    () => hasBootstrapped.value && tripId.value.length > 0 && currentTrip.value == null,
+);
+
+function formatSwitcherLabel(tr: Record<string, unknown>) {
+    const raw = tr.scheduled_departure_at;
+    if (raw == null || String(raw) === '') {
+        return String(tr.id ?? '');
+    }
+    const d = new Date(String(raw));
+    if (Number.isNaN(d.getTime())) {
+        return String(raw);
+    }
+    return new Intl.DateTimeFormat(locale.value === 'fr' ? 'fr-CA' : 'en-CA', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(d);
+}
+
+const tripSwitcherOptions = computed(() =>
+    trips.value.map((tr) => ({
+        label: formatSwitcherLabel(tr),
+        value: String(tr.id),
+    })),
+);
+
+const boatTypeOptions = computed(() =>
+    boatTypes.value.map((bt) => ({
+        label: String(bt.name ?? ''),
+        value: String(bt.id),
+    })),
+);
+
+const waterRouteOptions = computed(() =>
+    waterRoutes.value.map((wr) => ({
+        label: String(wr.name ?? ''),
+        value: String(wr.id),
+    })),
+);
+
+const editSchema = createTripUpsertFormSchema(t);
+const { handleSubmit, defineField, meta, isSubmitting, setValues, resetForm } = useForm<TripUpsertFormValues>({
+    validationSchema: editSchema,
+    initialValues: {
+        scheduledDepartureAt: '',
+        capacity: null,
+        boatTypeId: null,
+        waterRouteId: null,
+    } as unknown as TripUpsertFormValues,
+});
+
+const quasarField = createQuasarFieldBinder(defineField);
+
+const [editScheduled, editScheduledProps] = quasarField('scheduledDepartureAt');
+const [editCapacity, editCapacityProps] = quasarField('capacity');
+const [editBoatTypeId, editBoatTypeIdProps] = quasarField('boatTypeId');
+const [editWaterRouteId, editWaterRouteIdProps] = quasarField('waterRouteId');
+
+function syncFormFromTrip() {
+    const tr = currentTrip.value;
+    if (!tr) {
+        return;
+    }
+    const cap = parsePositiveInt(tr.capacity);
+    setValues({
+        scheduledDepartureAt: isoToLocalDatetimeInputValue(String(tr.scheduled_departure_at ?? '')),
+        capacity: cap,
+        boatTypeId:
+            tr.boat_type_id == null || String(tr.boat_type_id).length === 0
+                ? null
+                : String(tr.boat_type_id),
+        waterRouteId:
+            tr.water_route_id == null || String(tr.water_route_id).length === 0
+                ? null
+                : String(tr.water_route_id),
+    });
+}
+
+watch([currentTrip, tripId], () => {
+    if (currentTrip.value) {
+        syncFormFromTrip();
+    } else {
+        resetForm();
+    }
+}, { immediate: true });
+
+function onSwitchTrip(nextId: string | null | undefined) {
+    if (nextId == null || String(nextId) === String(tripId.value)) {
+        return;
+    }
+    void router.push({
+        name: 'trips.edit',
+        params: { programId: programId.value, tripId: String(nextId) },
+    });
+}
+
+function goPrev() {
+    const p = neighbors.value.prev;
+    if (p) {
+        onSwitchTrip(p);
+    }
+}
+
+function goNext() {
+    const n = neighbors.value.next;
+    if (n) {
+        onSwitchTrip(n);
+    }
+}
+
+const onSaveSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
+    const id = tripId.value;
+    if (id.length === 0) {
+        return;
+    }
+    await runWithNotify(
+        async () => {
+            const cap = parsePositiveInt(values.capacity);
+            if (cap === null) {
+                throw new Error('capacity');
+            }
+            const iso = localDatetimeInputValueToIso(String(values.scheduledDepartureAt));
+            const nextBoatType =
+                values.boatTypeId != null && String(values.boatTypeId).length > 0
+                    ? String(values.boatTypeId)
+                    : null;
+            const nextWaterRoute =
+                values.waterRouteId != null && String(values.waterRouteId).length > 0
+                    ? String(values.waterRouteId)
+                    : null;
+            await patchTripRow(id, (draft) => {
+                draft.scheduled_departure_at = iso;
+                draft.capacity = cap;
+                draft.boat_type_id = nextBoatType;
+                draft.water_route_id = nextWaterRoute;
+            });
+        },
+        { successMessage: t('tripsList.changesSaved'), errorGeneric: t('tripsList.errorGeneric') },
+    );
+});
+
+function confirmDelete() {
+    const tr = currentTrip.value;
+    if (!tr) {
+        return;
+    }
+    confirm({
+        title: t('tripsList.deleteConfirmTitle'),
+        message: t('tripsList.deleteConfirmMessage'),
+        onOk: async () => {
+            isDeleting.value = true;
+            try {
+                await deleteTripRow(String(tr.id));
+                $q.notify({ type: 'positive', message: t('tripsList.deleted') });
+                await router.push({ name: 'trips.list', params: { programId: programId.value } });
+            } catch (e) {
+                notifyError(e, t('tripsList.errorGeneric'));
+            } finally {
+                isDeleting.value = false;
+            }
+        },
+    });
+}
+
+onMounted(() => {
+    void ensureBoatTypesReady();
+    void ensureWaterRoutesReady();
+    void ensureTripsReady();
+});
+</script>

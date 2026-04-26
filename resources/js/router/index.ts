@@ -58,6 +58,24 @@ const programScopeChildren: RouteRecordRaw[] = [
                 meta: scopedProgramMeta,
             },
             {
+                path: 'trips/create',
+                name: 'trips.create',
+                component: () => import('../pages/AppTripCreatePage.vue'),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: 'trips/:tripId/edit',
+                name: 'trips.edit',
+                component: () => import('../pages/AppTripEditPage.vue'),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: 'trips',
+                name: 'trips.list',
+                component: () => import('../pages/AppTripsPage.vue'),
+                meta: scopedProgramMeta,
+            },
+            {
                 path: 'reports',
                 name: 'reports',
                 component: () => import('../pages/AppReportsPage.vue'),

@@ -23,6 +23,20 @@ export function parseOptionalNonNegativeInt(raw: unknown): number | null {
 }
 
 /**
+ * Parse required positive integers (empty / non-finite / below 1 → null).
+ */
+export function parsePositiveInt(raw: unknown): number | null {
+    if (raw === null || raw === undefined || raw === '') {
+        return null;
+    }
+    const n = typeof raw === 'number' ? raw : Number.parseInt(String(raw), 10);
+    if (!Number.isFinite(n) || n < 1) {
+        return null;
+    }
+    return n;
+}
+
+/**
  * Required non-empty string after trim.
  */
 export function zRequiredTrimmedString(requiredMessage: string): z.ZodString {
