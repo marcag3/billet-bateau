@@ -437,7 +437,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $user = User::factory()->create();
         $boatId = (string) Str::uuid();
 
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
+        $response = $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
                 [
                     'op' => 'PUT',
@@ -448,9 +448,38 @@ class PowerSyncUploadControllerTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ]);
+
+        $response->assertUnprocessable();
+        $errors = $response->json('errors') ?? [];
+        $this->assertArrayHasKey('data.capacity', $errors);
+        $this->assertNotEmpty($errors['data.capacity']);
 
         $this->assertDatabaseMissing('boats', ['id' => $boatId]);
+    }
+
+    public function test_put_boat_program_rejects_unknown_boat_id(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->for($user)->create();
+        $linkId = (string) Str::uuid();
+        $unknownBoatId = (string) Str::uuid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'boat_program',
+                    'id' => $linkId,
+                    'data' => [
+                        'boat_id' => $unknownBoatId,
+                        'program_id' => $program->getKey(),
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseMissing('boat_program', ['id' => $linkId]);
     }
 
     public function test_patch_updates_owned_boat_type(): void
@@ -853,5 +882,135 @@ class PowerSyncUploadControllerTest extends TestCase
         ])->assertUnprocessable();
 
         $this->assertDatabaseMissing('trips', ['id' => $tripId]);
+    }
+
+    public function test_patch_boat_type_rejects_invalid_name_type_returns_unprocessable(): void
+    {
+        $user = User::factory()->create();
+        $boatType = BoatType::factory()->for($user)->create();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'boat_types',
+                    'id' => $boatType->getKey(),
+                    'data' => [
+                        'name' => ['invalid'],
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
+    }
+
+    public function test_patch_boat_rejects_negative_capacity_returns_unprocessable(): void
+    {
+        $user = User::factory()->create();
+        $boat = Boat::factory()->for($user)->create();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'boats',
+                    'id' => $boat->getKey(),
+                    'data' => [
+                        'capacity' => -1,
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
+    }
+
+    public function test_put_trip_rejects_invalid_boat_type_uuid_returns_unprocessable(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->for($user)->create();
+        $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
+        $tripId = (string) Str::uuid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'trips',
+                    'id' => $tripId,
+                    'data' => [
+                        'program_id' => $program->getKey(),
+                        'scheduled_departure_at' => '2026-08-10T15:30:00+00:00',
+                        'capacity' => 10,
+                        'boat_type_id' => 'not-a-uuid',
+                        'water_route_id' => $route->getKey(),
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseMissing('trips', ['id' => $tripId]);
+    }
+
+    public function test_put_program_rejects_invalid_theme_color_returns_unprocessable(): void
+    {
+        $user = User::factory()->create();
+        $programId = (string) Str::uuid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'programs',
+                    'id' => $programId,
+                    'data' => [
+                        'name' => 'Bad color',
+                        'theme_color' => 'red',
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseMissing('programs', ['id' => $programId]);
+    }
+
+    public function test_patch_program_rejects_invalid_theme_color_returns_unprocessable(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->for($user)->create();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'programs',
+                    'id' => $program->getKey(),
+                    'data' => [
+                        'theme_color' => '#GGGGGG',
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
+    }
+
+    public function test_put_boat_rejects_unknown_boat_type_id_returns_unprocessable(): void
+    {
+        $user = User::factory()->create();
+        $boatId = (string) Str::uuid();
+        $missingBoatTypeId = (string) Str::uuid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'boats',
+                    'id' => $boatId,
+                    'data' => [
+                        'name' => 'Ghost type',
+                        'capacity' => 4,
+                        'boat_type_id' => $missingBoatTypeId,
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseMissing('boats', ['id' => $boatId]);
     }
 }

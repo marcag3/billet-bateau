@@ -2,32 +2,27 @@
 
 namespace App\PowerSync;
 
+use App\Actions\PowerSync\ApplyAddressPowerSyncCrudAction;
+use App\Actions\PowerSync\ApplyBoatPowerSyncCrudAction;
+use App\Actions\PowerSync\ApplyBoatProgramPowerSyncCrudAction;
+use App\Actions\PowerSync\ApplyBoatTypePowerSyncCrudAction;
+use App\Actions\PowerSync\ApplyProgramPowerSyncCrudAction;
+use App\Actions\PowerSync\ApplyTripPowerSyncCrudAction;
+use App\Actions\PowerSync\ApplyWaterRoutePowerSyncCrudAction;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
 
 final class PowerSyncUploadRouter
 {
-    public function __construct(
-        private readonly ProgramPowerSyncUploadApplier $programs,
-        private readonly AddressPowerSyncUploadApplier $addresses,
-        private readonly BoatPowerSyncUploadApplier $boats,
-        private readonly BoatTypePowerSyncUploadApplier $boatTypes,
-        private readonly BoatProgramPowerSyncUploadApplier $boatProgram,
-        private readonly TripPowerSyncUploadApplier $trips,
-        private readonly WaterRoutePowerSyncUploadApplier $waterRoutes,
-    ) {}
-
     public function apply(PowerSyncCrudEntryData $entry, int $userId): void
     {
-        $payload = $entry->toApplierPayload();
-
         match ($entry->type) {
-            PowerSyncCrudType::Programs => $this->programs->apply($payload, $userId),
-            PowerSyncCrudType::Addresses => $this->addresses->apply($payload, $userId),
-            PowerSyncCrudType::Boats => $this->boats->apply($payload, $userId),
-            PowerSyncCrudType::BoatTypes => $this->boatTypes->apply($payload, $userId),
-            PowerSyncCrudType::BoatProgram => $this->boatProgram->apply($payload, $userId),
-            PowerSyncCrudType::Trips => $this->trips->apply($payload, $userId),
-            PowerSyncCrudType::WaterRoutes => $this->waterRoutes->apply($payload, $userId),
+            PowerSyncCrudType::Programs => ApplyProgramPowerSyncCrudAction::run($entry, $userId),
+            PowerSyncCrudType::Addresses => ApplyAddressPowerSyncCrudAction::run($entry, $userId),
+            PowerSyncCrudType::Boats => ApplyBoatPowerSyncCrudAction::run($entry, $userId),
+            PowerSyncCrudType::BoatTypes => ApplyBoatTypePowerSyncCrudAction::run($entry, $userId),
+            PowerSyncCrudType::BoatProgram => ApplyBoatProgramPowerSyncCrudAction::run($entry, $userId),
+            PowerSyncCrudType::Trips => ApplyTripPowerSyncCrudAction::run($entry, $userId),
+            PowerSyncCrudType::WaterRoutes => ApplyWaterRoutePowerSyncCrudAction::run($entry, $userId),
         };
     }
 }

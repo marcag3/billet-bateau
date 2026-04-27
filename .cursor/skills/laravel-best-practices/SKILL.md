@@ -103,7 +103,7 @@ Check sibling files, related controllers, models, or tests for established patte
 
 - Implicit route model binding
 - Scoped bindings for nested resources
-- PowerSync: client-side mutations are batched to `POST /powersync/upload`; route each `type` in `PowerSyncUploadRouter` to a dedicated `*PowerSyncUploadApplier` — not `apiResource` CRUD per table
+- PowerSync: client-side mutations are batched to `POST /powersync/upload`; route each `type` in `PowerSyncUploadRouter` to a dedicated `Apply{Entity}PowerSyncCrudAction::run(...)` — not `apiResource` CRUD per table
 - PowerSync wiring uses invokable controllers where appropriate (`PowerSyncCredentialsController`, `PowerSyncUploadController`); add new sync types by extending the router and an applier, not by adding `update`/`destroy` on a REST controller unless you deliberately expose both paths
 - For classic REST resources you add outside PowerSync, use `Route::apiResource()` and the five methods (`index`, `store`, `show`, `update`, `destroy`); custom actions stay in dedicated controllers/routes
 - Methods under 10 lines — extract to actions/services

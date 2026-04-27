@@ -57,7 +57,7 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 
 ### Backend — on-water data model
 
-- [ ] PostGIS + Magellan in Docker/CI; `water_routes`: `name`, `trace` (LineString), `duration_minutes` — **reusable** rows (no departure columns; same geometry across many `trips`)
+- [x] PostGIS + Magellan in Docker/CI; `water_routes`: `name`, `trace` (LineString), `duration_minutes` — **reusable** rows (no departure columns; same geometry across many `trips`)
 - [x] `boats`: as implemented today (`name`, `boat_type_id`, optional `user_id` for audit, capacity, notes, …) — physical hull in fleet CRUD / sync; not per-user scoping
 - [x] `trips`: `scheduled_departure_at`, `boat_type_id`, `water_route_id`, …
 - [ ] `voyages`: nullable `trip_id`, **`water_route_id` NOT NULL** (actual path may differ from `trips.water_route_id`), `started_at`, `arrived_at`, `status`; optional `scheduled_departure_at` **only** when `trip_id` is null; **no** `boat_id`

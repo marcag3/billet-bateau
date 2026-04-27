@@ -40,7 +40,7 @@ Route::get('/users/{user}/posts/{post}', function (User $user, Post $post) {
 
 This app syncs many entities through **PowerSync**, not per-model REST CRUD:
 
-- **Upload path**: authenticated `POST /powersync/upload` validates a `crud` array and runs each entry in a transaction. Extend `PowerSyncUploadRouter` and add a `*PowerSyncUploadApplier` for new synced `type` values — that is the primary mutation surface for those tables.
+- **Upload path**: authenticated `POST /powersync/upload` validates a `crud` array and runs each entry in a transaction. Extend `PowerSyncUploadRouter` and add an `Apply{Entity}PowerSyncCrudAction` under `App\Actions\PowerSync` for new synced `type` values; dispatch with `Apply{Entity}PowerSyncCrudAction::run($entry, $userId)` — that is the primary mutation surface for those tables.
 - **Credentials**: invokable controller issuing token + endpoint for the PowerSync client.
 - **Other API routes** (e.g. media upload, one-off `store`): dedicated routes/controllers are correct; they are not required to mirror `index`/`show`/`update`/`destroy` for PowerSync-backed models.
 
