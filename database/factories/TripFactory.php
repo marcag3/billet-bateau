@@ -26,6 +26,7 @@ class TripFactory extends Factory
             'program_id' => Program::factory(),
             'boat_type_id' => null,
             'water_route_id' => null,
+            'template_day_slot_id' => null,
             'scheduled_departure_at' => fake()->dateTimeBetween('+1 day', '+2 months'),
             'capacity' => fake()->numberBetween(4, 60),
         ];

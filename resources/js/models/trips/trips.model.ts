@@ -99,6 +99,7 @@ export function useTrips() {
             program_id: programId,
             boat_type_id: boatTypeId,
             water_route_id: waterRouteId,
+            template_day_slot_id: null,
             scheduled_departure_at: scheduledIso,
             capacity: cap,
             created_at: now,

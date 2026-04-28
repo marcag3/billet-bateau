@@ -10,7 +10,7 @@ use Carbon\CarbonImmutable;
 /**
  * Resolves merged PUT attributes for {@see Trip} PowerSync uploads (after program id is known).
  *
- * @return array{scheduled_departure_at: CarbonImmutable, capacity: int, boat_type_id: ?string, water_route_id: ?string}
+ * @return array{scheduled_departure_at: CarbonImmutable, capacity: int, boat_type_id: ?string, water_route_id: ?string, template_day_slot_id: ?string}
  */
 final class TripPutPayloadResolver
 {
@@ -25,6 +25,7 @@ final class TripPutPayloadResolver
         $capacity = PowerSyncOptional::resolve($dto->capacity, $existing?->capacity);
         $boatTypeId = PowerSyncOptional::resolve($dto->boat_type_id, $existing?->boat_type_id);
         $waterRouteId = PowerSyncOptional::resolve($dto->water_route_id, $existing?->water_route_id);
+        $templateDaySlotId = PowerSyncOptional::resolve($dto->template_day_slot_id, $existing?->template_day_slot_id);
 
         PowerSyncCrudInnerDataValidator::validate(
             [
@@ -46,6 +47,7 @@ final class TripPutPayloadResolver
             'capacity' => (int) $capacity,
             'boat_type_id' => $boatTypeId,
             'water_route_id' => $waterRouteId,
+            'template_day_slot_id' => $templateDaySlotId,
         ];
     }
 }

@@ -20,4 +20,10 @@ enum PowerSyncCrudType: string
     case Trips = 'trips';
 
     case WaterRoutes = 'water_routes';
+
+    case TemplateDays = 'template_days';
+
+    case TemplateDaySlots = 'template_day_slots';
+
+    case TemplateDayDates = 'template_day_dates';
 }

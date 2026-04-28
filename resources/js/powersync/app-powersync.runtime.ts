@@ -13,12 +13,15 @@ import {
     appProgramsPowerSyncTable,
     appMediaPowerSyncTable,
     appPowerSyncSchema,
+    appTemplateDayDatesPowerSyncTable,
+    appTemplateDaysPowerSyncTable,
+    appTemplateDaySlotsPowerSyncTable,
     appTripsPowerSyncTable,
     appWaterRoutesPowerSyncTable,
 } from './app.powersync-schema';
 import { translate } from '../utilities/i18n';
 
-const DB_FILENAME = 'billbateau-app-v11.db';
+const DB_FILENAME = 'billbateau-app-v12.db';
 
 const loadFailedMessage = translate('sync.unableLoadSync');
 const persistenceLimitedMessage = translate('sync.persistenceLimited');
@@ -115,6 +118,9 @@ const collectionRefs = {
     boat_program: shallowRef(null),
     trips: shallowRef(null),
     water_routes: shallowRef(null),
+    template_days: shallowRef(null),
+    template_day_slots: shallowRef(null),
+    template_day_dates: shallowRef(null),
     media: shallowRef(null),
 };
 
@@ -126,6 +132,9 @@ const tableByName = {
     boat_program: appBoatProgramPowerSyncTable,
     trips: appTripsPowerSyncTable,
     water_routes: appWaterRoutesPowerSyncTable,
+    template_days: appTemplateDaysPowerSyncTable,
+    template_day_slots: appTemplateDaySlotsPowerSyncTable,
+    template_day_dates: appTemplateDayDatesPowerSyncTable,
     media: appMediaPowerSyncTable,
 };
 
@@ -136,7 +145,7 @@ const programSyncScopeIdRef = ref('');
 let programScopeSubscription = null;
 
 /**
- * Active program id for `program_scope` PowerSync stream (boats + boat_program roster + trips + water_routes).
+ * Active program id for `program_scope` PowerSync stream (roster, trips, water routes, template days).
  *
  * @returns {import('vue').Ref<string>}
  */
@@ -394,6 +403,18 @@ export function getWaterRoutesCollectionRef() {
     return collectionRefs.water_routes;
 }
 
+export function getTemplateDaysCollectionRef() {
+    return collectionRefs.template_days;
+}
+
+export function getTemplateDaySlotsCollectionRef() {
+    return collectionRefs.template_day_slots;
+}
+
+export function getTemplateDayDatesCollectionRef() {
+    return collectionRefs.template_day_dates;
+}
+
 export function getMediaCollectionRef() {
     return collectionRefs.media;
 }
@@ -408,6 +429,20 @@ export function getAppPowerSyncLoadingRef() {
 
 export function getAppPowerSyncErrorMessageRef() {
     return errorMessage;
+}
+
+export function getAppPowerSyncBootstrappedRef() {
+    return hasBootstrappedCollection;
+}
+
+export function getAppPowerSyncPersistenceUnavailableRef() {
+    return persistenceUnavailable;
+}
+
+export function getPersistenceLimitedMessage() {
+    return persistenceLimitedMessage;
+}
+ return errorMessage;
 }
 
 export function getAppPowerSyncBootstrappedRef() {

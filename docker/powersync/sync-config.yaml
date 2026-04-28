@@ -52,3 +52,17 @@ streams:
         SELECT * FROM water_routes
         WHERE program_id = subscription.parameter('program_id')
           AND program_id IN staff_program_ids
+      - |
+        SELECT * FROM template_days
+        WHERE program_id = subscription.parameter('program_id')
+          AND program_id IN staff_program_ids
+      - |
+        SELECT template_day_slots.*
+        FROM template_day_slots
+        INNER JOIN template_days ON template_days.id = template_day_slots.template_day_id
+        WHERE template_days.program_id = subscription.parameter('program_id')
+          AND template_days.program_id IN staff_program_ids
+      - |
+        SELECT * FROM template_day_dates
+        WHERE program_id = subscription.parameter('program_id')
+          AND program_id IN staff_program_ids

@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
-use Database\Factories\TripFactory;
+use Database\Factories\TemplateDaySlotFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Trip extends Model
+class TemplateDaySlot extends Model
 {
-    /** @use HasFactory<TripFactory> */
+    /** @use HasFactory<TemplateDaySlotFactory> */
     use HasFactory;
 
     public $incrementing = false;
@@ -19,12 +19,12 @@ class Trip extends Model
 
     protected $fillable = [
         'id',
-        'program_id',
+        'template_day_id',
+        'sort_order',
+        'departure_time',
+        'capacity',
         'boat_type_id',
         'water_route_id',
-        'template_day_slot_id',
-        'scheduled_departure_at',
-        'capacity',
         'created_at',
         'updated_at',
     ];
@@ -32,16 +32,16 @@ class Trip extends Model
     protected function casts(): array
     {
         return [
-            'scheduled_departure_at' => 'datetime',
+            'sort_order' => 'integer',
             'capacity' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
     }
 
-    public function program(): BelongsTo
+    public function templateDay(): BelongsTo
     {
-        return $this->belongsTo(Program::class, 'program_id');
+        return $this->belongsTo(TemplateDay::class, 'template_day_id');
     }
 
     public function boatType(): BelongsTo
@@ -54,13 +54,8 @@ class Trip extends Model
         return $this->belongsTo(WaterRoute::class, 'water_route_id');
     }
 
-    public function templateDaySlot(): BelongsTo
+    public function trips(): HasMany
     {
-        return $this->belongsTo(TemplateDaySlot::class, 'template_day_slot_id');
-    }
-
-    public function voyages(): HasMany
-    {
-        return $this->hasMany(Voyage::class, 'trip_id');
+        return $this->hasMany(Trip::class, 'template_day_slot_id');
     }
 }
