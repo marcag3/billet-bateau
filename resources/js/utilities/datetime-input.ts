@@ -12,7 +12,8 @@ export function isoToLocalDatetimeInputValue(iso: string): string {
 }
 
 /**
- * Parse a `datetime-local` value to an ISO string for PowerSync / server.
+ * Parse a `datetime-local` value to the same string shape as `Date.prototype.toISOString()`
+ * (RFC 3339 UTC, milliseconds, `Z`), matching Spatie Laravel Data `config('data.date_format')`.
  */
 export function localDatetimeInputValueToIso(local: string): string {
     const date = new Date(String(local).trim());

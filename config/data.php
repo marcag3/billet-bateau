@@ -20,18 +20,20 @@ use Spatie\LaravelData\Transformers\EnumTransformer;
 
 return [
     /*
-     * The package will use this format when working with dates. If this option
-     * is an array, it will try to convert from the first format that works,
-     * and will serialize dates using the first format from the array.
+     * Same wire shape as JavaScript `Date.prototype.toISOString()` (RFC 3339 UTC with
+     * milliseconds + Z). Spatie Laravel Data casts and transforms `DateTimeInterface`
+     * using this single format.
      */
-    'date_format' => DATE_ATOM,
+    'date_format' => 'Y-m-d\TH:i:s.v\Z',
 
     /*
      * When transforming or casting dates, the following timezone will be used to
      * convert the date to the correct timezone. If set to null no timezone will
      * be passed.
+     *
+     * UTC keeps serialized timestamps aligned with JS `toISOString()`.
      */
-    'date_timezone' => null,
+    'date_timezone' => 'UTC',
 
     /*
      * It is possible to enable certain features of the package, these would otherwise

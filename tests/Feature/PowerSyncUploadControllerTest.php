@@ -629,7 +629,7 @@ class PowerSyncUploadControllerTest extends TestCase
                     'id' => $tripId,
                     'data' => [
                         'program_id' => $program->getKey(),
-                        'scheduled_departure_at' => '2026-08-10T15:30:00+00:00',
+                        'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
                         'capacity' => 12,
                         'boat_type_id' => $boatType->getKey(),
                         'water_route_id' => $route->getKey(),
@@ -661,7 +661,7 @@ class PowerSyncUploadControllerTest extends TestCase
                     'id' => $tripId,
                     'data' => [
                         'program_id' => $program->getKey(),
-                        'scheduled_departure_at' => '2026-08-10T15:30:00+00:00',
+                        'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
                     ],
                 ],
             ],
@@ -685,7 +685,7 @@ class PowerSyncUploadControllerTest extends TestCase
                     'id' => $tripId,
                     'data' => [
                         'program_id' => $program->getKey(),
-                        'scheduled_departure_at' => '2026-08-10T15:30:00+00:00',
+                        'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
                         'capacity' => 8,
                     ],
                 ],
@@ -873,7 +873,7 @@ class PowerSyncUploadControllerTest extends TestCase
                     'id' => $tripId,
                     'data' => [
                         'program_id' => $programA->getKey(),
-                        'scheduled_departure_at' => '2026-08-10T15:30:00+00:00',
+                        'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
                         'capacity' => 10,
                         'water_route_id' => $routeB->getKey(),
                     ],
@@ -937,7 +937,7 @@ class PowerSyncUploadControllerTest extends TestCase
                     'id' => $tripId,
                     'data' => [
                         'program_id' => $program->getKey(),
-                        'scheduled_departure_at' => '2026-08-10T15:30:00+00:00',
+                        'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
                         'capacity' => 10,
                         'boat_type_id' => 'not-a-uuid',
                         'water_route_id' => $route->getKey(),
