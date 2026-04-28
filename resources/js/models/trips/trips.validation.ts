@@ -1,12 +1,13 @@
+import { isValid } from 'ulid';
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 import { parsePositiveInt } from '../../validation/zod-fields';
 
 export type Translator = (key: string) => string;
 
-const optionalUuidRefSchema = z.preprocess(
+const optionalUlidRefSchema = z.preprocess(
     (v) => (v == null || v === '' ? null : String(v)),
-    z.union([z.string().uuid(), z.null()]),
+    z.union([z.string().refine((s) => isValid(s)), z.null()]),
 );
 
 function createTripUpsertZodSchema(t: Translator) {
@@ -22,8 +23,8 @@ function createTripUpsertZodSchema(t: Translator) {
                 z.union([z.number().int().min(1), z.null()]),
             )
             .refine((v): v is number => v !== null, { message: t('tripsList.capacityRequired') }),
-        boatTypeId: optionalUuidRefSchema,
-        waterRouteId: optionalUuidRefSchema,
+        boatTypeId: optionalUlidRefSchema,
+        waterRouteId: optionalUlidRefSchema,
     });
 }
 

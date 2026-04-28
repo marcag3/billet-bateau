@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('programs', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
+            $table->ulid('id')->primary();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignUuid('address_id')->nullable()->unique()->constrained('addresses')->nullOnDelete();
+            $table->foreignUlid('address_id')->nullable()->unique()->constrained('addresses')->nullOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('theme_color', 7);

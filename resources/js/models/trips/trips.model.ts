@@ -1,3 +1,4 @@
+import { ulid } from 'ulid';
 import { computed, toValue } from 'vue';
 import { defineRelations } from '../entity.relations';
 import { defineModel } from '../model.definition';
@@ -76,7 +77,7 @@ export function useTrips() {
             throw new Error('Trips collection is not ready.');
         }
 
-        const id = crypto.randomUUID();
+        const id = ulid();
         const now = new Date().toISOString();
         const scheduled = String(input.scheduledDepartureAt).trim();
         const cap = Number.parseInt(String(input.capacity), 10);

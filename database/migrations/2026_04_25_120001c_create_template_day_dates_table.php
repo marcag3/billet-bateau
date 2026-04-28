@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('template_day_dates', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('program_id')->constrained('programs')->cascadeOnDelete();
-            $table->foreignUuid('template_day_id')->constrained('template_days')->cascadeOnDelete();
+            $table->ulid('id')->primary();
+            $table->foreignUlid('program_id')->constrained('programs')->cascadeOnDelete();
+            $table->foreignUlid('template_day_id')->constrained('template_days')->cascadeOnDelete();
             $table->date('service_date');
             $table->timestamps();
 

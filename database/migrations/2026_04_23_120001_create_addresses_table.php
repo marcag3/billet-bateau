@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('addresses', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
+            $table->ulid('id')->primary();
             $table->string('line_1')->nullable();
             $table->string('line_2')->nullable();
             $table->string('city')->nullable();
@@ -18,5 +18,4 @@ return new class extends Migration
             $table->timestamps();
         });
     }
-
 };

@@ -1,4 +1,5 @@
 import { computed, toValue } from 'vue';
+import { ulid } from 'ulid';
 import { defineRelations } from '../entity.relations';
 import { defineModel } from '../model.definition';
 import { useEntityList } from '../entity.queries';
@@ -78,7 +79,7 @@ export function useWaterRoutes() {
             throw new Error('Water routes collection is not ready.');
         }
 
-        const id = crypto.randomUUID();
+        const id = ulid();
         const now = new Date().toISOString();
         const name = String(input.name ?? '').trim();
         const duration = Number.parseInt(String(input.durationMinutes), 10);

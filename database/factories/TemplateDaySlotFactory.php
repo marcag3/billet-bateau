@@ -20,7 +20,7 @@ class TemplateDaySlotFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => (string) Str::uuid(),
+            'id' => (string) Str::ulid(),
             'template_day_id' => TemplateDay::factory(),
             'sort_order' => 0,
             'departure_time' => '09:30:00',

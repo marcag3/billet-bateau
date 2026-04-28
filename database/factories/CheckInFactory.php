@@ -21,7 +21,7 @@ class CheckInFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => (string) Str::uuid(),
+            'id' => (string) Str::ulid(),
             'booking_id' => Booking::factory(),
             'voyage_id' => Voyage::factory(),
             'notes' => fake()->optional()->sentence(),

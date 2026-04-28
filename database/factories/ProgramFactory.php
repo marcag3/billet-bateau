@@ -29,7 +29,7 @@ class ProgramFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => (string) Str::uuid(),
+            'id' => (string) Str::ulid(),
             'user_id' => User::factory(),
             'name' => fake()->words(3, true),
             'description' => fake()->optional()->paragraph(),
@@ -37,7 +37,7 @@ class ProgramFactory extends Factory
             'is_active' => false,
             'is_archived' => false,
             'slug' => function (array $attributes): string {
-                $id = (string) ($attributes['id'] ?? Str::uuid());
+                $id = (string) ($attributes['id'] ?? Str::ulid());
 
                 return 'p-'.Str::lower(substr(str_replace('-', '', $id), 0, 16));
             },

@@ -10,9 +10,9 @@ return new class extends Migration
     {
 
         Schema::create('boat_program', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('boat_id')->constrained('boats')->cascadeOnDelete();
-            $table->foreignUuid('program_id')->constrained('programs')->cascadeOnDelete();
+            $table->ulid('id')->primary();
+            $table->foreignUlid('boat_id')->constrained('boats')->cascadeOnDelete();
+            $table->foreignUlid('program_id')->constrained('programs')->cascadeOnDelete();
             $table->timestamps();
 
             $table->unique(['boat_id', 'program_id']);

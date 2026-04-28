@@ -118,7 +118,7 @@ class PublicProgramApiTest extends TestCase
 
     public function test_show_404_for_unknown_id(): void
     {
-        $this->getJson('/api/public/programs/'.(string) Str::uuid())
+        $this->getJson('/api/public/programs/'.(string) Str::ulid())
             ->assertNotFound();
     }
 

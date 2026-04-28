@@ -20,7 +20,7 @@ class GuideFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => (string) Str::uuid(),
+            'id' => (string) Str::ulid(),
             'user_id' => User::factory(),
             'name' => fake()->name(),
             'staff_user_id' => null,

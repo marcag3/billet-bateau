@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Clickbar\Magellan\Data\Geometries\LineString;
 use Database\Factories\WaterRouteFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,9 +15,7 @@ class WaterRoute extends Model
     /** @use HasFactory<WaterRouteFactory> */
     use HasFactory;
 
-    public $incrementing = false;
-
-    protected $keyType = 'string';
+    use HasUlids;
 
     protected $fillable = [
         'id',

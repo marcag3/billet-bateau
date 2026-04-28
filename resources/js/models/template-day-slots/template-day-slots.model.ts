@@ -1,4 +1,5 @@
 import { computed } from 'vue';
+import { ulid } from 'ulid';
 import { defineRelations } from '../entity.relations';
 import { defineModel } from '../model.definition';
 import { useEntityList } from '../entity.queries';
@@ -83,7 +84,7 @@ export function useTemplateDaySlots() {
             throw new Error('Template day slots collection is not ready.');
         }
 
-        const id = crypto.randomUUID();
+        const id = ulid();
         const now = new Date().toISOString();
         const cap = Number.parseInt(String(input.capacity), 10);
         if (!Number.isFinite(cap) || cap < 1) {

@@ -25,7 +25,7 @@ class ProgramController extends Controller
         $data = ProgramStoreData::from($request);
 
         $program = DB::transaction(function () use ($data, $user): Program {
-            $id = $data->id ?? (string) Str::uuid();
+            $id = $data->id ?? (string) Str::ulid();
 
             $themeColor = strtoupper($data->theme_color);
 

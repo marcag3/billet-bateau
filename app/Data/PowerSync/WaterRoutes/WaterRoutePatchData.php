@@ -32,7 +32,7 @@ final class WaterRoutePatchData extends Data
     public static function rules(): array
     {
         return [
-            'program_id' => ['sometimes', 'nullable', 'uuid'],
+            'program_id' => ['sometimes', 'nullable', 'ulid'],
             'name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'duration_minutes' => ['sometimes', 'integer', 'min:1'],
             'trace' => ['sometimes', 'required', 'string', new GeoJsonLineStringRule],

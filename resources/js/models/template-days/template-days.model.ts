@@ -1,4 +1,5 @@
 import { computed } from 'vue';
+import { ulid } from 'ulid';
 import { defineRelations } from '../entity.relations';
 import { defineModel } from '../model.definition';
 import { useEntityList } from '../entity.queries';
@@ -67,7 +68,7 @@ export function useTemplateDays() {
             throw new Error('Template days collection is not ready.');
         }
 
-        const id = crypto.randomUUID();
+        const id = ulid();
         const now = new Date().toISOString();
         const name = String(input.name ?? '').trim();
 

@@ -61,10 +61,10 @@ class ProgramControllerTest extends TestCase
         $response->assertCreated();
 
         $id = (string) $response->json('data.id');
-        $this->assertTrue(Str::isUuid($id));
+        $this->assertTrue(Str::isUlid($id));
 
         $addressId = (string) $response->json('data.address.id');
-        $this->assertTrue(Str::isUuid($addressId));
+        $this->assertTrue(Str::isUlid($addressId));
 
         $this->assertDatabaseHas('programs', [
             'id' => $id,

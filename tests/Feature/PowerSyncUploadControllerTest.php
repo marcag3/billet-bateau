@@ -28,7 +28,7 @@ class PowerSyncUploadControllerTest extends TestCase
                 [
                     'op' => 'PUT',
                     'type' => 'programs',
-                    'id' => (string) Str::uuid(),
+                    'id' => (string) Str::ulid(),
                     'data' => [
                         'name' => 'Guest probe',
                         'theme_color' => '#000000',
@@ -41,7 +41,7 @@ class PowerSyncUploadControllerTest extends TestCase
     public function test_put_creates_program_for_current_user(): void
     {
         $user = User::factory()->create();
-        $id = (string) Str::uuid();
+        $id = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -77,7 +77,7 @@ class PowerSyncUploadControllerTest extends TestCase
     public function test_put_derives_slug_from_accented_name_when_slug_missing(): void
     {
         $user = User::factory()->create();
-        $id = (string) Str::uuid();
+        $id = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -102,8 +102,8 @@ class PowerSyncUploadControllerTest extends TestCase
     public function test_put_creates_address_when_parent_owned(): void
     {
         $user = User::factory()->create();
-        $programId = (string) Str::uuid();
-        $addressId = (string) Str::uuid();
+        $programId = (string) Str::ulid();
+        $addressId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -150,7 +150,7 @@ class PowerSyncUploadControllerTest extends TestCase
     public function test_delete_removes_owned_program(): void
     {
         $user = User::factory()->create();
-        $addressId = (string) Str::uuid();
+        $addressId = (string) Str::ulid();
         Address::query()->create([
             'id' => $addressId,
             'line_1' => 'Old dock',
@@ -182,7 +182,7 @@ class PowerSyncUploadControllerTest extends TestCase
                 [
                     'op' => 'INVALID',
                     'type' => 'programs',
-                    'id' => (string) Str::uuid(),
+                    'id' => (string) Str::ulid(),
                 ],
             ],
         ])->assertUnprocessable();
@@ -197,7 +197,7 @@ class PowerSyncUploadControllerTest extends TestCase
                 [
                     'op' => 'PUT',
                     'type' => 'unknown_table',
-                    'id' => (string) Str::uuid(),
+                    'id' => (string) Str::ulid(),
                 ],
             ],
         ])->assertUnprocessable();
@@ -212,7 +212,7 @@ class PowerSyncUploadControllerTest extends TestCase
                 [
                     'op' => 'PUT',
                     'type' => 'programs',
-                    'id' => 'not-a-uuid',
+                    'id' => 'not-a-ulid',
                 ],
             ],
         ])->assertUnprocessable();
@@ -274,7 +274,7 @@ class PowerSyncUploadControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $addressId = (string) Str::uuid();
+        $addressId = (string) Str::ulid();
         Address::query()->create([
             'id' => $addressId,
             'line_1' => 'Owners pier',
@@ -303,8 +303,8 @@ class PowerSyncUploadControllerTest extends TestCase
     {
         $u1 = User::factory()->create();
         $u2 = User::factory()->create();
-        $id1 = (string) Str::uuid();
-        $id2 = (string) Str::uuid();
+        $id1 = (string) Str::ulid();
+        $id2 = (string) Str::ulid();
 
         $this->actingAs($u1)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -349,7 +349,7 @@ class PowerSyncUploadControllerTest extends TestCase
     public function test_put_creates_boat_type_for_current_user(): void
     {
         $user = User::factory()->create();
-        $id = (string) Str::uuid();
+        $id = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -375,7 +375,7 @@ class PowerSyncUploadControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $boatType = BoatType::factory()->for($user)->create();
-        $boatId = (string) Str::uuid();
+        $boatId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -408,7 +408,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
         $boatType = BoatType::factory()->for($owner)->create();
-        $boatId = (string) Str::uuid();
+        $boatId = (string) Str::ulid();
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -437,7 +437,7 @@ class PowerSyncUploadControllerTest extends TestCase
     public function test_put_new_boat_without_capacity_is_unprocessable(): void
     {
         $user = User::factory()->create();
-        $boatId = (string) Str::uuid();
+        $boatId = (string) Str::ulid();
 
         $response = $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -464,8 +464,8 @@ class PowerSyncUploadControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $program = Program::factory()->for($user)->create();
-        $linkId = (string) Str::uuid();
-        $unknownBoatId = (string) Str::uuid();
+        $linkId = (string) Str::ulid();
+        $unknownBoatId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -568,7 +568,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $user = User::factory()->create();
         $program = Program::factory()->for($user)->create();
         $boat = Boat::factory()->for($user)->create();
-        $linkId = (string) Str::uuid();
+        $linkId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -597,7 +597,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $program = Program::factory()->for($user)->create();
         $boat = Boat::factory()->for($user)->create();
         $link = BoatProgram::query()->create([
-            'id' => (string) Str::uuid(),
+            'id' => (string) Str::ulid(),
             'boat_id' => $boat->getKey(),
             'program_id' => $program->getKey(),
         ]);
@@ -621,7 +621,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $program = Program::factory()->for($user)->create();
         $boatType = BoatType::factory()->for($user)->create();
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
-        $tripId = (string) Str::uuid();
+        $tripId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -653,7 +653,7 @@ class PowerSyncUploadControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $program = Program::factory()->for($user)->create();
-        $tripId = (string) Str::uuid();
+        $tripId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -677,7 +677,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
         $program = Program::factory()->for($owner)->create();
-        $tripId = (string) Str::uuid();
+        $tripId = (string) Str::ulid();
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -740,7 +740,7 @@ class PowerSyncUploadControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $program = Program::factory()->for($user)->create();
-        $routeId = (string) Str::uuid();
+        $routeId = (string) Str::ulid();
         $trace = '{"type":"LineString","coordinates":[[-73.5673,45.5017],[-73.5540,45.5080]]}';
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -772,7 +772,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
         $program = Program::factory()->for($owner)->create();
-        $routeId = (string) Str::uuid();
+        $routeId = (string) Str::ulid();
         $trace = '{"type":"LineString","coordinates":[[-73.5673,45.5017],[-73.5540,45.5080]]}';
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
@@ -865,7 +865,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $programA = Program::factory()->for($user)->create();
         $programB = Program::factory()->for($user)->create();
         $routeB = WaterRoute::factory()->create(['program_id' => $programB->getKey()]);
-        $tripId = (string) Str::uuid();
+        $tripId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -924,12 +924,12 @@ class PowerSyncUploadControllerTest extends TestCase
         ])->assertUnprocessable();
     }
 
-    public function test_put_trip_rejects_invalid_boat_type_uuid_returns_unprocessable(): void
+    public function test_put_trip_rejects_invalid_boat_type_ulid_returns_unprocessable(): void
     {
         $user = User::factory()->create();
         $program = Program::factory()->for($user)->create();
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
-        $tripId = (string) Str::uuid();
+        $tripId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -941,7 +941,7 @@ class PowerSyncUploadControllerTest extends TestCase
                         'program_id' => $program->getKey(),
                         'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
                         'capacity' => 10,
-                        'boat_type_id' => 'not-a-uuid',
+                        'boat_type_id' => 'not-a-ulid',
                         'water_route_id' => $route->getKey(),
                     ],
                 ],
@@ -954,7 +954,7 @@ class PowerSyncUploadControllerTest extends TestCase
     public function test_put_program_rejects_invalid_theme_color_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $programId = (string) Str::uuid();
+        $programId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -995,8 +995,8 @@ class PowerSyncUploadControllerTest extends TestCase
     public function test_put_boat_rejects_unknown_boat_type_id_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $boatId = (string) Str::uuid();
-        $missingBoatTypeId = (string) Str::uuid();
+        $boatId = (string) Str::ulid();
+        $missingBoatTypeId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -1020,7 +1020,7 @@ class PowerSyncUploadControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $program = Program::factory()->for($user)->create();
-        $templateDayId = (string) Str::uuid();
+        $templateDayId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -1048,7 +1048,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
         $program = Program::factory()->for($owner)->create();
-        $templateDayId = (string) Str::uuid();
+        $templateDayId = (string) Str::ulid();
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -1074,7 +1074,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $templateDay = TemplateDay::factory()->forProgram($program)->create();
         $boatType = BoatType::factory()->for($user)->create();
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
-        $slotId = (string) Str::uuid();
+        $slotId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -1107,7 +1107,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $user = User::factory()->create();
         $program = Program::factory()->for($user)->create();
         $templateDay = TemplateDay::factory()->forProgram($program)->create();
-        $rowId = (string) Str::uuid();
+        $rowId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -1139,7 +1139,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $slot = TemplateDaySlot::factory()->forTemplateDay($templateDay)->create();
         $boatType = BoatType::factory()->for($user)->create();
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
-        $tripId = (string) Str::uuid();
+        $tripId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -1175,7 +1175,7 @@ class PowerSyncUploadControllerTest extends TestCase
             ->create();
         $boatType = BoatType::factory()->for($user)->create();
         $route = WaterRoute::factory()->create(['program_id' => $programA->getKey()]);
-        $tripId = (string) Str::uuid();
+        $tripId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [

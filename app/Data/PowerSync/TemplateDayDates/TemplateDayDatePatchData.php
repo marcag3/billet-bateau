@@ -21,8 +21,8 @@ final class TemplateDayDatePatchData extends Data
     public static function rules(): array
     {
         return [
-            'program_id' => ['sometimes', 'nullable', 'uuid'],
-            'template_day_id' => ['sometimes', 'nullable', 'uuid', 'exists:template_days,id'],
+            'program_id' => ['sometimes', 'nullable', 'ulid'],
+            'template_day_id' => ['sometimes', 'nullable', 'ulid', 'exists:template_days,id'],
             'service_date' => ['sometimes', 'date'],
         ];
     }

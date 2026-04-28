@@ -22,8 +22,8 @@ final class BoatProgramPutData extends Data
     public static function rules(): array
     {
         return [
-            'boat_id' => ['required', 'uuid', 'exists:boats,id'],
-            'program_id' => ['required', 'uuid', 'exists:programs,id'],
+            'boat_id' => ['required', 'ulid', 'exists:boats,id'],
+            'program_id' => ['required', 'ulid', 'exists:programs,id'],
         ];
     }
 }

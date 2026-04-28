@@ -30,12 +30,12 @@ final class TripPutData extends Data
     public static function rules(): array
     {
         return [
-            'program_id' => ['sometimes', 'nullable', 'uuid'],
+            'program_id' => ['sometimes', 'nullable', 'ulid'],
             'scheduled_departure_at' => ['sometimes', 'nullable', 'date'],
             'capacity' => ['sometimes', 'nullable', 'integer', 'min:1'],
-            'boat_type_id' => ['sometimes', 'nullable', 'uuid', 'exists:boat_types,id'],
-            'water_route_id' => ['sometimes', 'nullable', 'uuid', 'exists:water_routes,id'],
-            'template_day_slot_id' => ['sometimes', 'nullable', 'uuid', 'exists:template_day_slots,id'],
+            'boat_type_id' => ['sometimes', 'nullable', 'ulid', 'exists:boat_types,id'],
+            'water_route_id' => ['sometimes', 'nullable', 'ulid', 'exists:water_routes,id'],
+            'template_day_slot_id' => ['sometimes', 'nullable', 'ulid', 'exists:template_day_slots,id'],
         ];
     }
 }

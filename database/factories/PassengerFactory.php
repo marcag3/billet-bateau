@@ -20,7 +20,7 @@ class PassengerFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => (string) Str::uuid(),
+            'id' => (string) Str::ulid(),
             'voyage_id' => Voyage::factory(),
             'name' => fake()->name(),
             'booking_id' => null,

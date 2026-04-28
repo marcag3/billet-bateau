@@ -31,7 +31,7 @@ final class ProgramStoreData extends Data
     public static function rules(): array
     {
         return [
-            'id' => ['nullable', 'uuid'],
+            'id' => ['nullable', 'ulid'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'theme_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],

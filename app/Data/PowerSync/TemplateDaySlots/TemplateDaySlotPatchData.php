@@ -26,8 +26,8 @@ final class TemplateDaySlotPatchData extends Data
             'sort_order' => ['sometimes', 'integer', 'min:0'],
             'departure_time' => ['sometimes', 'nullable', 'string', 'regex:/^([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$/'],
             'capacity' => ['sometimes', 'integer', 'min:1'],
-            'boat_type_id' => ['sometimes', 'nullable', 'uuid', 'exists:boat_types,id'],
-            'water_route_id' => ['sometimes', 'nullable', 'uuid', 'exists:water_routes,id'],
+            'boat_type_id' => ['sometimes', 'nullable', 'ulid', 'exists:boat_types,id'],
+            'water_route_id' => ['sometimes', 'nullable', 'ulid', 'exists:water_routes,id'],
         ];
     }
 }

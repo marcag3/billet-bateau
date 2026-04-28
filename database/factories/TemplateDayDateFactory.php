@@ -21,7 +21,7 @@ class TemplateDayDateFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => (string) Str::uuid(),
+            'id' => (string) Str::ulid(),
             'template_day_id' => TemplateDay::factory(),
             'service_date' => fake()->date(),
         ];

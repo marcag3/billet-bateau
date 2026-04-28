@@ -23,7 +23,7 @@ final class TemplateDayPatchData extends Data
     public static function rules(): array
     {
         return [
-            'program_id' => ['sometimes', 'nullable', 'uuid'],
+            'program_id' => ['sometimes', 'nullable', 'ulid'],
             'name' => ['sometimes', 'nullable', 'string', 'max:255'],
         ];
     }

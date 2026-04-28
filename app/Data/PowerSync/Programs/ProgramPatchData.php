@@ -44,7 +44,7 @@ final class ProgramPatchData extends Data
             'is_active' => ['sometimes', 'nullable', 'boolean'],
             'is_archived' => ['sometimes', 'nullable', 'boolean'],
             'slug' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'address_id' => ['sometimes', 'nullable', 'uuid', 'exists:addresses,id'],
+            'address_id' => ['sometimes', 'nullable', 'ulid', 'exists:addresses,id'],
         ];
     }
 }

@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('boat_types', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
+            $table->ulid('id')->primary();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->timestamps();

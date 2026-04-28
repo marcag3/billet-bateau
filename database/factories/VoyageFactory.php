@@ -24,7 +24,7 @@ class VoyageFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => (string) Str::uuid(),
+            'id' => (string) Str::ulid(),
             'user_id' => User::factory(),
             'trip_id' => null,
             'water_route_id' => WaterRoute::factory(),

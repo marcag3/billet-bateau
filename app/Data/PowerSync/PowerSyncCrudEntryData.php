@@ -3,7 +3,9 @@
 namespace App\Data\PowerSync;
 
 use App\PowerSync\PowerSyncCrudType;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Enum;
 use Spatie\LaravelData\Data;
 
 final class PowerSyncCrudEntryData extends Data
@@ -37,14 +39,14 @@ final class PowerSyncCrudEntryData extends Data
     }
 
     /**
-     * @return array<string, list<string|\Illuminate\Contracts\Validation\ValidationRule|\Illuminate\Validation\Rules\Enum>>
+     * @return array<string, list<string|ValidationRule|Enum>>
      */
     public static function prefixedRules(string $prefix): array
     {
         return [
             $prefix.'.op' => ['required', Rule::in(self::ops())],
             $prefix.'.type' => ['required', Rule::enum(PowerSyncCrudType::class)],
-            $prefix.'.id' => ['required', 'uuid'],
+            $prefix.'.id' => ['required', 'ulid'],
             $prefix.'.data' => ['nullable', 'array'],
         ];
     }

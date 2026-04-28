@@ -2,14 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BoatProgram extends Model
 {
-    public $incrementing = false;
-
-    protected $keyType = 'string';
+    use HasUlids;
 
     protected $table = 'boat_program';
 

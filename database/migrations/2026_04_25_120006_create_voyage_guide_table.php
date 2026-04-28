@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('voyage_guide', function (Blueprint $table): void {
             $table->id();
-            $table->foreignUuid('voyage_id')->constrained('voyages')->cascadeOnDelete();
-            $table->foreignUuid('guide_id')->constrained('guides')->cascadeOnDelete();
+            $table->foreignUlid('voyage_id')->constrained('voyages')->cascadeOnDelete();
+            $table->foreignUlid('guide_id')->constrained('guides')->cascadeOnDelete();
             $table->timestamps();
 
             $table->unique(['voyage_id', 'guide_id']);

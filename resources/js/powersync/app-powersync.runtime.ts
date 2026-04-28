@@ -442,17 +442,3 @@ export function getAppPowerSyncPersistenceUnavailableRef() {
 export function getPersistenceLimitedMessage() {
     return persistenceLimitedMessage;
 }
- return errorMessage;
-}
-
-export function getAppPowerSyncBootstrappedRef() {
-    return hasBootstrappedCollection;
-}
-
-export function getAppPowerSyncPersistenceUnavailableRef() {
-    return persistenceUnavailable;
-}
-
-export function getPersistenceLimitedMessage() {
-    return persistenceLimitedMessage;
-}

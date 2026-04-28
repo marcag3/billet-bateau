@@ -1,4 +1,5 @@
 import { computed, toValue } from 'vue';
+import { ulid } from 'ulid';
 import { defineRelations } from '../entity.relations';
 import { defineModel } from '../model.definition';
 import { useEntityList } from '../entity.queries';
@@ -100,7 +101,7 @@ export function useBoats() {
         const parsedUserId = Number.parseInt(currentUserIdRef.value, 10);
         const userId = Number.isFinite(parsedUserId) ? parsedUserId : null;
 
-        const id = crypto.randomUUID();
+        const id = ulid();
         const now = new Date().toISOString();
         const name = String(input.name).trim();
         const notes = String(input.notes ?? '').trim();
@@ -122,7 +123,7 @@ export function useBoats() {
             updated_at: now,
         });
 
-        const linkId = crypto.randomUUID();
+        const linkId = ulid();
         boatProgramCollection.insert({
             id: linkId,
             boat_id: id,

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\GuideFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,9 +14,7 @@ class Guide extends Model
     /** @use HasFactory<GuideFactory> */
     use HasFactory;
 
-    public $incrementing = false;
-
-    protected $keyType = 'string';
+    use HasUlids;
 
     protected $fillable = [
         'id',

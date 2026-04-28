@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('check_ins', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('booking_id')->unique()->constrained('bookings')->cascadeOnDelete();
-            $table->foreignUuid('voyage_id')->constrained('voyages')->cascadeOnDelete();
+            $table->ulid('id')->primary();
+            $table->foreignUlid('booking_id')->unique()->constrained('bookings')->cascadeOnDelete();
+            $table->foreignUlid('voyage_id')->constrained('voyages')->cascadeOnDelete();
             $table->text('notes')->nullable();
             $table->timestamps();
 

@@ -33,7 +33,7 @@ final class BoatPatchData extends Data
             'name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'notes' => ['sometimes', 'nullable', 'string'],
             'capacity' => ['sometimes', 'integer', 'min:0'],
-            'boat_type_id' => ['sometimes', 'nullable', 'uuid', 'exists:boat_types,id'],
+            'boat_type_id' => ['sometimes', 'nullable', 'ulid', 'exists:boat_types,id'],
         ];
     }
 }

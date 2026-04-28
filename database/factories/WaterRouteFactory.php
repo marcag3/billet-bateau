@@ -27,7 +27,7 @@ class WaterRouteFactory extends Factory
         ], srid: 4326);
 
         return [
-            'id' => (string) Str::uuid(),
+            'id' => (string) Str::ulid(),
             'program_id' => Program::factory(),
             'name' => fake()->words(3, true),
             'trace' => $trace,

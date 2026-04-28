@@ -1,4 +1,5 @@
 import { computed } from 'vue';
+import { ulid } from 'ulid';
 import { addressHasAny, buildAddressInsertRow } from '../addresses/addresses.model';
 import { defineRelations } from '../entity.relations';
 import { defineModel } from '../model.definition';
@@ -98,11 +99,11 @@ export function usePrograms() {
         const parsedUserId = Number.parseInt(currentUserIdRef.value, 10);
         const userId = Number.isFinite(parsedUserId) ? parsedUserId : null;
 
-        const id = crypto.randomUUID();
+        const id = ulid();
         const now = new Date().toISOString();
         const themeColor = normalizeThemeColor(input.themeColor);
         const address = input.address ?? {};
-        const addressId = crypto.randomUUID();
+        const addressId = ulid();
         const hasAddress = addressHasAny(address);
 
         if (hasAddress) {
@@ -183,7 +184,7 @@ export function usePrograms() {
                     draft.updated_at = now;
                 });
             } else {
-                const newAddressId = crypto.randomUUID();
+                const newAddressId = ulid();
                 addressesCollection.insert(buildAddressInsertRow(newAddressId, address, now));
                 nextAddressId = newAddressId;
             }

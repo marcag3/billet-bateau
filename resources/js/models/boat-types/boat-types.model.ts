@@ -1,4 +1,5 @@
 import { computed } from 'vue';
+import { ulid } from 'ulid';
 import { defineRelations } from '../entity.relations';
 import { defineModel } from '../model.definition';
 import { useEntityList } from '../entity.queries';
@@ -61,7 +62,7 @@ export function useBoatTypes() {
         const parsedUserId = Number.parseInt(currentUserIdRef.value, 10);
         const userId = Number.isFinite(parsedUserId) ? parsedUserId : null;
 
-        const id = crypto.randomUUID();
+        const id = ulid();
         const now = new Date().toISOString();
         const trimmed = String(name).trim();
 

@@ -20,7 +20,7 @@ class BookingFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => (string) Str::uuid(),
+            'id' => (string) Str::ulid(),
             'program_id' => Program::factory(),
             'contact_name' => fake()->name(),
             'contact_email' => fake()->safeEmail(),
