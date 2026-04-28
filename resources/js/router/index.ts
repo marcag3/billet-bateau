@@ -19,7 +19,7 @@ const programScopeChildren: RouteRecordRaw[] = [
         }),
     },
     {
-        path: 'contexts/edit',
+        path: 'edit-context',
         component: () => import('../layouts/AppProgramEditContextLayout.vue'),
         meta: {
             ...scopedProgramMeta,
@@ -102,7 +102,7 @@ const programScopeChildren: RouteRecordRaw[] = [
         ],
     },
     {
-        path: 'contexts/control-panel',
+        path: 'control-context',
         component: () => import('../layouts/AppProgramControlContextLayout.vue'),
         meta: {
             ...scopedProgramMeta,
@@ -110,6 +110,14 @@ const programScopeChildren: RouteRecordRaw[] = [
         children: [
             {
                 path: '',
+                meta: scopedProgramMeta,
+                redirect: (to) => ({
+                    name: 'programs.control',
+                    params: { programId: String(to.params.programId ?? '') },
+                }),
+            },
+            {
+                path: 'control',
                 name: 'programs.control',
                 component: () => import('../pages/AppProgramControlPanelPage.vue'),
                 meta: scopedProgramMeta,
@@ -117,7 +125,7 @@ const programScopeChildren: RouteRecordRaw[] = [
         ],
     },
     {
-        path: 'contexts/checkin',
+        path: 'checkin-context',
         component: () => import('../layouts/AppProgramCheckinContextLayout.vue'),
         meta: {
             ...scopedProgramMeta,
@@ -125,6 +133,14 @@ const programScopeChildren: RouteRecordRaw[] = [
         children: [
             {
                 path: '',
+                meta: scopedProgramMeta,
+                redirect: (to) => ({
+                    name: 'programs.checkin',
+                    params: { programId: String(to.params.programId ?? '') },
+                }),
+            },
+            {
+                path: 'checkin',
                 name: 'programs.checkin',
                 component: () => import('../pages/AppProgramCheckinManagerPage.vue'),
                 meta: scopedProgramMeta,
