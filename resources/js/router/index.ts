@@ -82,6 +82,12 @@ const programScopeChildren: RouteRecordRaw[] = [
                 meta: scopedProgramMeta,
             },
             {
+                path: 'ticket-types',
+                name: 'ticket-types.list',
+                component: () => import('../pages/AppTicketTypesPage.vue'),
+                meta: scopedProgramMeta,
+            },
+            {
                 path: 'reports',
                 name: 'reports',
                 component: () => import('../pages/AppReportsPage.vue'),

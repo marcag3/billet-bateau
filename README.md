@@ -49,7 +49,7 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 
 - [x] Backend + sync: title, price, PWYC, min/max per purchase
 - [x] Store **per-trip caps** in **`trip_inventory_caps`** (JSON map of trip id → cap); enforcement logic still open
-- [ ] Admin UI (Quasar) to manage ticket types for the selected program
+- [x] Admin UI (Quasar) to manage ticket types for the selected program
 - [ ] Server-side inventory enforcement against caps per trip
 
 ### Companion / ratio rules
@@ -94,7 +94,7 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 - [ ] Control context: ops board (today: **placeholder** `AppProgramControlPanelPage`)
 - [ ] Start **départ** modal: multi boats, multi guides, notes
 - [ ] Check-in context: manifest workflows (today: **placeholder** `AppProgramCheckinManagerPage`)
-- [ ] Ticket types screens (sync-ready models exist without pages)
+- [x] Ticket types screens (sync-ready models exist without pages)
 
 ### Fleet and sequencing notes
 
