@@ -94,6 +94,12 @@ class ProgramControllerTest extends TestCase
 
         $program = Program::query()->with('address')->findOrFail($id);
         $this->assertCount(1, $program->getMedia('images'));
+
+        $this->assertDatabaseHas('media', [
+            'model_id' => $id,
+            'program_id' => $id,
+            'model_type' => Program::class,
+        ]);
     }
 
     public function test_program_user_pivot_allows_multiple_users(): void
@@ -153,6 +159,12 @@ class ProgramControllerTest extends TestCase
 
         $program->refresh();
         $this->assertCount(1, $program->getMedia('images'));
+
+        $this->assertDatabaseHas('media', [
+            'model_id' => $program->getKey(),
+            'program_id' => $program->getKey(),
+            'model_type' => Program::class,
+        ]);
     }
 
     public function test_store_media_appends_images(): void
@@ -173,6 +185,12 @@ class ProgramControllerTest extends TestCase
 
         $program->refresh();
         $this->assertCount(1, $program->getMedia('images'));
+
+        $this->assertDatabaseHas('media', [
+            'model_id' => $program->getKey(),
+            'program_id' => $program->getKey(),
+            'model_type' => Program::class,
+        ]);
     }
 
     public function test_guest_cannot_list_program_media(): void
@@ -196,6 +214,12 @@ class ProgramControllerTest extends TestCase
                 'images' => [$image],
             ])
             ->assertOk();
+
+        $this->assertDatabaseHas('media', [
+            'model_id' => $program->getKey(),
+            'program_id' => $program->getKey(),
+            'model_type' => Program::class,
+        ]);
 
         $this->actingAs($user)
             ->getJson('/api/media/program/'.$program->getKey())

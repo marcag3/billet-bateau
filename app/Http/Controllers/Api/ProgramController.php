@@ -7,6 +7,7 @@ use App\Data\Programs\ProgramStoreData;
 use App\Http\Controllers\Controller;
 use App\Models\Address;
 use App\Models\Program;
+use App\Support\MediaProgramContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,17 +30,11 @@ class ProgramController extends Controller
 
             $themeColor = strtoupper($data->theme_color);
 
-            $addressId = null;
-            if ($data->address !== null && $data->address->hasAnyNonEmpty()) {
-                $address = Address::query()->create($data->address->toRow());
-                $addressId = $address->id;
-            }
-
             /** @var Program $program */
             $program = Program::query()->create([
                 'id' => $id,
                 'user_id' => $user->getAuthIdentifier(),
-                'address_id' => $addressId,
+                'address_id' => null,
                 'name' => $data->name,
                 'description' => $data->description,
                 'theme_color' => $themeColor,
@@ -48,10 +43,25 @@ class ProgramController extends Controller
                 'slug' => $data->slug,
             ]);
 
+            $addressId = null;
+            if ($data->address !== null && $data->address->hasAnyNonEmpty()) {
+                $addressId = (string) Str::ulid();
+                Address::query()->create(array_merge(
+                    $data->address->toRow(),
+                    [
+                        'id' => $addressId,
+                        'program_id' => $program->getKey(),
+                    ],
+                ));
+                $program->update(['address_id' => $addressId]);
+            }
+
             if ($data->images !== null) {
-                foreach ($data->images as $file) {
-                    $program->addMedia($file)->toMediaCollection('images');
-                }
+                MediaProgramContext::run((string) $program->getKey(), function () use ($data, $program): void {
+                    foreach ($data->images as $file) {
+                        $program->addMedia($file)->toMediaCollection('images');
+                    }
+                });
             }
 
             // First manager on the program; additional managers require an invite (pivot row).

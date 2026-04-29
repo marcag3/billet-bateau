@@ -44,11 +44,11 @@
 
             <AppEntityList>
                 <AppEmptyListRow
-                    :show="boatTypes.length === 0"
+                    :show="boatTypesForProgram.length === 0"
                     :message="t('boatTypesList.empty')"
                 />
                 <q-item
-                    v-for="bt in boatTypes"
+                    v-for="bt in boatTypesForProgram"
                     :key="bt.id"
                     class="q-pa-md"
                     style="align-items: flex-start"
@@ -110,7 +110,8 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate';
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { createBoatTypeFormSchema, type BoatTypeFormValues } from '../models/boat-types/boat-types.validation';
@@ -139,6 +140,14 @@ import AppEntityList from '../components/ui/AppEntityList.vue';
 import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
 
 const BOAT_TYPE_MODEL = 'App\\Models\\BoatType';
+
+const route = useRoute();
+const programId = computed(() => String(route.params.programId ?? ''));
+
+const boatTypesForProgram = computed(() => {
+    const pid = programId.value;
+    return (boatTypes.value ?? []).filter((bt) => bt != null && String(bt.program_id) === pid);
+});
 
 const { t } = useI18n();
 const $q = useQuasar();
@@ -242,7 +251,7 @@ function commitName(bt: Record<string, unknown>) {
 const onCreateSubmit = handleSubmit(async (values: BoatTypeFormValues) => {
     await runWithNotify(
         async () => {
-            await createBoatTypeRow(values.name);
+            await createBoatTypeRow(values.name, programId.value);
             resetForm();
         },
         { successMessage: t('boatTypesList.created'), errorGeneric: t('boatTypesList.errorGeneric') },

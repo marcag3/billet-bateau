@@ -21,7 +21,7 @@ import {
 } from './app.powersync-schema';
 import { translate } from '../utilities/i18n';
 
-const DB_FILENAME = 'billbateau-app-v12.db';
+const DB_FILENAME = 'billbateau-app-v13.db';
 
 const loadFailedMessage = translate('sync.unableLoadSync');
 const persistenceLimitedMessage = translate('sync.persistenceLimited');
@@ -142,6 +142,9 @@ const tableByName = {
 const programSyncScopeIdRef = ref('');
 
 /** @type {{ unsubscribe: () => void } | null} */
+let userScopeSubscription = null;
+
+/** @type {{ unsubscribe: () => void } | null} */
 let programScopeSubscription = null;
 
 /**
@@ -161,6 +164,23 @@ export async function setProgramSyncScopeId(programId) {
     programSyncScopeIdRef.value =
         programId == null || programId === '' ? '' : String(programId).trim();
     await resyncProgramScopeSubscription();
+}
+
+/**
+ * @returns {Promise<void>}
+ */
+async function resyncUserScopeSubscription() {
+    const db = powerSyncDbRef.value;
+    if (!db) {
+        return;
+    }
+
+    if (userScopeSubscription) {
+        userScopeSubscription.unsubscribe();
+        userScopeSubscription = null;
+    }
+
+    userScopeSubscription = await db.syncStream('user_scope').subscribe();
 }
 
 /**
@@ -310,6 +330,7 @@ export async function bootstrapAppPowerSync() {
 
             await db.connect(connector);
 
+            await resyncUserScopeSubscription();
             await resyncProgramScopeSubscription();
 
             try {
@@ -333,6 +354,10 @@ export async function bootstrapAppPowerSync() {
         } catch (error) {
             bootstrapPromise = null;
             hasBootstrappedCollection.value = false;
+            if (userScopeSubscription) {
+                userScopeSubscription.unsubscribe();
+                userScopeSubscription = null;
+            }
             if (programScopeSubscription) {
                 programScopeSubscription.unsubscribe();
                 programScopeSubscription = null;

@@ -1,68 +1,71 @@
 # Sync Streams (edition 3). Included via service.yaml → sync_config.path.
 # See: https://docs.powersync.com/sync/streams/overview
 #
-# Staff shared data (no user_id visibility scoping). Global streams auto-subscribe;
-# program_scope syncs roster boats + pivot for a client-selected program_id.
+# Programs are visible only to the owner (programs.user_id) or members (program_user).
+# user_scope auto-subscribes shared tables; program_scope adds detail rows for selected program_id.
 
 config:
   edition: 3
 
 streams:
-  global_boat_types:
+  user_scope:
     auto_subscribe: true
-    query: SELECT * FROM boat_types
+    with:
+      accessible_program_ids: |
+        SELECT id AS program_id FROM programs WHERE user_id = auth.user_id()
+        UNION
+        SELECT program_id FROM program_user WHERE user_id = auth.user_id()
+    queries:
+      - |
+        SELECT * FROM programs
+        WHERE id IN accessible_program_ids
+      - |
+        SELECT * FROM addresses
+        WHERE program_id IN accessible_program_ids
+      - |
+        SELECT * FROM boat_types
+        WHERE program_id IN accessible_program_ids
+      - |
+        SELECT * FROM media
+        WHERE program_id IN accessible_program_ids
 
-  global_addresses:
-    auto_subscribe: true
-    query: SELECT * FROM addresses
-
-  global_media:
-    auto_subscribe: true
-    query: SELECT * FROM media
-
-  global_programs:
-    auto_subscribe: true
-    query: SELECT * FROM programs
-
-  # Client supplies program_id; JWT proves staff session. IN staff_program_ids ties subscription to auth (PowerSync requirement).
-  # Shared staff data: programs are not scoped by row user_id — any authenticated bearer gets all program ids in the CTE.
   program_scope:
     with:
-      staff_program_ids: |
-        SELECT id AS program_id
-        FROM programs
-        WHERE auth.user_id() = auth.user_id()
+      accessible_program_ids: |
+        SELECT id AS program_id FROM programs WHERE user_id = auth.user_id()
+        UNION
+        SELECT program_id FROM program_user WHERE user_id = auth.user_id()
     queries:
       - |
         SELECT * FROM boat_program
         WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN staff_program_ids
+          AND program_id IN accessible_program_ids
       - |
         SELECT * FROM boats
         WHERE id IN (
           SELECT boat_id FROM boat_program
           WHERE program_id = subscription.parameter('program_id')
-            AND program_id IN staff_program_ids
+            AND program_id IN accessible_program_ids
         )
       - |
         SELECT * FROM trips
         WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN staff_program_ids
+          AND program_id IN accessible_program_ids
       - |
         SELECT * FROM water_routes
         WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN staff_program_ids
+          AND program_id IN accessible_program_ids
       - |
         SELECT * FROM template_days
         WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN staff_program_ids
+          AND program_id IN accessible_program_ids
       - |
         SELECT template_day_slots.*
         FROM template_day_slots
         INNER JOIN template_days ON template_days.id = template_day_slots.template_day_id
         WHERE template_days.program_id = subscription.parameter('program_id')
-          AND template_days.program_id IN staff_program_ids
+          AND template_days.program_id IN accessible_program_ids
       - |
         SELECT * FROM template_day_dates
         WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN staff_program_ids
+          AND program_id IN accessible_program_ids

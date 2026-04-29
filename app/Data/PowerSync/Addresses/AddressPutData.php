@@ -14,6 +14,7 @@ use Spatie\LaravelData\Data;
 final class AddressPutData extends Data
 {
     public function __construct(
+        public string $program_id,
         #[WithCast(TrimmedNullableStringCast::class)]
         public ?string $line_1 = null,
         #[WithCast(TrimmedNullableStringCast::class)]
@@ -32,6 +33,7 @@ final class AddressPutData extends Data
     public static function rules(): array
     {
         return [
+            'program_id' => ['required', 'ulid', 'exists:programs,id'],
             'line_1' => ['nullable', 'string', 'max:255'],
             'line_2' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:120'],

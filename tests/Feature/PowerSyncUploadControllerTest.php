@@ -109,20 +109,28 @@ class PowerSyncUploadControllerTest extends TestCase
             'crud' => [
                 [
                     'op' => 'PUT',
-                    'type' => 'addresses',
-                    'id' => $addressId,
-                    'data' => [
-                        'line_1' => 'Pier 2',
-                        'city' => 'Seaside',
-                    ],
-                ],
-                [
-                    'op' => 'PUT',
                     'type' => 'programs',
                     'id' => $programId,
                     'data' => [
                         'name' => 'With address',
                         'theme_color' => '#111111',
+                    ],
+                ],
+                [
+                    'op' => 'PUT',
+                    'type' => 'addresses',
+                    'id' => $addressId,
+                    'data' => [
+                        'program_id' => $programId,
+                        'line_1' => 'Pier 2',
+                        'city' => 'Seaside',
+                    ],
+                ],
+                [
+                    'op' => 'PATCH',
+                    'type' => 'programs',
+                    'id' => $programId,
+                    'data' => [
                         'address_id' => $addressId,
                     ],
                 ],
@@ -137,6 +145,7 @@ class PowerSyncUploadControllerTest extends TestCase
 
         $this->assertDatabaseHas('addresses', [
             'id' => $addressId,
+            'program_id' => $programId,
             'line_1' => 'Pier 2',
             'city' => 'Seaside',
         ]);
@@ -151,13 +160,15 @@ class PowerSyncUploadControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $addressId = (string) Str::ulid();
+        $program = Program::factory()->for($user)->create([
+            'address_id' => null,
+        ]);
         Address::query()->create([
             'id' => $addressId,
+            'program_id' => $program->getKey(),
             'line_1' => 'Old dock',
         ]);
-        $program = Program::factory()->for($user)->create([
-            'address_id' => $addressId,
-        ]);
+        $program->update(['address_id' => $addressId]);
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -270,19 +281,21 @@ class PowerSyncUploadControllerTest extends TestCase
         $this->assertDatabaseHas('programs', ['id' => $program->getKey()]);
     }
 
-    public function test_address_delete_by_authenticated_user_unlinks_foreign_program_and_removes_orphan(): void
+    public function test_address_delete_forbids_non_member_even_when_address_is_shared(): void
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
         $addressId = (string) Str::ulid();
+        $ownersProgram = Program::factory()->for($owner)->create([
+            'address_id' => null,
+        ]);
         Address::query()->create([
             'id' => $addressId,
+            'program_id' => $ownersProgram->getKey(),
             'line_1' => 'Owners pier',
             'city' => 'Baytown',
         ]);
-        $ownersProgram = Program::factory()->for($owner)->create([
-            'address_id' => $addressId,
-        ]);
+        $ownersProgram->update(['address_id' => $addressId]);
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -292,11 +305,11 @@ class PowerSyncUploadControllerTest extends TestCase
                     'id' => $addressId,
                 ],
             ],
-        ])->assertOk();
+        ])->assertForbidden();
 
-        $this->assertDatabaseMissing('addresses', ['id' => $addressId]);
+        $this->assertDatabaseHas('addresses', ['id' => $addressId]);
         $ownersProgram->refresh();
-        $this->assertNull($ownersProgram->address_id);
+        $this->assertSame($addressId, $ownersProgram->address_id);
     }
 
     public function test_put_program_uses_suffix_when_slug_conflicts_globally(): void
@@ -349,6 +362,7 @@ class PowerSyncUploadControllerTest extends TestCase
     public function test_put_creates_boat_type_for_current_user(): void
     {
         $user = User::factory()->create();
+        $program = Program::factory()->for($user)->create();
         $id = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -358,6 +372,7 @@ class PowerSyncUploadControllerTest extends TestCase
                     'type' => 'boat_types',
                     'id' => $id,
                     'data' => [
+                        'program_id' => $program->getKey(),
                         'name' => 'RIB',
                     ],
                 ],
@@ -367,6 +382,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $this->assertDatabaseHas('boat_types', [
             'id' => $id,
             'user_id' => $user->getAuthIdentifier(),
+            'program_id' => $program->getKey(),
             'name' => 'RIB',
         ]);
     }
@@ -522,7 +538,7 @@ class PowerSyncUploadControllerTest extends TestCase
         $this->assertDatabaseMissing('boats', ['id' => $boat->getKey()]);
     }
 
-    public function test_put_allows_authenticated_user_to_overwrite_another_users_boat_type(): void
+    public function test_put_forbids_non_member_from_overwriting_another_users_boat_type(): void
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
@@ -534,17 +550,20 @@ class PowerSyncUploadControllerTest extends TestCase
                     'op' => 'PUT',
                     'type' => 'boat_types',
                     'id' => $boatType->getKey(),
-                    'data' => ['name' => 'Hijacked'],
+                    'data' => [
+                        'program_id' => $boatType->program_id,
+                        'name' => 'Hijacked',
+                    ],
                 ],
             ],
-        ])->assertOk();
+        ])->assertForbidden();
 
         $boatType->refresh();
-        $this->assertSame('Hijacked', $boatType->name);
-        $this->assertSame((int) $intruder->getAuthIdentifier(), (int) $boatType->user_id);
+        $this->assertSame('Owners', $boatType->name);
+        $this->assertSame((int) $owner->getAuthIdentifier(), (int) $boatType->user_id);
     }
 
-    public function test_delete_allows_authenticated_user_to_remove_another_users_boat(): void
+    public function test_delete_forbids_non_member_from_removing_another_users_boat(): void
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
@@ -558,9 +577,9 @@ class PowerSyncUploadControllerTest extends TestCase
                     'id' => $boat->getKey(),
                 ],
             ],
-        ])->assertOk();
+        ])->assertForbidden();
 
-        $this->assertDatabaseMissing('boats', ['id' => $boat->getKey()]);
+        $this->assertDatabaseHas('boats', ['id' => $boat->getKey()]);
     }
 
     public function test_put_creates_boat_program_link(): void

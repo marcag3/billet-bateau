@@ -15,6 +15,7 @@ use Spatie\LaravelData\Optional;
 final class AddressPatchData extends Data
 {
     public function __construct(
+        public string|Optional|null $program_id = new Optional,
         #[WithCast(TrimmedNullableStringCast::class)]
         public string|Optional|null $line_1 = new Optional,
         #[WithCast(TrimmedNullableStringCast::class)]
@@ -33,6 +34,7 @@ final class AddressPatchData extends Data
     public static function rules(): array
     {
         return [
+            'program_id' => ['sometimes', 'nullable', 'ulid', 'exists:programs,id'],
             'line_1' => ['sometimes', 'nullable', 'string', 'max:255'],
             'line_2' => ['sometimes', 'nullable', 'string', 'max:255'],
             'city' => ['sometimes', 'nullable', 'string', 'max:120'],

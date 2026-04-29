@@ -234,6 +234,14 @@ final class ApplyProgramPowerSyncCrudAction
             ]);
         }
 
+        $address = Address::query()->whereKey($value)->first();
+
+        if ($address !== null && $address->program_id !== null && $address->program_id !== $programId) {
+            throw ValidationException::withMessages([
+                'data.address_id' => 'Address belongs to a different program.',
+            ]);
+        }
+
         return $value;
     }
 }

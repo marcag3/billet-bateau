@@ -6,6 +6,8 @@ use App\Data\PowerSync\BoatTypes\BoatTypePatchData;
 use App\Data\PowerSync\BoatTypes\BoatTypePutData;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Models\BoatType;
+use App\Models\Program;
+use Illuminate\Auth\Access\AuthorizationException;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Spatie\LaravelData\Optional;
 
@@ -25,19 +27,37 @@ final class ApplyBoatTypePowerSyncCrudAction
 
         if ($op === PowerSyncCrudEntryData::OP_DELETE) {
             $boatType = BoatType::query()->whereKey($id)->first();
-            $boatType?->delete();
+
+            if ($boatType === null) {
+                return;
+            }
+
+            $program = Program::query()->whereKey($boatType->program_id)->first();
+
+            if ($program === null || ! $program->userCanManage($userId)) {
+                throw new AuthorizationException;
+            }
+
+            $boatType->delete();
 
             return;
         }
 
         if ($op === PowerSyncCrudEntryData::OP_PUT) {
             $data = BoatTypePutData::validateAndCreate($raw);
+            $program = Program::query()->whereKey($data->program_id)->first();
+
+            if ($program === null || ! $program->userCanManage($userId)) {
+                throw new AuthorizationException;
+            }
+
             $name = $data->name;
 
             BoatType::query()->updateOrCreate(
                 ['id' => $id],
                 [
                     'user_id' => $userId,
+                    'program_id' => $data->program_id,
                     'name' => ($name !== null && $name !== '') ? $name : 'Untitled',
                 ],
             );
@@ -51,6 +71,12 @@ final class ApplyBoatTypePowerSyncCrudAction
 
             if ($boatType === null) {
                 return;
+            }
+
+            $program = Program::query()->whereKey($boatType->program_id)->first();
+
+            if ($program === null || ! $program->userCanManage($userId)) {
+                throw new AuthorizationException;
             }
 
             if (! ($data->name instanceof Optional) && $data->name !== '') {

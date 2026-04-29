@@ -11,6 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
+/**
+ * @property string $program_id
+ */
 class BoatType extends Model implements HasMedia
 {
     /** @use HasFactory<BoatTypeFactory> */
@@ -22,6 +25,7 @@ class BoatType extends Model implements HasMedia
     protected $fillable = [
         'id',
         'user_id',
+        'program_id',
         'name',
         'created_at',
         'updated_at',
@@ -44,6 +48,14 @@ class BoatType extends Model implements HasMedia
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return BelongsTo<Program, $this>
+     */
+    public function program(): BelongsTo
+    {
+        return $this->belongsTo(Program::class, 'program_id');
     }
 
     public function boats(): HasMany

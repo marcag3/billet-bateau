@@ -2,25 +2,28 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Media\ResolveMediaAttachableAction;
 use App\Data\Media\MediaItemData;
 use App\Http\Controllers\Controller;
-use App\Models\BoatType;
-use App\Models\Program;
+use App\Models\Media;
+use App\Support\MediaProgramContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class MediaController extends Controller
 {
+    public function __construct(
+        private readonly ResolveMediaAttachableAction $resolveMediaAttachable,
+    ) {}
+
     public function index(string $type, string $id): JsonResponse
     {
-        $model = $this->resolveHasMedia($type, $id);
+        $resolved = $this->resolveMediaAttachable->run($type, $id);
 
-        $this->authorize('update', $model);
+        $this->authorize('update', $resolved->program);
 
-        $items = $model->getMedia('images');
+        $items = $resolved->attachable->getMedia('images');
 
         /** @var list<MediaItemData> $data */
         $data = $items->map(
@@ -34,9 +37,9 @@ class MediaController extends Controller
 
     public function store(Request $request, string $type, string $id): JsonResponse
     {
-        $model = $this->resolveHasMedia($type, $id);
+        $resolved = $this->resolveMediaAttachable->run($type, $id);
 
-        $this->authorize('update', $model);
+        $this->authorize('update', $resolved->program);
 
         $validated = $request->validate([
             'images' => ['required', 'array', 'min:1', 'max:12'],
@@ -46,10 +49,12 @@ class MediaController extends Controller
         /** @var list<Media> $uploaded */
         $uploaded = [];
 
-        DB::transaction(function () use ($model, $validated, &$uploaded): void {
-            foreach ($validated['images'] as $file) {
-                $uploaded[] = $model->addMedia($file)->toMediaCollection('images');
-            }
+        MediaProgramContext::run($resolved->programId, function () use ($resolved, $validated, &$uploaded): void {
+            DB::transaction(function () use ($resolved, $validated, &$uploaded): void {
+                foreach ($validated['images'] as $file) {
+                    $uploaded[] = $resolved->attachable->addMedia($file)->toMediaCollection('images');
+                }
+            });
         });
 
         $data = array_map(
@@ -60,14 +65,5 @@ class MediaController extends Controller
         return response()->json([
             'data' => $data,
         ]);
-    }
-
-    private function resolveHasMedia(string $type, string $id): HasMedia
-    {
-        return match ($type) {
-            'program' => Program::query()->findOrFail($id),
-            'boat_type' => BoatType::query()->findOrFail($id),
-            default => abort(404),
-        };
     }
 }

@@ -11,13 +11,15 @@ export function addressHasAny(address) {
 
 /**
  * @param {string} addressId
+ * @param {string} programId
  * @param {Record<string, string | undefined>} address
  * @param {string} now
  * @returns {Record<string, unknown>}
  */
-export function buildAddressInsertRow(addressId, address, now) {
+export function buildAddressInsertRow(addressId, programId, address, now) {
     return {
         id: addressId,
+        program_id: programId,
         line_1: typeof address.line_1 === 'string' ? address.line_1.trim() || null : null,
         line_2: typeof address.line_2 === 'string' ? address.line_2.trim() || null : null,
         city: typeof address.city === 'string' ? address.city.trim() || null : null,

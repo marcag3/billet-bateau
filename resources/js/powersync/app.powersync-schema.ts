@@ -16,6 +16,7 @@ const programsTable = new Table({
 
 const addressesTable = new Table({
     id: column.text,
+    program_id: column.text,
     line_1: column.text,
     line_2: column.text,
     city: column.text,
@@ -27,6 +28,7 @@ const addressesTable = new Table({
 
 const boatTypesTable = new Table({
     user_id: column.integer,
+    program_id: column.text,
     name: column.text,
     created_at: column.text,
     updated_at: column.text,
@@ -101,6 +103,7 @@ const templateDayDatesTable = new Table({
 
 const mediaTable = new Table({
     id: column.integer,
+    program_id: column.text,
     model_type: column.text,
     model_id: column.text,
     uuid: column.text,

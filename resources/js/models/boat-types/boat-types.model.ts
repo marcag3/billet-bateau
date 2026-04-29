@@ -16,7 +16,7 @@ import {
 export const boatTypesModelDefinition = defineModel({
     name: 'boat_types',
     collectionId: 'boat_types',
-    persistenceSchemaVersion: 1,
+    persistenceSchemaVersion: 2,
     pickUpdatePayload: (changes) => ({ ...changes }),
     orderBy: [
         { key: 'updated_at', direction: 'desc' },
@@ -49,14 +49,20 @@ export function useBoatTypes() {
 
     /**
      * @param {string} name
+     * @param {string} programId
      * @returns {Promise<string>} boat type id
      */
-    async function createBoatTypeRow(name) {
+    async function createBoatTypeRow(name, programId) {
         await ensureBoatTypesReady();
 
         const collection = boatTypesCollectionRef.value;
         if (!collection) {
             throw new Error('Boat types collection is not ready.');
+        }
+
+        const pid = String(programId ?? '').trim();
+        if (pid.length === 0) {
+            throw new Error('Program is required to create a boat type.');
         }
 
         const parsedUserId = Number.parseInt(currentUserIdRef.value, 10);
@@ -69,6 +75,7 @@ export function useBoatTypes() {
         collection.insert({
             id,
             user_id: userId,
+            program_id: pid,
             name: trimmed.length > 0 ? trimmed : 'Untitled',
             created_at: now,
             updated_at: now,

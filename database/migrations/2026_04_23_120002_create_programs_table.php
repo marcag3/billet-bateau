@@ -22,5 +22,9 @@ return new class extends Migration
 
             $table->index(['user_id', 'updated_at']);
         });
+
+        Schema::table('addresses', function (Blueprint $table): void {
+            $table->foreignUlid('program_id')->constrained('programs')->cascadeOnDelete();
+        });
     }
 };

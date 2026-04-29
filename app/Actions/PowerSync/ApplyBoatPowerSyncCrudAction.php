@@ -7,6 +7,7 @@ use App\Data\PowerSync\Boats\BoatPutData;
 use App\Data\PowerSync\Boats\BoatPutPayloadResolver;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Models\Boat;
+use Illuminate\Auth\Access\AuthorizationException;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Spatie\LaravelData\Optional;
 
@@ -26,7 +27,14 @@ final class ApplyBoatPowerSyncCrudAction
 
         if ($op === PowerSyncCrudEntryData::OP_DELETE) {
             $boat = Boat::query()->whereKey($id)->first();
-            $boat?->delete();
+
+            if ($boat === null) {
+                return;
+            }
+
+            $this->ensureUserMayMutateBoat($boat, $userId);
+
+            $boat->delete();
 
             return;
         }
@@ -40,7 +48,7 @@ final class ApplyBoatPowerSyncCrudAction
 
         if ($op === PowerSyncCrudEntryData::OP_PATCH) {
             $dto = BoatPatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $dto);
+            $this->applyPatch($id, $dto, $userId);
 
             return;
         }
@@ -51,6 +59,11 @@ final class ApplyBoatPowerSyncCrudAction
     private function applyPut(string $id, BoatPutData $data, int $userId): void
     {
         $existing = Boat::query()->whereKey($id)->first();
+
+        if ($existing !== null) {
+            $this->ensureUserMayMutateBoat($existing, $userId);
+        }
+
         $resolved = BoatPutPayloadResolver::resolve($data, $existing);
 
         Boat::query()->updateOrCreate(
@@ -65,13 +78,15 @@ final class ApplyBoatPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, BoatPatchData $data): void
+    private function applyPatch(string $id, BoatPatchData $data, int $userId): void
     {
         $boat = Boat::query()->whereKey($id)->first();
 
         if ($boat === null) {
             return;
         }
+
+        $this->ensureUserMayMutateBoat($boat, $userId);
 
         if (! ($data->name instanceof Optional)) {
             if ($data->name !== null && $data->name !== '') {
@@ -92,5 +107,22 @@ final class ApplyBoatPowerSyncCrudAction
         }
 
         $boat->save();
+    }
+
+    private function ensureUserMayMutateBoat(Boat $boat, int $userId): void
+    {
+        if ($boat->user_id !== null && (int) $boat->user_id === $userId) {
+            return;
+        }
+
+        $programs = $boat->programs()->get();
+
+        foreach ($programs as $program) {
+            if ($program->userCanManage($userId)) {
+                return;
+            }
+        }
+
+        throw new AuthorizationException;
     }
 }

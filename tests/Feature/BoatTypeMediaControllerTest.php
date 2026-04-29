@@ -30,7 +30,7 @@ class BoatTypeMediaControllerTest extends TestCase
             ->assertUnprocessable();
     }
 
-    public function test_authenticated_user_can_upload_media_for_another_users_boat_type(): void
+    public function test_user_without_program_access_cannot_upload_boat_type_media(): void
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
@@ -38,7 +38,22 @@ class BoatTypeMediaControllerTest extends TestCase
 
         $this->actingAs($other)->post('/api/media/boat_type/'.$boatType->getKey(), [
             'images' => [UploadedFile::fake()->image('a.jpg', 10, 10)],
-        ])->assertOk();
+        ])->assertForbidden();
+
+        $this->assertSame(0, $boatType->fresh()->getMedia('images')->count());
+    }
+
+    public function test_collaborator_linked_via_program_user_can_upload_boat_type_media(): void
+    {
+        $owner = User::factory()->create();
+        $collaborator = User::factory()->create();
+        $boatType = BoatType::factory()->for($owner)->create();
+        $boatType->program->users()->syncWithoutDetaching([(int) $collaborator->getAuthIdentifier()]);
+
+        $this->actingAs($collaborator)->post('/api/media/boat_type/'.$boatType->getKey(), [
+            'images' => [UploadedFile::fake()->image('collab.jpg', 10, 10)],
+        ])->assertOk()
+            ->assertJsonPath('data.0.name', 'collab');
 
         $this->assertSame(1, $boatType->fresh()->getMedia('images')->count());
     }
@@ -54,6 +69,12 @@ class BoatTypeMediaControllerTest extends TestCase
             ->assertJsonPath('data.0.name', 'deck');
 
         $this->assertSame(1, $boatType->fresh()->getMedia('images')->count());
+
+        $this->assertDatabaseHas('media', [
+            'model_id' => $boatType->getKey(),
+            'program_id' => $boatType->program_id,
+            'model_type' => BoatType::class,
+        ]);
     }
 
     public function test_guest_cannot_list_boat_type_media(): void
@@ -63,7 +84,7 @@ class BoatTypeMediaControllerTest extends TestCase
         $this->getJson('/api/media/boat_type/'.$boatType->getKey())->assertUnauthorized();
     }
 
-    public function test_authenticated_user_can_list_another_users_boat_type_media(): void
+    public function test_user_without_program_access_cannot_list_boat_type_media(): void
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
@@ -74,6 +95,21 @@ class BoatTypeMediaControllerTest extends TestCase
         ])->assertOk();
 
         $this->actingAs($other)->getJson('/api/media/boat_type/'.$boatType->getKey())
+            ->assertForbidden();
+    }
+
+    public function test_collaborator_can_list_boat_type_media(): void
+    {
+        $owner = User::factory()->create();
+        $collaborator = User::factory()->create();
+        $boatType = BoatType::factory()->for($owner)->create();
+        $boatType->program->users()->syncWithoutDetaching([(int) $collaborator->getAuthIdentifier()]);
+
+        $this->actingAs($owner)->post('/api/media/boat_type/'.$boatType->getKey(), [
+            'images' => [UploadedFile::fake()->image('list.jpg', 20, 20)],
+        ])->assertOk();
+
+        $this->actingAs($collaborator)->getJson('/api/media/boat_type/'.$boatType->getKey())
             ->assertOk()
             ->assertJsonPath('data.0.name', 'list');
     }

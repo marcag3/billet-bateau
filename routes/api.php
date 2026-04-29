@@ -25,10 +25,10 @@ Route::middleware(['web', 'auth:sanctum', 'throttle:60,1'])->group(function (): 
     Route::post('/programs', [ProgramController::class, 'store'])->name('api.programs.store');
     Route::get('/media/{type}/{id}', [MediaController::class, 'index'])
         ->whereIn('type', ['program', 'boat_type'])
-        ->whereUuid('id')
+        ->whereUlid('id')
         ->name('api.media.index');
     Route::post('/media/{type}/{id}', [MediaController::class, 'store'])
         ->whereIn('type', ['program', 'boat_type'])
-        ->whereUuid('id')
+        ->whereUlid('id')
         ->name('api.media.store');
 });

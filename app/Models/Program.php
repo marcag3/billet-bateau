@@ -57,6 +57,24 @@ class Program extends Model implements HasMedia
 
     protected static function booted(): void
     {
+        static::saved(function (Program $program): void {
+            if (! $program->wasRecentlyCreated && ! $program->wasChanged('address_id')) {
+                return;
+            }
+
+            Address::query()
+                ->where('program_id', $program->getKey())
+                ->when(
+                    $program->address_id !== null,
+                    fn ($query) => $query->where('id', '!=', $program->address_id),
+                )
+                ->update(['program_id' => null]);
+
+            if ($program->address_id !== null) {
+                Address::query()->whereKey($program->address_id)->update(['program_id' => $program->getKey()]);
+            }
+        });
+
         static::deleting(function (Program $program): void {
             $addressId = $program->address_id;
 
@@ -88,6 +106,10 @@ class Program extends Model implements HasMedia
 
     public function userCanManage(int $userId): bool
     {
+        if ($this->user_id !== null && (int) $this->user_id === $userId) {
+            return true;
+        }
+
         return $this->users()->whereKey($userId)->exists();
     }
 

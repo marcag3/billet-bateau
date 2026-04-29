@@ -14,6 +14,7 @@ use Spatie\LaravelData\Data;
 final class BoatTypePutData extends Data
 {
     public function __construct(
+        public string $program_id,
         #[WithCast(TrimmedNullableStringCast::class)]
         public ?string $name = null,
     ) {}
@@ -24,6 +25,7 @@ final class BoatTypePutData extends Data
     public static function rules(): array
     {
         return [
+            'program_id' => ['required', 'ulid', 'exists:programs,id'],
             'name' => ['nullable', 'string', 'max:255'],
         ];
     }

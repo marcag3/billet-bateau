@@ -24,6 +24,7 @@ RUN apt-get update \
         ca-certificates \
         curl \
         dnsutils \
+        fd-find \
         ffmpeg \
         fswatch \
         git \
@@ -32,9 +33,11 @@ RUN apt-get update \
         openssh-client \
         postgresql-client \
         redis-tools \
+        ripgrep \
         sqlite3 \
         unzip \
         zip \
+    && ln -sf /usr/bin/fdfind /usr/local/bin/fd \
     && mkdir -p /etc/apt/keyrings \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
         | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \

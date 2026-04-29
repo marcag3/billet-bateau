@@ -19,7 +19,7 @@ import { foldUnicodeForProgramSlug } from '../../utilities/program-slug';
 export const programsModelDefinition = defineModel({
     name: 'programs',
     collectionId: 'programs',
-    persistenceSchemaVersion: 6,
+    persistenceSchemaVersion: 7,
     pickUpdatePayload: (changes) => ({ ...changes }),
     orderBy: [
         { key: 'updated_at', direction: 'desc' },
@@ -107,7 +107,7 @@ export function usePrograms() {
         const hasAddress = addressHasAny(address);
 
         if (hasAddress) {
-            addressesCollection.insert(buildAddressInsertRow(addressId, address, now));
+            addressesCollection.insert(buildAddressInsertRow(addressId, id, address, now));
         }
 
         programsCollection.insert({
@@ -185,7 +185,7 @@ export function usePrograms() {
                 });
             } else {
                 const newAddressId = ulid();
-                addressesCollection.insert(buildAddressInsertRow(newAddressId, address, now));
+                addressesCollection.insert(buildAddressInsertRow(newAddressId, programId, address, now));
                 nextAddressId = newAddressId;
             }
         } else if (nextAddressId) {
