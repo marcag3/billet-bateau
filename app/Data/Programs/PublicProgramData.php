@@ -16,7 +16,11 @@ final class PublicProgramData extends Data
         public ?string $description,
         public string $theme_color,
         public string $slug,
-        public ?AddressResponseData $address,
+        public ?string $line_1,
+        public ?string $line_2,
+        public ?string $city,
+        public ?string $postal_code,
+        public ?string $country,
         public array $images,
     ) {}
 
@@ -34,26 +38,17 @@ final class PublicProgramData extends Data
             ];
         }
 
-        $address = null;
-
-        if ($program->address !== null) {
-            $address = AddressResponseData::from([
-                'id' => (string) $program->address->getKey(),
-                'line_1' => $program->address->line_1,
-                'line_2' => $program->address->line_2,
-                'city' => $program->address->city,
-                'postal_code' => $program->address->postal_code,
-                'country' => $program->address->country,
-            ]);
-        }
-
         return new self(
             id: (string) $program->getKey(),
             name: (string) $program->name,
             description: $program->description,
             theme_color: (string) $program->theme_color,
             slug: (string) $program->slug,
-            address: $address,
+            line_1: $program->line_1,
+            line_2: $program->line_2,
+            city: $program->city,
+            postal_code: $program->postal_code,
+            country: $program->country,
             images: $images,
         );
     }

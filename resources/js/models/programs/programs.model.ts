@@ -1,13 +1,11 @@
 import { computed } from 'vue';
 import { ulid } from 'ulid';
-import { addressHasAny, buildAddressInsertRow } from '../addresses/addresses.model';
 import { defineRelations } from '../entity.relations';
 import { defineModel } from '../model.definition';
 import { useEntityList } from '../entity.queries';
 import {
     bootstrapAppPowerSync,
     getAppPowerSyncBootstrappedRef,
-    getAddressesCollectionRef,
     getProgramsCollectionRef,
     getCurrentUserIdRef,
     getPowerSyncDbRef,
@@ -16,10 +14,21 @@ import {
 } from '../../powersync/app-powersync.runtime';
 import { foldUnicodeForProgramSlug } from '../../utilities/program-slug';
 
+/**
+ * @param {object} address
+ * @returns {boolean}
+ */
+function addressHasAny(address) {
+    return ['line_1', 'line_2', 'city', 'postal_code', 'country'].some((key) => {
+        const value = address[key];
+        return typeof value === 'string' && value.trim().length > 0;
+    });
+}
+
 export const programsModelDefinition = defineModel({
     name: 'programs',
     collectionId: 'programs',
-    persistenceSchemaVersion: 7,
+    persistenceSchemaVersion: 8,
     pickUpdatePayload: (changes) => ({ ...changes }),
     orderBy: [
         { key: 'updated_at', direction: 'desc' },
@@ -60,10 +69,33 @@ function buildInitialProgramSlug(name, id) {
     return `p-${h.slice(0, 8)}`.toLowerCase();
 }
 
+/**
+ * @param {Record<string, string | undefined>} address
+ * @returns {Record<string, string | null>}
+ */
+function normalizeAddressRowFields(address) {
+    if (!addressHasAny(address)) {
+        return {
+            line_1: null,
+            line_2: null,
+            city: null,
+            postal_code: null,
+            country: null,
+        };
+    }
+
+    return {
+        line_1: typeof address.line_1 === 'string' ? address.line_1.trim() || null : null,
+        line_2: typeof address.line_2 === 'string' ? address.line_2.trim() || null : null,
+        city: typeof address.city === 'string' ? address.city.trim() || null : null,
+        postal_code: typeof address.postal_code === 'string' ? address.postal_code.trim() || null : null,
+        country: typeof address.country === 'string' ? address.country.trim() || null : null,
+    };
+}
+
 export function usePrograms() {
     const hasBootstrappedCollection = getAppPowerSyncBootstrappedRef();
     const programsCollectionRef = getProgramsCollectionRef();
-    const addressesCollectionRef = getAddressesCollectionRef();
     const currentUserIdRef = getCurrentUserIdRef();
 
     const { data: programs } = useEntityList({
@@ -90,9 +122,8 @@ export function usePrograms() {
         await ensureProgramsReady();
 
         const programsCollection = programsCollectionRef.value;
-        const addressesCollection = addressesCollectionRef.value;
 
-        if (!programsCollection || !addressesCollection) {
+        if (!programsCollection) {
             throw new Error('Program collections are not ready.');
         }
 
@@ -103,23 +134,22 @@ export function usePrograms() {
         const now = new Date().toISOString();
         const themeColor = normalizeThemeColor(input.themeColor);
         const address = input.address ?? {};
-        const addressId = ulid();
-        const hasAddress = addressHasAny(address);
-
-        if (hasAddress) {
-            addressesCollection.insert(buildAddressInsertRow(addressId, id, address, now));
-        }
+        const addressFields = normalizeAddressRowFields(address);
 
         programsCollection.insert({
             id,
             user_id: userId,
-            address_id: hasAddress ? addressId : null,
             name: input.name.trim(),
             description: input.description.trim().length > 0 ? input.description.trim() : null,
             theme_color: themeColor,
             is_active: input.isActive ? 1 : 0,
             is_archived: 0,
             slug: buildInitialProgramSlug(input.name, id),
+            line_1: addressFields.line_1,
+            line_2: addressFields.line_2,
+            city: addressFields.city,
+            postal_code: addressFields.postal_code,
+            country: addressFields.country,
             created_at: now,
             updated_at: now,
         });
@@ -151,9 +181,8 @@ export function usePrograms() {
         await ensureProgramsReady();
 
         const programsCollection = programsCollectionRef.value;
-        const addressesCollection = addressesCollectionRef.value;
 
-        if (!programsCollection || !addressesCollection) {
+        if (!programsCollection) {
             throw new Error('Program collections are not ready.');
         }
 
@@ -165,40 +194,7 @@ export function usePrograms() {
         const themeColor = normalizeThemeColor(input.themeColor);
         const now = new Date().toISOString();
         const address = input.address ?? {};
-        const hasAddress = addressHasAny(address);
-
-        let nextAddressId =
-            programRow.address_id != null && String(programRow.address_id).length > 0
-                ? String(programRow.address_id)
-                : null;
-
-        if (hasAddress) {
-            if (nextAddressId) {
-                addressesCollection.update(nextAddressId, (draft) => {
-                    draft.line_1 = typeof address.line_1 === 'string' ? address.line_1.trim() || null : null;
-                    draft.line_2 = typeof address.line_2 === 'string' ? address.line_2.trim() || null : null;
-                    draft.city = typeof address.city === 'string' ? address.city.trim() || null : null;
-                    draft.postal_code =
-                        typeof address.postal_code === 'string' ? address.postal_code.trim() || null : null;
-                    draft.country = typeof address.country === 'string' ? address.country.trim() || null : null;
-                    draft.updated_at = now;
-                });
-            } else {
-                const newAddressId = ulid();
-                addressesCollection.insert(buildAddressInsertRow(newAddressId, programId, address, now));
-                nextAddressId = newAddressId;
-            }
-        } else if (nextAddressId) {
-            addressesCollection.update(nextAddressId, (draft) => {
-                draft.line_1 = null;
-                draft.line_2 = null;
-                draft.city = null;
-                draft.postal_code = null;
-                draft.country = null;
-                draft.updated_at = now;
-            });
-            nextAddressId = null;
-        }
+        const addressFields = normalizeAddressRowFields(address);
 
         programsCollection.update(programId, (draft) => {
             draft.name = input.name.trim();
@@ -207,7 +203,11 @@ export function usePrograms() {
             draft.slug = input.slug;
             draft.is_active = input.isActive ? 1 : 0;
             draft.is_archived = input.isArchived ? 1 : 0;
-            draft.address_id = nextAddressId;
+            draft.line_1 = addressFields.line_1;
+            draft.line_2 = addressFields.line_2;
+            draft.city = addressFields.city;
+            draft.postal_code = addressFields.postal_code;
+            draft.country = addressFields.country;
             draft.updated_at = now;
         });
 

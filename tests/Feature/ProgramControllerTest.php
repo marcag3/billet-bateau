@@ -35,7 +35,7 @@ class ProgramControllerTest extends TestCase
         ])->assertUnauthorized();
     }
 
-    public function test_store_creates_address_and_images(): void
+    public function test_store_saves_address_fields_and_images(): void
     {
         Storage::fake('public');
 
@@ -63,13 +63,16 @@ class ProgramControllerTest extends TestCase
         $id = (string) $response->json('data.id');
         $this->assertTrue(Str::isUlid($id));
 
-        $addressId = (string) $response->json('data.address.id');
-        $this->assertTrue(Str::isUlid($addressId));
+        $this->assertSame('1 Wharf', $response->json('data.line_1'));
+        $this->assertSame('Portville', $response->json('data.city'));
 
         $this->assertDatabaseHas('programs', [
             'id' => $id,
             'user_id' => $user->getAuthIdentifier(),
-            'address_id' => $addressId,
+            'line_1' => '1 Wharf',
+            'city' => 'Portville',
+            'postal_code' => 'H0H0H0',
+            'country' => 'CA',
             'name' => 'Harbor week',
             'theme_color' => '#AABBCC',
             'slug' => 'harbor-week',
@@ -84,15 +87,9 @@ class ProgramControllerTest extends TestCase
 
         $response->assertJsonPath('data.user_ids.0', (int) $user->getAuthIdentifier());
 
-        $this->assertDatabaseHas('addresses', [
-            'id' => $addressId,
-            'line_1' => '1 Wharf',
-            'city' => 'Portville',
-        ]);
-
         $response->assertJsonMissingPath('data.images');
 
-        $program = Program::query()->with('address')->findOrFail($id);
+        $program = Program::query()->findOrFail($id);
         $this->assertCount(1, $program->getMedia('images'));
 
         $this->assertDatabaseHas('media', [

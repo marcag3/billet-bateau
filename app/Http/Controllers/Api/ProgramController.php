@@ -5,59 +5,49 @@ namespace App\Http\Controllers\Api;
 use App\Data\Programs\ProgramData;
 use App\Data\Programs\ProgramStoreData;
 use App\Http\Controllers\Controller;
-use App\Models\Address;
 use App\Models\Program;
 use App\Support\MediaProgramContext;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ProgramController extends Controller
 {
-    public function store(Request $request): JsonResponse
+    public function store(ProgramStoreData $data): JsonResponse
     {
-        $user = $request->user();
-
-        if ($user === null) {
-            abort(401);
-        }
-
-        $data = ProgramStoreData::from($request);
-
-        $program = DB::transaction(function () use ($data, $user): Program {
+        $program = DB::transaction(function () use ($data): Program {
             $id = $data->id ?? (string) Str::ulid();
 
             $themeColor = strtoupper($data->theme_color);
 
-            /** @var Program $program */
-            $program = Program::query()->create([
-                'id' => $id,
-                'user_id' => $user->getAuthIdentifier(),
-                'address_id' => null,
-                'name' => $data->name,
-                'description' => $data->description,
-                'theme_color' => $themeColor,
-                'is_active' => $data->is_active,
-                'is_archived' => (bool) ($data->is_archived ?? false),
-                'slug' => $data->slug,
-            ]);
+            $addressRow = $data->address !== null && $data->address->hasAnyNonEmpty()
+                ? $data->address->toRow()
+                : [
+                    'line_1' => null,
+                    'line_2' => null,
+                    'city' => null,
+                    'postal_code' => null,
+                    'country' => null,
+                ];
 
-            $addressId = null;
-            if ($data->address !== null && $data->address->hasAnyNonEmpty()) {
-                $addressId = (string) Str::ulid();
-                Address::query()->create(array_merge(
-                    $data->address->toRow(),
-                    [
-                        'id' => $addressId,
-                        'program_id' => $program->getKey(),
-                    ],
-                ));
-                $program->update(['address_id' => $addressId]);
-            }
+            /** @var Program $program */
+            $program = Program::query()->create(array_merge(
+                [
+                    'id' => $id,
+                    'user_id' => Auth::id(),
+                    'name' => $data->name,
+                    'description' => $data->description,
+                    'theme_color' => $themeColor,
+                    'is_active' => $data->is_active,
+                    'is_archived' => (bool) ($data->is_archived ?? false),
+                    'slug' => $data->slug,
+                ],
+                $addressRow,
+            ));
 
             if ($data->images !== null) {
-                MediaProgramContext::run((string) $program->getKey(), function () use ($data, $program): void {
+                MediaProgramContext::run($id, function () use ($data, $program): void {
                     foreach ($data->images as $file) {
                         $program->addMedia($file)->toMediaCollection('images');
                     }
@@ -65,9 +55,9 @@ class ProgramController extends Controller
             }
 
             // First manager on the program; additional managers require an invite (pivot row).
-            $program->users()->syncWithoutDetaching([(int) $user->getAuthIdentifier()]);
+            $program->users()->syncWithoutDetaching([Auth::id()]);
 
-            return $program->fresh(['address', 'users']);
+            return $program->fresh(['users']);
         });
 
         return response()->json([

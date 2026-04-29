@@ -20,7 +20,11 @@ final class ProgramData extends Data
         public bool $is_active,
         public bool $is_archived,
         public string $slug,
-        public ?AddressResponseData $address,
+        public ?string $line_1,
+        public ?string $line_2,
+        public ?string $city,
+        public ?string $postal_code,
+        public ?string $country,
     ) {}
 
     /**
@@ -29,19 +33,6 @@ final class ProgramData extends Data
      */
     public static function fromModel(Program $program): self
     {
-        $address = null;
-
-        if ($program->address !== null) {
-            $address = AddressResponseData::from([
-                'id' => (string) $program->address->getKey(),
-                'line_1' => $program->address->line_1,
-                'line_2' => $program->address->line_2,
-                'city' => $program->address->city,
-                'postal_code' => $program->address->postal_code,
-                'country' => $program->address->country,
-            ]);
-        }
-
         $userIds = $program->users
             ->pluck('id')
             ->map(static fn ($id): int => (int) $id)
@@ -59,7 +50,11 @@ final class ProgramData extends Data
             is_active: (bool) $program->is_active,
             is_archived: (bool) $program->is_archived,
             slug: $program->slug,
-            address: $address,
+            line_1: $program->line_1,
+            line_2: $program->line_2,
+            city: $program->city,
+            postal_code: $program->postal_code,
+            country: $program->country,
         );
     }
 }

@@ -7,11 +7,9 @@ use App\Data\PowerSync\Programs\ProgramPatchData;
 use App\Data\PowerSync\Programs\ProgramPutData;
 use App\Data\PowerSync\Programs\ProgramPutPayloadResolver;
 use App\Data\PowerSync\Values\SlugNormalizer;
-use App\Models\Address;
 use App\Models\Program;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Spatie\LaravelData\Optional;
 
@@ -77,11 +75,12 @@ final class ApplyProgramPowerSyncCrudAction
             'is_active' => $merged['is_active'],
             'is_archived' => $merged['is_archived'],
             'slug' => $this->assignUniqueSlug((string) $id, $merged['base_slug']),
+            'line_1' => $merged['line_1'],
+            'line_2' => $merged['line_2'],
+            'city' => $merged['city'],
+            'postal_code' => $merged['postal_code'],
+            'country' => $merged['country'],
         ];
-
-        if (! ($merged['address_id'] instanceof Optional)) {
-            $attributes['address_id'] = $this->resolveAddressId((string) $id, $merged['address_id']);
-        }
 
         Program::query()->updateOrCreate(
             ['id' => $id],
@@ -129,8 +128,24 @@ final class ApplyProgramPowerSyncCrudAction
             $program->slug = $this->assignUniqueSlug((string) $id, $base);
         }
 
-        if (! ($patch->address_id instanceof Optional)) {
-            $program->address_id = $this->resolveAddressId((string) $id, $patch->address_id);
+        if (! ($patch->line_1 instanceof Optional)) {
+            $program->line_1 = $patch->line_1;
+        }
+
+        if (! ($patch->line_2 instanceof Optional)) {
+            $program->line_2 = $patch->line_2;
+        }
+
+        if (! ($patch->city instanceof Optional)) {
+            $program->city = $patch->city;
+        }
+
+        if (! ($patch->postal_code instanceof Optional)) {
+            $program->postal_code = $patch->postal_code;
+        }
+
+        if (! ($patch->country instanceof Optional)) {
+            $program->country = $patch->country;
         }
 
         $program->save();
@@ -209,39 +224,5 @@ final class ApplyProgramPowerSyncCrudAction
             ->where('slug', $slug)
             ->where('id', '!=', $exceptId)
             ->exists();
-    }
-
-    private function resolveAddressId(string $programId, ?string $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        if (! Address::query()->whereKey($value)->exists()) {
-            throw ValidationException::withMessages([
-                'data.address_id' => 'The selected address is invalid.',
-            ]);
-        }
-
-        $owner = Program::query()
-            ->where('address_id', $value)
-            ->where('id', '!=', $programId)
-            ->first();
-
-        if ($owner !== null) {
-            throw ValidationException::withMessages([
-                'data.address_id' => 'Address is already linked to a different program.',
-            ]);
-        }
-
-        $address = Address::query()->whereKey($value)->first();
-
-        if ($address !== null && $address->program_id !== null && $address->program_id !== $programId) {
-            throw ValidationException::withMessages([
-                'data.address_id' => 'Address belongs to a different program.',
-            ]);
-        }
-
-        return $value;
     }
 }

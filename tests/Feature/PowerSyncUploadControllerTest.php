@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Address;
 use App\Models\Boat;
 use App\Models\BoatProgram;
 use App\Models\BoatType;
@@ -99,11 +98,10 @@ class PowerSyncUploadControllerTest extends TestCase
         ]);
     }
 
-    public function test_put_creates_address_when_parent_owned(): void
+    public function test_put_sets_inline_address_on_program_when_parent_owned(): void
     {
         $user = User::factory()->create();
         $programId = (string) Str::ulid();
-        $addressId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -114,24 +112,8 @@ class PowerSyncUploadControllerTest extends TestCase
                     'data' => [
                         'name' => 'With address',
                         'theme_color' => '#111111',
-                    ],
-                ],
-                [
-                    'op' => 'PUT',
-                    'type' => 'addresses',
-                    'id' => $addressId,
-                    'data' => [
-                        'program_id' => $programId,
                         'line_1' => 'Pier 2',
                         'city' => 'Seaside',
-                    ],
-                ],
-                [
-                    'op' => 'PATCH',
-                    'type' => 'programs',
-                    'id' => $programId,
-                    'data' => [
-                        'address_id' => $addressId,
                     ],
                 ],
             ],
@@ -139,15 +121,9 @@ class PowerSyncUploadControllerTest extends TestCase
 
         $this->assertDatabaseHas('programs', [
             'id' => $programId,
-            'address_id' => $addressId,
-            'slug' => 'with-address',
-        ]);
-
-        $this->assertDatabaseHas('addresses', [
-            'id' => $addressId,
-            'program_id' => $programId,
             'line_1' => 'Pier 2',
             'city' => 'Seaside',
+            'slug' => 'with-address',
         ]);
 
         $this->assertDatabaseHas('program_user', [
@@ -159,16 +135,9 @@ class PowerSyncUploadControllerTest extends TestCase
     public function test_delete_removes_owned_program(): void
     {
         $user = User::factory()->create();
-        $addressId = (string) Str::ulid();
         $program = Program::factory()->for($user)->create([
-            'address_id' => null,
-        ]);
-        Address::query()->create([
-            'id' => $addressId,
-            'program_id' => $program->getKey(),
             'line_1' => 'Old dock',
         ]);
-        $program->update(['address_id' => $addressId]);
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -181,7 +150,6 @@ class PowerSyncUploadControllerTest extends TestCase
         ])->assertOk();
 
         $this->assertDatabaseMissing('programs', ['id' => $program->getKey()]);
-        $this->assertDatabaseMissing('addresses', ['id' => $addressId]);
     }
 
     public function test_invalid_op_returns_unprocessable_entity(): void
@@ -279,37 +247,6 @@ class PowerSyncUploadControllerTest extends TestCase
         ])->assertForbidden();
 
         $this->assertDatabaseHas('programs', ['id' => $program->getKey()]);
-    }
-
-    public function test_address_delete_forbids_non_member_even_when_address_is_shared(): void
-    {
-        $owner = User::factory()->create();
-        $intruder = User::factory()->create();
-        $addressId = (string) Str::ulid();
-        $ownersProgram = Program::factory()->for($owner)->create([
-            'address_id' => null,
-        ]);
-        Address::query()->create([
-            'id' => $addressId,
-            'program_id' => $ownersProgram->getKey(),
-            'line_1' => 'Owners pier',
-            'city' => 'Baytown',
-        ]);
-        $ownersProgram->update(['address_id' => $addressId]);
-
-        $this->actingAs($intruder)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'DELETE',
-                    'type' => 'addresses',
-                    'id' => $addressId,
-                ],
-            ],
-        ])->assertForbidden();
-
-        $this->assertDatabaseHas('addresses', ['id' => $addressId]);
-        $ownersProgram->refresh();
-        $this->assertSame($addressId, $ownersProgram->address_id);
     }
 
     public function test_put_program_uses_suffix_when_slug_conflicts_globally(): void

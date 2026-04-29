@@ -3,20 +3,12 @@ import { column, Schema, Table } from '@powersync/web';
 const programsTable = new Table({
     id: column.text,
     user_id: column.integer,
-    address_id: column.text,
     name: column.text,
     description: column.text,
     theme_color: column.text,
     is_active: column.integer,
     is_archived: column.integer,
     slug: column.text,
-    created_at: column.text,
-    updated_at: column.text,
-});
-
-const addressesTable = new Table({
-    id: column.text,
-    program_id: column.text,
     line_1: column.text,
     line_2: column.text,
     city: column.text,
@@ -125,7 +117,6 @@ const mediaTable = new Table({
 
 export const appPowerSyncSchema = new Schema({
     programs: programsTable,
-    addresses: addressesTable,
     boat_types: boatTypesTable,
     boats: boatsTable,
     boat_program: boatProgramTable,
@@ -139,9 +130,6 @@ export const appPowerSyncSchema = new Schema({
 
 /** @type {import('@powersync/web').Table} */
 export const appProgramsPowerSyncTable = appPowerSyncSchema.props.programs;
-
-/** @type {import('@powersync/web').Table} */
-export const appAddressesPowerSyncTable = appPowerSyncSchema.props.addresses;
 
 /** @type {import('@powersync/web').Table} */
 export const appBoatTypesPowerSyncTable = appPowerSyncSchema.props.boat_types;

@@ -6,7 +6,6 @@ import { fetchCurrentSession } from '../models/auth.api';
 import { useAuthStore } from '../store/auth.store';
 import { createAppPowerSyncConnector } from '../services/powersync.connector';
 import {
-    appAddressesPowerSyncTable,
     appBoatProgramPowerSyncTable,
     appBoatTypesPowerSyncTable,
     appBoatsPowerSyncTable,
@@ -21,7 +20,7 @@ import {
 } from './app.powersync-schema';
 import { translate } from '../utilities/i18n';
 
-const DB_FILENAME = 'billbateau-app-v13.db';
+const DB_FILENAME = 'billbateau-app-v14.db';
 
 const loadFailedMessage = translate('sync.unableLoadSync');
 const persistenceLimitedMessage = translate('sync.persistenceLimited');
@@ -112,7 +111,6 @@ let powerSyncStatusUnsubscribe = null;
 
 const collectionRefs = {
     programs: shallowRef(null),
-    addresses: shallowRef(null),
     boat_types: shallowRef(null),
     boats: shallowRef(null),
     boat_program: shallowRef(null),
@@ -126,7 +124,6 @@ const collectionRefs = {
 
 const tableByName = {
     programs: appProgramsPowerSyncTable,
-    addresses: appAddressesPowerSyncTable,
     boat_types: appBoatTypesPowerSyncTable,
     boats: appBoatsPowerSyncTable,
     boat_program: appBoatProgramPowerSyncTable,
@@ -402,10 +399,6 @@ export function getPowerSyncDbRef() {
 
 export function getProgramsCollectionRef() {
     return collectionRefs.programs;
-}
-
-export function getAddressesCollectionRef() {
-    return collectionRefs.addresses;
 }
 
 export function getBoatTypesCollectionRef() {

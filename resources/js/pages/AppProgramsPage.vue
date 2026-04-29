@@ -174,7 +174,6 @@ import { usePrograms } from "../models/programs/programs.model";
 import { useEntityList } from "../models/entity.queries";
 import {
     getAppPowerSyncBootstrappedRef,
-    getAddressesCollectionRef,
     getMediaCollectionRef,
     useAppPowerSyncOutbox,
 } from "../powersync/app-powersync.runtime";
@@ -196,13 +195,6 @@ const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
-
-const { data: addressRows } = useEntityList({
-    enabledRef: hasBootstrapped,
-    alias: "addresses",
-    collection: getAddressesCollectionRef(),
-    orderBy: [],
-});
 
 const { data: mediaRows } = useEntityList({
     enabledRef: hasBootstrapped,
@@ -250,21 +242,6 @@ onMounted(() => {
     void ensureProgramsReady();
 });
 
-function findAddressForProgram(p: Record<string, unknown>) {
-    const id = p.address_id;
-    if (id == null || String(id).length === 0) {
-        return null;
-    }
-    const rows = addressRows.value ?? [];
-    return (
-        rows.find(
-            (a) =>
-                a != null &&
-                String((a as Record<string, unknown>).id) === String(id),
-        ) ?? null
-    );
-}
-
 function programDescription(p: Record<string, unknown>): string {
     const d = p.description;
     if (d == null) {
@@ -276,26 +253,22 @@ function programDescription(p: Record<string, unknown>): string {
 }
 
 function addressDisplayLines(p: Record<string, unknown>): string[] {
-    const a = findAddressForProgram(p) as Record<string, unknown> | null;
-    if (!a) {
-        return [];
-    }
     const lines: string[] = [];
-    const l1 = a.line_1 != null ? String(a.line_1).trim() : "";
-    const l2 = a.line_2 != null ? String(a.line_2).trim() : "";
+    const l1 = p.line_1 != null ? String(p.line_1).trim() : "";
+    const l2 = p.line_2 != null ? String(p.line_2).trim() : "";
     if (l1.length > 0) {
         lines.push(l1);
     }
     if (l2.length > 0) {
         lines.push(l2);
     }
-    const city = a.city != null ? String(a.city).trim() : "";
-    const pc = a.postal_code != null ? String(a.postal_code).trim() : "";
+    const city = p.city != null ? String(p.city).trim() : "";
+    const pc = p.postal_code != null ? String(p.postal_code).trim() : "";
     const cityLine = [city, pc].filter((x) => x.length > 0).join(", ");
     if (cityLine.length > 0) {
         lines.push(cityLine);
     }
-    const country = a.country != null ? String(a.country).trim() : "";
+    const country = p.country != null ? String(p.country).trim() : "";
     if (country.length > 0) {
         lines.push(country);
     }

@@ -2,7 +2,6 @@
 
 namespace App\PowerSync;
 
-use App\Actions\PowerSync\ApplyAddressPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyBoatPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyBoatProgramPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyBoatTypePowerSyncCrudAction;
@@ -20,7 +19,6 @@ final class PowerSyncUploadRouter
     {
         match ($entry->type) {
             PowerSyncCrudType::Programs => ApplyProgramPowerSyncCrudAction::run($entry, $userId),
-            PowerSyncCrudType::Addresses => ApplyAddressPowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::Boats => ApplyBoatPowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::BoatTypes => ApplyBoatTypePowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::BoatProgram => ApplyBoatProgramPowerSyncCrudAction::run($entry, $userId),

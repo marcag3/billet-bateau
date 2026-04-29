@@ -7,3 +7,4 @@ alwaysApply: true
 
 Default to clean breaking changes over backward compatibility.
 Do not add shims, aliases, adapters, or dual paths unless explicitly requested.
+Edit existing migrations, they are not deployed.

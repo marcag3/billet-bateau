@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -28,13 +27,17 @@ class Program extends Model implements HasMedia
     protected $fillable = [
         'id',
         'user_id',
-        'address_id',
         'name',
         'description',
         'theme_color',
         'is_active',
         'is_archived',
         'slug',
+        'line_1',
+        'line_2',
+        'city',
+        'postal_code',
+        'country',
         'created_at',
         'updated_at',
     ];
@@ -53,38 +56,6 @@ class Program extends Model implements HasMedia
     protected function active(Builder $query): void
     {
         $query->where('is_active', true);
-    }
-
-    protected static function booted(): void
-    {
-        static::saved(function (Program $program): void {
-            if (! $program->wasRecentlyCreated && ! $program->wasChanged('address_id')) {
-                return;
-            }
-
-            Address::query()
-                ->where('program_id', $program->getKey())
-                ->when(
-                    $program->address_id !== null,
-                    fn ($query) => $query->where('id', '!=', $program->address_id),
-                )
-                ->update(['program_id' => null]);
-
-            if ($program->address_id !== null) {
-                Address::query()->whereKey($program->address_id)->update(['program_id' => $program->getKey()]);
-            }
-        });
-
-        static::deleting(function (Program $program): void {
-            $addressId = $program->address_id;
-
-            if ($addressId === null) {
-                return;
-            }
-
-            DB::table('programs')->where('id', $program->id)->update(['address_id' => null]);
-            Address::query()->whereKey($addressId)->delete();
-        });
     }
 
     public function registerMediaCollections(): void
@@ -111,11 +82,6 @@ class Program extends Model implements HasMedia
         }
 
         return $this->users()->whereKey($userId)->exists();
-    }
-
-    public function address(): BelongsTo
-    {
-        return $this->belongsTo(Address::class, 'address_id');
     }
 
     public function boats(): BelongsToMany

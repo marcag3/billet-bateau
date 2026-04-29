@@ -24,7 +24,7 @@ class PublicProgramController extends Controller
 
     public function show(Program $program): PublicProgramData
     {
-        $program->loadMissing('address', 'media');
+        $program->load('media');
 
         return PublicProgramData::fromModel($program);
     }

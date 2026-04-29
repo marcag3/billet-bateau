@@ -20,9 +20,6 @@ streams:
         SELECT * FROM programs
         WHERE id IN accessible_program_ids
       - |
-        SELECT * FROM addresses
-        WHERE program_id IN accessible_program_ids
-      - |
         SELECT * FROM boat_types
         WHERE program_id IN accessible_program_ids
       - |

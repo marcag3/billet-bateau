@@ -200,11 +200,7 @@ import {
 } from "../models/programs/programs.validation";
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
 import { usePrograms } from "../models/programs/programs.model";
-import { useEntityList } from "../models/entity.queries";
-import {
-    getAppPowerSyncBootstrappedRef,
-    getAddressesCollectionRef,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncBootstrappedRef } from "../powersync/app-powersync.runtime";
 import mediaRoutes from "../routes/api/media";
 import { requestFormData } from "../services/http.client";
 import { normalizeImageFiles } from "../utilities/image-files";
@@ -227,13 +223,6 @@ const lastHydratedSignature = ref("");
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
-const { data: addressRows } = useEntityList({
-    enabledRef: hasBootstrapped,
-    alias: "addresses",
-    collection: getAddressesCollectionRef(),
-    orderBy: [],
-});
-
 const showNotFound = computed(() => {
     if (!hasBootstrapped.value) {
         return false;
@@ -245,25 +234,6 @@ const showNotFound = computed(() => {
     const list = programs.value ?? [];
     return !list.some((p) => p != null && String(p.id) === id);
 });
-
-/**
- * @param {Record<string, unknown>} p
- * @returns {Record<string, unknown> | null}
- */
-function findAddressForProgram(p: Record<string, unknown>) {
-    const id = p.address_id;
-    if (id == null || String(id).length === 0) {
-        return null;
-    }
-    const rows = addressRows.value ?? [];
-    return (
-        (rows.find(
-            (a) =>
-                a != null &&
-                String((a as Record<string, unknown>).id) === String(id),
-        ) as Record<string, unknown> | undefined) ?? null
-    );
-}
 
 const programEditSchema = createProgramEditFormSchema(t);
 const { handleSubmit, defineField, isSubmitting, resetForm } =
@@ -312,7 +282,7 @@ watch(
 );
 
 watch(
-    [programId, programs, addressRows],
+    [programId, programs],
     () => {
         const id = programId.value;
         if (id.length === 0) {
@@ -324,15 +294,7 @@ watch(
         if (!p) {
             return;
         }
-        const addrId =
-            p.address_id != null && String(p.address_id).length > 0
-                ? String(p.address_id)
-                : "";
-        const a = findAddressForProgram(p);
-        if (addrId.length > 0 && !a) {
-            return;
-        }
-        const signature = `${id}:${String(p.updated_at ?? "")}:${String((a as Record<string, unknown> | null)?.updated_at ?? "")}`;
+        const signature = `${id}:${String(p.updated_at ?? "")}`;
         if (lastHydratedSignature.value === signature) {
             return;
         }
@@ -353,22 +315,18 @@ watch(
                 isArchived: readReplicatedBoolean(p.is_archived),
                 address: {
                     line_1:
-                        a && typeof a.line_1 === "string"
-                            ? String(a.line_1)
-                            : "",
+                        typeof p.line_1 === "string" ? String(p.line_1) : "",
                     line_2:
-                        a && typeof a.line_2 === "string"
-                            ? String(a.line_2)
-                            : "",
+                        typeof p.line_2 === "string" ? String(p.line_2) : "",
                     city:
-                        a && typeof a.city === "string" ? String(a.city) : "",
+                        typeof p.city === "string" ? String(p.city) : "",
                     postal_code:
-                        a && typeof a.postal_code === "string"
-                            ? String(a.postal_code)
+                        typeof p.postal_code === "string"
+                            ? String(p.postal_code)
                             : "",
                     country:
-                        a && typeof a.country === "string"
-                            ? String(a.country)
+                        typeof p.country === "string"
+                            ? String(p.country)
                             : "",
                 },
                 imagesModel: null,
