@@ -6,7 +6,6 @@ use App\Data\Programs\ProgramData;
 use App\Data\Programs\ProgramStoreData;
 use App\Http\Controllers\Controller;
 use App\Models\Program;
-use App\Support\MediaProgramContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -45,14 +44,6 @@ class ProgramController extends Controller
                 ],
                 $addressRow,
             ));
-
-            if ($data->images !== null) {
-                MediaProgramContext::run($id, function () use ($data, $program): void {
-                    foreach ($data->images as $file) {
-                        $program->addMedia($file)->toMediaCollection('images');
-                    }
-                });
-            }
 
             // First manager on the program; additional managers require an invite (pivot row).
             $program->users()->syncWithoutDetaching([Auth::id()]);

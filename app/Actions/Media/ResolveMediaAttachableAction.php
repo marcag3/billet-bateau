@@ -2,14 +2,13 @@
 
 namespace App\Actions\Media;
 
-use App\Data\Media\ResolvedMediaAttachableData;
 use App\Models\BoatType;
 use App\Models\Program;
 use Spatie\MediaLibrary\HasMedia;
 
 final class ResolveMediaAttachableAction
 {
-    public function run(string $type, string $id): ResolvedMediaAttachableData
+    public function run(string $type, string $id): ResolvedMediaAttachable
     {
         $attachable = match ($type) {
             'program' => Program::query()->find($id),
@@ -34,6 +33,6 @@ final class ResolveMediaAttachableAction
         /** @var Program $program */
         $program = Program::query()->findOrFail($programId);
 
-        return new ResolvedMediaAttachableData($attachable, $program, $programId);
+        return new ResolvedMediaAttachable($attachable, $program, $programId);
     }
 }

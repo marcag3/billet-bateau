@@ -6,7 +6,6 @@ use App\Actions\Media\ResolveMediaAttachableAction;
 use App\Data\Media\MediaItemData;
 use App\Http\Controllers\Controller;
 use App\Models\Media;
-use App\Support\MediaProgramContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -49,12 +48,10 @@ class MediaController extends Controller
         /** @var list<Media> $uploaded */
         $uploaded = [];
 
-        MediaProgramContext::run($resolved->programId, function () use ($resolved, $validated, &$uploaded): void {
-            DB::transaction(function () use ($resolved, $validated, &$uploaded): void {
-                foreach ($validated['images'] as $file) {
-                    $uploaded[] = $resolved->attachable->addMedia($file)->toMediaCollection('images');
-                }
-            });
+        DB::transaction(function () use ($resolved, $validated, &$uploaded): void {
+            foreach ($validated['images'] as $file) {
+                $uploaded[] = $resolved->attachable->addMedia($file)->toMediaCollection('images');
+            }
         });
 
         $data = array_map(

@@ -2,7 +2,7 @@
 # See: https://docs.powersync.com/sync/streams/overview
 #
 # Programs are visible only to the owner (programs.user_id) or members (program_user).
-# user_scope auto-subscribes shared tables; program_scope adds detail rows for selected program_id.
+# user_scope auto-subscribes the program list; program_scope adds detail rows (boats, trips, templates, boat_types, media) for selected program_id.
 
 config:
   edition: 3
@@ -19,12 +19,6 @@ streams:
       - |
         SELECT * FROM programs
         WHERE id IN accessible_program_ids
-      - |
-        SELECT * FROM boat_types
-        WHERE program_id IN accessible_program_ids
-      - |
-        SELECT * FROM media
-        WHERE program_id IN accessible_program_ids
 
   program_scope:
     with:
@@ -33,6 +27,14 @@ streams:
         UNION
         SELECT program_id FROM program_user WHERE user_id = auth.user_id()
     queries:
+      - |
+        SELECT * FROM boat_types
+        WHERE program_id = subscription.parameter('program_id')
+          AND program_id IN accessible_program_ids
+      - |
+        SELECT * FROM media
+        WHERE program_id = subscription.parameter('program_id')
+          AND program_id IN accessible_program_ids
       - |
         SELECT * FROM boat_program
         WHERE program_id = subscription.parameter('program_id')

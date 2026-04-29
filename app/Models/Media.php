@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use App\Support\MediaProgramContext;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Context;
 use LogicException;
 use Spatie\MediaLibrary\MediaCollections\Models\Media as BaseMedia;
 
@@ -18,14 +16,37 @@ class Media extends BaseMedia
     protected static function booted(): void
     {
         static::creating(function (Media $media): void {
-            $fromContext = Context::get(MediaProgramContext::KEY);
+            $programId = self::resolveProgramIdForMorph((string) $media->model_type, $media->model_id);
 
-            if (! is_string($fromContext) || $fromContext === '') {
-                throw new LogicException('Missing media program context: wrap media creation in MediaProgramContext::run().');
+            if ($programId === '') {
+                throw new LogicException('Unable to resolve media program id for attachable.');
             }
 
-            $media->program_id = $fromContext;
+            $media->program_id = $programId;
         });
+    }
+
+    /**
+     * @param  mixed  $modelId
+     */
+    private static function resolveProgramIdForMorph(string $modelType, $modelId): string
+    {
+        return match ($modelType) {
+            Program::class => (string) $modelId,
+            BoatType::class => self::boatTypeProgramId((string) $modelId),
+            default => throw new LogicException('Unsupported media attachable model type: '.$modelType.'.'),
+        };
+    }
+
+    private static function boatTypeProgramId(string $boatTypeId): string
+    {
+        $programId = BoatType::query()->whereKey($boatTypeId)->value('program_id');
+
+        if (! is_string($programId) || $programId === '') {
+            throw new LogicException('Boat type media attachable is missing a program id.');
+        }
+
+        return $programId;
     }
 
     /**

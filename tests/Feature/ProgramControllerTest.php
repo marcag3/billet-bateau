@@ -35,13 +35,9 @@ class ProgramControllerTest extends TestCase
         ])->assertUnauthorized();
     }
 
-    public function test_store_saves_address_fields_and_images(): void
+    public function test_store_saves_address_fields(): void
     {
-        Storage::fake('public');
-
         $user = User::factory()->create();
-
-        $image = $this->fakePngUpload('banner.png');
 
         $response = $this->actingAs($user)->post('/api/programs', [
             'name' => 'Harbor week',
@@ -55,7 +51,6 @@ class ProgramControllerTest extends TestCase
                 'postal_code' => 'H0H0H0',
                 'country' => 'CA',
             ],
-            'images' => [$image],
         ]);
 
         $response->assertCreated();
@@ -90,13 +85,7 @@ class ProgramControllerTest extends TestCase
         $response->assertJsonMissingPath('data.images');
 
         $program = Program::query()->findOrFail($id);
-        $this->assertCount(1, $program->getMedia('images'));
-
-        $this->assertDatabaseHas('media', [
-            'model_id' => $id,
-            'program_id' => $id,
-            'model_type' => Program::class,
-        ]);
+        $this->assertCount(0, $program->getMedia('images'));
     }
 
     public function test_program_user_pivot_allows_multiple_users(): void

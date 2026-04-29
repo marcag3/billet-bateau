@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Program;
 use App\Models\User;
-use App\Support\MediaProgramContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -135,9 +134,7 @@ class PublicProgramApiTest extends TestCase
 
         $u = User::factory()->create();
         $p = Program::factory()->for($u)->create(['is_active' => true]);
-        MediaProgramContext::run((string) $p->getKey(), function () use ($p): void {
-            $p->addMedia($this->miniPngUpload())->toMediaCollection('images');
-        });
+        $p->addMedia($this->miniPngUpload())->toMediaCollection('images');
         $p->refresh();
         $media = $p->getFirstMedia('images');
         $this->assertNotNull($media);

@@ -2,17 +2,12 @@
 
 namespace App\Data\Programs;
 
-use Illuminate\Http\UploadedFile;
-use Illuminate\Validation\Rules\File;
 use Spatie\LaravelData\Attributes\MergeValidationRules;
 use Spatie\LaravelData\Data;
 
 #[MergeValidationRules]
 final class ProgramStoreData extends Data
 {
-    /**
-     * @param  array<int, UploadedFile>|null  $images
-     */
     public function __construct(
         public ?string $id,
         public string $name,
@@ -22,11 +17,10 @@ final class ProgramStoreData extends Data
         public ?bool $is_archived,
         public string $slug,
         public ?AddressUpsertData $address,
-        public ?array $images,
     ) {}
 
     /**
-     * @return array<string, list<string|File>>
+     * @return array<string, list<string>>
      */
     public static function rules(): array
     {
@@ -44,8 +38,6 @@ final class ProgramStoreData extends Data
             'address.city' => ['nullable', 'string', 'max:120'],
             'address.postal_code' => ['nullable', 'string', 'max:32'],
             'address.country' => ['nullable', 'string', 'max:120'],
-            'images' => ['nullable', 'array', 'max:12'],
-            'images.*' => ['file', 'image', 'max:12288'],
         ];
     }
 }

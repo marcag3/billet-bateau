@@ -145,7 +145,7 @@ let userScopeSubscription = null;
 let programScopeSubscription = null;
 
 /**
- * Active program id for `program_scope` PowerSync stream (roster, trips, water routes, template days).
+ * Active program id for `program_scope` PowerSync stream (boat types, media, roster, trips, water routes, template days).
  *
  * @returns {import('vue').Ref<string>}
  */
