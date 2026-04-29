@@ -14,6 +14,9 @@ use Spatie\LaravelData\Optional;
 
 /**
  * Applies PowerSync CRUD for {@see TicketType} rows (ticket_types upload type).
+ *
+ * Idempotent semantics: {@see PowerSyncCrudEntryData::OP_PATCH} and {@see PowerSyncCrudEntryData::OP_DELETE}
+ * no-op when the target row does not exist (offline client retries safe).
  */
 final class ApplyTicketTypePowerSyncCrudAction
 {
@@ -34,6 +37,13 @@ final class ApplyTicketTypePowerSyncCrudAction
             }
 
             $this->assertProgramManaged((string) $ticketType->program_id, $userId);
+
+            if ($ticketType->bookingTickets()->exists()) {
+                throw ValidationException::withMessages([
+                    'id' => 'Cannot delete a ticket type that is still used by booking tickets.',
+                ]);
+            }
+
             $ticketType->delete();
 
             return;
@@ -66,12 +76,13 @@ final class ApplyTicketTypePowerSyncCrudAction
                 throw new AuthorizationException;
             }
         } else {
-            $programId = $dto->program_id;
-            if ($programId === null || $programId === '') {
+            if ($dto->program_id instanceof Optional || $dto->program_id === null || $dto->program_id === '') {
                 throw ValidationException::withMessages([
                     'data.program_id' => 'Program is required.',
                 ]);
             }
+
+            $programId = $dto->program_id;
         }
 
         $this->assertProgramManaged($programId, $userId);
@@ -210,6 +221,7 @@ final class ApplyTicketTypePowerSyncCrudAction
 
             if ($cap === null) {
                 $caps[$tripIdString] = null;
+
                 continue;
             }
 

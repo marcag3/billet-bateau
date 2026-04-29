@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\MediaController::index
-* @see app/Http/Controllers/Api/MediaController.php:17
+* @see app/Http/Controllers/Api/MediaController.php:19
 * @route '/api/media/{type}/{id}'
 */
 export const index = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\MediaController::index
-* @see app/Http/Controllers/Api/MediaController.php:17
+* @see app/Http/Controllers/Api/MediaController.php:19
 * @route '/api/media/{type}/{id}'
 */
 index.url = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions) => {
@@ -42,7 +42,7 @@ index.url = (args: { type: string | number, id: string | number } | [type: strin
 
 /**
 * @see \App\Http\Controllers\Api\MediaController::index
-* @see app/Http/Controllers/Api/MediaController.php:17
+* @see app/Http/Controllers/Api/MediaController.php:19
 * @route '/api/media/{type}/{id}'
 */
 index.get = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -52,7 +52,7 @@ index.get = (args: { type: string | number, id: string | number } | [type: strin
 
 /**
 * @see \App\Http\Controllers\Api\MediaController::index
-* @see app/Http/Controllers/Api/MediaController.php:17
+* @see app/Http/Controllers/Api/MediaController.php:19
 * @route '/api/media/{type}/{id}'
 */
 index.head = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -62,7 +62,7 @@ index.head = (args: { type: string | number, id: string | number } | [type: stri
 
 /**
 * @see \App\Http\Controllers\Api\MediaController::store
-* @see app/Http/Controllers/Api/MediaController.php:35
+* @see app/Http/Controllers/Api/MediaController.php:37
 * @route '/api/media/{type}/{id}'
 */
 export const store = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -77,7 +77,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\MediaController::store
-* @see app/Http/Controllers/Api/MediaController.php:35
+* @see app/Http/Controllers/Api/MediaController.php:37
 * @route '/api/media/{type}/{id}'
 */
 store.url = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ store.url = (args: { type: string | number, id: string | number } | [type: strin
 
 /**
 * @see \App\Http\Controllers\Api\MediaController::store
-* @see app/Http/Controllers/Api/MediaController.php:35
+* @see app/Http/Controllers/Api/MediaController.php:37
 * @route '/api/media/{type}/{id}'
 */
 store.post = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({

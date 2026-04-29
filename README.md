@@ -7,7 +7,7 @@ After a program is selected, staff work is split into **three contexts**. Each c
 
 | Context     | URL segment                         | Purpose                                                                                                |
 | ----------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| **Edit**    | `edit-context/`                     | Program configuration and catalog: boats, boat types, reports, settings, and program metadata at `edit-context/edit`. |
+| **Edit**    | `edit-context/`                     | Program configuration and catalog: boats, boat types, water routes, trips, reports, settings, and program metadata at `edit-context/edit`. |
 | **Control** | `control-context/control`           | Program **control panel**: operations-facing entry for that program.                                   |
 | **Checkin** | `checkin-context/checkin`           | **Check-in manager** for the program (bookings / manifest workflows scoped to the program).            |
 
@@ -17,29 +17,40 @@ Program shell policy for the app chrome (e.g. in-place program switching) is set
 
 ## Todo list
 
-Checkboxes mirror the working roadmap; high-level domain notes stay in sections below (_Ticket types & ratio_, _On-water operations_, etc.).
+Checkboxes mirror the working roadmap; high-level domain notes stay in sections below (_Ticket types & ratio_, _On-water operations_, etc.). **Backend** means Laravel migrations/models/API; **admin UI** is the authenticated Quasar bundle; **public** is the unauthenticated catalog SPA (`routes/web.php` fallback).
 
 ### Completed
 
-- [x] Design architecture for separating responsibility cleanly in the frontend
-- [x] Install PowerSync
-- [x] Programs (base: name, description, theme, address, media; admin create; synced)
+- [x] Design architecture for separating responsibility cleanly in the frontend (program edit / control / check-in contexts + layouts)
+- [x] Install PowerSync (Docker service + Laravel credentials + TanStack sync bootstrap)
+- [x] Programs (base: name, description, theme, address, media; admin create; synced); **`slug`** on `programs` for public URLs
+- [x] Boat types & boats: CRUD in admin UI + PowerSync downlink/uplink + tests
+- [x] Water routes (_Parcours_): CRUD + sync; trace capture via **GeoJSON textarea** in admin (not an interactive map editor yet)
+- [x] Trips (_Sorties_): migrations + PowerSync + admin list / create / edit pages (`boat_type_id`, `water_route_id`, `scheduled_departure_at`, `capacity`, optional `template_day_slot_id`)
+- [x] Template days / slots / dates: migrations, PowerSync sync + uplink, TanStack collections + models + `PowerSyncUploadTemplateDayTest` — **no** dedicated scheduling/calendar UI yet
+- [x] Ticket types: per-program fields (title, `price_cents`, PWYC, min/max, `trip_inventory_caps` JSON) + PowerSync downlink/uplink (`PUT` / `PATCH` / `DELETE` on `POST /api/powersync/upload`; idempotent no-op when the row is missing; delete returns **422** if `booking_tickets` still reference the type) + `PowerSyncUploadTicketTypeBookingTicketTest` — **no** admin screens wired (models/sync only)
+- [x] Booking **line items**: `booking_tickets` (name, email, country, `custom_fields` JSON, optional `waiver_confirmation_id`) + the same uplink path + tests — requires a pre-existing `bookings` row today (no uplink for parent **bookings** yet; **`bookings` not in local PowerSync schema**)
+- [x] Public **read-only** catalog: `GET /api/public/programs`, `GET /api/public/programs/{slug}`, public home + program detail pages (`PublicHomePage`, `PublicProgramDetailPage`)
+- [x] PHPUnit: PostGIS geometry + relations (`OnWaterDataModelTest`); PowerSync upload coverage (programs, boats, trips/water routes, template stack, ticket types / booking tickets); `PublicProgramApiTest`
 
 ### Public booking
 
-- [ ] Shareable program link / slug (no login to view and book)
-- [ ] Booking flow: trip / date / quantities; **v1: no payment** — reserve/hold or confirm-only
-- [ ] Laravel public routes and policies (guest-readable catalog; authenticated or guest writes per your booking rules)
+- [x] Shareable program link / slug — **view catalog without login** (API + public SPA)
+- [ ] Guest booking flow: pick trip / date / quantities; **v1: no payment** — reserve/hold or confirm-only (UI + backend writes for anonymous users)
+- [ ] Laravel policies for **guest writes** to bookings when the product opens public checkout (`POST /api/powersync/upload` remains **staff-authenticated** today)
 
 ### Checkout
 
-- [ ] Collect name, email, country (baseline required fields)
-- [ ] Admin-defined questions per trip/program; persist answers; validate
+- [x] Baseline fields on **`booking_tickets`**: name, email, country, optional **`waiver_confirmation_id`**, and **`custom_fields`** JSON (schema + PowerSync validation)
+- [ ] Product flow that **creates `bookings`** (parent rows) from checkout — API or PowerSync `bookings` type + local sync table for offline staff workflows
+- [ ] Admin-defined questions per trip/program beyond generic JSON — authoring UI and validation rules
 
 ### Ticket types
 
-- [ ] Per program: title, price, PWYC, min/max per purchase
-- [ ] Inventory caps **per trip** (not only at program level)
+- [x] Backend + sync: title, price, PWYC, min/max per purchase
+- [x] Store **per-trip caps** in **`trip_inventory_caps`** (JSON map of trip id → cap); enforcement logic still open
+- [ ] Admin UI (Quasar) to manage ticket types for the selected program
+- [ ] Server-side inventory enforcement against caps per trip
 
 ### Companion / ratio rules
 
@@ -49,55 +60,58 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 
 ### Trips and calendar
 
-- [ ] **Trips** (_Sortie_ in UI): bookable unit — date, **`scheduled_departure_at`**, capacity, `program_id`; link to template **or** ad-hoc description
-- [ ] Trips expose `boat_type_id` and `water_route_id` before trip-linked voyages are meaningful
-- [ ] **Template day**: reusable “typical day” with defined trips / slots
-- [ ] Assign template days to calendar dates
-- [ ] Manually add or adjust trips on a calendar day
+- [x] Trips as bookable rows with **`scheduled_departure_at`**, capacity, `program_id`, **`boat_type_id`**, **`water_route_id`**, optional link to **`template_day_slot_id`**
+- [ ] **Template calendar UX**: assign template days to dates and visualize trips — data layer exists without calendar screens
+- [ ] Manual “day planner” beyond today’s trip list CRUD (if the product needs it)
 
 ### Backend — on-water data model
 
-- [x] PostGIS + Magellan in Docker/CI; `water_routes`: `name`, `trace` (LineString), `duration_minutes` — **reusable** rows (no departure columns; same geometry across many `trips`)
-- [x] `boats`: as implemented today (`name`, `boat_type_id`, optional `user_id` for audit, capacity, notes, …) — physical hull in fleet CRUD / sync; not per-user scoping
-- [x] `trips`: `scheduled_departure_at`, `boat_type_id`, `water_route_id`, …
-- [ ] `voyages`: nullable `trip_id`, **`water_route_id` NOT NULL** (actual path may differ from `trips.water_route_id`), `started_at`, `arrived_at`, `status`; optional `scheduled_departure_at` **only** when `trip_id` is null; **no** `boat_id`
-- [ ] `voyage_boat` pivot; `guides` + `voyage_guide` (multi-select at start)
-- [ ] `check_ins`: one per booking, `voyage_id`; **`passengers`**: one row per person on the `voyages` row (booked + walk-ons)
-- [ ] Pax on board: count / group **`passengers`**; align with ticket-type per row when booking types exist
+- [x] PostGIS + Magellan in Docker/CI; `water_routes`: `name`, `trace` (LineString), `duration_minutes` — reusable rows
+- [x] `boats`; **`trips`** with planned route + boat type
+- [x] **`voyages`** table (+ **`user_id`** on row today), **`voyage_boat`**, **`guides`**, **`voyage_guide`**, **`check_ins`**, **`passengers`** — migrations, factories, Eloquent relations (`OnWaterDataModelTest` covers core geometry/trip/voyage/passenger shapes)
+- [ ] Voyages **runtime**: HTTP actions (`startVoyage`, `markArrived`), ETA helpers, and aligning **`passengers`** with ticket types for manifests
 
 ### API and state
 
-- [ ] Policies v1: **guest vs authenticated staff** only (no staff role matrix); include `POST /api/powersync/upload` where relevant
-- [ ] `startVoyage`: idempotent; `underway`; persist boats + guides; ETA = (**`trips.scheduled_departure_at`** if `trip_id` set, else ad-hoc departure on **`voyages`**) **+** **`water_routes.duration_minutes`** via **`voyages.water_route_id`** (may differ from `trips.water_route_id` — v1)
+- [x] Thin policies / gates in practice: public catalog **without** auth; PowerSync upload **requires** Sanctum user; upload actions assert **program membership** (`userCanManage`) on mutated rows (including `ticket_types` and `booking_tickets`)
+- [ ] Formal policy coverage surface matching every route/resource if you want everything routed through Laravel policies consistently
+- [ ] `startVoyage`: idempotent; `underway`; persist boats + guides; ETA from **`trips.scheduled_departure_at`** or ad-hoc **`voyages.scheduled_departure_at`** + **`water_routes.duration_minutes`** on **`voyages.water_route_id`**
 - [ ] `markArrived` / complete; status transitions (`draft` \| `ready` \| `underway` \| `completed` \| `cancelled` — tune names)
 - [ ] Audit: who started / closed the voyage
 
 ### PowerSync and admin client
 
-- [ ] Sync: `water_routes` (+ GeoJSON when online), `boats`, `boat_types`, `trips`, `voyages`, pivots, `guides`, `check_ins`, **`passengers`**, **bookings** needed for check-in
-- [ ] Uplink and **conflict** rules (e.g. single-writer per voyage; queue retries; keep v1 simple)
-- [ ] TanStack DB: optimistic start/arrive; reconcile on reconnect; document offline-allowed vs forbidden actions
+- [x] **Synced today** (program scope in `docker/powersync/sync-config.yaml`): programs (user scope list), `boat_types`, `media`, `boat_program`, `boats`, `trips`, `water_routes`, `template_days` / `template_day_slots` / `template_day_dates`, `ticket_types`, `booking_tickets` (joined through `bookings`)
+- [x] **Uplink** for those tables via `POST /api/powersync/upload` (`PowerSyncUploadRouter`)
+- [ ] Sync / uplink for **`bookings`** headers, **`voyages`**, **`guides`** (if edited offline), **`check_ins`**, **`passengers`**, operational pivots — required for field ops + check-in offline
+- [ ] Conflict rules (single-writer per voyage, queue retries, …) documented and enforced beyond best-effort FIFO batches
+- [ ] TanStack DB: optimistic voyage lifecycle + reconcile on reconnect; document offline-allowed vs forbidden actions
 
 ### Admin UI (Quasar)
 
-- [ ] **Parcours** editor: draw LineString, duration, name; save to API (map authoring online v1 is OK)
-- [ ] Ops board: ready/underway voyages; program/trip label, route, departure, ETA, pax, boats, guides; Start / Mark arrived
-- [ ] Start **départ** modal: multi boats (filter by trip’s boat type), multi guides, notes
-- [ ] Check-in: attach bookings to voyage (`check_ins`); manifest as **`passengers`** (one row per person); **offline** per sync design
+- [x] Edit context: boats, boat types, water routes (textarea trace), trips CRUD, program edit, settings placeholder, reports placeholder
+- [ ] **Parcours** map editor: draw LineString on a map (optional upgrade from GeoJSON textarea)
+- [ ] Control context: ops board (today: **placeholder** `AppProgramControlPanelPage`)
+- [ ] Start **départ** modal: multi boats, multi guides, notes
+- [ ] Check-in context: manifest workflows (today: **placeholder** `AppProgramCheckinManagerPage`)
+- [ ] Ticket types screens (sync-ready models exist without pages)
 
 ### Fleet and sequencing notes
 
-- [ ] Fleet: boat types / hulls CRUD; guides (optional `user_id`); admin + sync
-- [ ] Optional: **Voyage** with `trip_id` null first for field tests; then end-to-end with bookings
+- [x] Boat types / hulls CRUD + sync
+- [ ] Guides: tables exist; **no** admin UI or PowerSync sync yet
+- [ ] Optional: **Voyage** with `trip_id` null for field tests; end-to-end with bookings + check-in
 
 ### Testing
 
-- [ ] PHPUnit: voyage lifecycle, policies, ETA = trip departure + **voyage** route duration (or ad-hoc); PostGIS in CI
+- [x] PostGIS in CI; upload/trip/water route/template/ticket + booking ticket feature tests (`PowerSyncUploadTicketTypeBookingTicketTest` and sibling `PowerSyncUpload*` tests)
+- [ ] PHPUnit: voyage **lifecycle** HTTP API, ETA = departure + **voyage** route duration, policy matrix if expanded
 - [ ] Feature tests: `startVoyage` with N boats and M guides
 
 ### Cross-cutting
 
-- [ ] French-first i18n for _Sortie_ / _Départ_ / _Parcours_ / _Embarcation_ (see terminology table below)
+- [x] Partial French strings for **Sortie** / **Parcours** (trips & water routes lists) in `resources/js/utilities/i18n.ts`
+- [ ] French-first pass for **Départ** / **Embarcation** / control & check-in placeholders and remaining screens
 
 ### Later
 

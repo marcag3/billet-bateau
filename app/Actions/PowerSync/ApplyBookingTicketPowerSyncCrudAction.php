@@ -16,6 +16,10 @@ use Spatie\LaravelData\Optional;
 
 /**
  * Applies PowerSync CRUD for {@see BookingTicket} rows (booking_tickets upload type).
+ *
+ * Idempotent semantics: {@see PowerSyncCrudEntryData::OP_PATCH} and {@see PowerSyncCrudEntryData::OP_DELETE}
+ * no-op when the target row does not exist, or when a {@see BookingTicket} row has no resolvable {@see Booking}
+ * for authorization (offline client retries safe).
  */
 final class ApplyBookingTicketPowerSyncCrudAction
 {
