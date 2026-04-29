@@ -24,4 +24,8 @@ enum PowerSyncCrudType: string
     case TemplateDaySlots = 'template_day_slots';
 
     case TemplateDayDates = 'template_day_dates';
+
+    case TicketTypes = 'ticket_types';
+
+    case BookingTickets = 'booking_tickets';
 }

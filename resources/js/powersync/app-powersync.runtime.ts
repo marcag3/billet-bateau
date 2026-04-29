@@ -6,9 +6,11 @@ import { fetchCurrentSession } from '../models/auth.api';
 import { useAuthStore } from '../store/auth.store';
 import { createAppPowerSyncConnector } from '../services/powersync.connector';
 import {
+    appBookingTicketsPowerSyncTable,
     appBoatProgramPowerSyncTable,
     appBoatTypesPowerSyncTable,
     appBoatsPowerSyncTable,
+    appTicketTypesPowerSyncTable,
     appProgramsPowerSyncTable,
     appMediaPowerSyncTable,
     appPowerSyncSchema,
@@ -20,7 +22,7 @@ import {
 } from './app.powersync-schema';
 import { translate } from '../utilities/i18n';
 
-const DB_FILENAME = 'billbateau-app-v14.db';
+const DB_FILENAME = 'billbateau-app-v15.db';
 
 const loadFailedMessage = translate('sync.unableLoadSync');
 const persistenceLimitedMessage = translate('sync.persistenceLimited');
@@ -115,6 +117,8 @@ const collectionRefs = {
     boats: shallowRef(null),
     boat_program: shallowRef(null),
     trips: shallowRef(null),
+    ticket_types: shallowRef(null),
+    booking_tickets: shallowRef(null),
     water_routes: shallowRef(null),
     template_days: shallowRef(null),
     template_day_slots: shallowRef(null),
@@ -128,6 +132,8 @@ const tableByName = {
     boats: appBoatsPowerSyncTable,
     boat_program: appBoatProgramPowerSyncTable,
     trips: appTripsPowerSyncTable,
+    ticket_types: appTicketTypesPowerSyncTable,
+    booking_tickets: appBookingTicketsPowerSyncTable,
     water_routes: appWaterRoutesPowerSyncTable,
     template_days: appTemplateDaysPowerSyncTable,
     template_day_slots: appTemplateDaySlotsPowerSyncTable,
@@ -415,6 +421,14 @@ export function getBoatProgramCollectionRef() {
 
 export function getTripsCollectionRef() {
     return collectionRefs.trips;
+}
+
+export function getTicketTypesCollectionRef() {
+    return collectionRefs.ticket_types;
+}
+
+export function getBookingTicketsCollectionRef() {
+    return collectionRefs.booking_tickets;
 }
 
 export function getWaterRoutesCollectionRef() {

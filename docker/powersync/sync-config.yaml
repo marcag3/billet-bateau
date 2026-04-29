@@ -51,6 +51,16 @@ streams:
         WHERE program_id = subscription.parameter('program_id')
           AND program_id IN accessible_program_ids
       - |
+        SELECT * FROM ticket_types
+        WHERE program_id = subscription.parameter('program_id')
+          AND program_id IN accessible_program_ids
+      - |
+        SELECT booking_tickets.*
+        FROM booking_tickets
+        INNER JOIN bookings ON bookings.id = booking_tickets.booking_id
+        WHERE bookings.program_id = subscription.parameter('program_id')
+          AND bookings.program_id IN accessible_program_ids
+      - |
         SELECT * FROM water_routes
         WHERE program_id = subscription.parameter('program_id')
           AND program_id IN accessible_program_ids

@@ -103,7 +103,7 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 
 - [ ] Weekly schedule: start/end date; template days or individual trips
 - [ ] Overrides: e.g. holidays with template days
-- [ ] Extras: electronic ticket, thank-you email, advanced settings (Zeffy-style parity)
+- [ ] Extras: electronic ticket, thank-you email, advanced settings
 
 ## Naming notes
 

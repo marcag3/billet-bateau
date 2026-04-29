@@ -2,17 +2,16 @@
 
 namespace App\Models;
 
-use Database\Factories\BookingFactory;
+use Database\Factories\TicketTypeFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class Booking extends Model
+class TicketType extends Model
 {
-    /** @use HasFactory<BookingFactory> */
+    /** @use HasFactory<TicketTypeFactory> */
     use HasFactory;
 
     use HasUlids;
@@ -20,8 +19,12 @@ class Booking extends Model
     protected $fillable = [
         'id',
         'program_id',
-        'contact_name',
-        'contact_email',
+        'title',
+        'price_cents',
+        'is_pay_what_you_can',
+        'min_per_purchase',
+        'max_per_purchase',
+        'trip_inventory_caps',
         'created_at',
         'updated_at',
     ];
@@ -29,6 +32,11 @@ class Booking extends Model
     protected function casts(): array
     {
         return [
+            'price_cents' => 'integer',
+            'is_pay_what_you_can' => 'boolean',
+            'min_per_purchase' => 'integer',
+            'max_per_purchase' => 'integer',
+            'trip_inventory_caps' => 'array',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -39,18 +47,8 @@ class Booking extends Model
         return $this->belongsTo(Program::class, 'program_id');
     }
 
-    public function checkIn(): HasOne
-    {
-        return $this->hasOne(CheckIn::class, 'booking_id');
-    }
-
-    public function passengers(): HasMany
-    {
-        return $this->hasMany(Passenger::class, 'booking_id');
-    }
-
     public function bookingTickets(): HasMany
     {
-        return $this->hasMany(BookingTicket::class, 'booking_id');
+        return $this->hasMany(BookingTicket::class, 'ticket_type_id');
     }
 }

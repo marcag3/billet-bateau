@@ -6,6 +6,8 @@ use App\Actions\PowerSync\ApplyBoatPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyBoatProgramPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyBoatTypePowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyProgramPowerSyncCrudAction;
+use App\Actions\PowerSync\ApplyBookingTicketPowerSyncCrudAction;
+use App\Actions\PowerSync\ApplyTicketTypePowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyTemplateDayDatePowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyTemplateDayPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyTemplateDaySlotPowerSyncCrudAction;
@@ -27,6 +29,8 @@ final class PowerSyncUploadRouter
             PowerSyncCrudType::TemplateDays => ApplyTemplateDayPowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::TemplateDaySlots => ApplyTemplateDaySlotPowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::TemplateDayDates => ApplyTemplateDayDatePowerSyncCrudAction::run($entry, $userId),
+            PowerSyncCrudType::TicketTypes => ApplyTicketTypePowerSyncCrudAction::run($entry, $userId),
+            PowerSyncCrudType::BookingTickets => ApplyBookingTicketPowerSyncCrudAction::run($entry, $userId),
         };
     }
 }

@@ -104,6 +104,11 @@ class Program extends Model implements HasMedia
         return $this->hasMany(Booking::class, 'program_id');
     }
 
+    public function ticketTypes(): HasMany
+    {
+        return $this->hasMany(TicketType::class, 'program_id');
+    }
+
     /**
      * Public program routes resolve by slug and exclude archived programs.
      *
