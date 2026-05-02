@@ -77,12 +77,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
-import { useTrips } from '../models/trips/trips.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection, getBoatTypesCollection, getWaterRoutesCollection } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection, getBoatTypesCollection, getWaterRoutesCollection, getTripsCollection, getProgramSyncScopeIdRef } from '../powersync/app-powersync.runtime';
+import type { TripOutput } from '../powersync/trips.collection';
 import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -93,7 +93,25 @@ import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
 
 const { t, locale } = useI18n();
 const route = useRoute();
-const { trips, ensureTripsReady } = useTrips();
+const tripsCollection = getTripsCollection();
+const { data: allTrips } = useLiveQuery(
+    (queryBuilder) => {
+        const col = tripsCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ t: col })
+            .orderBy(({ t }) => t.scheduled_departure_at, 'desc')
+            .orderBy(({ t }) => t.updated_at, 'desc')
+            .orderBy(({ t }) => t.id, 'desc');
+    },
+    [tripsCollection],
+);
+
+const trips = computed(() => {
+    const pid = getProgramSyncScopeIdRef().value.trim();
+    if (pid.length === 0) return [];
+    return (allTrips.value ?? []).filter((row) => String(row.program_id) === pid);
+});
+
 const programsCollection = getProgramsCollection();
 
 const { data: programs } = useLiveQuery(
@@ -158,7 +176,7 @@ const waterRouteOptions = computed(() =>
     })),
 );
 
-function formatDeparture(tr: Record<string, unknown>) {
+function formatDeparture(tr: TripOutput) {
     const raw = tr.scheduled_departure_at;
     if (raw == null || String(raw) === '') {
         return '—';
@@ -173,7 +191,7 @@ function formatDeparture(tr: Record<string, unknown>) {
     }).format(d);
 }
 
-function boatTypeLabelFor(tr: Record<string, unknown>) {
+function boatTypeLabelFor(tr: TripOutput) {
     const id = tr.boat_type_id;
     if (id == null || String(id) === '') {
         return '';
@@ -182,7 +200,7 @@ function boatTypeLabelFor(tr: Record<string, unknown>) {
     return opt?.label ?? '';
 }
 
-function waterRouteLabelFor(tr: Record<string, unknown>) {
+function waterRouteLabelFor(tr: TripOutput) {
     const id = tr.water_route_id;
     if (id == null || String(id) === '') {
         return '';
@@ -191,7 +209,5 @@ function waterRouteLabelFor(tr: Record<string, unknown>) {
     return opt?.label ?? '';
 }
 
-onMounted(() => {
-    void ensureTripsReady();
-});
+
 </script>

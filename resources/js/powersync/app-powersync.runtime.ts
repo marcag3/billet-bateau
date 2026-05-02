@@ -24,6 +24,7 @@ import { createBoatTypesCollection } from './boat-types.collection';
 import { createTicketTypesCollection } from './ticket-types.collection';
 import { createBoatsCollection } from './boats.collection';
 import { createWaterRoutesCollection } from './water-routes.collection';
+import { createTripsCollection } from './trips.collection';
 import { translate } from '../utilities/i18n';
 
 const DB_FILENAME = 'billbateau-app-v16.db';
@@ -323,6 +324,10 @@ export async function bootstrapAppPowerSync() {
                     collection = createWaterRoutesCollection(db, (error) => {
                         errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
                     });
+                } else if (name === 'trips') {
+                    collection = createTripsCollection(db, (error) => {
+                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                    });
                 } else {
                     const collectionOptions = powerSyncCollectionOptions({
                         database: db,
@@ -423,7 +428,7 @@ export function getBoatsCollection() {
     return collectionRefs.boats;
 }
 
-export function getTripsCollectionRef() {
+export function getTripsCollection() {
     return collectionRefs.trips;
 }
 
