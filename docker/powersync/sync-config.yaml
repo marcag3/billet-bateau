@@ -13,7 +13,10 @@ config:
 with:
   accessible_program_ids: |
     SELECT id AS program_id FROM programs
-    WHERE id IN (SELECT program_id FROM program_user WHERE user_id = auth.user_id())
+    WHERE id IN (
+      SELECT program_id FROM program_user
+      WHERE user_id::text = auth.user_id()
+    )
 
 streams:
   user_scope:
