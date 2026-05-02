@@ -19,6 +19,7 @@ import {
     appTripsPowerSyncTable,
     appWaterRoutesPowerSyncTable,
 } from './app.powersync-schema';
+import { createProgramsCollection } from './programs.collection';
 import { translate } from '../utilities/i18n';
 
 const DB_FILENAME = 'billbateau-app-v16.db';
@@ -95,6 +96,7 @@ function isBenignPowerSyncUploadFailure(uploadError, formattedMessage) {
 
 const isLoading = ref(true);
 const errorMessage = ref('');
+const programsDeserializationError = ref<unknown>(null);
 const hasBootstrappedCollection = ref(false);
 const persistenceUnavailable = ref(false);
 const outboxPendingCount = ref(0);
@@ -295,11 +297,19 @@ export async function bootstrapAppPowerSync() {
 
             for (const name of Object.keys(tableByName)) {
                 const table = tableByName[name];
-                const collectionOptions = powerSyncCollectionOptions({
-                    database: db,
-                    table,
-                });
-                const collection = createCollection(/** @type {any} */(collectionOptions));
+                let collection;
+                if (name === 'programs') {
+                    collection = createProgramsCollection(db, (error) => {
+                        programsDeserializationError.value = error;
+                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                    });
+                } else {
+                    const collectionOptions = powerSyncCollectionOptions({
+                        database: db,
+                        table,
+                    });
+                    collection = createCollection(/** @type {any} */(collectionOptions));
+                }
                 collectionRefs[name].value = collection;
             }
 
@@ -377,8 +387,12 @@ export function getPowerSyncDbRef() {
     return powerSyncDbRef;
 }
 
-export function getProgramsCollectionRef() {
+export function getProgramsCollection() {
     return collectionRefs.programs;
+}
+
+export function getProgramsDeserializationErrorRef() {
+    return programsDeserializationError;
 }
 
 export function getBoatTypesCollectionRef() {
