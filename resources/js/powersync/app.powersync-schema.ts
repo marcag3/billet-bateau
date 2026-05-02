@@ -113,7 +113,6 @@ const templateDayDatesTable = new Table({
 });
 
 const mediaTable = new Table({
-    id: column.integer,
     program_id: column.text,
     model_type: column.text,
     model_id: column.text,

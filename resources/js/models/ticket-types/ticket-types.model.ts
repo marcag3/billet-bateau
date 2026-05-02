@@ -6,11 +6,9 @@ import { useEntityList } from '../entity.queries';
 import {
     bootstrapAppPowerSync,
     getAppPowerSyncBootstrappedRef,
-    getPowerSyncDbRef,
     getProgramSyncScopeIdRef,
     getTicketTypesCollectionRef,
     refreshOutboxSnapshot,
-    waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
 
 export const ticketTypesModelDefinition = defineModel({
@@ -86,25 +84,22 @@ export function useTicketTypes() {
             throw new Error('Ticket type title is required.');
         }
 
-        collection.insert({
-            id,
-            program_id: programId,
-            title,
-            price_cents: input.priceCents,
-            is_pay_what_you_can: input.isPayWhatYouCan ? 1 : 0,
-            min_per_purchase: input.minPerPurchase ?? 0,
-            max_per_purchase: input.maxPerPurchase,
-            trip_inventory_caps: JSON.stringify(input.tripInventoryCaps ?? {}),
-            created_at: now,
-            updated_at: now,
-        });
+        await collection
+            .insert({
+                id,
+                program_id: programId,
+                title,
+                price_cents: input.priceCents,
+                is_pay_what_you_can: input.isPayWhatYouCan ? 1 : 0,
+                min_per_purchase: input.minPerPurchase ?? 0,
+                max_per_purchase: input.maxPerPurchase,
+                trip_inventory_caps: JSON.stringify(input.tripInventoryCaps ?? {}),
+                created_at: now,
+                updated_at: now,
+            })
+            .isPersisted.promise;
 
         void refreshOutboxSnapshot();
-
-        const db = getPowerSyncDbRef().value;
-        if (db) {
-            await waitForUploadQueueDrained(db);
-        }
 
         return id;
     }

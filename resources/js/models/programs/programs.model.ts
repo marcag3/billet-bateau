@@ -8,9 +8,7 @@ import {
     getAppPowerSyncBootstrappedRef,
     getProgramsCollectionRef,
     getCurrentUserIdRef,
-    getPowerSyncDbRef,
     refreshOutboxSnapshot,
-    waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
 import { foldUnicodeForProgramSlug } from '../../utilities/program-slug';
 
@@ -136,29 +134,26 @@ export function usePrograms() {
         const address = input.address ?? {};
         const addressFields = normalizeAddressRowFields(address);
 
-        programsCollection.insert({
-            id,
-            name: input.name.trim(),
-            description: input.description.trim().length > 0 ? input.description.trim() : null,
-            theme_color: themeColor,
-            is_active: input.isActive ? 1 : 0,
-            is_archived: 0,
-            slug: buildInitialProgramSlug(input.name, id),
-            line_1: addressFields.line_1,
-            line_2: addressFields.line_2,
-            city: addressFields.city,
-            postal_code: addressFields.postal_code,
-            country: addressFields.country,
-            created_at: now,
-            updated_at: now,
-        });
+        await programsCollection
+            .insert({
+                id,
+                name: input.name.trim(),
+                description: input.description.trim().length > 0 ? input.description.trim() : null,
+                theme_color: themeColor,
+                is_active: input.isActive ? 1 : 0,
+                is_archived: 0,
+                slug: buildInitialProgramSlug(input.name, id),
+                line_1: addressFields.line_1,
+                line_2: addressFields.line_2,
+                city: addressFields.city,
+                postal_code: addressFields.postal_code,
+                country: addressFields.country,
+                created_at: now,
+                updated_at: now,
+            })
+            .isPersisted.promise;
 
         void refreshOutboxSnapshot();
-
-        const db = getPowerSyncDbRef().value;
-        if (db) {
-            await waitForUploadQueueDrained(db);
-        }
 
         return id;
     }

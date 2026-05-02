@@ -31,7 +31,7 @@ class ProgramFactory extends Factory
             'name' => fake()->words(3, true),
             'description' => fake()->optional()->paragraph(),
             'theme_color' => '#'.strtoupper(fake()->regexify('[0-9A-F]{6}')),
-            'is_active' => false,
+            'is_active' => true,
             'is_archived' => false,
             'slug' => function (array $attributes): string {
                 $id = (string) ($attributes['id'] ?? Str::ulid());

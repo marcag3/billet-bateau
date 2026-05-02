@@ -8,10 +8,8 @@ import {
     getAppPowerSyncBootstrappedRef,
     getBoatsCollectionRef,
     getCurrentUserIdRef,
-    getPowerSyncDbRef,
     getProgramSyncScopeIdRef,
     refreshOutboxSnapshot,
-    waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
 import { parseOptionalNonNegativeInt } from '../../validation/zod-fields';
 
@@ -89,24 +87,21 @@ export function useBoats() {
         const boatTypeId =
             input.boatTypeId != null && String(input.boatTypeId).length > 0 ? String(input.boatTypeId) : null;
 
-        collection.insert({
-            id,
-            user_id: userId,
-            boat_type_id: boatTypeId,
-            program_id: programId,
-            name: name.length > 0 ? name : 'Untitled',
-            capacity,
-            notes: notes.length > 0 ? notes : null,
-            created_at: now,
-            updated_at: now,
-        });
+        await collection
+            .insert({
+                id,
+                user_id: userId,
+                boat_type_id: boatTypeId,
+                program_id: programId,
+                name: name.length > 0 ? name : 'Untitled',
+                capacity,
+                notes: notes.length > 0 ? notes : null,
+                created_at: now,
+                updated_at: now,
+            })
+            .isPersisted.promise;
 
         void refreshOutboxSnapshot();
-
-        const db = getPowerSyncDbRef().value;
-        if (db) {
-            await waitForUploadQueueDrained(db);
-        }
 
         return id;
     }

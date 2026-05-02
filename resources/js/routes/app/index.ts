@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
 /**
-* @see routes/web.php:9
+* @see routes/web.php:10
 * @route '/app/setup'
 */
 export const setup = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ setup.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:9
+* @see routes/web.php:10
 * @route '/app/setup'
 */
 setup.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ setup.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:9
+* @see routes/web.php:10
 * @route '/app/setup'
 */
 setup.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -31,7 +31,7 @@ setup.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:9
+* @see routes/web.php:10
 * @route '/app/setup'
 */
 setup.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -40,7 +40,7 @@ setup.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:17
+* @see routes/web.php:18
 * @route '/app/login'
 */
 export const login = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -54,7 +54,7 @@ login.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:17
+* @see routes/web.php:18
 * @route '/app/login'
 */
 login.url = (options?: RouteQueryOptions) => {
@@ -62,7 +62,7 @@ login.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:17
+* @see routes/web.php:18
 * @route '/app/login'
 */
 login.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -71,7 +71,7 @@ login.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:17
+* @see routes/web.php:18
 * @route '/app/login'
 */
 login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

@@ -6,11 +6,9 @@ import { useEntityList } from '../entity.queries';
 import {
     bootstrapAppPowerSync,
     getAppPowerSyncBootstrappedRef,
-    getPowerSyncDbRef,
     getProgramSyncScopeIdRef,
     getTemplateDaysCollectionRef,
     refreshOutboxSnapshot,
-    waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
 
 export const templateDaysModelDefinition = defineModel({
@@ -72,20 +70,17 @@ export function useTemplateDays() {
         const now = new Date().toISOString();
         const name = String(input.name ?? '').trim();
 
-        collection.insert({
-            id,
-            program_id: programId,
-            name: name.length > 0 ? name : 'Untitled',
-            created_at: now,
-            updated_at: now,
-        });
+        await collection
+            .insert({
+                id,
+                program_id: programId,
+                name: name.length > 0 ? name : 'Untitled',
+                created_at: now,
+                updated_at: now,
+            })
+            .isPersisted.promise;
 
         void refreshOutboxSnapshot();
-
-        const db = getPowerSyncDbRef().value;
-        if (db) {
-            await waitForUploadQueueDrained(db);
-        }
 
         return id;
     }

@@ -18,19 +18,22 @@ with:
 streams:
   user_scope:
     auto_subscribe: true
+    priority: 1
     queries:
       - |
         SELECT * FROM programs
         WHERE id IN accessible_program_ids
 
   program_scope:
+    priority: 2
     queries:
       - |
         SELECT * FROM boat_types
         WHERE boat_types.program_id = subscription.parameter('program_id')
           AND boat_types.program_id IN accessible_program_ids
       - |
-        SELECT * FROM media
+        SELECT uuid, program_id, model_type, model_id, collection_name, name, file_name
+        FROM media
         WHERE media.program_id = subscription.parameter('program_id')
           AND media.program_id IN accessible_program_ids
       - |

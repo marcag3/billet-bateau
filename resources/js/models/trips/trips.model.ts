@@ -6,11 +6,9 @@ import { useEntityList } from '../entity.queries';
 import {
     bootstrapAppPowerSync,
     getAppPowerSyncBootstrappedRef,
-    getPowerSyncDbRef,
     getProgramSyncScopeIdRef,
     getTripsCollectionRef,
     refreshOutboxSnapshot,
-    waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
 
 export const tripsModelDefinition = defineModel({
@@ -95,24 +93,21 @@ export function useTrips() {
             ? scheduled
             : new Date(scheduled).toISOString();
 
-        collection.insert({
-            id,
-            program_id: programId,
-            boat_type_id: boatTypeId,
-            water_route_id: waterRouteId,
-            template_day_slot_id: null,
-            scheduled_departure_at: scheduledIso,
-            capacity: cap,
-            created_at: now,
-            updated_at: now,
-        });
+        await collection
+            .insert({
+                id,
+                program_id: programId,
+                boat_type_id: boatTypeId,
+                water_route_id: waterRouteId,
+                template_day_slot_id: null,
+                scheduled_departure_at: scheduledIso,
+                capacity: cap,
+                created_at: now,
+                updated_at: now,
+            })
+            .isPersisted.promise;
 
         void refreshOutboxSnapshot();
-
-        const db = getPowerSyncDbRef().value;
-        if (db) {
-            await waitForUploadQueueDrained(db);
-        }
 
         return id;
     }

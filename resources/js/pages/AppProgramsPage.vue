@@ -297,7 +297,7 @@ function primaryImageFor(programId: string) {
     if (fileName.length === 0) {
         return undefined;
     }
-    return `/storage/${String(match.id ?? "")}/${fileName}`;
+    return `/media/${String(match.uuid)}`;
 }
 
 function placeholderStyle(p: Record<string, unknown>) {

@@ -6,11 +6,9 @@ import { useEntityList } from '../entity.queries';
 import {
     bootstrapAppPowerSync,
     getAppPowerSyncBootstrappedRef,
-    getPowerSyncDbRef,
     getProgramSyncScopeIdRef,
     getWaterRoutesCollectionRef,
     refreshOutboxSnapshot,
-    waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
 
 /** Default LineString (Montreal area) as GeoJSON; matches server tests / upload applier. */
@@ -89,22 +87,19 @@ export function useWaterRoutes() {
         const traceRaw = input.traceGeoJson != null ? String(input.traceGeoJson).trim() : '';
         const trace = traceRaw.length > 0 ? traceRaw : DEFAULT_WATER_ROUTE_TRACE_GEOJSON;
 
-        collection.insert({
-            id,
-            program_id: programId,
-            name: name.length > 0 ? name : 'Untitled',
-            trace,
-            duration_minutes: duration,
-            created_at: now,
-            updated_at: now,
-        });
+        await collection
+            .insert({
+                id,
+                program_id: programId,
+                name: name.length > 0 ? name : 'Untitled',
+                trace,
+                duration_minutes: duration,
+                created_at: now,
+                updated_at: now,
+            })
+            .isPersisted.promise;
 
         void refreshOutboxSnapshot();
-
-        const db = getPowerSyncDbRef().value;
-        if (db) {
-            await waitForUploadQueueDrained(db);
-        }
 
         return id;
     }

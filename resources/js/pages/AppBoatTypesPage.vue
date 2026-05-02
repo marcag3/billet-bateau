@@ -215,7 +215,7 @@ function primaryImageFor(boatTypeId: string) {
     if (fileName.length === 0) {
         return undefined;
     }
-    return `/storage/${String(match['id'] ?? '')}/${fileName}`;
+    return `/media/${String(match['uuid'])}`;
 }
 
 function commitName(bt: Record<string, unknown>) {

@@ -6,12 +6,10 @@ import { useEntityList } from '../entity.queries';
 import {
     bootstrapAppPowerSync,
     getAppPowerSyncBootstrappedRef,
-    getPowerSyncDbRef,
     getProgramSyncScopeIdRef,
     getTemplateDaySlotsCollectionRef,
     getTemplateDaysCollectionRef,
     refreshOutboxSnapshot,
-    waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
 
 export const templateDaySlotsModelDefinition = defineModel({
@@ -93,30 +91,27 @@ export function useTemplateDaySlots() {
             throw new Error('Capacity must be a positive integer.');
         }
 
-        collection.insert({
-            id,
-            template_day_id: String(input.templateDayId),
-            sort_order: input.sortOrder ?? 0,
-            departure_time: String(input.departureTime).trim(),
-            capacity: cap,
-            boat_type_id:
-                input.boatTypeId != null && String(input.boatTypeId).length > 0 ? String(input.boatTypeId) : null,
-            water_route_id:
-                input.waterRouteId != null && String(input.waterRouteId).length > 0
-                    ? String(input.waterRouteId)
-                    : null,
-            internal_notes: input.internalNotes ?? null,
-            ticket_setup: input.ticketSetup != null ? JSON.stringify(input.ticketSetup) : null,
-            created_at: now,
-            updated_at: now,
-        });
+        await collection
+            .insert({
+                id,
+                template_day_id: String(input.templateDayId),
+                sort_order: input.sortOrder ?? 0,
+                departure_time: String(input.departureTime).trim(),
+                capacity: cap,
+                boat_type_id:
+                    input.boatTypeId != null && String(input.boatTypeId).length > 0 ? String(input.boatTypeId) : null,
+                water_route_id:
+                    input.waterRouteId != null && String(input.waterRouteId).length > 0
+                        ? String(input.waterRouteId)
+                        : null,
+                internal_notes: input.internalNotes ?? null,
+                ticket_setup: input.ticketSetup != null ? JSON.stringify(input.ticketSetup) : null,
+                created_at: now,
+                updated_at: now,
+            })
+            .isPersisted.promise;
 
         void refreshOutboxSnapshot();
-
-        const db = getPowerSyncDbRef().value;
-        if (db) {
-            await waitForUploadQueueDrained(db);
-        }
 
         return id;
     }

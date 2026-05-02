@@ -240,29 +240,6 @@ async function resolveAuthenticatedUserId() {
     return String(u.id);
 }
 
-/**
- * Wait until PowerSync upload queue is empty (best-effort polling).
- *
- * @param {import('@powersync/web').PowerSyncDatabase} db
- * @param {{ timeoutMs?: number, pollMs?: number }} [opts]
- * @returns {Promise<void>}
- */
-export async function waitForUploadQueueDrained(db, { timeoutMs = 45000, pollMs = 75 } = {}) {
-    const started = Date.now();
-
-    while (Date.now() - started < timeoutMs) {
-        const stats = await db.getUploadQueueStats(false);
-        const count = typeof stats?.count === 'number' ? stats.count : 0;
-        if (count === 0) {
-            return;
-        }
-        await new Promise((resolve) => {
-            setTimeout(resolve, pollMs);
-        });
-    }
-
-    throw new Error('Timed out waiting for PowerSync upload queue to drain.');
-}
 
 /**
  * @returns {Promise<void>}

@@ -7,9 +7,7 @@ import {
     bootstrapAppPowerSync,
     getAppPowerSyncBootstrappedRef,
     getBookingTicketsCollectionRef,
-    getPowerSyncDbRef,
     refreshOutboxSnapshot,
-    waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
 
 export const bookingTicketsModelDefinition = defineModel({
@@ -68,28 +66,25 @@ export function useBookingTickets() {
         const id = ulid();
         const now = new Date().toISOString();
 
-        collection.insert({
-            id,
-            booking_id: String(input.bookingId ?? '').trim(),
-            ticket_type_id: String(input.ticketTypeId ?? '').trim(),
-            name: String(input.name ?? '').trim(),
-            email: String(input.email ?? '').trim(),
-            country: String(input.country ?? '').trim(),
-            custom_fields: JSON.stringify(input.customFields ?? {}),
-            waiver_confirmation_id:
-                input.waiverConfirmationId != null && String(input.waiverConfirmationId).length > 0
-                    ? String(input.waiverConfirmationId)
-                    : null,
-            created_at: now,
-            updated_at: now,
-        });
+        await collection
+            .insert({
+                id,
+                booking_id: String(input.bookingId ?? '').trim(),
+                ticket_type_id: String(input.ticketTypeId ?? '').trim(),
+                name: String(input.name ?? '').trim(),
+                email: String(input.email ?? '').trim(),
+                country: String(input.country ?? '').trim(),
+                custom_fields: JSON.stringify(input.customFields ?? {}),
+                waiver_confirmation_id:
+                    input.waiverConfirmationId != null && String(input.waiverConfirmationId).length > 0
+                        ? String(input.waiverConfirmationId)
+                        : null,
+                created_at: now,
+                updated_at: now,
+            })
+            .isPersisted.promise;
 
         void refreshOutboxSnapshot();
-
-        const db = getPowerSyncDbRef().value;
-        if (db) {
-            await waitForUploadQueueDrained(db);
-        }
 
         return id;
     }

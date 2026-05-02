@@ -6,11 +6,9 @@ import { useEntityList } from '../entity.queries';
 import {
     bootstrapAppPowerSync,
     getAppPowerSyncBootstrappedRef,
-    getPowerSyncDbRef,
     getProgramSyncScopeIdRef,
     getTemplateDayDatesCollectionRef,
     refreshOutboxSnapshot,
-    waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
 
 export const templateDayDatesModelDefinition = defineModel({
@@ -71,21 +69,18 @@ export function useTemplateDayDates() {
         const id = ulid();
         const now = new Date().toISOString();
 
-        collection.insert({
-            id,
-            program_id: programId,
-            template_day_id: String(input.templateDayId),
-            service_date: String(input.serviceDate ?? '').trim(),
-            created_at: now,
-            updated_at: now,
-        });
+        await collection
+            .insert({
+                id,
+                program_id: programId,
+                template_day_id: String(input.templateDayId),
+                service_date: String(input.serviceDate ?? '').trim(),
+                created_at: now,
+                updated_at: now,
+            })
+            .isPersisted.promise;
 
         void refreshOutboxSnapshot();
-
-        const db = getPowerSyncDbRef().value;
-        if (db) {
-            await waitForUploadQueueDrained(db);
-        }
 
         return id;
     }

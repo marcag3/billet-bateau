@@ -8,9 +8,7 @@ import {
     getAppPowerSyncBootstrappedRef,
     getBoatTypesCollectionRef,
     getCurrentUserIdRef,
-    getPowerSyncDbRef,
     refreshOutboxSnapshot,
-    waitForUploadQueueDrained,
 } from '../../powersync/app-powersync.runtime';
 
 export const boatTypesModelDefinition = defineModel({
@@ -72,21 +70,18 @@ export function useBoatTypes() {
         const now = new Date().toISOString();
         const trimmed = String(name).trim();
 
-        collection.insert({
-            id,
-            user_id: userId,
-            program_id: pid,
-            name: trimmed.length > 0 ? trimmed : 'Untitled',
-            created_at: now,
-            updated_at: now,
-        });
+        await collection
+            .insert({
+                id,
+                user_id: userId,
+                program_id: pid,
+                name: trimmed.length > 0 ? trimmed : 'Untitled',
+                created_at: now,
+                updated_at: now,
+            })
+            .isPersisted.promise;
 
         void refreshOutboxSnapshot();
-
-        const db = getPowerSyncDbRef().value;
-        if (db) {
-            await waitForUploadQueueDrained(db);
-        }
 
         return id;
     }
