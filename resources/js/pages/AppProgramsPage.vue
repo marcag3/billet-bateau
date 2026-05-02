@@ -1,7 +1,6 @@
 <template>
-    <q-page class="q-pa-xl app-programs-page">
+    <q-page class="">
         <AppPageHeader
-            variant="hero"
             :title="t('programsList.title')"
             :description="t('programsList.description')"
         >
@@ -171,7 +170,6 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
 import { useLiveQuery } from '@tanstack/vue-db';
-import { useEntityList } from "../models/entity.queries";
 import {
     getAppPowerSyncBootstrappedRef,
     getMediaCollection,
@@ -210,26 +208,29 @@ const { data: programs } = useLiveQuery(
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
 
-const { data: mediaRows } = useEntityList({
-    enabledRef: hasBootstrapped,
-    alias: "media",
-    collection: getMediaCollection(),
-    orderBy: [
-        { key: "order_column", direction: "asc" },
-        { key: "created_at", direction: "asc" },
-    ],
-});
+const mediaCollection = getMediaCollection();
+const { data: mediaRows } = useLiveQuery(
+    (queryBuilder) => {
+        const col = mediaCollection.value;
+        if (!col) return undefined;
+        return queryBuilder
+            .from({ m: col })
+            .orderBy(({ m }) => m.order_column, 'asc')
+            .orderBy(({ m }) => m.created_at, 'asc');
+    },
+    [mediaCollection],
+);
 
 const programTab = ref<"active" | "archived">("active");
 
 const totalProgramCount = computed(() => (programs.value ?? []).length);
 
-const filteredPrograms = computed(() => {
+const filteredPrograms = computed((): ProgramOutput[] => {
     const list = programs.value ?? [];
     if (programTab.value === "active") {
-        return list.filter((p) => p != null && !p.is_archived);
+        return list.filter((p) => p != null && !p.is_archived) as ProgramOutput[];
     }
-    return list.filter((p) => p != null && p.is_archived);
+    return list.filter((p) => p != null && p.is_archived) as ProgramOutput[];
 });
 
 const emptyListMessage = computed(() => {
@@ -315,9 +316,7 @@ function copyPublicUrl(p: ProgramOutput) {
 </script>
 
 <style scoped>
-.app-programs-page {
-    padding-top: 2rem;
-}
+
 
 .app-program-card {
     border-radius: 12px;

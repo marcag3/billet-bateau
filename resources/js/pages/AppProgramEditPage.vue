@@ -205,6 +205,7 @@ import {
     getProgramsCollection,
     refreshOutboxSnapshot,
 } from "../powersync/app-powersync.runtime";
+import type { ProgramOutput } from "../powersync/programs.collection";
 import { normalizeThemeColor, normalizeAddressRowFields } from "../utilities/program-helpers";
 import mediaRoutes from "../routes/api/media";
 import { requestFormData } from "../services/http.client";
@@ -244,7 +245,13 @@ const showNotFound = computed(() => {
         return true;
     }
     const list = programs.value ?? [];
-    return !list.some((p) => p != null && String(p.id) === id);
+    return !list.some((row) => {
+        if (row == null) {
+            return false;
+        }
+        const p = row as ProgramOutput;
+        return String(p.id) === id;
+    });
 });
 
 const programEditSchema = createProgramEditFormSchema(t);
@@ -300,12 +307,17 @@ watch(
         if (id.length === 0) {
             return;
         }
-        const p = (programs.value ?? []).find(
-            (row) => row != null && String(row.id) === id,
-        );
-        if (!p) {
+        const row = (programs.value ?? []).find((r) => {
+            if (r == null) {
+                return false;
+            }
+            const candidate = r as ProgramOutput;
+            return String(candidate.id) === id;
+        });
+        if (!row) {
             return;
         }
+        const p = row as ProgramOutput;
         const signature = `${id}:${String(p.updated_at ?? "")}`;
         if (lastHydratedSignature.value === signature) {
             return;

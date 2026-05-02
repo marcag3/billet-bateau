@@ -262,7 +262,7 @@ const filteredBoats = computed(() => {
     return boats.value.filter((b) => {
         const name = String(b.name ?? '').toLowerCase();
         const notes = String(b.notes ?? '').toLowerCase();
-        const cap = b.capacity == null || b.capacity === '' ? '' : String(b.capacity);
+        const cap = b.capacity == null ? '' : String(b.capacity);
 
         if (nq.length > 0 && !name.includes(nq)) {
             return false;

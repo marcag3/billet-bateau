@@ -5,11 +5,11 @@ import { appBoatTypesPowerSyncTable } from './app.powersync-schema';
 
 export const boatTypesSchema = z.object({
     id: z.string(),
-    user_id: z.number().int().nullable(),
-    program_id: z.string().nullable(),
-    name: z.string().nullable(),
-    created_at: z.string().nullable(),
-    updated_at: z.string().nullable(),
+    user_id: z.number().int().nullable().default(null),
+    program_id: z.string().nullable().default(null),
+    name: z.string().nullable().default(null),
+    created_at: z.string().nullable().default(null),
+    updated_at: z.string().nullable().default(null),
 });
 
 export type BoatTypeInput = z.input<typeof boatTypesSchema>;
@@ -17,11 +17,11 @@ export type BoatTypeOutput = z.output<typeof boatTypesSchema>;
 
 export const boatTypesDeserializationSchema = z.object({
     id: z.string(),
-    user_id: z.number().int().nullable(),
-    program_id: z.string().nullable(),
-    name: z.string().nullable(),
-    created_at: z.string().nullable(),
-    updated_at: z.string().nullable(),
+    user_id: z.number().int().nullable().default(null),
+    program_id: z.string().nullable().default(null),
+    name: z.string().nullable().default(null),
+    created_at: z.string().nullable().default(null),
+    updated_at: z.string().nullable().default(null),
 });
 
 export function createBoatTypesCollection(
@@ -33,7 +33,6 @@ export function createBoatTypesCollection(
             database,
             table: appBoatTypesPowerSyncTable,
             schema: boatTypesSchema,
-            deserializationSchema: boatTypesDeserializationSchema,
             onDeserializationError: (error) => {
                 onError(error);
             },

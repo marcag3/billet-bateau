@@ -238,8 +238,7 @@ const boatId = computed(() => String(route.params.boatId ?? '').trim());
 
 const backTo = computed(() => ({ name: 'boats.list' as const, params: { programId: programId.value } }));
 
-const currentBoat = useBoatById(boatId);
-const neighbors = useBoatNeighborsInRoster(boatId);
+// currentBoat and neighbors are computed above from allBoats
 
 const showNotFound = computed(
     () => hasBootstrapped.value && boatId.value.length > 0 && currentBoat.value == null,
@@ -293,7 +292,7 @@ function syncFormFromBoat() {
     setValues({
         name: String(b.name ?? ''),
         capacity:
-            b.capacity === null || b.capacity === undefined || b.capacity === ''
+            b.capacity === null || b.capacity === undefined
                 ? null
                 : Number(b.capacity),
         notes: String(b.notes ?? ''),

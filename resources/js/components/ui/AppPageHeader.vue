@@ -1,8 +1,8 @@
 <template>
-    <header :class="headerClass">
+    <header class="app-page-header">
         <h1
             v-if="title"
-            :class="titleClass"
+            class="text-h4 q-mb-sm"
         >
             {{ title }}
         </h1>
@@ -12,19 +12,19 @@
         />
         <p
             v-if="description"
-            :class="descriptionClass"
+            class="text-body1 text-grey-8 q-mb-lg"
         >
             {{ description }}
         </p>
         <p
             v-else-if="hasDefaultSlot"
-            :class="descriptionClass"
+            class="text-body1 text-grey-8 q-mb-lg"
         >
             <slot />
         </p>
         <div
             v-if="$slots.actions"
-            :class="actionsClass"
+            class="q-mt-sm"
         >
             <slot name="actions" />
         </div>
@@ -38,45 +38,16 @@ const props = withDefaults(
     defineProps<{
         title?: string;
         description?: string;
-        /** Default: list page. `hero` uses dark gradient (e.g. programs). */
-        variant?: 'default' | 'hero';
-        /** `body1` (default) or `body2` for the description line. */
-        descriptionSize?: 'body1' | 'body2';
     }>(),
     {
         title: '',
         description: '',
-        variant: 'default',
-        descriptionSize: 'body1',
     },
 );
 
 const slots = useSlots();
 const hasDefaultSlot = computed(() => Boolean(slots.default));
 
-const headerClass = computed(() => {
-    if (props.variant === 'hero') {
-        return 'app-page-header app-page-header--hero q-mb-lg';
-    }
-    return 'app-page-header';
-});
-
-const titleClass = computed(() => {
-    if (props.variant === 'hero') {
-        return 'text-h4 q-mb-sm text-weight-bold';
-    }
-    return 'text-h4 q-mb-sm';
-});
-
-const descriptionClass = computed(() => {
-    if (props.variant === 'hero') {
-        return 'text-body1 q-mb-none app-page-header__hero-copy';
-    }
-    const size = props.descriptionSize === 'body2' ? 'text-body2' : 'text-body1';
-    return `${size} text-grey-8 q-mb-lg`;
-});
-
-const actionsClass = computed(() => 'q-mt-sm');
 </script>
 
 <style scoped>

@@ -123,17 +123,17 @@ const currentUserIdRef = ref('');
 let powerSyncStatusUnsubscribe = null;
 
 const collectionRefs = {
-    programs: shallowRef(null),
-    boat_types: shallowRef(null),
-    boats: shallowRef(null),
-    trips: shallowRef(null),
-    ticket_types: shallowRef(null),
-    booking_tickets: shallowRef(null),
-    water_routes: shallowRef(null),
-    template_days: shallowRef(null),
-    template_day_slots: shallowRef(null),
-    template_day_dates: shallowRef(null),
-    media: shallowRef(null),
+    programs: shallowRef<ReturnType<typeof createProgramsCollection> | null>(null),
+    boat_types: shallowRef<ReturnType<typeof createBoatTypesCollection> | null>(null),
+    boats: shallowRef<ReturnType<typeof createBoatsCollection> | null>(null),
+    trips: shallowRef<ReturnType<typeof createTripsCollection> | null>(null),
+    ticket_types: shallowRef<ReturnType<typeof createTicketTypesCollection> | null>(null),
+    booking_tickets: shallowRef<ReturnType<typeof createBookingTicketsCollection> | null>(null),
+    water_routes: shallowRef<ReturnType<typeof createWaterRoutesCollection> | null>(null),
+    template_days: shallowRef<ReturnType<typeof createTemplateDaysCollection> | null>(null),
+    template_day_slots: shallowRef<ReturnType<typeof createTemplateDaySlotsCollection> | null>(null),
+    template_day_dates: shallowRef<ReturnType<typeof createTemplateDayDatesCollection> | null>(null),
+    media: shallowRef<ReturnType<typeof createMediaCollection> | null>(null),
 };
 
 const tableByName = {

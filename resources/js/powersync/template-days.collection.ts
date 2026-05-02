@@ -5,10 +5,10 @@ import { appTemplateDaysPowerSyncTable } from './app.powersync-schema';
 
 export const templateDaysSchema = z.object({
     id: z.string(),
-    program_id: z.string().nullable(),
-    name: z.string().nullable(),
-    created_at: z.string().nullable(),
-    updated_at: z.string().nullable(),
+    program_id: z.string().nullable().default(null),
+    name: z.string().nullable().default(null),
+    created_at: z.string().nullable().default(null),
+    updated_at: z.string().nullable().default(null),
 });
 
 export type TemplateDayInput = z.input<typeof templateDaysSchema>;
@@ -16,10 +16,10 @@ export type TemplateDayOutput = z.output<typeof templateDaysSchema>;
 
 export const templateDaysDeserializationSchema = z.object({
     id: z.string(),
-    program_id: z.string().nullable(),
-    name: z.string().nullable(),
-    created_at: z.string().nullable(),
-    updated_at: z.string().nullable(),
+    program_id: z.string().nullable().default(null),
+    name: z.string().nullable().default(null),
+    created_at: z.string().nullable().default(null),
+    updated_at: z.string().nullable().default(null),
 });
 
 export function createTemplateDaysCollection(
@@ -31,7 +31,6 @@ export function createTemplateDaysCollection(
             database,
             table: appTemplateDaysPowerSyncTable,
             schema: templateDaysSchema,
-            deserializationSchema: templateDaysDeserializationSchema,
             onDeserializationError: (error) => {
                 onError(error);
             },

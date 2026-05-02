@@ -201,14 +201,6 @@ const routes: RouteRecordRaw[] = [
         },
     },
     {
-        path: '/test',
-        name: 'test',
-        component: () => import('../pages/AppTestPage.vue'),
-        meta: {
-            requiresAuth: true,
-        },
-    },
-    {
         path: '/:pathMatch(.*)*',
         name: 'not-found',
         component: () => import('../pages/AppNotFoundPage.vue'),

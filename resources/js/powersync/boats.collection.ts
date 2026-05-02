@@ -5,14 +5,14 @@ import { appBoatsPowerSyncTable } from './app.powersync-schema';
 
 export const boatsSchema = z.object({
     id: z.string(),
-    user_id: z.number().int().nullable(),
-    boat_type_id: z.string().nullable(),
-    program_id: z.string().nullable(),
-    name: z.string().nullable(),
-    capacity: z.number().int().nullable(),
-    notes: z.string().nullable(),
-    created_at: z.string().nullable(),
-    updated_at: z.string().nullable(),
+    user_id: z.number().int().nullable().default(null),
+    boat_type_id: z.string().nullable().default(null),
+    program_id: z.string().nullable().default(null),
+    name: z.string().nullable().default(null),
+    capacity: z.number().int().nullable().default(null),
+    notes: z.string().nullable().default(null),
+    created_at: z.string().nullable().default(null),
+    updated_at: z.string().nullable().default(null),
 });
 
 export type BoatInput = z.input<typeof boatsSchema>;
@@ -20,14 +20,14 @@ export type BoatOutput = z.output<typeof boatsSchema>;
 
 export const boatsDeserializationSchema = z.object({
     id: z.string(),
-    user_id: z.number().int().nullable(),
-    boat_type_id: z.string().nullable(),
-    program_id: z.string().nullable(),
-    name: z.string().nullable(),
-    capacity: z.number().int().nullable(),
-    notes: z.string().nullable(),
-    created_at: z.string().nullable(),
-    updated_at: z.string().nullable(),
+    user_id: z.number().int().nullable().default(null),
+    boat_type_id: z.string().nullable().default(null),
+    program_id: z.string().nullable().default(null),
+    name: z.string().nullable().default(null),
+    capacity: z.number().int().nullable().default(null),
+    notes: z.string().nullable().default(null),
+    created_at: z.string().nullable().default(null),
+    updated_at: z.string().nullable().default(null),
 });
 
 export function createBoatsCollection(
@@ -39,7 +39,6 @@ export function createBoatsCollection(
             database,
             table: appBoatsPowerSyncTable,
             schema: boatsSchema,
-            deserializationSchema: boatsDeserializationSchema,
             onDeserializationError: (error) => {
                 onError(error);
             },

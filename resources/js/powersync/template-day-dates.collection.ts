@@ -5,11 +5,11 @@ import { appTemplateDayDatesPowerSyncTable } from './app.powersync-schema';
 
 export const templateDayDatesSchema = z.object({
     id: z.string(),
-    program_id: z.string().nullable(),
-    template_day_id: z.string().nullable(),
-    service_date: z.string().nullable(),
-    created_at: z.string().nullable(),
-    updated_at: z.string().nullable(),
+    program_id: z.string().nullable().default(null),
+    template_day_id: z.string().nullable().default(null),
+    service_date: z.string().nullable().default(null),
+    created_at: z.string().nullable().default(null),
+    updated_at: z.string().nullable().default(null),
 });
 
 export type TemplateDayDateInput = z.input<typeof templateDayDatesSchema>;
@@ -17,11 +17,11 @@ export type TemplateDayDateOutput = z.output<typeof templateDayDatesSchema>;
 
 export const templateDayDatesDeserializationSchema = z.object({
     id: z.string(),
-    program_id: z.string().nullable(),
-    template_day_id: z.string().nullable(),
-    service_date: z.string().nullable(),
-    created_at: z.string().nullable(),
-    updated_at: z.string().nullable(),
+    program_id: z.string().nullable().default(null),
+    template_day_id: z.string().nullable().default(null),
+    service_date: z.string().nullable().default(null),
+    created_at: z.string().nullable().default(null),
+    updated_at: z.string().nullable().default(null),
 });
 
 export function createTemplateDayDatesCollection(
@@ -33,7 +33,6 @@ export function createTemplateDayDatesCollection(
             database,
             table: appTemplateDayDatesPowerSyncTable,
             schema: templateDayDatesSchema,
-            deserializationSchema: templateDayDatesDeserializationSchema,
             onDeserializationError: (error) => {
                 onError(error);
             },
