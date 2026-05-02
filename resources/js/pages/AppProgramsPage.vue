@@ -167,21 +167,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
-import { usePrograms } from "../models/programs/programs.model";
+import { useLiveQuery } from '@tanstack/vue-db';
 import { useEntityList } from "../models/entity.queries";
 import {
     getAppPowerSyncBootstrappedRef,
     getMediaCollectionRef,
+    getProgramsCollection,
     useAppPowerSyncOutbox,
 } from "../powersync/app-powersync.runtime";
+import type { ProgramOutput } from "../powersync/programs.collection";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
-import { readReplicatedBoolean } from "../utilities/replicated-boolean";
 import { usePageLayout } from "../composables/usePageLayout";
 
 const PROGRAM_MODEL = "App\\Models\\Program";
@@ -190,8 +191,21 @@ const { t } = useI18n();
 
 usePageLayout({ documentTitleKey: "programsList.title" });
 const $q = useQuasar();
-const { programs, ensureProgramsReady } = usePrograms();
+const programsCollection = getProgramsCollection();
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
+
+const { data: programs } = useLiveQuery(
+    (queryBuilder) => {
+        const col = programsCollection.value;
+        if (!col) return undefined;
+        return queryBuilder
+            .from({ p: col })
+            .orderBy(({ p }) => p.updated_at, 'desc')
+            .orderBy(({ p }) => p.created_at, 'desc')
+            .orderBy(({ p }) => p.id, 'desc');
+    },
+    [programsCollection],
+);
 
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
@@ -213,19 +227,9 @@ const totalProgramCount = computed(() => (programs.value ?? []).length);
 const filteredPrograms = computed(() => {
     const list = programs.value ?? [];
     if (programTab.value === "active") {
-        return list.filter(
-            (p) =>
-                p != null &&
-                !readReplicatedBoolean(
-                    (p as Record<string, unknown>).is_archived,
-                ),
-        );
+        return list.filter((p) => p != null && !p.is_archived);
     }
-    return list.filter(
-        (p) =>
-            p != null &&
-            readReplicatedBoolean((p as Record<string, unknown>).is_archived),
-    );
+    return list.filter((p) => p != null && p.is_archived);
 });
 
 const emptyListMessage = computed(() => {
@@ -238,11 +242,7 @@ const emptyListMessage = computed(() => {
     return t("programsList.emptyArchived");
 });
 
-onMounted(() => {
-    void ensureProgramsReady();
-});
-
-function programDescription(p: Record<string, unknown>): string {
+function programDescription(p: ProgramOutput): string {
     const d = p.description;
     if (d == null) {
         return "";
@@ -252,7 +252,7 @@ function programDescription(p: Record<string, unknown>): string {
     return s;
 }
 
-function addressDisplayLines(p: Record<string, unknown>): string[] {
+function addressDisplayLines(p: ProgramOutput): string[] {
     const lines: string[] = [];
     const l1 = p.line_1 != null ? String(p.line_1).trim() : "";
     const l2 = p.line_2 != null ? String(p.line_2).trim() : "";
@@ -300,13 +300,13 @@ function primaryImageFor(programId: string) {
     return `/media/${String(match.uuid)}`;
 }
 
-function placeholderStyle(p: Record<string, unknown>) {
+function placeholderStyle(p: ProgramOutput) {
     const hex =
         typeof p.theme_color === "string" ? p.theme_color.trim() : "#e0e0e0";
     return { background: hex || "#e0e0e0" };
 }
 
-function copyPublicUrl(p: Record<string, unknown>) {
+function copyPublicUrl(p: ProgramOutput) {
     const path = "/programs/" + encodeURIComponent(String(p.slug ?? "").trim());
     const url = `${window.location.origin}${path}`;
     void navigator.clipboard.writeText(url);
