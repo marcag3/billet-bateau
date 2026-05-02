@@ -1,9 +1,9 @@
 import { computed, onMounted, watch, type ComputedRef, type Ref } from 'vue';
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import { useQuasar } from 'quasar';
+import { useLiveQuery } from '@tanstack/vue-db';
 import { useAuthStore } from '../store/auth.store';
-import { usePrograms } from '../models/programs/programs.model';
-import { readReplicatedBoolean } from '../utilities/replicated-boolean';
+import { getProgramsCollection, getAppPowerSyncBootstrappedRef } from '../powersync/app-powersync.runtime';
 import { useAppLayoutStore } from '../store/app-layout.store';
 
 type UseProgramWorkspaceLayoutOptions = {
@@ -21,7 +21,16 @@ export function useProgramWorkspaceLayout({ t, layoutStore, leftDrawerOpen }: Us
     const route = useRoute();
     const $q = useQuasar();
     const authStore = useAuthStore();
-    const { programs, ensureProgramsReady } = usePrograms();
+    const programsCollection = getProgramsCollection();
+
+    const { data: programs } = useLiveQuery(
+        (queryBuilder) => {
+            const col = programsCollection.value;
+            if (!col) return undefined;
+            return queryBuilder.from({ p: col });
+        },
+        [programsCollection],
+    );
 
     const isProgramWorkspace = computed(() =>
         route.matched.some((r) => r.meta.requiresSelectedProgram === true),
@@ -32,24 +41,24 @@ export function useProgramWorkspaceLayout({ t, layoutStore, leftDrawerOpen }: Us
     );
 
     const visibleProgramIds = computed(() =>
-        programs.value
+        (programs.value ?? [])
             .filter(
                 (p) =>
                     p != null &&
-                    !readReplicatedBoolean((p as Record<string, unknown>).is_archived),
+                    !p.is_archived,
             )
             .map((p) => String(p.id)),
     );
 
     const programSwitcherOptions = computed(() =>
-        programs.value
+        (programs.value ?? [])
             .filter(
                 (p) =>
                     p != null &&
-                    !readReplicatedBoolean((p as Record<string, unknown>).is_archived),
+                    !p.is_archived,
             )
             .map((p) => ({
-                label: String((p as Record<string, unknown>).name ?? ''),
+                label: String(p.name ?? ''),
                 value: String(p.id),
             })),
     );
@@ -59,9 +68,9 @@ export function useProgramWorkspaceLayout({ t, layoutStore, leftDrawerOpen }: Us
         if (id.length === 0) {
             return t('common.programs');
         }
-        const row = programs.value.find((p) => p != null && String(p.id) === id);
+        const row = (programs.value ?? []).find((p) => p != null && String(p.id) === id);
         if (row) {
-            return String((row as Record<string, unknown>).name ?? id);
+            return String(row.name ?? id);
         }
         return id;
     });
@@ -102,7 +111,7 @@ export function useProgramWorkspaceLayout({ t, layoutStore, leftDrawerOpen }: Us
 
     onMounted(() => {
         if (authStore.canAccessProtectedRoute()) {
-            void ensureProgramsReady();
+            // programs bootstrap is gated by AppBootstrapGate
         }
     });
 
