@@ -18,7 +18,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_creates_ticket_type_for_program_manager(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $ticketTypeId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -57,7 +57,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $program = Program::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
         $ticketTypeId = (string) Str::ulid();
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
@@ -80,7 +80,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_creates_booking_ticket_for_program_manager(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
@@ -121,8 +121,8 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_booking_ticket_rejects_ticket_type_outside_booking_program(): void
     {
         $user = User::factory()->create();
-        $programA = Program::factory()->for($user)->create();
-        $programB = Program::factory()->for($user)->create();
+        $programA = Program::factory()->withOwner($user)->create();
+        $programB = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($programA)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $programB->getKey(),
@@ -152,7 +152,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_delete_removes_booking_ticket_for_program_manager(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
@@ -179,7 +179,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $program = Program::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
@@ -206,7 +206,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $program = Program::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
         ]);
@@ -228,7 +228,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $program = Program::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
             'title' => 'Original',
@@ -257,7 +257,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $program = Program::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
@@ -287,7 +287,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_patch_updates_owned_ticket_type(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
             'title' => 'Child',
@@ -318,8 +318,8 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_patch_ticket_type_forbids_changing_program_id(): void
     {
         $user = User::factory()->create();
-        $programA = Program::factory()->for($user)->create();
-        $programB = Program::factory()->for($user)->create();
+        $programA = Program::factory()->withOwner($user)->create();
+        $programB = Program::factory()->withOwner($user)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $programA->getKey(),
         ]);
@@ -346,7 +346,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_patch_ticket_type_rejects_max_less_than_min_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
             'min_per_purchase' => 3,
@@ -375,7 +375,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_patch_updates_booking_ticket(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
@@ -411,8 +411,8 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_patch_booking_ticket_rejects_ticket_type_outside_booking_program(): void
     {
         $user = User::factory()->create();
-        $programA = Program::factory()->for($user)->create();
-        $programB = Program::factory()->for($user)->create();
+        $programA = Program::factory()->withOwner($user)->create();
+        $programB = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($programA)->create();
         $ticketTypeA = TicketType::factory()->create([
             'program_id' => $programA->getKey(),
@@ -447,7 +447,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_delete_removes_ticket_type_for_program_manager(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
         ]);
@@ -468,7 +468,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_delete_ticket_type_unprocessable_when_booking_tickets_reference_it(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
@@ -515,7 +515,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_new_ticket_type_without_title_is_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $ticketTypeId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -538,7 +538,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_ticket_type_rejects_max_less_than_min_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $ticketTypeId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -563,7 +563,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_ticket_type_rejects_invalid_trip_inventory_caps_json_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $ticketTypeId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -587,7 +587,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_ticket_type_rejects_negative_trip_inventory_cap_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $ticketTypeId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -613,7 +613,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_booking_ticket_rejects_unknown_booking_id_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
         ]);
@@ -643,7 +643,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_booking_ticket_rejects_unknown_ticket_type_id_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $bookingTicketId = (string) Str::ulid();
         $unknownTicketTypeId = (string) Str::ulid();
@@ -671,7 +671,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_booking_ticket_rejects_invalid_email_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
@@ -701,7 +701,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_new_booking_ticket_without_name_is_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
@@ -730,7 +730,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_booking_ticket_rejects_invalid_booking_id_ulid_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
         ]);
@@ -759,7 +759,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_updates_existing_ticket_type_for_program_manager(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
             'title' => 'Old',
@@ -791,7 +791,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_updates_existing_booking_ticket_for_program_manager(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
@@ -829,7 +829,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_booking_ticket_accepts_custom_fields_as_json_string(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
@@ -865,7 +865,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_put_booking_ticket_rejects_invalid_custom_fields_json_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),
@@ -896,7 +896,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_patch_on_missing_ticket_type_is_no_op(): void
     {
         $user = User::factory()->create();
-        Program::factory()->for($user)->create();
+        Program::factory()->withOwner($user)->create();
         $missingId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -918,7 +918,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_patch_on_missing_booking_ticket_is_no_op(): void
     {
         $user = User::factory()->create();
-        Program::factory()->for($user)->create();
+        Program::factory()->withOwner($user)->create();
         $missingId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -940,7 +940,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_delete_on_missing_booking_ticket_is_no_op(): void
     {
         $user = User::factory()->create();
-        Program::factory()->for($user)->create();
+        Program::factory()->withOwner($user)->create();
         $missingId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -957,7 +957,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_delete_on_missing_ticket_type_is_no_op(): void
     {
         $user = User::factory()->create();
-        Program::factory()->for($user)->create();
+        Program::factory()->withOwner($user)->create();
         $missingId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -974,7 +974,7 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
     public function test_batch_rolls_back_when_later_entry_fails(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $booking = Booking::factory()->forProgram($program)->create();
         $ticketType = TicketType::factory()->create([
             'program_id' => $program->getKey(),

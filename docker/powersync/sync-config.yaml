@@ -1,7 +1,7 @@
 # Sync Streams (edition 3). Included via service.yaml → sync_config.path.
 # See: https://docs.powersync.com/sync/streams/overview
 #
-# Programs are visible only to the owner (programs.user_id) or members (program_user).
+# Programs are visible only to members listed in the program_user pivot table.
 # user_scope auto-subscribes the program list; program_scope adds detail rows for subscription.parameter('program_id').
 #
 # Note: Sync Streams SQL does not support UNION. Use OR + subquery for combined sets (see supported-sql).

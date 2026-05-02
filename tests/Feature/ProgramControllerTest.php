@@ -63,7 +63,6 @@ class ProgramControllerTest extends TestCase
 
         $this->assertDatabaseHas('programs', [
             'id' => $id,
-            'user_id' => $user->getAuthIdentifier(),
             'line_1' => '1 Wharf',
             'city' => 'Portville',
             'postal_code' => 'H0H0H0',
@@ -78,6 +77,7 @@ class ProgramControllerTest extends TestCase
         $this->assertDatabaseHas('program_user', [
             'program_id' => $id,
             'user_id' => $user->getAuthIdentifier(),
+            'role' => 'owner',
         ]);
 
         $response->assertJsonPath('data.user_ids.0', (int) $user->getAuthIdentifier());
@@ -93,7 +93,7 @@ class ProgramControllerTest extends TestCase
         $owner = User::factory()->create();
         $collaborator = User::factory()->create();
 
-        $program = Program::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
 
         $program->users()->syncWithoutDetaching([(int) $collaborator->getAuthIdentifier()]);
 
@@ -110,7 +110,7 @@ class ProgramControllerTest extends TestCase
         $owner = User::factory()->create();
         $other = User::factory()->create();
 
-        $program = Program::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
 
         $image = $this->fakePngUpload('x.png');
 
@@ -131,7 +131,7 @@ class ProgramControllerTest extends TestCase
         $owner = User::factory()->create();
         $collaborator = User::factory()->create();
 
-        $program = Program::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
         $program->users()->syncWithoutDetaching([(int) $collaborator->getAuthIdentifier()]);
 
         $image = $this->fakePngUpload('x.png');
@@ -158,7 +158,7 @@ class ProgramControllerTest extends TestCase
         Storage::fake('public');
 
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
 
         $image = $this->fakePngUpload('a.png');
 
@@ -182,7 +182,7 @@ class ProgramControllerTest extends TestCase
     public function test_guest_cannot_list_program_media(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
 
         $this->getJson('/api/media/program/'.$program->getKey())->assertUnauthorized();
     }
@@ -192,7 +192,7 @@ class ProgramControllerTest extends TestCase
         Storage::fake('public');
 
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $image = $this->fakePngUpload('list.png');
 
         $this->actingAs($user)

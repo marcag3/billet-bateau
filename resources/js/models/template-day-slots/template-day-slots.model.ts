@@ -73,6 +73,8 @@ export function useTemplateDaySlots() {
      *   sortOrder?: number,
      *   boatTypeId?: string | null,
      *   waterRouteId?: string | null,
+     *   internalNotes?: string | null,
+     *   ticketSetup?: Record<string, unknown> | null,
      * }} input
      * @returns {Promise<string>}
      */
@@ -103,6 +105,8 @@ export function useTemplateDaySlots() {
                 input.waterRouteId != null && String(input.waterRouteId).length > 0
                     ? String(input.waterRouteId)
                     : null,
+            internal_notes: input.internalNotes ?? null,
+            ticket_setup: input.ticketSetup != null ? JSON.stringify(input.ticketSetup) : null,
             created_at: now,
             updated_at: now,
         });

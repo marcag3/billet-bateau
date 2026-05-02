@@ -16,6 +16,8 @@ return new class extends Migration
             $table->unsignedInteger('capacity');
             $table->foreignUlid('boat_type_id')->nullable()->constrained('boat_types')->nullOnDelete();
             $table->foreignUlid('water_route_id')->nullable()->constrained('water_routes')->nullOnDelete();
+            $table->text('internal_notes')->nullable();
+            $table->json('ticket_setup')->nullable();
             $table->timestamps();
 
             $table->index(['template_day_id', 'sort_order']);

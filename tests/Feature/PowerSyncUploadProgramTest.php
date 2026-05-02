@@ -34,7 +34,6 @@ class PowerSyncUploadProgramTest extends TestCase
 
         $this->assertDatabaseHas('programs', [
             'id' => $id,
-            'user_id' => $user->getAuthIdentifier(),
             'name' => 'Dockside',
             'theme_color' => '#FF00AA',
             'is_active' => 0,
@@ -45,6 +44,7 @@ class PowerSyncUploadProgramTest extends TestCase
         $this->assertDatabaseHas('program_user', [
             'program_id' => $id,
             'user_id' => $user->getAuthIdentifier(),
+            'role' => 'admin',
         ]);
     }
 
@@ -104,13 +104,14 @@ class PowerSyncUploadProgramTest extends TestCase
         $this->assertDatabaseHas('program_user', [
             'program_id' => $programId,
             'user_id' => $user->getAuthIdentifier(),
+            'role' => 'admin',
         ]);
     }
 
     public function test_delete_removes_owned_program(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create([
+        $program = Program::factory()->withOwner($user)->create([
             'line_1' => 'Old dock',
         ]);
 
@@ -131,7 +132,7 @@ class PowerSyncUploadProgramTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $program = Program::factory()->for($owner)->create(['name' => 'Owners']);
+        $program = Program::factory()->withOwner($owner)->create(['name' => 'Owners']);
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -155,7 +156,7 @@ class PowerSyncUploadProgramTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $program = Program::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -242,7 +243,7 @@ class PowerSyncUploadProgramTest extends TestCase
     public function test_patch_program_rejects_invalid_theme_color_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [

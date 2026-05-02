@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\VoyageStatus;
 use App\Models\Program;
+use App\Models\ProgramUser;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Voyage;
@@ -38,7 +39,15 @@ class VoyageFactory extends Factory
     public function forTrip(Trip $trip, ?WaterRoute $waterRoute = null): static
     {
         return $this->state(function () use ($trip, $waterRoute): array {
-            $programUserId = Program::query()->whereKey($trip->program_id)->value('user_id');
+            $programUserId = ProgramUser::where('program_id', $trip->program_id)->value('user_id');
+
+            if ($programUserId === null) {
+                $programUserId = User::factory()->create()->getKey();
+                $program = Program::query()->whereKey($trip->program_id)->first();
+                if ($program !== null) {
+                    $program->users()->syncWithoutDetaching([$programUserId]);
+                }
+            }
             $route = $waterRoute ?? WaterRoute::factory()->create([
                 'program_id' => $trip->program_id,
             ]);

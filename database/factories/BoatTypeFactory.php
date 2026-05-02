@@ -24,7 +24,6 @@ class BoatTypeFactory extends Factory
                 return;
             }
 
-            $program->forceFill(['user_id' => $boatType->user_id])->save();
             $program->users()->syncWithoutDetaching([(int) $boatType->user_id]);
         });
     }

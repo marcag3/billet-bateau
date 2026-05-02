@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('program_user', function (Blueprint $table): void {
             $table->foreignUlid('program_id')->constrained('programs')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('role')->default('admin');
             $table->timestamps();
 
             $table->primary(['program_id', 'user_id']);

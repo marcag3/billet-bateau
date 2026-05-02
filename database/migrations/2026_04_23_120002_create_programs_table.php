@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('programs', function (Blueprint $table): void {
             $table->ulid('id')->primary();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('theme_color', 7);
@@ -23,8 +22,6 @@ return new class extends Migration
             $table->string('postal_code')->nullable();
             $table->string('country')->nullable();
             $table->timestamps();
-
-            $table->index(['user_id', 'updated_at']);
         });
     }
 };

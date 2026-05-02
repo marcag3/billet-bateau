@@ -2,7 +2,6 @@ import { column, Schema, Table } from '@powersync/web';
 
 const programsTable = new Table({
     id: column.text,
-    user_id: column.integer,
     name: column.text,
     description: column.text,
     theme_color: column.text,
@@ -98,6 +97,8 @@ const templateDaySlotsTable = new Table({
     capacity: column.integer,
     boat_type_id: column.text,
     water_route_id: column.text,
+    internal_notes: column.text,
+    ticket_setup: column.text,
     created_at: column.text,
     updated_at: column.text,
 });

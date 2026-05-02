@@ -24,6 +24,8 @@ class TemplateDaySlot extends Model
         'capacity',
         'boat_type_id',
         'water_route_id',
+        'internal_notes',
+        'ticket_setup',
         'created_at',
         'updated_at',
     ];
@@ -33,6 +35,7 @@ class TemplateDaySlot extends Model
         return [
             'sort_order' => 'integer',
             'capacity' => 'integer',
+            'ticket_setup' => 'array',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

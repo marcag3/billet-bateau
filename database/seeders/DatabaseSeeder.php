@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
 
         Program::factory()
             ->count(2)
-            ->for($user)
+            ->withOwner($user)
             ->create();
     }
 }

@@ -4,7 +4,9 @@ namespace Database\Factories;
 
 use App\Models\BoatType;
 use App\Models\Program;
+use App\Models\ProgramUser;
 use App\Models\Trip;
+use App\Models\User;
 use App\Models\WaterRoute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -63,7 +65,13 @@ class TripFactory extends Factory
     public function withBoatType(?BoatType $boatType = null): static
     {
         return $this->afterCreating(function (Trip $trip) use ($boatType): void {
-            $ownerId = Program::query()->whereKey($trip->program_id)->value('user_id');
+            $ownerId = ProgramUser::where('program_id', $trip->program_id)->value('user_id');
+
+            if ($ownerId === null) {
+                $ownerId = User::factory()->create()->getKey();
+                Program::query()->whereKey($trip->program_id)->first()?->users()->syncWithoutDetaching([$ownerId]);
+            }
+
             $type = $boatType ?? BoatType::factory()->create(['user_id' => $ownerId]);
             $trip->update(['boat_type_id' => $type->getKey()]);
         });

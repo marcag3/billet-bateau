@@ -19,7 +19,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     public function test_put_creates_trip_for_program_manager(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $boatType = BoatType::factory()->for($user)->create();
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
         $tripId = (string) Str::ulid();
@@ -53,7 +53,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     public function test_put_new_trip_without_capacity_is_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $tripId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -77,7 +77,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $program = Program::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
         $tripId = (string) Str::ulid();
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
@@ -101,7 +101,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     public function test_delete_removes_trip_for_program_manager(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $trip = Trip::factory()->forProgram($program)->create();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -121,7 +121,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $program = Program::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
         $trip = Trip::factory()->forProgram($program)->create();
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
@@ -140,7 +140,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     public function test_put_creates_water_route_for_program_manager(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $routeId = (string) Str::ulid();
         $trace = '{"type":"LineString","coordinates":[[-73.5673,45.5017],[-73.5540,45.5080]]}';
 
@@ -172,7 +172,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $program = Program::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
         $routeId = (string) Str::ulid();
         $trace = '{"type":"LineString","coordinates":[[-73.5673,45.5017],[-73.5540,45.5080]]}';
 
@@ -198,7 +198,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     public function test_patch_updates_water_route_name(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey(), 'name' => 'Old']);
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -223,7 +223,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     public function test_delete_removes_water_route_for_program_manager(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -242,7 +242,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     public function test_delete_water_route_unprocessable_when_voyage_references_it(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $trip = Trip::factory()->forProgram($program)->create();
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
         Voyage::factory()->forTrip($trip, $route)->create();
@@ -263,8 +263,8 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     public function test_put_trip_rejects_water_route_from_other_program(): void
     {
         $user = User::factory()->create();
-        $programA = Program::factory()->for($user)->create();
-        $programB = Program::factory()->for($user)->create();
+        $programA = Program::factory()->withOwner($user)->create();
+        $programB = Program::factory()->withOwner($user)->create();
         $routeB = WaterRoute::factory()->create(['program_id' => $programB->getKey()]);
         $tripId = (string) Str::ulid();
 
@@ -290,7 +290,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     public function test_put_trip_rejects_invalid_boat_type_ulid_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
         $tripId = (string) Str::ulid();
 

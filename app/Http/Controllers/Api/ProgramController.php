@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Data\Programs\ProgramData;
 use App\Data\Programs\ProgramStoreData;
+use App\Enums\ProgramRole;
 use App\Http\Controllers\Controller;
 use App\Models\Program;
 use Illuminate\Http\JsonResponse;
@@ -34,7 +35,6 @@ class ProgramController extends Controller
             $program = Program::query()->create(array_merge(
                 [
                     'id' => $id,
-                    'user_id' => Auth::id(),
                     'name' => $data->name,
                     'description' => $data->description,
                     'theme_color' => $themeColor,
@@ -46,7 +46,7 @@ class ProgramController extends Controller
             ));
 
             // First manager on the program; additional managers require an invite (pivot row).
-            $program->users()->syncWithoutDetaching([Auth::id()]);
+            $program->users()->attach(Auth::id(), ['role' => ProgramRole::Owner->value]);
 
             return $program->fresh(['users']);
         });

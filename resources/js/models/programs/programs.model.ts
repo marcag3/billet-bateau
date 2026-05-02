@@ -138,7 +138,6 @@ export function usePrograms() {
 
         programsCollection.insert({
             id,
-            user_id: userId,
             name: input.name.trim(),
             description: input.description.trim().length > 0 ? input.description.trim() : null,
             theme_color: themeColor,

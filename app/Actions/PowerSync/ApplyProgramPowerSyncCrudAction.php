@@ -68,7 +68,6 @@ final class ApplyProgramPowerSyncCrudAction
         $merged = ProgramPutPayloadResolver::resolve($dto, $existing);
 
         $attributes = [
-            'user_id' => $userId,
             'name' => $merged['name'],
             'description' => $merged['description'],
             'theme_color' => $merged['theme_color'],

@@ -17,7 +17,7 @@ class PowerSyncUploadBoatTest extends TestCase
     public function test_put_creates_boat_type_for_current_user(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $id = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -46,7 +46,7 @@ class PowerSyncUploadBoatTest extends TestCase
     {
         $user = User::factory()->create();
         $boatType = BoatType::factory()->for($user)->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $boatId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -82,7 +82,7 @@ class PowerSyncUploadBoatTest extends TestCase
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
         $boatType = BoatType::factory()->for($owner)->create();
-        $program = Program::factory()->for($intruder)->create();
+        $program = Program::factory()->withOwner($intruder)->create();
         $boatId = (string) Str::ulid();
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
@@ -114,7 +114,7 @@ class PowerSyncUploadBoatTest extends TestCase
     public function test_put_new_boat_without_capacity_is_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $boatId = (string) Str::ulid();
 
         $response = $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -262,7 +262,7 @@ class PowerSyncUploadBoatTest extends TestCase
     public function test_put_boat_rejects_unknown_boat_type_id_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
         $boatId = (string) Str::ulid();
         $missingBoatTypeId = (string) Str::ulid();
 

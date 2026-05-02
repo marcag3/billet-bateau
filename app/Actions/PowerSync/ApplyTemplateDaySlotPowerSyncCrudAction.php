@@ -103,6 +103,8 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction
                 'capacity' => $resolved['capacity'],
                 'boat_type_id' => $resolved['boat_type_id'],
                 'water_route_id' => $resolved['water_route_id'],
+                'internal_notes' => $resolved['internal_notes'],
+                'ticket_setup' => $resolved['ticket_setup'],
             ],
         );
     }
@@ -141,6 +143,15 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction
         if (! ($patch->water_route_id instanceof Optional)) {
             $this->assertWaterRouteBelongsToProgram($patch->water_route_id, $programId);
             $slot->water_route_id = $patch->water_route_id;
+        }
+
+        if (! ($patch->internal_notes instanceof Optional)) {
+            $slot->internal_notes = $patch->internal_notes;
+        }
+
+        if (! ($patch->ticket_setup instanceof Optional)) {
+            $normalized = $this->normalizeTicketSetupForPatch($patch->ticket_setup);
+            $slot->ticket_setup = $normalized;
         }
 
         $slot->save();
@@ -185,5 +196,34 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction
                 'data.water_route_id' => 'Water route must belong to the same program.',
             ]);
         }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function normalizeTicketSetupForPatch(mixed $value): ?array
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (! is_array($decoded)) {
+                throw ValidationException::withMessages([
+                    'data.ticket_setup' => 'ticket_setup must be a valid JSON object.',
+                ]);
+            }
+
+            return $decoded;
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        throw ValidationException::withMessages([
+            'data.ticket_setup' => 'ticket_setup must be an object or JSON string.',
+        ]);
     }
 }

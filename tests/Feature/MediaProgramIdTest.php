@@ -19,7 +19,7 @@ class MediaProgramIdTest extends TestCase
         Storage::fake('public');
 
         $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
 
         $this->actingAs($user)
             ->post('/api/media/program/'.$program->getKey(), [

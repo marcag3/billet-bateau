@@ -29,12 +29,12 @@ class PublicProgramApiTest extends TestCase
     {
         $u = User::factory()->create();
 
-        $active = Program::factory()->for($u)->create([
+        $active = Program::factory()->withOwner($u)->create([
             'is_active' => true,
             'name' => 'A Active',
         ]);
 
-        Program::factory()->for($u)->create([
+        Program::factory()->withOwner($u)->create([
             'is_active' => false,
         ]);
 
@@ -50,7 +50,7 @@ class PublicProgramApiTest extends TestCase
     {
         $u = User::factory()->create();
 
-        $p = Program::factory()->for($u)->create([
+        $p = Program::factory()->withOwner($u)->create([
             'is_active' => true,
             'name' => 'B With slug',
             'slug' => 'harbor-2026',
@@ -65,13 +65,13 @@ class PublicProgramApiTest extends TestCase
     {
         $u = User::factory()->create();
 
-        $listed = Program::factory()->for($u)->create([
+        $listed = Program::factory()->withOwner($u)->create([
             'is_active' => true,
             'is_archived' => false,
             'name' => 'Listed',
         ]);
 
-        Program::factory()->for($u)->create([
+        Program::factory()->withOwner($u)->create([
             'is_active' => true,
             'is_archived' => true,
             'name' => 'Archived only',
@@ -86,7 +86,7 @@ class PublicProgramApiTest extends TestCase
     public function test_show_returns_404_for_archived_program(): void
     {
         $u = User::factory()->create();
-        Program::factory()->for($u)->create([
+        Program::factory()->withOwner($u)->create([
             'is_active' => true,
             'is_archived' => true,
             'name' => 'Gone',
@@ -100,7 +100,7 @@ class PublicProgramApiTest extends TestCase
     public function test_show_resolves_by_slug_and_does_not_require_is_active(): void
     {
         $u = User::factory()->create();
-        $p = Program::factory()->for($u)->create(['is_active' => false, 'name' => 'Off', 'slug' => 'summer-2025']);
+        $p = Program::factory()->withOwner($u)->create(['is_active' => false, 'name' => 'Off', 'slug' => 'summer-2025']);
 
         $this->getJson('/api/public/programs/summer-2025')
             ->assertOk()
@@ -110,7 +110,7 @@ class PublicProgramApiTest extends TestCase
     public function test_show_404_for_slug_with_wrong_case(): void
     {
         $u = User::factory()->create();
-        Program::factory()->for($u)->create(['is_active' => true, 'slug' => 'summer-run']);
+        Program::factory()->withOwner($u)->create(['is_active' => true, 'slug' => 'summer-run']);
 
         $this->getJson('/api/public/programs/SummER-RuN')
             ->assertNotFound();
@@ -133,7 +133,7 @@ class PublicProgramApiTest extends TestCase
         Storage::fake('public');
 
         $u = User::factory()->create();
-        $p = Program::factory()->for($u)->create(['is_active' => true]);
+        $p = Program::factory()->withOwner($u)->create(['is_active' => true]);
         $p->addMedia($this->miniPngUpload())->toMediaCollection('images');
         $p->refresh();
         $media = $p->getFirstMedia('images');

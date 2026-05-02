@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\ProgramRole;
+use App\Models\ProgramUser;
 use Database\Factories\ProgramFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -9,7 +11,6 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -26,7 +27,6 @@ class Program extends Model implements HasMedia
 
     protected $fillable = [
         'id',
-        'user_id',
         'name',
         'description',
         'theme_color',
@@ -64,24 +64,34 @@ class Program extends Model implements HasMedia
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
     }
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
     /** @return BelongsToMany<User, $this> */
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class)->withTimestamps();
+        return $this->belongsToMany(User::class)
+            ->using(ProgramUser::class)
+            ->withPivot('role')
+            ->withTimestamps();
     }
 
     public function userCanManage(int $userId): bool
     {
-        if ($this->user_id !== null && (int) $this->user_id === $userId) {
-            return true;
+        return $this->users()->whereKey($userId)->exists();
+    }
+
+    public function userRole(int $userId): ?ProgramRole
+    {
+        $pivot = $this->users()->whereKey($userId)->first();
+
+        if ($pivot === null || ! isset($pivot->pivot->role)) {
+            return null;
         }
 
-        return $this->users()->whereKey($userId)->exists();
+        return ProgramRole::tryFrom((string) $pivot->pivot->role);
+    }
+
+    public function userIsOwner(int $userId): bool
+    {
+        return $this->userRole($userId) === ProgramRole::Owner;
     }
 
     public function boats(): HasMany

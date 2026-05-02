@@ -12,7 +12,6 @@ final class ProgramData extends Data
      */
     public function __construct(
         public string $id,
-        public ?int $user_id,
         public array $user_ids,
         public string $name,
         public ?string $description,
@@ -42,7 +41,6 @@ final class ProgramData extends Data
 
         return new self(
             id: (string) $program->getKey(),
-            user_id: $program->user_id !== null ? (int) $program->user_id : null,
             user_ids: $userIds,
             name: (string) $program->name,
             description: $program->description,

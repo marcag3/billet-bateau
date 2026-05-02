@@ -15,6 +15,8 @@ final class TemplateDaySlotPatchData extends Data
         public int|Optional|null $capacity = new Optional,
         public string|Optional|null $boat_type_id = new Optional,
         public string|Optional|null $water_route_id = new Optional,
+        public string|Optional|null $internal_notes = new Optional,
+        public string|array|Optional|null $ticket_setup = new Optional,
     ) {}
 
     /**
@@ -28,6 +30,8 @@ final class TemplateDaySlotPatchData extends Data
             'capacity' => ['sometimes', 'integer', 'min:1'],
             'boat_type_id' => ['sometimes', 'nullable', 'ulid', 'exists:boat_types,id'],
             'water_route_id' => ['sometimes', 'nullable', 'ulid', 'exists:water_routes,id'],
+            'internal_notes' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'ticket_setup' => ['sometimes', 'nullable'],
         ];
     }
 }
