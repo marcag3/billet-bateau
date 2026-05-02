@@ -82,10 +82,10 @@ import { useRoute, useRouter } from 'vue-router';
 import { createTripUpsertFormSchema, type TripUpsertFormValues } from '../models/trips/trips.validation';
 import { localDatetimeInputValueToIso } from '../utilities/datetime-input';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
+import { useLiveQuery } from '@tanstack/vue-db';
 import { useTrips } from '../models/trips/trips.model';
-import { useBoatTypes } from '../models/boat-types/boat-types.model';
 import { useWaterRoutes } from '../models/water-routes/water-routes.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection } from '../powersync/app-powersync.runtime';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import AppEntityCreatePageLayout from '../layouts/AppEntityCreatePageLayout.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -96,7 +96,17 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { createTripRow, ensureTripsReady } = useTrips();
-const { boatTypes, ensureBoatTypesReady } = useBoatTypes();
+const boatTypesCollection = getBoatTypesCollection();
+
+const { data: boatTypes } = useLiveQuery(
+    (queryBuilder) => {
+        const col = boatTypesCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ bt: col });
+    },
+    [boatTypesCollection],
+);
+
 const { waterRoutes, ensureWaterRoutesReady } = useWaterRoutes();
 const { runWithNotify } = useNotifyAsyncAction();
 
@@ -158,7 +168,6 @@ const onCreateSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
 });
 
 onMounted(() => {
-    void ensureBoatTypesReady();
     void ensureWaterRoutesReady();
     void ensureTripsReady();
 });

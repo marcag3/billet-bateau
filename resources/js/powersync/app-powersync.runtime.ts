@@ -20,6 +20,8 @@ import {
     appWaterRoutesPowerSyncTable,
 } from './app.powersync-schema';
 import { createProgramsCollection } from './programs.collection';
+import { createBoatTypesCollection } from './boat-types.collection';
+import { createTicketTypesCollection } from './ticket-types.collection';
 import { translate } from '../utilities/i18n';
 
 const DB_FILENAME = 'billbateau-app-v16.db';
@@ -303,6 +305,14 @@ export async function bootstrapAppPowerSync() {
                         programsDeserializationError.value = error;
                         errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
                     });
+                } else if (name === 'boat_types') {
+                    collection = createBoatTypesCollection(db, (error) => {
+                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                    });
+                } else if (name === 'ticket_types') {
+                    collection = createTicketTypesCollection(db, (error) => {
+                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                    });
                 } else {
                     const collectionOptions = powerSyncCollectionOptions({
                         database: db,
@@ -395,7 +405,7 @@ export function getProgramsDeserializationErrorRef() {
     return programsDeserializationError;
 }
 
-export function getBoatTypesCollectionRef() {
+export function getBoatTypesCollection() {
     return collectionRefs.boat_types;
 }
 
@@ -407,7 +417,7 @@ export function getTripsCollectionRef() {
     return collectionRefs.trips;
 }
 
-export function getTicketTypesCollectionRef() {
+export function getTicketTypesCollection() {
     return collectionRefs.ticket_types;
 }
 

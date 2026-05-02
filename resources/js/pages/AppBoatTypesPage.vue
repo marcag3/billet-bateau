@@ -110,18 +110,21 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
+import { useLiveQuery } from '@tanstack/vue-db';
+import { ulid } from 'ulid';
 import { createBoatTypeFormSchema, type BoatTypeFormValues } from '../models/boat-types/boat-types.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { safeParseBoatEntityName } from '../models/boats/boats.validation';
-import { useBoatTypes } from '../models/boat-types/boat-types.model';
-import { useEntityList } from '../models/entity.queries';
 import {
     getAppPowerSyncBootstrappedRef,
+    getBoatTypesCollection,
     getMediaCollectionRef,
+    getCurrentUserIdRef,
+    refreshOutboxSnapshot,
     useAppPowerSyncOutbox,
 } from '../powersync/app-powersync.runtime';
 import mediaRoutes from '../routes/api/media';
@@ -144,6 +147,17 @@ const BOAT_TYPE_MODEL = 'App\\Models\\BoatType';
 const route = useRoute();
 const programId = computed(() => String(route.params.programId ?? ''));
 
+const boatTypesCollection = getBoatTypesCollection();
+
+const { data: boatTypes } = useLiveQuery(
+    (queryBuilder) => {
+        const col = boatTypesCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ bt: col });
+    },
+    [boatTypesCollection],
+);
+
 const boatTypesForProgram = computed(() => {
     const pid = programId.value;
     return (boatTypes.value ?? []).filter((bt) => bt != null && String(bt.program_id) === pid);
@@ -154,27 +168,20 @@ const $q = useQuasar();
 const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
-const {
-    boatTypes,
-    ensureBoatTypesReady,
-    createBoatTypeRow,
-    patchBoatTypeRow,
-    deleteBoatTypeRow,
-} = useBoatTypes();
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
 
-const { data: mediaRows } = useEntityList({
-    enabledRef: hasBootstrapped,
-    alias: 'media',
-    collection: getMediaCollectionRef(),
-    orderBy: [
-        { key: 'order_column', direction: 'asc' },
-        { key: 'created_at', direction: 'asc' },
-    ],
-});
+const mediaCollection = getMediaCollectionRef();
+const { data: mediaRows } = useLiveQuery(
+    (queryBuilder) => {
+        const col = mediaCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ m: col }).orderBy(({ m }) => m.order_column, 'asc').orderBy(({ m }) => m.created_at, 'asc');
+    },
+    [mediaCollection],
+);
 
 const boatTypeFormSchema = createBoatTypeFormSchema(t);
 const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm<BoatTypeFormValues>({
@@ -190,10 +197,6 @@ const [createName, createNameProps] = quasarField('name');
 const patchingId = ref('');
 const uploadingId = ref('');
 const nameDrafts = reactive<Record<string, string>>({});
-
-onMounted(() => {
-    void ensureBoatTypesReady();
-});
 
 function setNameDraft(id: string, v: unknown) {
     nameDrafts[id] = String(v ?? '');
@@ -239,9 +242,13 @@ function commitName(bt: Record<string, unknown>) {
     void (async () => {
         patchingId.value = id;
         try {
-            await patchBoatTypeRow(id, (draft) => {
+            const col = boatTypesCollection.value;
+            if (!col) return;
+            col.update(id, (draft) => {
                 draft.name = parsed.data;
+                draft.updated_at = new Date().toISOString();
             });
+            void refreshOutboxSnapshot();
         } finally {
             patchingId.value = '';
         }
@@ -251,7 +258,22 @@ function commitName(bt: Record<string, unknown>) {
 const onCreateSubmit = handleSubmit(async (values: BoatTypeFormValues) => {
     await runWithNotify(
         async () => {
-            await createBoatTypeRow(values.name, programId.value);
+            const col = boatTypesCollection.value;
+            if (!col) throw new Error('Boat types collection not ready.');
+            const parsedUserId = Number.parseInt(getCurrentUserIdRef().value, 10);
+            const userId = Number.isFinite(parsedUserId) ? parsedUserId : null;
+            const id = ulid();
+            const now = new Date().toISOString();
+            const trimmed = String(values.name ?? '').trim();
+            await col.insert({
+                id,
+                user_id: userId,
+                program_id: programId.value,
+                name: trimmed.length > 0 ? trimmed : 'Untitled',
+                created_at: now,
+                updated_at: now,
+            }).isPersisted.promise;
+            void refreshOutboxSnapshot();
             resetForm();
         },
         { successMessage: t('boatTypesList.created'), errorGeneric: t('boatTypesList.errorGeneric') },
@@ -292,7 +314,10 @@ function confirmDelete(bt: Record<string, unknown>) {
         message: t('boatTypesList.deleteConfirmMessage', { name: String(bt.name ?? '') }),
         onOk: async () => {
             try {
-                await deleteBoatTypeRow(String(bt.id));
+                const col = boatTypesCollection.value;
+                if (!col) return;
+                col.delete(String(bt.id));
+                void refreshOutboxSnapshot();
                 $q.notify({ type: 'positive', message: t('boatTypesList.deleted') });
             } catch (e) {
                 notifyError(e, t('boatTypesList.errorGeneric'));

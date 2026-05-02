@@ -165,10 +165,10 @@ import { useRoute, useRouter } from 'vue-router';
 import { createTripUpsertFormSchema, type TripUpsertFormValues } from '../models/trips/trips.validation';
 import { isoToLocalDatetimeInputValue, localDatetimeInputValueToIso } from '../utilities/datetime-input';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
+import { useLiveQuery } from '@tanstack/vue-db';
 import { useTrips } from '../models/trips/trips.model';
-import { useBoatTypes } from '../models/boat-types/boat-types.model';
 import { useWaterRoutes } from '../models/water-routes/water-routes.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection } from '../powersync/app-powersync.runtime';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
@@ -193,7 +193,17 @@ const {
     useTripById,
     useTripNeighborsInProgram,
 } = useTrips();
-const { boatTypes, ensureBoatTypesReady } = useBoatTypes();
+const boatTypesCollection = getBoatTypesCollection();
+
+const { data: boatTypes } = useLiveQuery(
+    (queryBuilder) => {
+        const col = boatTypesCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ bt: col });
+    },
+    [boatTypesCollection],
+);
+
 const { waterRoutes, ensureWaterRoutesReady } = useWaterRoutes();
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
@@ -375,7 +385,6 @@ function confirmDelete() {
 }
 
 onMounted(() => {
-    void ensureBoatTypesReady();
     void ensureWaterRoutesReady();
     void ensureTripsReady();
 });

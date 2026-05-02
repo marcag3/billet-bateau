@@ -161,9 +161,9 @@ import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { createBoatCreateFormSchema, type BoatCreateFormValues } from '../models/boats/boats.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
+import { useLiveQuery } from '@tanstack/vue-db';
 import { useBoats } from '../models/boats/boats.model';
-import { useBoatTypes } from '../models/boat-types/boat-types.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection } from '../powersync/app-powersync.runtime';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
@@ -181,7 +181,16 @@ const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
 const { boats, ensureBoatsReady, patchBoatRow, deleteBoatRow, useBoatById, useBoatNeighborsInRoster } = useBoats();
-const { boatTypes, ensureBoatTypesReady } = useBoatTypes();
+const boatTypesCollection = getBoatTypesCollection();
+
+const { data: boatTypes } = useLiveQuery(
+    (queryBuilder) => {
+        const col = boatTypesCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ bt: col });
+    },
+    [boatTypesCollection],
+);
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
@@ -341,7 +350,6 @@ function confirmDelete() {
 }
 
 onMounted(() => {
-    void ensureBoatTypesReady();
     void ensureBoatsReady();
 });
 </script>

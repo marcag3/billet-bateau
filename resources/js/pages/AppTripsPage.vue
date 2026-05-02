@@ -82,9 +82,8 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { useTrips } from '../models/trips/trips.model';
-import { useBoatTypes } from '../models/boat-types/boat-types.model';
 import { useWaterRoutes } from '../models/water-routes/water-routes.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection, getBoatTypesCollection } from '../powersync/app-powersync.runtime';
 import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -107,7 +106,17 @@ const { data: programs } = useLiveQuery(
     [programsCollection],
 );
 
-const { boatTypes, ensureBoatTypesReady } = useBoatTypes();
+const boatTypesCollection = getBoatTypesCollection();
+
+const { data: boatTypes } = useLiveQuery(
+    (queryBuilder) => {
+        const col = boatTypesCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ bt: col });
+    },
+    [boatTypesCollection],
+);
+
 const { waterRoutes, ensureWaterRoutesReady } = useWaterRoutes();
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
@@ -176,7 +185,6 @@ function waterRouteLabelFor(tr: Record<string, unknown>) {
 }
 
 onMounted(() => {
-    void ensureBoatTypesReady();
     void ensureWaterRoutesReady();
     void ensureTripsReady();
 });

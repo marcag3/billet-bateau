@@ -159,8 +159,7 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { useBoats } from '../models/boats/boats.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection } from '../powersync/app-powersync.runtime';
-import { useBoatTypes } from '../models/boat-types/boat-types.model';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection, getBoatTypesCollection } from '../powersync/app-powersync.runtime';
 import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -186,7 +185,16 @@ const { data: programs } = useLiveQuery(
     [programsCollection],
 );
 
-const { boatTypes, ensureBoatTypesReady } = useBoatTypes();
+const boatTypesCollection = getBoatTypesCollection();
+
+const { data: boatTypes } = useLiveQuery(
+    (queryBuilder) => {
+        const col = boatTypesCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ bt: col });
+    },
+    [boatTypesCollection],
+);
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
@@ -318,7 +326,6 @@ function onLoadMore(_index: number, done: (stop?: boolean) => void) {
 }
 
 onMounted(() => {
-    void ensureBoatTypesReady();
     void ensureBoatsReady();
 });
 </script>

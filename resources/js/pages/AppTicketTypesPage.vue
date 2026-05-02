@@ -59,7 +59,7 @@
                                 outline
                                 dense
                                 :label="t('ticketTypesList.edit')"
-                                @click="() => openEditDialog(row as Record<string, unknown>)"
+                                @click="() => openEditDialog(row)"
                             />
                             <q-btn
                                 flat
@@ -67,7 +67,7 @@
                                 color="negative"
                                 icon="delete"
                                 :label="t('ticketTypesList.delete')"
-                                @click="() => confirmDelete(row as Record<string, unknown>)"
+                                @click="() => confirmDelete(row)"
                             />
                         </div>
                     </q-item-section>
@@ -187,12 +187,12 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useLiveQuery } from '@tanstack/vue-db';
-import { useTicketTypes } from '../models/ticket-types/ticket-types.model';
+import { ulid } from 'ulid';
 import {
     createEmptyTicketTypeFormValues,
     createTicketTypeFormSchema,
@@ -200,7 +200,14 @@ import {
     type TicketTypeFormValues,
 } from '../models/ticket-types/ticket-types.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection } from '../powersync/app-powersync.runtime';
+import {
+    getAppPowerSyncBootstrappedRef,
+    getTicketTypesCollection,
+    getProgramSyncScopeIdRef,
+    getProgramsCollection,
+    refreshOutboxSnapshot,
+    useAppPowerSyncOutbox,
+} from '../powersync/app-powersync.runtime';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
@@ -221,13 +228,25 @@ const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
 
-const {
-    ticketTypes,
-    ensureTicketTypesReady,
-    createTicketTypeRow,
-    patchTicketTypeRow,
-    deleteTicketTypeRow,
-} = useTicketTypes();
+const ticketTypesCollection = getTicketTypesCollection();
+
+const { data: allTicketTypes } = useLiveQuery(
+    (queryBuilder) => {
+        const col = ticketTypesCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ tt: col });
+    },
+    [ticketTypesCollection],
+);
+
+const ticketTypes = computed(() => {
+    const pid = getProgramSyncScopeIdRef().value.trim();
+    if (pid.length === 0) {
+        return [];
+    }
+    return (allTicketTypes.value ?? []).filter((row) => String(row.program_id) === pid);
+});
+
 const programsCollection = getProgramsCollection();
 
 const { data: programs } = useLiveQuery(
@@ -327,10 +346,10 @@ function onMaxPerPurchaseInput(value: unknown) {
 }
 
 /**
- * @param {Record<string, unknown>} row
+ * @param {import('../powersync/ticket-types.collection').TicketTypeOutput} row
  * @returns {TicketTypeFormValues}
  */
-function rowToFormValues(row: Record<string, unknown>): TicketTypeFormValues {
+function rowToFormValues(row): TicketTypeFormValues {
     const capsRaw = row.trip_inventory_caps;
     let capsJson = '';
     if (typeof capsRaw === 'string' && capsRaw.trim().length > 0) {
@@ -352,7 +371,7 @@ function rowToFormValues(row: Record<string, unknown>): TicketTypeFormValues {
             price === null || price === undefined || price === ''
                 ? null
                 : Number(price),
-        isPayWhatYouCan: Number(row.is_pay_what_you_can) === 1,
+        isPayWhatYouCan: row.is_pay_what_you_can === true,
         minPerPurchase: Number(row.min_per_purchase ?? 0),
         maxPerPurchase:
             max === null || max === undefined || max === '' ? null : Number(max),
@@ -361,12 +380,12 @@ function rowToFormValues(row: Record<string, unknown>): TicketTypeFormValues {
 }
 
 /**
- * @param {Record<string, unknown>} row
+ * @param {import('../powersync/ticket-types.collection').TicketTypeOutput} row
  * @returns {string}
  */
-function summaryLine(row: Record<string, unknown>): string {
+function summaryLine(row): string {
     const parts: string[] = [];
-    if (Number(row.is_pay_what_you_can) === 1) {
+    if (row.is_pay_what_you_can === true) {
         parts.push(t('ticketTypesList.summaryPwyc'));
     } else {
         const cents = row.price_cents;
@@ -415,10 +434,10 @@ function formatPriceCents(cents: unknown): string {
 }
 
 /**
- * @param {Record<string, unknown>} row
+ * @param {import('../powersync/ticket-types.collection').TicketTypeOutput} row
  * @returns {number}
  */
-function tripCapsKeyCount(row: Record<string, unknown>): number {
+function tripCapsKeyCount(row): number {
     const raw = row.trip_inventory_caps;
     if (raw == null || raw === '') {
         return 0;
@@ -450,10 +469,10 @@ function openCreateDialog() {
 }
 
 /**
- * @param {Record<string, unknown>} row
+ * @param {import('../powersync/ticket-types.collection').TicketTypeOutput} row
  * @returns {void}
  */
-function openEditDialog(row: Record<string, unknown>) {
+function openEditDialog(row) {
     editingId.value = String(row.id ?? '').trim();
     resetForm({ values: rowToFormValues(row) });
     showFormDialog.value = true;
@@ -475,24 +494,43 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
 
     await runWithNotify(
         async () => {
+            const col = ticketTypesCollection.value;
+            if (!col) throw new Error('Ticket types collection not ready.');
             if (wasEditing) {
-                await patchTicketTypeRow(idSnapshot, (draft) => {
+                col.update(idSnapshot, (draft) => {
                     draft.title = values.title;
                     draft.price_cents = values.priceCents;
-                    draft.is_pay_what_you_can = values.isPayWhatYouCan ? 1 : 0;
+                    draft.is_pay_what_you_can = values.isPayWhatYouCan;
                     draft.min_per_purchase = values.minPerPurchase;
                     draft.max_per_purchase = values.maxPerPurchase;
                     draft.trip_inventory_caps = JSON.stringify(caps);
+                    draft.updated_at = new Date().toISOString();
                 });
+                void refreshOutboxSnapshot();
             } else {
-                await createTicketTypeRow({
-                    title: values.title,
-                    priceCents: values.priceCents,
-                    isPayWhatYouCan: values.isPayWhatYouCan,
-                    minPerPurchase: values.minPerPurchase,
-                    maxPerPurchase: values.maxPerPurchase,
-                    tripInventoryCaps: caps,
-                });
+                const programId = getProgramSyncScopeIdRef().value.trim();
+                if (programId.length === 0) {
+                    throw new Error('Select a program before adding ticket types.');
+                }
+                const id = ulid();
+                const now = new Date().toISOString();
+                const title = String(values.title ?? '').trim();
+                if (title.length === 0) {
+                    throw new Error('Ticket type title is required.');
+                }
+                await col.insert({
+                    id,
+                    program_id: programId,
+                    title,
+                    price_cents: values.priceCents,
+                    is_pay_what_you_can: values.isPayWhatYouCan,
+                    min_per_purchase: values.minPerPurchase ?? 0,
+                    max_per_purchase: values.maxPerPurchase,
+                    trip_inventory_caps: JSON.stringify(caps),
+                    created_at: now,
+                    updated_at: now,
+                }).isPersisted.promise;
+                void refreshOutboxSnapshot();
             }
             closeFormDialog();
         },
@@ -504,10 +542,10 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
 });
 
 /**
- * @param {Record<string, unknown>} row
+ * @param {import('../powersync/ticket-types.collection').TicketTypeOutput} row
  * @returns {void}
  */
-function confirmDelete(row: Record<string, unknown>) {
+function confirmDelete(row) {
     confirm({
         title: t('ticketTypesList.deleteConfirmTitle'),
         message: t('ticketTypesList.deleteConfirmMessage', {
@@ -515,7 +553,10 @@ function confirmDelete(row: Record<string, unknown>) {
         }),
         onOk: async () => {
             try {
-                await deleteTicketTypeRow(String(row.id ?? ''));
+                const col = ticketTypesCollection.value;
+                if (!col) return;
+                col.delete(String(row.id ?? ''));
+                void refreshOutboxSnapshot();
                 $q.notify({ type: 'positive', message: t('ticketTypesList.deleted') });
             } catch (e) {
                 notifyError(e, t('ticketTypesList.errorGeneric'));
@@ -523,8 +564,4 @@ function confirmDelete(row: Record<string, unknown>) {
         },
     });
 }
-
-onMounted(() => {
-    void ensureTicketTypesReady();
-});
 </script>
