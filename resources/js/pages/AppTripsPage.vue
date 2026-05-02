@@ -82,8 +82,7 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { useTrips } from '../models/trips/trips.model';
-import { useWaterRoutes } from '../models/water-routes/water-routes.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection, getBoatTypesCollection } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection, getBoatTypesCollection, getWaterRoutesCollection } from '../powersync/app-powersync.runtime';
 import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -117,7 +116,15 @@ const { data: boatTypes } = useLiveQuery(
     [boatTypesCollection],
 );
 
-const { waterRoutes, ensureWaterRoutesReady } = useWaterRoutes();
+const waterRoutesCollection = getWaterRoutesCollection();
+const { data: waterRoutes } = useLiveQuery(
+    (queryBuilder) => {
+        const col = waterRoutesCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ wr: col });
+    },
+    [waterRoutesCollection],
+);
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
@@ -185,7 +192,6 @@ function waterRouteLabelFor(tr: Record<string, unknown>) {
 }
 
 onMounted(() => {
-    void ensureWaterRoutesReady();
     void ensureTripsReady();
 });
 </script>

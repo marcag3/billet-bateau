@@ -84,8 +84,7 @@ import { localDatetimeInputValueToIso } from '../utilities/datetime-input';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { useTrips } from '../models/trips/trips.model';
-import { useWaterRoutes } from '../models/water-routes/water-routes.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection, getWaterRoutesCollection } from '../powersync/app-powersync.runtime';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import AppEntityCreatePageLayout from '../layouts/AppEntityCreatePageLayout.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -107,7 +106,15 @@ const { data: boatTypes } = useLiveQuery(
     [boatTypesCollection],
 );
 
-const { waterRoutes, ensureWaterRoutesReady } = useWaterRoutes();
+const waterRoutesCollection = getWaterRoutesCollection();
+const { data: waterRoutes } = useLiveQuery(
+    (queryBuilder) => {
+        const col = waterRoutesCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ wr: col });
+    },
+    [waterRoutesCollection],
+);
 const { runWithNotify } = useNotifyAsyncAction();
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
@@ -168,7 +175,6 @@ const onCreateSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
 });
 
 onMounted(() => {
-    void ensureWaterRoutesReady();
     void ensureTripsReady();
 });
 </script>

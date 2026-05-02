@@ -125,20 +125,23 @@
 </template>
 
 <script setup lang="ts">
-import { useForm } from 'vee-validate';
-import { onMounted, reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
+import { useLiveQuery } from '@tanstack/vue-db';
+import { ulid } from 'ulid';
 import {
     createWaterRouteCreateFormSchema,
     type WaterRouteCreateFormValues,
 } from '../models/water-routes/water-routes.validation';
 import { safeParseBoatEntityName } from '../models/boats/boats.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
-import { useWaterRoutes } from '../models/water-routes/water-routes.model';
 import {
     getAppPowerSyncBootstrappedRef,
+    getProgramSyncScopeIdRef,
+    getWaterRoutesCollection,
     useAppPowerSyncOutbox,
+    refreshOutboxSnapshot,
 } from '../powersync/app-powersync.runtime';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
@@ -156,13 +159,30 @@ const $q = useQuasar();
 const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
-const {
-    waterRoutes,
-    ensureWaterRoutesReady,
-    createWaterRouteRow,
-    patchWaterRouteRow,
-    deleteWaterRouteRow,
-} = useWaterRoutes();
+
+/** Default LineString (Montreal area) as GeoJSON; matches server tests / upload applier. */
+const DEFAULT_WATER_ROUTE_TRACE_GEOJSON =
+    '{"type":"LineString","coordinates":[[-73.5673,45.5017],[-73.5540,45.5080]]}';
+
+const waterRoutesCollection = getWaterRoutesCollection();
+const programSyncScopeIdRef = getProgramSyncScopeIdRef();
+
+const { data: allWaterRoutes } = useLiveQuery(
+    (queryBuilder) => {
+        const col = waterRoutesCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ wr: col });
+    },
+    [waterRoutesCollection],
+);
+
+const waterRoutes = computed(() => {
+    const pid = programSyncScopeIdRef.value.trim();
+    if (pid.length === 0) {
+        return [];
+    }
+    return (allWaterRoutes.value ?? []).filter((row) => String(row.program_id) === pid);
+});
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
@@ -188,9 +208,6 @@ const nameDrafts = reactive<Record<string, string>>({});
 const durationDrafts = reactive<Record<string, string>>({});
 const traceDrafts = reactive<Record<string, string>>({});
 
-onMounted(() => {
-    void ensureWaterRoutesReady();
-});
 
 function isValidLineStringGeoJson(raw: string): boolean {
     const trimmed = raw.trim();
@@ -238,9 +255,13 @@ function commitName(wr: Record<string, unknown>) {
     void (async () => {
         patchingId.value = id;
         try {
-            await patchWaterRouteRow(id, (draft) => {
+            const col = waterRoutesCollection.value;
+            if (!col) return;
+            col.update(id, (draft) => {
                 draft.name = parsed.data;
+                draft.updated_at = new Date().toISOString();
             });
+            void refreshOutboxSnapshot();
         } finally {
             patchingId.value = '';
         }
@@ -261,9 +282,13 @@ function commitDuration(wr: Record<string, unknown>) {
     void (async () => {
         patchingId.value = id;
         try {
-            await patchWaterRouteRow(id, (draft) => {
+            const col = waterRoutesCollection.value;
+            if (!col) return;
+            col.update(id, (draft) => {
                 draft.duration_minutes = n;
+                draft.updated_at = new Date().toISOString();
             });
+            void refreshOutboxSnapshot();
         } finally {
             patchingId.value = '';
         }
@@ -284,9 +309,13 @@ function commitTrace(wr: Record<string, unknown>) {
     void (async () => {
         patchingId.value = id;
         try {
-            await patchWaterRouteRow(id, (draft) => {
+            const col = waterRoutesCollection.value;
+            if (!col) return;
+            col.update(id, (draft) => {
                 draft.trace = next;
+                draft.updated_at = new Date().toISOString();
             });
+            void refreshOutboxSnapshot();
         } finally {
             patchingId.value = '';
         }
@@ -296,12 +325,37 @@ function commitTrace(wr: Record<string, unknown>) {
 const onCreateSubmit = handleSubmit(async (values: WaterRouteCreateFormValues) => {
     await runWithNotify(
         async () => {
-            const trace = String(values.traceGeoJson ?? '').trim();
-            await createWaterRouteRow({
-                name: values.name,
-                durationMinutes: values.durationMinutes,
-                traceGeoJson: trace.length > 0 ? trace : undefined,
-            });
+            const programId = programSyncScopeIdRef.value.trim();
+            if (programId.length === 0) {
+                throw new Error('Select a program before adding water routes.');
+            }
+            const col = waterRoutesCollection.value;
+            if (!col) {
+                throw new Error('Water routes collection is not ready.');
+            }
+            const id = ulid();
+            const now = new Date().toISOString();
+            const name = String(values.name ?? '').trim();
+            const duration = Number.parseInt(String(values.durationMinutes), 10);
+            if (!Number.isFinite(duration) || duration < 1) {
+                throw new Error('Duration must be a positive integer (minutes).');
+            }
+            const traceRaw = values.traceGeoJson != null ? String(values.traceGeoJson).trim() : '';
+            const trace = traceRaw.length > 0 ? traceRaw : DEFAULT_WATER_ROUTE_TRACE_GEOJSON;
+
+            await col
+                .insert({
+                    id,
+                    program_id: programId,
+                    name: name.length > 0 ? name : 'Untitled',
+                    trace,
+                    duration_minutes: duration,
+                    created_at: now,
+                    updated_at: now,
+                })
+                .isPersisted.promise;
+
+            void refreshOutboxSnapshot();
             resetForm();
         },
         { successMessage: t('waterRoutesList.created'), errorGeneric: t('waterRoutesList.errorGeneric') },
@@ -314,7 +368,10 @@ function confirmDelete(wr: Record<string, unknown>) {
         message: t('waterRoutesList.deleteConfirmMessage', { name: String(wr.name ?? '') }),
         onOk: async () => {
             try {
-                await deleteWaterRouteRow(String(wr.id));
+                const col = waterRoutesCollection.value;
+                if (!col) return;
+                col.delete(String(wr.id));
+                void refreshOutboxSnapshot();
                 $q.notify({ type: 'positive', message: t('waterRoutesList.deleted') });
             } catch (e) {
                 notifyError(e, t('waterRoutesList.errorGeneric'));

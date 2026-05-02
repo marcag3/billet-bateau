@@ -155,15 +155,14 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { createBoatCreateFormSchema, type BoatCreateFormValues } from '../models/boats/boats.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useLiveQuery } from '@tanstack/vue-db';
-import { useBoats } from '../models/boats/boats.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection, getBoatsCollection, refreshOutboxSnapshot } from '../powersync/app-powersync.runtime';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
@@ -180,7 +179,43 @@ const router = useRouter();
 const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
-const { boats, ensureBoatsReady, patchBoatRow, deleteBoatRow, useBoatById, useBoatNeighborsInRoster } = useBoats();
+const boatsCollection = getBoatsCollection();
+
+const { data: allBoats } = useLiveQuery(
+    (queryBuilder) => {
+        const col = boatsCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ b: col });
+    },
+    [boatsCollection],
+);
+
+const programBoats = computed(() => {
+    const pid = programId.value;
+    if (pid.length === 0) return [];
+    return (allBoats.value ?? []).filter((b) => String(b.program_id) === pid);
+});
+
+const currentBoat = computed(() => {
+    const id = boatId.value;
+    if (id.length === 0) return null;
+    return programBoats.value.find((b) => String(b.id) === id) ?? null;
+});
+
+const neighbors = computed(() => {
+    const id = boatId.value;
+    const list = programBoats.value;
+    const ids = list.map((b) => String(b.id));
+    const idx = id.length === 0 ? -1 : ids.indexOf(id);
+    if (idx < 0) return { prev: null, next: null, index: -1, total: ids.length };
+    return {
+        prev: idx > 0 ? String(ids[idx - 1]) : null,
+        next: idx < ids.length - 1 ? String(ids[idx + 1]) : null,
+        index: idx,
+        total: ids.length,
+    };
+});
+
 const boatTypesCollection = getBoatTypesCollection();
 
 const { data: boatTypes } = useLiveQuery(
@@ -219,7 +254,7 @@ const formSectionLabel = computed(() => {
 });
 
 const boatSwitcherOptions = computed(() =>
-    boats.value.map((b) => ({
+    programBoats.value.map((b) => ({
         label: String(b.name ?? ''),
         value: String(b.id),
     })),
@@ -315,12 +350,16 @@ const onSaveSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
             const notes = String(values.notes ?? '').trim();
             const nextType = values.boatTypeId;
             const nextTypeId = nextType != null && String(nextType).length > 0 ? String(nextType) : null;
-            await patchBoatRow(id, (draft) => {
+            const col = boatsCollection.value;
+            if (!col) throw new Error('Boats collection not ready.');
+            col.update(id, (draft) => {
                 draft.name = String(values.name).trim();
                 draft.capacity = cap;
                 draft.notes = notes.length > 0 ? notes : null;
                 draft.boat_type_id = nextTypeId;
+                draft.updated_at = new Date().toISOString();
             });
+            void refreshOutboxSnapshot();
         },
         { successMessage: t('boatsList.changesSaved'), errorGeneric: t('boatsList.errorGeneric') },
     );
@@ -337,7 +376,10 @@ function confirmDelete() {
         onOk: async () => {
             isDeleting.value = true;
             try {
-                await deleteBoatRow(String(b.id));
+                const col = boatsCollection.value;
+                if (!col) return;
+                col.delete(String(b.id));
+                void refreshOutboxSnapshot();
                 $q.notify({ type: 'positive', message: t('boatsList.deleted') });
                 await router.push({ name: 'boats.list', params: { programId: programId.value } });
             } catch (e) {
@@ -349,7 +391,5 @@ function confirmDelete() {
     });
 }
 
-onMounted(() => {
-    void ensureBoatsReady();
-});
+
 </script>

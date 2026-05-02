@@ -73,14 +73,15 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate';
-import { computed, onMounted } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { createBoatCreateFormSchema, type BoatCreateFormValues } from '../models/boats/boats.validation';
+import { parseOptionalNonNegativeInt } from '../validation/zod-fields';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useLiveQuery } from '@tanstack/vue-db';
-import { useBoats } from '../models/boats/boats.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection } from '../powersync/app-powersync.runtime';
+import { ulid } from 'ulid';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection, getBoatsCollection, getCurrentUserIdRef, getProgramSyncScopeIdRef, refreshOutboxSnapshot } from '../powersync/app-powersync.runtime';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import AppEntityCreatePageLayout from '../layouts/AppEntityCreatePageLayout.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -90,7 +91,9 @@ import AppFormStack from '../components/ui/AppFormStack.vue';
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
-const { createBoatRow, ensureBoatsReady } = useBoats();
+const boatsCollection = getBoatsCollection();
+const currentUserIdRef = getCurrentUserIdRef();
+const programSyncScopeIdRef = getProgramSyncScopeIdRef();
 const boatTypesCollection = getBoatTypesCollection();
 
 const { data: boatTypes } = useLiveQuery(
@@ -139,12 +142,40 @@ const [createBoatTypeId, createBoatTypeIdProps] = quasarField('boatTypeId');
 const onCreateSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
     await runWithNotify(
         async () => {
-            await createBoatRow({
-                name: values.name,
-                capacity: values.capacity,
-                notes: values.notes,
-                boatTypeId: values.boatTypeId,
-            });
+            const pid = programSyncScopeIdRef.value.trim();
+            if (pid.length === 0) {
+                throw new Error('Select a program roster before adding boats.');
+            }
+            const col = boatsCollection.value;
+            if (!col) {
+                throw new Error('Boats collection is not ready.');
+            }
+            const parsedUserId = Number.parseInt(currentUserIdRef.value, 10);
+            const userId = Number.isFinite(parsedUserId) ? parsedUserId : null;
+            const id = ulid();
+            const now = new Date().toISOString();
+            const name = String(values.name).trim();
+            const notes = String(values.notes ?? '').trim();
+            const capacity = parseOptionalNonNegativeInt(values.capacity);
+            if (capacity === null) {
+                throw new Error('Boat capacity is required.');
+            }
+            const boatTypeId =
+                values.boatTypeId != null && String(values.boatTypeId).length > 0 ? String(values.boatTypeId) : null;
+            await col
+                .insert({
+                    id,
+                    user_id: userId,
+                    boat_type_id: boatTypeId,
+                    program_id: pid,
+                    name: name.length > 0 ? name : 'Untitled',
+                    capacity,
+                    notes: notes.length > 0 ? notes : null,
+                    created_at: now,
+                    updated_at: now,
+                })
+                .isPersisted.promise;
+            void refreshOutboxSnapshot();
             resetForm();
             await router.push({ name: 'boats.list', params: { programId: programId.value } });
         },
@@ -152,7 +183,5 @@ const onCreateSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
     );
 });
 
-onMounted(() => {
-    void ensureBoatsReady();
-});
+
 </script>

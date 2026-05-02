@@ -154,12 +154,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
-import { useBoats } from '../models/boats/boats.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection, getBoatTypesCollection } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection, getBoatTypesCollection, getBoatsCollection, getProgramSyncScopeIdRef } from '../powersync/app-powersync.runtime';
 import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -173,7 +172,24 @@ const PAGE_SIZE = 20;
 
 const { t } = useI18n();
 const route = useRoute();
-const { boats, ensureBoatsReady } = useBoats();
+const boatsCollection = getBoatsCollection();
+const programSyncScopeIdRef = getProgramSyncScopeIdRef();
+const { data: allBoats } = useLiveQuery(
+    (queryBuilder) => {
+        const col = boatsCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ b: col })
+            .orderBy(({ b }) => b.updated_at, 'desc')
+            .orderBy(({ b }) => b.created_at, 'desc')
+            .orderBy(({ b }) => b.id, 'desc');
+    },
+    [boatsCollection],
+);
+const boats = computed(() => {
+    const pid = programSyncScopeIdRef.value.trim();
+    if (pid.length === 0) return [];
+    return (allBoats.value ?? []).filter((b) => String(b.program_id) === pid);
+});
 const programsCollection = getProgramsCollection();
 
 const { data: programs } = useLiveQuery(
@@ -325,7 +341,5 @@ function onLoadMore(_index: number, done: (stop?: boolean) => void) {
     done(stop);
 }
 
-onMounted(() => {
-    void ensureBoatsReady();
-});
+
 </script>
