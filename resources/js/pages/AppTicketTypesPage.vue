@@ -500,7 +500,7 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
                 col.update(idSnapshot, (draft) => {
                     draft.title = values.title;
                     draft.price_cents = values.priceCents;
-                    draft.is_pay_what_you_can = values.isPayWhatYouCan;
+                    draft.is_pay_what_you_can = values.isPayWhatYouCan ? 1 : 0;
                     draft.min_per_purchase = values.minPerPurchase;
                     draft.max_per_purchase = values.maxPerPurchase;
                     draft.trip_inventory_caps = JSON.stringify(caps);
@@ -523,7 +523,7 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
                     program_id: programId,
                     title,
                     price_cents: values.priceCents,
-                    is_pay_what_you_can: values.isPayWhatYouCan,
+                    is_pay_what_you_can: values.isPayWhatYouCan ? 1 : 0,
                     min_per_purchase: values.minPerPurchase ?? 0,
                     max_per_purchase: values.maxPerPurchase,
                     trip_inventory_caps: JSON.stringify(caps),

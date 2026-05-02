@@ -98,7 +98,7 @@ const items = computed((): PublicProgramCard[] => {
 function placeholderBoxStyle(themeColor: string | undefined) {
     return {
         minHeight: '200px',
-        background: themeColor || '#0f172a',
+        background: themeColor || '#02153D',
     };
 }
 
@@ -135,14 +135,14 @@ onMounted(() => {
 .public-program-card {
     min-height: 6rem;
     border-radius: 1rem;
-    border-color: rgba(0, 22, 77, 0.12);
+    border-color: hsla(226, 97%, 12%, 0.12);
     transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
 .public-program-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 16px 30px rgba(0, 22, 77, 0.15);
-    border-color: rgba(234, 29, 44, 0.36);
+    box-shadow: 0 16px 30px hsla(226, 97%, 12%, 0.15);
+    border-color: hsla(358, 84%, 52%, 0.36);
 }
 
 .public-home-page {
@@ -154,9 +154,9 @@ onMounted(() => {
     margin: 0 auto;
     padding: 2rem 1.5rem;
     border-radius: 1.25rem;
-    background: linear-gradient(130deg, rgba(0, 22, 77, 0.94) 0%, rgba(12, 50, 131, 0.92) 60%, rgba(234, 29, 44, 0.92) 100%);
+    background: linear-gradient(130deg, hsla(226, 97%, 12%, 0.94) 0%, hsla(221, 83%, 28%, 0.92) 60%, hsla(358, 84%, 52%, 0.92) 100%);
     color: #ffffff;
-    box-shadow: 0 20px 38px rgba(0, 22, 77, 0.2);
+    box-shadow: 0 20px 38px hsla(226, 97%, 12%, 0.2);
 }
 
 .hero-copy {

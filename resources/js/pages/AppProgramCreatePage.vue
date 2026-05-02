@@ -198,7 +198,7 @@ const { handleSubmit, defineField, isSubmitting } =
         initialValues: {
             name: "",
             description: "",
-            themeColor: "#0F766E",
+            themeColor: "#08758A",
             isActive: true,
             address: {
                 line_1: "",
@@ -256,8 +256,8 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
                 name: values.name.trim(),
                 description: values.description.trim().length > 0 ? values.description.trim() : null,
                 theme_color: themeColor,
-                is_active: values.isActive,
-                is_archived: false,
+                is_active: values.isActive ? 1 : 0,
+                is_archived: 0,
                 slug: buildInitialProgramSlug(values.name, id),
                 line_1: addressFields.line_1,
                 line_2: addressFields.line_2,

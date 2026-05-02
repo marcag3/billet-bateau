@@ -20,6 +20,6 @@ withDefaults(
 
 <style scoped>
 .app-entity-list {
-    border-color: rgba(0, 22, 77, 0.12);
+    border-color: hsla(226, 97%, 12%, 0.12);
 }
 </style>

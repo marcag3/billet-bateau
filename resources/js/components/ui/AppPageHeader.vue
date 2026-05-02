@@ -56,12 +56,12 @@ const hasDefaultSlot = computed(() => Boolean(slots.default));
     padding: 1.5rem;
     background: linear-gradient(
         122deg,
-        rgba(0, 22, 77, 0.95) 0%,
-        rgba(8, 44, 116, 0.94) 64%,
-        rgba(234, 29, 44, 0.9) 100%
+        var(--deep-navy) 0%,
+        var(--deep-navy) 64%,
+        var(--racing-red) 100%
     );
     color: #ffffff;
-    box-shadow: var(--app-hero-shadow);
+    box-shadow: gray;
 }
 
 .app-page-header__hero-copy {

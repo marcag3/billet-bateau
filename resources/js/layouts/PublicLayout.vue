@@ -42,12 +42,12 @@ const showHomeTab = computed(
 <style scoped>
 .public-shell {
     background:
-        linear-gradient(125deg, rgba(0, 22, 77, 0.06) 0%, rgba(255, 255, 255, 0.98) 42%),
+        linear-gradient(125deg, hsla(226, 97%, 12%, 0.06) 0%, rgba(255, 255, 255, 0.98) 42%),
         linear-gradient(180deg, #f8fafc 0%, #f2f4fb 100%);
 }
 
 .public-header {
-    background: linear-gradient(90deg, #00164d 0%, #0a2f86 50%, #ea1d2c 100%);
+    background: linear-gradient(90deg, var(--deep-navy) 0%, hsla(222, 86%, 28%, 1) 50%, var(--racing-red) 100%);
     color: #ffffff;
 }
 

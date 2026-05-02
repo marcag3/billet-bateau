@@ -249,7 +249,7 @@ const showNotFound = computed(() => {
         if (row == null) {
             return false;
         }
-        const p = row as ProgramOutput;
+        const p = row as unknown as ProgramOutput;
         return String(p.id) === id;
     });
 });
@@ -261,7 +261,7 @@ const { handleSubmit, defineField, isSubmitting, resetForm } =
         initialValues: {
             name: "",
             description: "",
-            themeColor: "#0F766E",
+            themeColor: "#08758A",
             slug: "",
             isActive: true,
             isArchived: false,
@@ -311,13 +311,13 @@ watch(
             if (r == null) {
                 return false;
             }
-            const candidate = r as ProgramOutput;
+            const candidate = r as unknown as ProgramOutput;
             return String(candidate.id) === id;
         });
         if (!row) {
             return;
         }
-        const p = row as ProgramOutput;
+        const p = row as unknown as ProgramOutput;
         const signature = `${id}:${String(p.updated_at ?? "")}`;
         if (lastHydratedSignature.value === signature) {
             return;
@@ -331,7 +331,7 @@ watch(
                 themeColor:
                     typeof p.theme_color === "string" && p.theme_color.length > 0
                         ? String(p.theme_color).trim()
-                        : "#0F766E",
+                        : "#08758A",
                 slug: String(p.slug ?? "")
                     .trim()
                     .toLowerCase(),
@@ -386,8 +386,8 @@ const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
             draft.description = values.description.trim().length > 0 ? values.description.trim() : null;
             draft.theme_color = themeColor;
             draft.slug = values.slug;
-            draft.is_active = values.isActive;
-            draft.is_archived = values.isArchived;
+            draft.is_active = values.isActive ? 1 : 0;
+            draft.is_archived = values.isArchived ? 1 : 0;
             draft.line_1 = addressFields.line_1;
             draft.line_2 = addressFields.line_2;
             draft.city = addressFields.city;

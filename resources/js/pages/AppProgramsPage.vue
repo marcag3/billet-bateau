@@ -228,9 +228,9 @@ const totalProgramCount = computed(() => (programs.value ?? []).length);
 const filteredPrograms = computed((): ProgramOutput[] => {
     const list = programs.value ?? [];
     if (programTab.value === "active") {
-        return list.filter((p) => p != null && !p.is_archived) as ProgramOutput[];
+        return list.filter((p) => p != null && !p.is_archived) as unknown as ProgramOutput[];
     }
-    return list.filter((p) => p != null && p.is_archived) as ProgramOutput[];
+    return list.filter((p) => p != null && p.is_archived) as unknown as ProgramOutput[];
 });
 
 const emptyListMessage = computed(() => {

@@ -244,7 +244,7 @@ async function logout() {
 }
 
 .app-header {
-    background: linear-gradient(90deg, #00164d 0%, #01256f 58%, #ea1d2c 100%);
+    background: linear-gradient(90deg, var(--deep-navy) 0%, hsla(224, 83%, 22%, 1) 58%, var(--racing-red) 100%);
     color: #ffffff;
 }
 
@@ -277,15 +277,15 @@ async function logout() {
 }
 
 .app-nav-list :deep(.app-nav-item--active) {
-    background: rgba(234, 29, 44, 0.1);
-    color: #00164d;
+    background: hsla(358, 84%, 52%, 0.1);
+    color: var(--deep-navy);
     font-weight: 600;
-    border-left: 3px solid #ea1d2c;
+    border-left: 3px solid var(--racing-red);
 }
 
 .app-nav-list :deep(.app-nav-item--back) {
     font-weight: 600;
-    color: #00164d;
+    color: var(--deep-navy);
 }
 
 .app-locale-toggle {

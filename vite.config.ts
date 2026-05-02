@@ -43,8 +43,8 @@ export default defineConfig({
                 start_url: '/app/',
                 scope: '/app/',
                 display: 'standalone',
-                background_color: '#020617',
-                theme_color: '#0f172a',
+                background_color: '#02153D',
+                theme_color: '#02153D',
                 icons: [
                     {
                         src: '/icons/app-icon.svg',

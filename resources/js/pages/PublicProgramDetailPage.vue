@@ -101,10 +101,10 @@ watch(
 
 .program-surface {
     background: #ffffff;
-    border: 1px solid rgba(0, 22, 77, 0.12);
+    border: 1px solid hsla(226, 97%, 12%, 0.12);
     border-radius: 1rem;
     padding: 1.5rem;
-    box-shadow: 0 14px 28px rgba(0, 22, 77, 0.08);
+    box-shadow: 0 14px 28px hsla(226, 97%, 12%, 0.08);
 }
 
 .program-description {

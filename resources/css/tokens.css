@@ -1,11 +1,25 @@
 /**
  * App-wide design tokens (complement Quasar + app.scss).
+ *
+ * Theme palette — the only source of truth for brand colors.
+ * Never hardcode these values elsewhere; always reference the CSS variable.
  */
 :root {
+    /* ── Theme palette ─────────────────────────────── */
+    --deep-navy:      hsla(226, 97%, 12%, 1);
+    --rosy-granite:   hsla(255, 2%, 62%, 1);
+    --racing-red:     hsla(358, 84%, 52%, 1);
+    --banana-cream:   hsla(54, 100%, 73%, 1);
+    --lemon-lime:     hsla(73, 67%, 63%, 1);
+    --cerulean:       hsla(195, 89%, 28%, 1);
+
+
+    /* ── Radii ──────────────────────────────────────── */
     --app-radius-lg: 1.15rem;
     --app-radius-md: 0.9rem;
     --app-radius-banner: 0.75rem;
+
+    /* ── Layout ─────────────────────────────────────── */
     --app-page-padding-xl: 2.5rem;
     --app-content-max: 70rem;
-    --app-hero-shadow: 0 20px 40px rgba(0, 22, 77, 0.19);
 }

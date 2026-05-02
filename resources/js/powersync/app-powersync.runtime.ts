@@ -1,10 +1,10 @@
-import { createCollection } from '@tanstack/db';
-import { powerSyncCollectionOptions } from '@tanstack/powersync-db-collection';
-import { PowerSyncDatabase } from '@powersync/web';
-import { computed, ref, shallowRef } from 'vue';
-import { fetchCurrentSession } from '../models/auth.api';
-import { useAuthStore } from '../store/auth.store';
-import { createAppPowerSyncConnector } from '../services/powersync.connector';
+import { createCollection } from "@tanstack/db";
+import { powerSyncCollectionOptions } from "@tanstack/powersync-db-collection";
+import { PowerSyncDatabase } from "@powersync/web";
+import { computed, ref, shallowRef } from "vue";
+import { fetchCurrentSession } from "../models/auth.api";
+import { useAuthStore } from "../store/auth.store";
+import { createAppPowerSyncConnector } from "../services/powersync.connector";
 import {
     appBookingTicketsPowerSyncTable,
     appBoatTypesPowerSyncTable,
@@ -18,47 +18,51 @@ import {
     appTemplateDaySlotsPowerSyncTable,
     appTripsPowerSyncTable,
     appWaterRoutesPowerSyncTable,
-} from './app.powersync-schema';
-import { createProgramsCollection } from './programs.collection';
-import { createBoatTypesCollection } from './boat-types.collection';
-import { createTicketTypesCollection } from './ticket-types.collection';
-import { createBoatsCollection } from './boats.collection';
-import { createWaterRoutesCollection } from './water-routes.collection';
-import { createTripsCollection } from './trips.collection';
-import { createBookingTicketsCollection } from './booking-tickets.collection';
-import { createTemplateDaysCollection } from './template-days.collection';
-import { createTemplateDaySlotsCollection } from './template-day-slots.collection';
-import { createTemplateDayDatesCollection } from './template-day-dates.collection';
-import { createMediaCollection } from './media.collection';
-import { translate } from '../utilities/i18n';
+} from "./app.powersync-schema";
+import { createProgramsCollection } from "./programs.collection";
+import { createBoatTypesCollection } from "./boat-types.collection";
+import { createTicketTypesCollection } from "./ticket-types.collection";
+import { createBoatsCollection } from "./boats.collection";
+import { createWaterRoutesCollection } from "./water-routes.collection";
+import { createTripsCollection } from "./trips.collection";
+import { createBookingTicketsCollection } from "./booking-tickets.collection";
+import { createTemplateDaysCollection } from "./template-days.collection";
+import { createTemplateDaySlotsCollection } from "./template-day-slots.collection";
+import { createTemplateDayDatesCollection } from "./template-day-dates.collection";
+import { createMediaCollection } from "./media.collection";
+import { translate } from "../utilities/i18n";
 
-const DB_FILENAME = 'billbateau-app-v16.db';
+const DB_FILENAME = "billbateau-app-v16.db";
 
-const loadFailedMessage = translate('sync.unableLoadSync');
-const persistenceLimitedMessage = translate('sync.persistenceLimited');
+const loadFailedMessage = translate("sync.unableLoadSync");
+const persistenceLimitedMessage = translate("sync.persistenceLimited");
 
 /**
  * @param {unknown} uploadError
  * @returns {string}
  */
 function formatPowerSyncUploadError(uploadError) {
-    if (uploadError == null || uploadError === '') {
-        return '';
+    if (uploadError == null || uploadError === "") {
+        return "";
     }
 
-    if (typeof uploadError === 'string') {
+    if (typeof uploadError === "string") {
         return uploadError;
     }
 
     if (uploadError instanceof Error) {
-        return uploadError.message || uploadError.name || '';
+        return uploadError.message || uploadError.name || "";
     }
 
-    if (typeof uploadError === 'object') {
-        const name = typeof uploadError.name === 'string' ? uploadError.name : '';
-        const message = typeof uploadError.message === 'string' ? uploadError.message : '';
+    if (typeof uploadError === "object") {
+        const name =
+            typeof uploadError.name === "string" ? uploadError.name : "";
+        const message =
+            typeof uploadError.message === "string" ? uploadError.message : "";
         if (message.length > 0) {
-            return name.length > 0 && !message.includes(name) ? `${name}: ${message}` : message;
+            return name.length > 0 && !message.includes(name)
+                ? `${name}: ${message}`
+                : message;
         }
         if (name.length > 0) {
             return name;
@@ -66,7 +70,7 @@ function formatPowerSyncUploadError(uploadError) {
         try {
             return JSON.stringify(uploadError);
         } catch {
-            return '';
+            return "";
         }
     }
 
@@ -79,60 +83,76 @@ function formatPowerSyncUploadError(uploadError) {
  * @returns {boolean}
  */
 function isBenignPowerSyncUploadFailure(uploadError, formattedMessage) {
-    if (uploadError == null || uploadError === '') {
+    if (uploadError == null || uploadError === "") {
         return true;
     }
 
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
         return true;
     }
 
     const text = formattedMessage.toLowerCase();
 
     const benignFragments = [
-        'failed to fetch',
-        'networkerror',
-        'network request failed',
-        'load failed',
-        'net::err',
-        'the internet connection appears to be offline',
-        'aborted',
-        'abort',
-        'delaying due to previously encountered crud item',
+        "failed to fetch",
+        "networkerror",
+        "network request failed",
+        "load failed",
+        "net::err",
+        "the internet connection appears to be offline",
+        "aborted",
+        "abort",
+        "delaying due to previously encountered crud item",
     ];
 
     return benignFragments.some((fragment) => text.includes(fragment));
 }
 
 const isLoading = ref(true);
-const errorMessage = ref('');
+const errorMessage = ref("");
 const programsDeserializationError = ref<unknown>(null);
 const hasBootstrappedCollection = ref(false);
 const persistenceUnavailable = ref(false);
 const outboxPendingCount = ref(0);
-const outboxCommitError = ref('');
+const outboxCommitError = ref("");
 let bootstrapPromise = null;
 
 /** @type {import('vue').ShallowRef<import('@powersync/web').PowerSyncDatabase | null>} */
 const powerSyncDbRef = shallowRef(null);
 
 /** @type {import('vue').Ref<string>} */
-const currentUserIdRef = ref('');
+const currentUserIdRef = ref("");
 
 /** @type {null | (() => void)} */
 let powerSyncStatusUnsubscribe = null;
 
 const collectionRefs = {
-    programs: shallowRef<ReturnType<typeof createProgramsCollection> | null>(null),
-    boat_types: shallowRef<ReturnType<typeof createBoatTypesCollection> | null>(null),
+    programs: shallowRef<ReturnType<typeof createProgramsCollection> | null>(
+        null,
+    ),
+    boat_types: shallowRef<ReturnType<typeof createBoatTypesCollection> | null>(
+        null,
+    ),
     boats: shallowRef<ReturnType<typeof createBoatsCollection> | null>(null),
     trips: shallowRef<ReturnType<typeof createTripsCollection> | null>(null),
-    ticket_types: shallowRef<ReturnType<typeof createTicketTypesCollection> | null>(null),
-    booking_tickets: shallowRef<ReturnType<typeof createBookingTicketsCollection> | null>(null),
-    water_routes: shallowRef<ReturnType<typeof createWaterRoutesCollection> | null>(null),
-    template_days: shallowRef<ReturnType<typeof createTemplateDaysCollection> | null>(null),
-    template_day_slots: shallowRef<ReturnType<typeof createTemplateDaySlotsCollection> | null>(null),
-    template_day_dates: shallowRef<ReturnType<typeof createTemplateDayDatesCollection> | null>(null),
+    ticket_types: shallowRef<ReturnType<
+        typeof createTicketTypesCollection
+    > | null>(null),
+    booking_tickets: shallowRef<ReturnType<
+        typeof createBookingTicketsCollection
+    > | null>(null),
+    water_routes: shallowRef<ReturnType<
+        typeof createWaterRoutesCollection
+    > | null>(null),
+    template_days: shallowRef<ReturnType<
+        typeof createTemplateDaysCollection
+    > | null>(null),
+    template_day_slots: shallowRef<ReturnType<
+        typeof createTemplateDaySlotsCollection
+    > | null>(null),
+    template_day_dates: shallowRef<ReturnType<
+        typeof createTemplateDayDatesCollection
+    > | null>(null),
     media: shallowRef<ReturnType<typeof createMediaCollection> | null>(null),
 };
 
@@ -151,7 +171,7 @@ const tableByName = {
 };
 
 /** @type {import('vue').Ref<string>} */
-const programSyncScopeIdRef = ref('');
+const programSyncScopeIdRef = ref("");
 
 /** @type {{ unsubscribe: () => void } | null} */
 let userScopeSubscription = null;
@@ -174,7 +194,7 @@ export function getProgramSyncScopeIdRef() {
  */
 export async function setProgramSyncScopeId(programId) {
     programSyncScopeIdRef.value =
-        programId == null || programId === '' ? '' : String(programId).trim();
+        programId == null || programId === "" ? "" : String(programId).trim();
     await resyncProgramScopeSubscription();
 }
 
@@ -192,7 +212,7 @@ async function resyncUserScopeSubscription() {
         userScopeSubscription = null;
     }
 
-    userScopeSubscription = await db.syncStream('user_scope').subscribe();
+    userScopeSubscription = await db.syncStream("user_scope").subscribe();
 }
 
 /**
@@ -214,7 +234,9 @@ async function resyncProgramScopeSubscription() {
         return;
     }
 
-    programScopeSubscription = await db.syncStream('program_scope', { program_id: pid }).subscribe();
+    programScopeSubscription = await db
+        .syncStream("program_scope", { program_id: pid })
+        .subscribe();
 }
 
 export async function refreshOutboxSnapshot() {
@@ -227,7 +249,8 @@ export async function refreshOutboxSnapshot() {
 
     try {
         const stats = await db.getUploadQueueStats(false);
-        outboxPendingCount.value = typeof stats?.count === 'number' ? stats.count : 0;
+        outboxPendingCount.value =
+            typeof stats?.count === "number" ? stats.count : 0;
     } catch {
         outboxPendingCount.value = 0;
     }
@@ -245,13 +268,17 @@ async function resolveAuthenticatedUserId() {
 
     const session = await fetchCurrentSession();
     const u = session.user as { id?: string | number } | null | undefined;
-    if (!session.isAuthenticated || u == null || u.id === undefined || u.id === null) {
-        throw new Error('Missing authenticated user id.');
+    if (
+        !session.isAuthenticated ||
+        u == null ||
+        u.id === undefined ||
+        u.id === null
+    ) {
+        throw new Error("Missing authenticated user id.");
     }
 
     return String(u.id);
 }
-
 
 /**
  * @returns {Promise<void>}
@@ -265,9 +292,10 @@ export async function bootstrapAppPowerSync() {
                     .filter(Boolean)
                     .map((c) => c.preload()),
             );
-            errorMessage.value = '';
+            errorMessage.value = "";
         } catch (error) {
-            errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+            errorMessage.value =
+                error instanceof Error ? error.message : loadFailedMessage;
         }
 
         await refreshOutboxSnapshot();
@@ -286,7 +314,9 @@ export async function bootstrapAppPowerSync() {
             const db = new PowerSyncDatabase({
                 schema: appPowerSyncSchema,
                 database: { dbFilename: DB_FILENAME },
-                ...(import.meta.env.DEV ? { flags: { useWebWorker: false } } : {}),
+                ...(import.meta.env.DEV
+                    ? { flags: { useWebWorker: false } }
+                    : {}),
             });
 
             await db.init();
@@ -298,8 +328,11 @@ export async function bootstrapAppPowerSync() {
                     const uploadError = status.dataFlowStatus?.uploadError;
                     const formatted = formatPowerSyncUploadError(uploadError);
                     outboxCommitError.value =
-                        isBenignPowerSyncUploadFailure(uploadError, formatted) || formatted.length === 0
-                            ? ''
+                        isBenignPowerSyncUploadFailure(
+                            uploadError,
+                            formatted,
+                        ) || formatted.length === 0
+                            ? ""
                             : formatted;
                     void refreshOutboxSnapshot();
                 },
@@ -308,57 +341,98 @@ export async function bootstrapAppPowerSync() {
             for (const name of Object.keys(tableByName)) {
                 const table = tableByName[name];
                 let collection;
-                if (name === 'programs') {
+                if (name === "programs") {
                     collection = createProgramsCollection(db, (error) => {
                         programsDeserializationError.value = error;
-                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                        errorMessage.value =
+                            error instanceof Error
+                                ? error.message
+                                : loadFailedMessage;
                     });
-                } else if (name === 'boat_types') {
+                } else if (name === "boat_types") {
                     collection = createBoatTypesCollection(db, (error) => {
-                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                        errorMessage.value =
+                            error instanceof Error
+                                ? error.message
+                                : loadFailedMessage;
                     });
-                } else if (name === 'ticket_types') {
+                } else if (name === "ticket_types") {
                     collection = createTicketTypesCollection(db, (error) => {
-                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                        errorMessage.value =
+                            error instanceof Error
+                                ? error.message
+                                : loadFailedMessage;
                     });
-                } else if (name === 'boats') {
+                } else if (name === "boats") {
                     collection = createBoatsCollection(db, (error) => {
-                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                        errorMessage.value =
+                            error instanceof Error
+                                ? error.message
+                                : loadFailedMessage;
                     });
-                } else if (name === 'water_routes') {
+                } else if (name === "water_routes") {
                     collection = createWaterRoutesCollection(db, (error) => {
-                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                        errorMessage.value =
+                            error instanceof Error
+                                ? error.message
+                                : loadFailedMessage;
                     });
-                } else if (name === 'trips') {
+                } else if (name === "trips") {
                     collection = createTripsCollection(db, (error) => {
-                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                        errorMessage.value =
+                            error instanceof Error
+                                ? error.message
+                                : loadFailedMessage;
                     });
-                } else if (name === 'booking_tickets') {
+                } else if (name === "booking_tickets") {
                     collection = createBookingTicketsCollection(db, (error) => {
-                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                        errorMessage.value =
+                            error instanceof Error
+                                ? error.message
+                                : loadFailedMessage;
                     });
-                } else if (name === 'template_days') {
+                } else if (name === "template_days") {
                     collection = createTemplateDaysCollection(db, (error) => {
-                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                        errorMessage.value =
+                            error instanceof Error
+                                ? error.message
+                                : loadFailedMessage;
                     });
-                } else if (name === 'template_day_slots') {
-                    collection = createTemplateDaySlotsCollection(db, (error) => {
-                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
-                    });
-                } else if (name === 'template_day_dates') {
-                    collection = createTemplateDayDatesCollection(db, (error) => {
-                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
-                    });
-                } else if (name === 'media') {
+                } else if (name === "template_day_slots") {
+                    collection = createTemplateDaySlotsCollection(
+                        db,
+                        (error) => {
+                            errorMessage.value =
+                                error instanceof Error
+                                    ? error.message
+                                    : loadFailedMessage;
+                        },
+                    );
+                } else if (name === "template_day_dates") {
+                    collection = createTemplateDayDatesCollection(
+                        db,
+                        (error) => {
+                            errorMessage.value =
+                                error instanceof Error
+                                    ? error.message
+                                    : loadFailedMessage;
+                        },
+                    );
+                } else if (name === "media") {
                     collection = createMediaCollection(db, (error) => {
-                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                        errorMessage.value =
+                            error instanceof Error
+                                ? error.message
+                                : loadFailedMessage;
                     });
                 } else {
                     const collectionOptions = powerSyncCollectionOptions({
                         database: db,
                         table,
                     });
-                    collection = createCollection(/** @type {any} */(collectionOptions));
+                    collection = createCollection(
+                        /** @type {any} */ collectionOptions,
+                    );
                 }
                 collectionRefs[name].value = collection;
             }
@@ -378,14 +452,17 @@ export async function bootstrapAppPowerSync() {
                         .map((c) => c.preload()),
                 );
             } catch (preloadError) {
-                hasBootstrappedCollection.value = true;
-                errorMessage.value = preloadError instanceof Error ? preloadError.message : loadFailedMessage;
+                bootstrapPromise = null;
+                errorMessage.value =
+                    preloadError instanceof Error
+                        ? preloadError.message
+                        : loadFailedMessage;
                 await refreshOutboxSnapshot();
                 return;
             }
 
             hasBootstrappedCollection.value = true;
-            errorMessage.value = '';
+            errorMessage.value = "";
             persistenceUnavailable.value = false;
             await refreshOutboxSnapshot();
         } catch (error) {
@@ -411,7 +488,8 @@ export async function bootstrapAppPowerSync() {
                 ref.value = null;
             }
             persistenceUnavailable.value = true;
-            errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+            errorMessage.value =
+                error instanceof Error ? error.message : loadFailedMessage;
         } finally {
             isLoading.value = false;
         }
@@ -424,9 +502,11 @@ export function useAppPowerSyncOutbox() {
     return {
         outboxPendingCount,
         outboxCommitError,
-        hasOutboxCommitError: computed(() => outboxCommitError.value.length > 0),
+        hasOutboxCommitError: computed(
+            () => outboxCommitError.value.length > 0,
+        ),
         dismissOutboxCommitError: () => {
-            outboxCommitError.value = '';
+            outboxCommitError.value = "";
         },
         refreshOutbox: refreshOutboxSnapshot,
         hasPendingOutboxWrites: computed(() => outboxPendingCount.value > 0),
