@@ -191,6 +191,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
+import { useLiveQuery } from '@tanstack/vue-db';
 import { useTicketTypes } from '../models/ticket-types/ticket-types.model';
 import {
     createEmptyTicketTypeFormValues,
@@ -198,9 +199,8 @@ import {
     parseTripInventoryCapsJson,
     type TicketTypeFormValues,
 } from '../models/ticket-types/ticket-types.validation';
-import { usePrograms } from '../models/programs/programs.model';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection } from '../powersync/app-powersync.runtime';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
@@ -228,7 +228,16 @@ const {
     patchTicketTypeRow,
     deleteTicketTypeRow,
 } = useTicketTypes();
-const { programs, ensureProgramsReady } = usePrograms();
+const programsCollection = getProgramsCollection();
+
+const { data: programs } = useLiveQuery(
+    (queryBuilder) => {
+        const col = programsCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ p: col });
+    },
+    [programsCollection],
+);
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
@@ -241,9 +250,9 @@ const selectedProgramName = computed(() => {
     if (id.length === 0) {
         return '';
     }
-    const row = programs.value.find((p) => p != null && String(p.id) === id);
+    const row = (programs.value ?? []).find((p) => p != null && String(p.id) === id);
     if (row) {
-        return String((row as Record<string, unknown>).name ?? id);
+        return String(row.name ?? id);
     }
     return id;
 });
@@ -516,7 +525,6 @@ function confirmDelete(row: Record<string, unknown>) {
 }
 
 onMounted(() => {
-    void ensureProgramsReady();
     void ensureTicketTypesReady();
 });
 </script>
