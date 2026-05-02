@@ -174,7 +174,7 @@ import { useLiveQuery } from '@tanstack/vue-db';
 import { useEntityList } from "../models/entity.queries";
 import {
     getAppPowerSyncBootstrappedRef,
-    getMediaCollectionRef,
+    getMediaCollection,
     getProgramsCollection,
     useAppPowerSyncOutbox,
 } from "../powersync/app-powersync.runtime";
@@ -213,7 +213,7 @@ const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
 const { data: mediaRows } = useEntityList({
     enabledRef: hasBootstrapped,
     alias: "media",
-    collection: getMediaCollectionRef(),
+    collection: getMediaCollection(),
     orderBy: [
         { key: "order_column", direction: "asc" },
         { key: "created_at", direction: "asc" },

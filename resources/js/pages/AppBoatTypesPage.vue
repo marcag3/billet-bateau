@@ -122,7 +122,7 @@ import { safeParseBoatEntityName } from '../models/boats/boats.validation';
 import {
     getAppPowerSyncBootstrappedRef,
     getBoatTypesCollection,
-    getMediaCollectionRef,
+    getMediaCollection,
     getCurrentUserIdRef,
     refreshOutboxSnapshot,
     useAppPowerSyncOutbox,
@@ -173,7 +173,7 @@ const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
 
-const mediaCollection = getMediaCollectionRef();
+const mediaCollection = getMediaCollection();
 const { data: mediaRows } = useLiveQuery(
     (queryBuilder) => {
         const col = mediaCollection.value;

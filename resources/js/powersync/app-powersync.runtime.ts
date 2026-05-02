@@ -25,6 +25,11 @@ import { createTicketTypesCollection } from './ticket-types.collection';
 import { createBoatsCollection } from './boats.collection';
 import { createWaterRoutesCollection } from './water-routes.collection';
 import { createTripsCollection } from './trips.collection';
+import { createBookingTicketsCollection } from './booking-tickets.collection';
+import { createTemplateDaysCollection } from './template-days.collection';
+import { createTemplateDaySlotsCollection } from './template-day-slots.collection';
+import { createTemplateDayDatesCollection } from './template-day-dates.collection';
+import { createMediaCollection } from './media.collection';
 import { translate } from '../utilities/i18n';
 
 const DB_FILENAME = 'billbateau-app-v16.db';
@@ -328,6 +333,26 @@ export async function bootstrapAppPowerSync() {
                     collection = createTripsCollection(db, (error) => {
                         errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
                     });
+                } else if (name === 'booking_tickets') {
+                    collection = createBookingTicketsCollection(db, (error) => {
+                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                    });
+                } else if (name === 'template_days') {
+                    collection = createTemplateDaysCollection(db, (error) => {
+                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                    });
+                } else if (name === 'template_day_slots') {
+                    collection = createTemplateDaySlotsCollection(db, (error) => {
+                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                    });
+                } else if (name === 'template_day_dates') {
+                    collection = createTemplateDayDatesCollection(db, (error) => {
+                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                    });
+                } else if (name === 'media') {
+                    collection = createMediaCollection(db, (error) => {
+                        errorMessage.value = error instanceof Error ? error.message : loadFailedMessage;
+                    });
                 } else {
                     const collectionOptions = powerSyncCollectionOptions({
                         database: db,
@@ -436,7 +461,7 @@ export function getTicketTypesCollection() {
     return collectionRefs.ticket_types;
 }
 
-export function getBookingTicketsCollectionRef() {
+export function getBookingTicketsCollection() {
     return collectionRefs.booking_tickets;
 }
 
@@ -444,19 +469,19 @@ export function getWaterRoutesCollection() {
     return collectionRefs.water_routes;
 }
 
-export function getTemplateDaysCollectionRef() {
+export function getTemplateDaysCollection() {
     return collectionRefs.template_days;
 }
 
-export function getTemplateDaySlotsCollectionRef() {
+export function getTemplateDaySlotsCollection() {
     return collectionRefs.template_day_slots;
 }
 
-export function getTemplateDayDatesCollectionRef() {
+export function getTemplateDayDatesCollection() {
     return collectionRefs.template_day_dates;
 }
 
-export function getMediaCollectionRef() {
+export function getMediaCollection() {
     return collectionRefs.media;
 }
 
