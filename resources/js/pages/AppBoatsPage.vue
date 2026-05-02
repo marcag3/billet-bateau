@@ -157,10 +157,10 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
+import { useLiveQuery } from '@tanstack/vue-db';
 import { useBoats } from '../models/boats/boats.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection } from '../powersync/app-powersync.runtime';
 import { useBoatTypes } from '../models/boat-types/boat-types.model';
-import { usePrograms } from '../models/programs/programs.model';
 import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -175,7 +175,17 @@ const PAGE_SIZE = 20;
 const { t } = useI18n();
 const route = useRoute();
 const { boats, ensureBoatsReady } = useBoats();
-const { programs, ensureProgramsReady } = usePrograms();
+const programsCollection = getProgramsCollection();
+
+const { data: programs } = useLiveQuery(
+    (queryBuilder) => {
+        const col = programsCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ p: col });
+    },
+    [programsCollection],
+);
+
 const { boatTypes, ensureBoatTypesReady } = useBoatTypes();
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
@@ -189,9 +199,9 @@ const selectedProgramName = computed(() => {
     if (id.length === 0) {
         return '';
     }
-    const row = programs.value.find((p) => p != null && String(p.id) === id);
+    const row = (programs.value ?? []).find((p) => p != null && String(p.id) === id);
     if (row) {
-        return String((row as Record<string, unknown>).name ?? id);
+        return String(row.name ?? id);
     }
     return id;
 });
@@ -308,7 +318,6 @@ function onLoadMore(_index: number, done: (stop?: boolean) => void) {
 }
 
 onMounted(() => {
-    void ensureProgramsReady();
     void ensureBoatTypesReady();
     void ensureBoatsReady();
 });
