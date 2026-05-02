@@ -194,17 +194,21 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { computed, ref, watch } from "vue";
+import { useLiveQuery } from '@tanstack/vue-db';
 import {
     createProgramEditFormSchema,
     type ProgramEditFormValues,
 } from "../models/programs/programs.validation";
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
-import { usePrograms } from "../models/programs/programs.model";
-import { getAppPowerSyncBootstrappedRef } from "../powersync/app-powersync.runtime";
+import {
+    getAppPowerSyncBootstrappedRef,
+    getProgramsCollection,
+    refreshOutboxSnapshot,
+} from "../powersync/app-powersync.runtime";
+import { normalizeThemeColor, normalizeAddressRowFields } from "../utilities/program-helpers";
 import mediaRoutes from "../routes/api/media";
 import { requestFormData } from "../services/http.client";
 import { normalizeImageFiles } from "../utilities/image-files";
-import { readReplicatedBoolean } from "../utilities/replicated-boolean";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
@@ -214,8 +218,16 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const $q = useQuasar();
-const { programs, ensureProgramsReady, updateProgramWithOptionalAddress } =
-    usePrograms();
+const programsCollection = getProgramsCollection();
+
+const { data: programs } = useLiveQuery(
+    (queryBuilder) => {
+        const col = programsCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ p: col });
+    },
+    [programsCollection],
+);
 
 const errorMessage = ref("");
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
@@ -290,7 +302,7 @@ watch(
         }
         const p = (programs.value ?? []).find(
             (row) => row != null && String(row.id) === id,
-        ) as Record<string, unknown> | undefined;
+        );
         if (!p) {
             return;
         }
@@ -311,8 +323,8 @@ watch(
                 slug: String(p.slug ?? "")
                     .trim()
                     .toLowerCase(),
-                isActive: readReplicatedBoolean(p.is_active),
-                isArchived: readReplicatedBoolean(p.is_archived),
+                isActive: p.is_active ?? true,
+                isArchived: p.is_archived ?? false,
                 address: {
                     line_1:
                         typeof p.line_1 === "string" ? String(p.line_1) : "",
@@ -336,8 +348,6 @@ watch(
     { immediate: true },
 );
 
-void ensureProgramsReady();
-
 function goToProgramsList() {
     void router.push({ name: "programs.list" });
 }
@@ -350,15 +360,31 @@ const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
     }
 
     try {
-        await updateProgramWithOptionalAddress(id, {
-            name: values.name,
-            description: values.description,
-            themeColor: values.themeColor,
-            slug: values.slug,
-            isActive: values.isActive,
-            isArchived: values.isArchived,
-            address: { ...values.address },
+        const col = programsCollection.value;
+        if (!col) {
+            throw new Error("Programs collection is not ready.");
+        }
+
+        const themeColor = normalizeThemeColor(values.themeColor);
+        const now = new Date().toISOString();
+        const addressFields = normalizeAddressRowFields({ ...values.address });
+
+        col.update(id, (draft) => {
+            draft.name = values.name.trim();
+            draft.description = values.description.trim().length > 0 ? values.description.trim() : null;
+            draft.theme_color = themeColor;
+            draft.slug = values.slug;
+            draft.is_active = values.isActive;
+            draft.is_archived = values.isArchived;
+            draft.line_1 = addressFields.line_1;
+            draft.line_2 = addressFields.line_2;
+            draft.city = addressFields.city;
+            draft.postal_code = addressFields.postal_code;
+            draft.country = addressFields.country;
+            draft.updated_at = now;
         });
+
+        void refreshOutboxSnapshot();
 
         const files = normalizeImageFiles(values.imagesModel);
         if (files.length > 0) {
