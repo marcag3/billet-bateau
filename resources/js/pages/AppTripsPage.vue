@@ -80,11 +80,11 @@
 import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
+import { useLiveQuery } from '@tanstack/vue-db';
 import { useTrips } from '../models/trips/trips.model';
 import { useBoatTypes } from '../models/boat-types/boat-types.model';
 import { useWaterRoutes } from '../models/water-routes/water-routes.model';
-import { usePrograms } from '../models/programs/programs.model';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection } from '../powersync/app-powersync.runtime';
 import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -96,7 +96,17 @@ import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
 const { t, locale } = useI18n();
 const route = useRoute();
 const { trips, ensureTripsReady } = useTrips();
-const { programs, ensureProgramsReady } = usePrograms();
+const programsCollection = getProgramsCollection();
+
+const { data: programs } = useLiveQuery(
+    (queryBuilder) => {
+        const col = programsCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ p: col });
+    },
+    [programsCollection],
+);
+
 const { boatTypes, ensureBoatTypesReady } = useBoatTypes();
 const { waterRoutes, ensureWaterRoutesReady } = useWaterRoutes();
 
@@ -111,9 +121,9 @@ const selectedProgramName = computed(() => {
     if (id.length === 0) {
         return '';
     }
-    const row = programs.value.find((p) => p != null && String(p.id) === id);
+    const row = (programs.value ?? []).find((p) => p != null && String(p.id) === id);
     if (row) {
-        return String((row as Record<string, unknown>).name ?? id);
+        return String(row.name ?? id);
     }
     return id;
 });
@@ -166,7 +176,6 @@ function waterRouteLabelFor(tr: Record<string, unknown>) {
 }
 
 onMounted(() => {
-    void ensureProgramsReady();
     void ensureBoatTypesReady();
     void ensureWaterRoutesReady();
     void ensureTripsReady();
