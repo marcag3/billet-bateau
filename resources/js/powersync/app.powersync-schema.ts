@@ -29,16 +29,10 @@ const boatTypesTable = new Table({
 const boatsTable = new Table({
     user_id: column.integer,
     boat_type_id: column.text,
+    program_id: column.text,
     name: column.text,
     capacity: column.integer,
     notes: column.text,
-    created_at: column.text,
-    updated_at: column.text,
-});
-
-const boatProgramTable = new Table({
-    boat_id: column.text,
-    program_id: column.text,
     created_at: column.text,
     updated_at: column.text,
 });
@@ -143,7 +137,6 @@ export const appPowerSyncSchema = new Schema({
     programs: programsTable,
     boat_types: boatTypesTable,
     boats: boatsTable,
-    boat_program: boatProgramTable,
     trips: tripsTable,
     ticket_types: ticketTypesTable,
     booking_tickets: bookingTicketsTable,
@@ -162,9 +155,6 @@ export const appBoatTypesPowerSyncTable = appPowerSyncSchema.props.boat_types;
 
 /** @type {import('@powersync/web').Table} */
 export const appBoatsPowerSyncTable = appPowerSyncSchema.props.boats;
-
-/** @type {import('@powersync/web').Table} */
-export const appBoatProgramPowerSyncTable = appPowerSyncSchema.props.boat_program;
 
 /** @type {import('@powersync/web').Table} */
 export const appTripsPowerSyncTable = appPowerSyncSchema.props.trips;

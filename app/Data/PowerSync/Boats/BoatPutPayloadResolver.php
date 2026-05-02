@@ -10,7 +10,7 @@ use App\Models\Boat;
 /**
  * Resolves merged PUT attributes for {@see Boat} PowerSync uploads.
  *
- * @return array{name: string, notes: ?string, capacity: int, boat_type_id: ?string}
+ * @return array{name: string, notes: ?string, capacity: int, boat_type_id: ?string, program_id: string}
  */
 final class BoatPutPayloadResolver
 {
@@ -24,10 +24,16 @@ final class BoatPutPayloadResolver
         $notes = PowerSyncOptional::resolve($dto->notes, $existing?->notes);
         $capacity = PowerSyncOptional::resolve($dto->capacity, $existing?->capacity);
         $boatTypeId = PowerSyncOptional::resolve($dto->boat_type_id, $existing?->boat_type_id);
+        $programId = PowerSyncOptional::resolve($dto->program_id, $existing?->program_id);
 
         PowerSyncCrudInnerDataValidator::validate(
             ['capacity' => $capacity],
             ['capacity' => ['required', 'integer', 'min:0']],
+        );
+
+        PowerSyncCrudInnerDataValidator::validate(
+            ['program_id' => $programId],
+            ['program_id' => ['required', 'ulid', 'exists:programs,id']],
         );
 
         $name = PowerSyncDisplayName::resolve($nameMerged, $existingName);
@@ -37,6 +43,7 @@ final class BoatPutPayloadResolver
             'notes' => $notes,
             'capacity' => (int) $capacity,
             'boat_type_id' => $boatTypeId,
+            'program_id' => $programId,
         ];
     }
 }

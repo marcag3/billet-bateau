@@ -7,6 +7,7 @@ use App\Data\PowerSync\Boats\BoatPutData;
 use App\Data\PowerSync\Boats\BoatPutPayloadResolver;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Models\Boat;
+use App\Models\Program;
 use Illuminate\Auth\Access\AuthorizationException;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Spatie\LaravelData\Optional;
@@ -74,6 +75,7 @@ final class ApplyBoatPowerSyncCrudAction
                 'capacity' => $resolved['capacity'],
                 'notes' => $resolved['notes'],
                 'boat_type_id' => $resolved['boat_type_id'],
+                'program_id' => $resolved['program_id'],
             ],
         );
     }
@@ -106,6 +108,10 @@ final class ApplyBoatPowerSyncCrudAction
             $boat->boat_type_id = $data->boat_type_id;
         }
 
+        if (! ($data->program_id instanceof Optional)) {
+            $boat->program_id = $data->program_id;
+        }
+
         $boat->save();
     }
 
@@ -115,12 +121,10 @@ final class ApplyBoatPowerSyncCrudAction
             return;
         }
 
-        $programs = $boat->programs()->get();
+        $program = $boat->program()->first();
 
-        foreach ($programs as $program) {
-            if ($program->userCanManage($userId)) {
-                return;
-            }
+        if ($program !== null && $program->userCanManage($userId)) {
+            return;
         }
 
         throw new AuthorizationException;

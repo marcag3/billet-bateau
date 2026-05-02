@@ -7,7 +7,6 @@ import { useAuthStore } from '../store/auth.store';
 import { createAppPowerSyncConnector } from '../services/powersync.connector';
 import {
     appBookingTicketsPowerSyncTable,
-    appBoatProgramPowerSyncTable,
     appBoatTypesPowerSyncTable,
     appBoatsPowerSyncTable,
     appTicketTypesPowerSyncTable,
@@ -22,7 +21,7 @@ import {
 } from './app.powersync-schema';
 import { translate } from '../utilities/i18n';
 
-const DB_FILENAME = 'billbateau-app-v15.db';
+const DB_FILENAME = 'billbateau-app-v16.db';
 
 const loadFailedMessage = translate('sync.unableLoadSync');
 const persistenceLimitedMessage = translate('sync.persistenceLimited');
@@ -115,7 +114,6 @@ const collectionRefs = {
     programs: shallowRef(null),
     boat_types: shallowRef(null),
     boats: shallowRef(null),
-    boat_program: shallowRef(null),
     trips: shallowRef(null),
     ticket_types: shallowRef(null),
     booking_tickets: shallowRef(null),
@@ -130,7 +128,6 @@ const tableByName = {
     programs: appProgramsPowerSyncTable,
     boat_types: appBoatTypesPowerSyncTable,
     boats: appBoatsPowerSyncTable,
-    boat_program: appBoatProgramPowerSyncTable,
     trips: appTripsPowerSyncTable,
     ticket_types: appTicketTypesPowerSyncTable,
     booking_tickets: appBookingTicketsPowerSyncTable,
@@ -413,10 +410,6 @@ export function getBoatTypesCollectionRef() {
 
 export function getBoatsCollectionRef() {
     return collectionRefs.boats;
-}
-
-export function getBoatProgramCollectionRef() {
-    return collectionRefs.boat_program;
 }
 
 export function getTripsCollectionRef() {

@@ -11,7 +11,7 @@
 ## Current Position
 
 - **Current phase:** 1 - Template Day Authoring UI
-- **Current plan:** TBD
+- **Current plan:** Planned (4 plans)
 - **Roadmap progress:** 0/4 phases complete
 - **Overall progress bar:** [----------] 0%
 
@@ -32,7 +32,7 @@
 
 ### Active TODOs
 
-- Build Phase 1 plans for template day creation/editing screens and slot form behavior.
+- Execute Phase 1 plans for template day authoring UI.
 - Define Phase 2 backend preview/commit contracts with idempotency and duplicate policy.
 - Design Phase 3 apply wizard copy and confirmation guardrails.
 

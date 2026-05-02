@@ -24,6 +24,7 @@ final class BoatPutData extends Data
         public string|Optional|null $notes = new Optional,
         public int|Optional|null $capacity = new Optional,
         public string|Optional|null $boat_type_id = new Optional,
+        public string|Optional|null $program_id = new Optional,
     ) {}
 
     /**
@@ -36,6 +37,7 @@ final class BoatPutData extends Data
             'notes' => ['sometimes', 'nullable', 'string'],
             'capacity' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'boat_type_id' => ['sometimes', 'nullable', 'ulid', 'exists:boat_types,id'],
+            'program_id' => ['sometimes', 'nullable', 'ulid', 'exists:programs,id'],
         ];
     }
 }

@@ -24,7 +24,11 @@
   3. Staff can set boat type, route, and capacity per slot and see those values shown before save/apply steps.
   4. Staff can configure ticket setup constraints per slot without leaving the template workflow.
   5. Staff can record and later review internal slot notes used for staff operations.
-**Plans**: TBD
+**Plans**:
+  - **Wave 1**: 001-PLAN-01 — Template day slot schema + sync contract
+  - **Wave 2** *(blocked on Wave 1 completion)*: 001-PLAN-02 — Admin UI: routes + template day list/create
+  - **Wave 3** *(blocked on Waves 1–2 completion)*: 001-PLAN-03 — Admin UI: template day editor + slot authoring
+  - **Wave 4** *(blocked on Waves 1–3 completion)*: 001-PLAN-04 — Validation, polish, and edge cases
 **UI hint**: yes
 
 ### Phase 2: Apply Integrity and Access Control
@@ -65,7 +69,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Template Day Authoring UI | 0/3 | Not started | - |
+| 1. Template Day Authoring UI | 0/4 | Not started | - |
 | 2. Apply Integrity and Access Control | 0/3 | Not started | - |
 | 3. Multi-Date Preview and Confirmation | 0/3 | Not started | - |
 | 4. Deterministic Outcomes and Operator Receipt | 0/2 | Not started | - |

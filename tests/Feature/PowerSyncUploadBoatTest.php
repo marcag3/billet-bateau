@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Boat;
-use App\Models\BoatProgram;
 use App\Models\BoatType;
 use App\Models\Program;
 use App\Models\User;
@@ -47,6 +46,7 @@ class PowerSyncUploadBoatTest extends TestCase
     {
         $user = User::factory()->create();
         $boatType = BoatType::factory()->for($user)->create();
+        $program = Program::factory()->for($user)->create();
         $boatId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -60,6 +60,7 @@ class PowerSyncUploadBoatTest extends TestCase
                         'capacity' => 12,
                         'notes' => 'Morning runs',
                         'boat_type_id' => $boatType->getKey(),
+                        'program_id' => $program->getKey(),
                     ],
                 ],
             ],
@@ -69,6 +70,7 @@ class PowerSyncUploadBoatTest extends TestCase
             'id' => $boatId,
             'user_id' => $user->getAuthIdentifier(),
             'boat_type_id' => $boatType->getKey(),
+            'program_id' => $program->getKey(),
             'name' => 'Sea Star',
             'capacity' => 12,
             'notes' => 'Morning runs',
@@ -80,6 +82,7 @@ class PowerSyncUploadBoatTest extends TestCase
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
         $boatType = BoatType::factory()->for($owner)->create();
+        $program = Program::factory()->for($intruder)->create();
         $boatId = (string) Str::ulid();
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
@@ -92,6 +95,7 @@ class PowerSyncUploadBoatTest extends TestCase
                         'name' => 'Stolen link',
                         'capacity' => 8,
                         'boat_type_id' => $boatType->getKey(),
+                        'program_id' => $program->getKey(),
                     ],
                 ],
             ],
@@ -101,6 +105,7 @@ class PowerSyncUploadBoatTest extends TestCase
             'id' => $boatId,
             'user_id' => $intruder->getAuthIdentifier(),
             'boat_type_id' => $boatType->getKey(),
+            'program_id' => $program->getKey(),
             'name' => 'Stolen link',
             'capacity' => 8,
         ]);
@@ -109,6 +114,7 @@ class PowerSyncUploadBoatTest extends TestCase
     public function test_put_new_boat_without_capacity_is_unprocessable(): void
     {
         $user = User::factory()->create();
+        $program = Program::factory()->for($user)->create();
         $boatId = (string) Str::ulid();
 
         $response = $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -119,6 +125,7 @@ class PowerSyncUploadBoatTest extends TestCase
                     'id' => $boatId,
                     'data' => [
                         'name' => 'No room',
+                        'program_id' => $program->getKey(),
                     ],
                 ],
             ],
@@ -130,30 +137,6 @@ class PowerSyncUploadBoatTest extends TestCase
         $this->assertNotEmpty($errors['data.capacity']);
 
         $this->assertDatabaseMissing('boats', ['id' => $boatId]);
-    }
-
-    public function test_put_boat_program_rejects_unknown_boat_id(): void
-    {
-        $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
-        $linkId = (string) Str::ulid();
-        $unknownBoatId = (string) Str::ulid();
-
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'PUT',
-                    'type' => 'boat_program',
-                    'id' => $linkId,
-                    'data' => [
-                        'boat_id' => $unknownBoatId,
-                        'program_id' => $program->getKey(),
-                    ],
-                ],
-            ],
-        ])->assertUnprocessable();
-
-        $this->assertDatabaseMissing('boat_program', ['id' => $linkId]);
     }
 
     public function test_patch_updates_owned_boat_type(): void
@@ -238,58 +221,6 @@ class PowerSyncUploadBoatTest extends TestCase
         $this->assertDatabaseHas('boats', ['id' => $boat->getKey()]);
     }
 
-    public function test_put_creates_boat_program_link(): void
-    {
-        $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
-        $boat = Boat::factory()->for($user)->create();
-        $linkId = (string) Str::ulid();
-
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'PUT',
-                    'type' => 'boat_program',
-                    'id' => $linkId,
-                    'data' => [
-                        'boat_id' => $boat->getKey(),
-                        'program_id' => $program->getKey(),
-                    ],
-                ],
-            ],
-        ])->assertOk();
-
-        $this->assertDatabaseHas('boat_program', [
-            'id' => $linkId,
-            'boat_id' => $boat->getKey(),
-            'program_id' => $program->getKey(),
-        ]);
-    }
-
-    public function test_delete_removes_boat_program_link(): void
-    {
-        $user = User::factory()->create();
-        $program = Program::factory()->for($user)->create();
-        $boat = Boat::factory()->for($user)->create();
-        $link = BoatProgram::query()->create([
-            'id' => (string) Str::ulid(),
-            'boat_id' => $boat->getKey(),
-            'program_id' => $program->getKey(),
-        ]);
-
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'DELETE',
-                    'type' => 'boat_program',
-                    'id' => $link->getKey(),
-                ],
-            ],
-        ])->assertOk();
-
-        $this->assertDatabaseMissing('boat_program', ['id' => $link->getKey()]);
-    }
-
     public function test_patch_boat_type_rejects_invalid_name_type_returns_unprocessable(): void
     {
         $user = User::factory()->create();
@@ -331,6 +262,7 @@ class PowerSyncUploadBoatTest extends TestCase
     public function test_put_boat_rejects_unknown_boat_type_id_returns_unprocessable(): void
     {
         $user = User::factory()->create();
+        $program = Program::factory()->for($user)->create();
         $boatId = (string) Str::ulid();
         $missingBoatTypeId = (string) Str::ulid();
 
@@ -344,6 +276,7 @@ class PowerSyncUploadBoatTest extends TestCase
                         'name' => 'Ghost type',
                         'capacity' => 4,
                         'boat_type_id' => $missingBoatTypeId,
+                        'program_id' => $program->getKey(),
                     ],
                 ],
             ],

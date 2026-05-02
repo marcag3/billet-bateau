@@ -6,7 +6,6 @@ import { useEntityList } from '../entity.queries';
 import {
     bootstrapAppPowerSync,
     getAppPowerSyncBootstrappedRef,
-    getBoatProgramCollectionRef,
     getBoatsCollectionRef,
     getCurrentUserIdRef,
     getPowerSyncDbRef,
@@ -32,7 +31,6 @@ export const boatsModelDefinition = defineModel({
 export function useBoats() {
     const hasBootstrappedCollection = getAppPowerSyncBootstrappedRef();
     const boatsCollectionRef = getBoatsCollectionRef();
-    const boatProgramCollectionRef = getBoatProgramCollectionRef();
     const programSyncScopeIdRef = getProgramSyncScopeIdRef();
     const currentUserIdRef = getCurrentUserIdRef();
 
@@ -43,28 +41,12 @@ export function useBoats() {
         orderBy: boatsModelDefinition.orderBy ?? [],
     });
 
-    const { data: boatProgramLinks } = useEntityList({
-        enabledRef: hasBootstrappedCollection,
-        alias: 'boat_program',
-        collection: boatProgramCollectionRef,
-        orderBy: [
-            { key: 'updated_at', direction: 'desc' },
-            { key: 'created_at', direction: 'desc' },
-            { key: 'id', direction: 'desc' },
-        ],
-    });
-
     const boats = computed(() => {
         const pid = programSyncScopeIdRef.value.trim();
         if (pid.length === 0) {
             return [];
         }
-        const boatIds = new Set(
-            boatProgramLinks.value
-                .filter((row) => String(row.program_id) === pid)
-                .map((row) => String(row.boat_id)),
-        );
-        return allBoats.value.filter((b) => boatIds.has(String(b.id)));
+        return allBoats.value.filter((b) => String(b.program_id) === pid);
     });
 
     /**
@@ -93,11 +75,6 @@ export function useBoats() {
             throw new Error('Boats collection is not ready.');
         }
 
-        const boatProgramCollection = boatProgramCollectionRef.value;
-        if (!boatProgramCollection) {
-            throw new Error('Boat program collection is not ready.');
-        }
-
         const parsedUserId = Number.parseInt(currentUserIdRef.value, 10);
         const userId = Number.isFinite(parsedUserId) ? parsedUserId : null;
 
@@ -116,18 +93,10 @@ export function useBoats() {
             id,
             user_id: userId,
             boat_type_id: boatTypeId,
+            program_id: programId,
             name: name.length > 0 ? name : 'Untitled',
             capacity,
             notes: notes.length > 0 ? notes : null,
-            created_at: now,
-            updated_at: now,
-        });
-
-        const linkId = ulid();
-        boatProgramCollection.insert({
-            id: linkId,
-            boat_id: id,
-            program_id: programId,
             created_at: now,
             updated_at: now,
         });
@@ -170,15 +139,6 @@ export function useBoats() {
         const collection = boatsCollectionRef.value;
         if (!collection) {
             return;
-        }
-
-        const bpCol = boatProgramCollectionRef.value;
-        if (bpCol) {
-            for (const row of boatProgramLinks.value) {
-                if (String(row.boat_id) === String(boatId)) {
-                    bpCol.delete(String(row.id));
-                }
-            }
         }
 
         collection.delete(boatId);

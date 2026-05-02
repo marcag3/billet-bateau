@@ -2,58 +2,49 @@
 # See: https://docs.powersync.com/sync/streams/overview
 #
 # Programs are visible only to the owner (programs.user_id) or members (program_user).
-# user_scope auto-subscribes the program list; program_scope adds detail rows (boats, trips, templates, boat_types, media) for selected program_id.
+# user_scope auto-subscribes the program list; program_scope adds detail rows for subscription.parameter('program_id').
+#
+# Note: Sync Streams SQL does not support UNION. Use OR + subquery for combined sets (see supported-sql).
 
 config:
   edition: 3
 
+# Shared CTE — single SELECT only (no UNION).
+with:
+  accessible_program_ids: |
+    SELECT id AS program_id FROM programs
+    WHERE id IN (SELECT program_id FROM program_user WHERE user_id = auth.user_id())
+
 streams:
   user_scope:
     auto_subscribe: true
-    with:
-      accessible_program_ids: |
-        SELECT id AS program_id FROM programs WHERE user_id = auth.user_id()
-        UNION
-        SELECT program_id FROM program_user WHERE user_id = auth.user_id()
     queries:
       - |
         SELECT * FROM programs
         WHERE id IN accessible_program_ids
 
   program_scope:
-    with:
-      accessible_program_ids: |
-        SELECT id AS program_id FROM programs WHERE user_id = auth.user_id()
-        UNION
-        SELECT program_id FROM program_user WHERE user_id = auth.user_id()
     queries:
       - |
         SELECT * FROM boat_types
-        WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN accessible_program_ids
+        WHERE boat_types.program_id = subscription.parameter('program_id')
+          AND boat_types.program_id IN accessible_program_ids
       - |
         SELECT * FROM media
-        WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN accessible_program_ids
-      - |
-        SELECT * FROM boat_program
-        WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN accessible_program_ids
+        WHERE media.program_id = subscription.parameter('program_id')
+          AND media.program_id IN accessible_program_ids
       - |
         SELECT * FROM boats
-        WHERE id IN (
-          SELECT boat_id FROM boat_program
-          WHERE program_id = subscription.parameter('program_id')
-            AND program_id IN accessible_program_ids
-        )
+        WHERE boats.program_id = subscription.parameter('program_id')
+          AND boats.program_id IN accessible_program_ids
       - |
         SELECT * FROM trips
-        WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN accessible_program_ids
+        WHERE trips.program_id = subscription.parameter('program_id')
+          AND trips.program_id IN accessible_program_ids
       - |
         SELECT * FROM ticket_types
-        WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN accessible_program_ids
+        WHERE ticket_types.program_id = subscription.parameter('program_id')
+          AND ticket_types.program_id IN accessible_program_ids
       - |
         SELECT booking_tickets.*
         FROM booking_tickets
@@ -62,12 +53,12 @@ streams:
           AND bookings.program_id IN accessible_program_ids
       - |
         SELECT * FROM water_routes
-        WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN accessible_program_ids
+        WHERE water_routes.program_id = subscription.parameter('program_id')
+          AND water_routes.program_id IN accessible_program_ids
       - |
         SELECT * FROM template_days
-        WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN accessible_program_ids
+        WHERE template_days.program_id = subscription.parameter('program_id')
+          AND template_days.program_id IN accessible_program_ids
       - |
         SELECT template_day_slots.*
         FROM template_day_slots
@@ -76,5 +67,5 @@ streams:
           AND template_days.program_id IN accessible_program_ids
       - |
         SELECT * FROM template_day_dates
-        WHERE program_id = subscription.parameter('program_id')
-          AND program_id IN accessible_program_ids
+        WHERE template_day_dates.program_id = subscription.parameter('program_id')
+          AND template_day_dates.program_id IN accessible_program_ids

@@ -84,9 +84,9 @@ class Program extends Model implements HasMedia
         return $this->users()->whereKey($userId)->exists();
     }
 
-    public function boats(): BelongsToMany
+    public function boats(): HasMany
     {
-        return $this->belongsToMany(Boat::class, 'boat_program')->withTimestamps();
+        return $this->hasMany(Boat::class, 'program_id');
     }
 
     public function trips(): HasMany
