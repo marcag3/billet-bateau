@@ -86,6 +86,19 @@ const programScopeChildren: RouteRecordRaw[] = [
                 meta: scopedProgramMeta,
             },
             {
+                path: "template-days/create",
+                name: "template-days.create",
+                component: () =>
+                    import("../pages/AppTemplateDayCreatePage.vue"),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: "template-days",
+                name: "template-days.list",
+                component: () => import("../pages/AppTemplateDaysPage.vue"),
+                meta: scopedProgramMeta,
+            },
+            {
                 path: "ticket-types",
                 name: "ticket-types.list",
                 component: () => import("../pages/AppTicketTypesPage.vue"),

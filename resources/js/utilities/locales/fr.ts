@@ -8,6 +8,7 @@ export default {
         boats: "Bateaux",
         boatTypes: "Types de bateau",
         trips: "Sorties",
+        templateDays: "Journees types",
         ticketTypes: "Types de billet",
         waterRoutes: "Parcours",
         logout: "Se deconnecter",
@@ -366,6 +367,24 @@ export default {
         copied: "Lien copie",
         noDescription: "Aucune description",
         noAddress: "Aucune adresse",
+    },
+    templateDaysList: {
+        title: "Journees types",
+        description:
+            "Modeles de journee reutilisables pour la planification. Les changements se synchronisent via PowerSync.",
+        addNew: "Nouveau modele",
+        addTemplateDay: "Ajouter un modele",
+        backToList: "Retour aux journees types",
+        createPageTitle: "Nouveau modele de journee",
+        createPageDescription:
+            "Creez un modele de journee reutilisable pour ce programme. Les changements se synchronisent via PowerSync.",
+        listForProgram: "Journees types du programme",
+        rosterForProgram: "Journees types : {name}",
+        name: "Nom",
+        create: "Creer le modele",
+        empty: "Aucun modele de journee pour le moment. Utilisez Ajouter un modele pour en creer un.",
+        created: "Modele de journee enregistre.",
+        errorGeneric: "Une erreur est survenue. Veuillez reessayer.",
     },
     locale: {
         english: "Anglais",

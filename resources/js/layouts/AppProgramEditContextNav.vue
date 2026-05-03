@@ -69,6 +69,19 @@
                 <q-item-section>{{ t("common.trips") }}</q-item-section>
             </q-item>
             <q-item
+                key="template-days"
+                v-ripple
+                clickable
+                :to="{ name: 'template-days.list', params: { programId } }"
+                exact
+                active-class="app-nav-item--active"
+            >
+                <q-item-section avatar>
+                    <q-icon name="calendar_month" />
+                </q-item-section>
+                <q-item-section>{{ t("common.templateDays") }}</q-item-section>
+            </q-item>
+            <q-item
                 key="ticket-types"
                 v-ripple
                 clickable

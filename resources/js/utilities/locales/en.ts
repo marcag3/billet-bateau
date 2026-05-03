@@ -8,6 +8,7 @@ export default {
         boats: "Boats",
         boatTypes: "Boat types",
         trips: "Trips",
+        templateDays: "Template days",
         ticketTypes: "Ticket types",
         waterRoutes: "Water routes",
         logout: "Logout",
@@ -353,6 +354,24 @@ export default {
         copied: "Link copied to clipboard",
         noDescription: "No description",
         noAddress: "No address on file",
+    },
+    templateDaysList: {
+        title: "Template days",
+        description:
+            "Reusable day patterns for scheduling. Changes sync through PowerSync.",
+        addNew: "New template day",
+        addTemplateDay: "Add template day",
+        backToList: "Back to template days",
+        createPageTitle: "New template day",
+        createPageDescription:
+            "Create a reusable day pattern for this program. Changes sync through PowerSync.",
+        listForProgram: "Program template days",
+        rosterForProgram: "Template days: {name}",
+        name: "Name",
+        create: "Create template day",
+        empty: "No template days yet. Use Add template day to create one.",
+        created: "Template day saved.",
+        errorGeneric: "Something went wrong. Please try again.",
     },
     locale: {
         english: "English",
