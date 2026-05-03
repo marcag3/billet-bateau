@@ -24,7 +24,7 @@
         </p>
         <div
             v-if="$slots.actions"
-            class="q-mt-sm"
+            class="q-mt-sm row justify-end"
         >
             <slot name="actions" />
         </div>
@@ -49,22 +49,3 @@ const slots = useSlots();
 const hasDefaultSlot = computed(() => Boolean(slots.default));
 
 </script>
-
-<style scoped>
-.app-page-header--hero {
-    border-radius: var(--app-radius-lg);
-    padding: 1.5rem;
-    background: linear-gradient(
-        122deg,
-        var(--deep-navy) 0%,
-        var(--deep-navy) 64%,
-        var(--racing-red) 100%
-    );
-    color: #ffffff;
-    box-shadow: gray;
-}
-
-.app-page-header__hero-copy {
-    color: rgba(255, 255, 255, 0.9);
-}
-</style>

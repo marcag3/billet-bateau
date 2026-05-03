@@ -7,22 +7,13 @@ export const templateDayDatesSchema = z.object({
     id: z.string(),
     program_id: z.string().nullable().default(null),
     template_day_id: z.string().nullable().default(null),
-    service_date: z.string().nullable().default(null),
-    created_at: z.string().nullable().default(null),
-    updated_at: z.string().nullable().default(null),
+    service_date: z.string().transform((v) => new Date(v)).nullable().default(null),
+    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
+    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type TemplateDayDateInput = z.input<typeof templateDayDatesSchema>;
 export type TemplateDayDateOutput = z.output<typeof templateDayDatesSchema>;
-
-export const templateDayDatesDeserializationSchema = z.object({
-    id: z.string(),
-    program_id: z.string().nullable().default(null),
-    template_day_id: z.string().nullable().default(null),
-    service_date: z.string().nullable().default(null),
-    created_at: z.string().nullable().default(null),
-    updated_at: z.string().nullable().default(null),
-});
 
 export function createTemplateDayDatesCollection(
     database: import('@powersync/web').PowerSyncDatabase,

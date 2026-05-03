@@ -382,7 +382,6 @@ const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
         }
 
         const themeColor = normalizeThemeColor(values.themeColor);
-        const now = new Date().toISOString();
         const addressFields = normalizeAddressRowFields({ ...values.address });
 
         col.update(id, (draft) => {
@@ -400,7 +399,7 @@ const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
             draft.city = addressFields.city;
             draft.postal_code = addressFields.postal_code;
             draft.country = addressFields.country;
-            draft.updated_at = now;
+            draft.updated_at = new Date().toISOString();
         });
 
         void refreshOutboxSnapshot();

@@ -240,11 +240,14 @@ async function logout() {
 
 <style scoped>
 .app-shell {
-    background: linear-gradient(180deg, #f6f8ff 0%, #eef2ff 100%);
+    background: linear-gradient(280deg,
+    color-mix(in lch, var(--rosy-granite) 30%, white) 0%,
+    color-mix(in lch, var(--cerulean) 40%, white) 40%
+      );
 }
 
 .app-header {
-    background: linear-gradient(90deg, var(--deep-navy) 0%, hsla(224, 83%, 22%, 1) 58%, var(--racing-red) 100%);
+    background: color-mix(var(--deep-navy) 90%, white) ;
     color: #ffffff;
 }
 

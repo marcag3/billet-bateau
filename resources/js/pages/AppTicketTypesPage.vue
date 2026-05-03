@@ -554,7 +554,6 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
                     );
                 }
                 const id = ulid();
-                const now = new Date().toISOString();
                 const title = String(values.title ?? "").trim();
                 if (title.length === 0) {
                     throw new Error("Ticket type title is required.");
@@ -568,8 +567,6 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
                     min_per_purchase: values.minPerPurchase ?? 0,
                     max_per_purchase: values.maxPerPurchase,
                     trip_inventory_caps: JSON.stringify(caps),
-                    created_at: now,
-                    updated_at: now,
                 }).isPersisted.promise;
                 void refreshOutboxSnapshot();
             }

@@ -1,9 +1,6 @@
 <template>
     <q-page class="">
-        <AppPageHeader
-            :title="t('programsList.title')"
-            :description="t('programsList.description')"
-        >
+        <AppPageHeader :title="t('programsList.title')">
             <template #actions>
                 <q-btn
                     unelevated
@@ -50,42 +47,24 @@
                     :key="String(p.id)"
                     class="col-12 col-sm-6 col-md-4"
                 >
-                    <q-card
-                        flat
-                        bordered
-                        class="app-program-card full-height column"
-                    >
-                        <div
-                            v-if="primaryImageFor(String(p.id))"
-                            class="app-program-card__media"
-                        >
-                            <q-img
-                                :src="primaryImageFor(String(p.id))"
-                                ratio="4/3"
-                                fit="cover"
-                            />
-                        </div>
-                        <div
-                            v-else
-                            class="app-program-card__media app-program-card__media--placeholder"
+                    <q-card>
+                        <q-img
+                            :src="primaryImageFor(String(p.id))"
                             :style="placeholderStyle(p)"
-                        />
-                        <q-card-section class="col-grow">
-                            <div class="text-h6 text-weight-bold q-mb-xs">
-                                {{ p.name }}
+                            :ratio="16 / 9"
+                        >
+                            <div class="absolute-bottom">
+                                <div class="text-h6">{{ p.name }}</div>
+                                <div
+                                    class="text-subtitle2"
+                                    v-if="programDescription(p)"
+                                >
+                                    {{ programDescription(p) }}
+                                </div>
                             </div>
-                            <p
-                                v-if="programDescription(p)"
-                                class="text-body2 text-grey-8 q-mb-sm q-mt-none"
-                            >
-                                {{ programDescription(p) }}
-                            </p>
-                            <p
-                                v-else
-                                class="text-caption text-grey-6 q-mb-sm q-mt-none"
-                            >
-                                {{ t("programsList.noDescription") }}
-                            </p>
+                        </q-img>
+
+                        <q-card-section class="col-grow">
                             <div
                                 v-if="addressDisplayLines(p).length"
                                 class="row no-wrap items-start text-body2 text-grey-7 q-gutter-sm"
@@ -111,14 +90,11 @@
                             </div>
                         </q-card-section>
                         <q-separator />
-                        <q-card-actions
-                            class="q-pa-md q-pt-sm column items-stretch"
-                            vertical
-                        >
+                        <q-card-actions align="evenly">
                             <q-btn
                                 icon="edit"
                                 color="primary"
-                                rounded
+                                flat
                                 no-caps
                                 :label="t('programsList.editProgram')"
                                 :to="{
@@ -129,7 +105,7 @@
                             <q-btn
                                 icon="dashboard"
                                 color="primary"
-                                rounded
+                                flat
                                 no-caps
                                 :label="t('programsList.controlPanel')"
                                 :to="{
@@ -138,24 +114,15 @@
                                 }"
                             />
                             <q-btn
-                                icon="check_circle"
+                                icon="confirmation_number"
                                 color="primary"
-                                rounded
+                                flat
                                 no-caps
                                 :label="t('programsList.checkinManager')"
                                 :to="{
                                     name: 'programs.checkin',
                                     params: { programId: String(p.id) },
                                 }"
-                            />
-                            <q-btn
-                                icon="link"
-                                color="primary"
-                                rounded
-                                outline
-                                no-caps
-                                :label="t('programsList.copyUrl')"
-                                @click="() => copyPublicUrl(p)"
                             />
                         </q-card-actions>
                     </q-card>
@@ -169,8 +136,8 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
-import { useLiveQuery } from '@tanstack/vue-db';
-import { eq } from '@tanstack/db';
+import { useLiveQuery } from "@tanstack/vue-db";
+import { eq } from "@tanstack/db";
 import {
     getAppPowerSyncBootstrappedRef,
     getMediaCollection,
@@ -199,9 +166,9 @@ const { data: programs } = useLiveQuery(
         if (!col) return undefined;
         return queryBuilder
             .from({ p: col })
-            .orderBy(({ p }) => p.updated_at, 'desc')
-            .orderBy(({ p }) => p.created_at, 'desc')
-            .orderBy(({ p }) => p.id, 'desc');
+            .orderBy(({ p }) => p.updated_at, "desc")
+            .orderBy(({ p }) => p.created_at, "desc")
+            .orderBy(({ p }) => p.id, "desc");
     },
     [programsCollection],
 );
@@ -216,9 +183,9 @@ const { data: mediaRows } = useLiveQuery(
         if (!col) return undefined;
         return queryBuilder
             .from({ m: col })
-            .where(({ m }) => eq(m.collection_name, 'images'))
-            .orderBy(({ m }) => m.order_column, 'asc')
-            .orderBy(({ m }) => m.created_at, 'asc');
+            .where(({ m }) => eq(m.collection_name, "images"))
+            .orderBy(({ m }) => m.order_column, "asc")
+            .orderBy(({ m }) => m.created_at, "asc");
     },
     [mediaCollection],
 );
@@ -230,9 +197,13 @@ const totalProgramCount = computed(() => (programs.value ?? []).length);
 const filteredPrograms = computed((): ProgramOutput[] => {
     const list = programs.value ?? [];
     if (programTab.value === "active") {
-        return list.filter((p) => p != null && !p.is_archived) as unknown as ProgramOutput[];
+        return list.filter(
+            (p) => p != null && !p.is_archived,
+        ) as unknown as ProgramOutput[];
     }
-    return list.filter((p) => p != null && p.is_archived) as unknown as ProgramOutput[];
+    return list.filter(
+        (p) => p != null && p.is_archived,
+    ) as unknown as ProgramOutput[];
 });
 
 const emptyListMessage = computed(() => {
@@ -317,21 +288,4 @@ function copyPublicUrl(p: ProgramOutput) {
 }
 </script>
 
-<style scoped>
-
-
-.app-program-card {
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.app-program-card__media {
-    overflow: hidden;
-    border-radius: 12px 12px 0 0;
-}
-
-.app-program-card__media--placeholder {
-    min-height: 10.5rem;
-    opacity: 0.9;
-}
-</style>
+<style scoped></style>

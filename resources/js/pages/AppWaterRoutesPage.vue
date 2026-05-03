@@ -361,7 +361,6 @@ const onCreateSubmit = handleSubmit(
                     throw new Error("Water routes collection is not ready.");
                 }
                 const id = ulid();
-                const now = new Date().toISOString();
                 const name = String(values.name ?? "").trim();
                 const duration = Number.parseInt(
                     String(values.durationMinutes),
@@ -387,8 +386,6 @@ const onCreateSubmit = handleSubmit(
                     name: name.length > 0 ? name : "Untitled",
                     trace,
                     duration_minutes: duration,
-                    created_at: now,
-                    updated_at: now,
                 }).isPersisted.promise;
 
                 void refreshOutboxSnapshot();

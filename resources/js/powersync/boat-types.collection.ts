@@ -7,22 +7,13 @@ export const boatTypesSchema = z.object({
     id: z.string(),
     user_id: z.number().int().nullable().default(null),
     program_id: z.string().nullable().default(null),
-    name: z.string().nullable().default(null),
-    created_at: z.string().nullable().default(null),
-    updated_at: z.string().nullable().default(null),
+    name: z.string().min(1, "Boat type name is required").nullable().default(null),
+    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
+    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type BoatTypeInput = z.input<typeof boatTypesSchema>;
 export type BoatTypeOutput = z.output<typeof boatTypesSchema>;
-
-export const boatTypesDeserializationSchema = z.object({
-    id: z.string(),
-    user_id: z.number().int().nullable().default(null),
-    program_id: z.string().nullable().default(null),
-    name: z.string().nullable().default(null),
-    created_at: z.string().nullable().default(null),
-    updated_at: z.string().nullable().default(null),
-});
 
 export function createBoatTypesCollection(
     database: import('@powersync/web').PowerSyncDatabase,

@@ -6,14 +6,14 @@ import { appTicketTypesPowerSyncTable } from './app.powersync-schema';
 export const ticketTypesSchema = z.object({
     id: z.string(),
     program_id: z.string().nullable().default(null),
-    title: z.string().nullable().default(null),
-    price_cents: z.number().int().nullable().default(null),
-    is_pay_what_you_can: z.number().int().nullable().default(null).transform((v) => (v != null ? v === 1 : null)),
-    min_per_purchase: z.number().int().nullable().default(null),
-    max_per_purchase: z.number().int().nullable().default(null),
+    title: z.string().min(1, "Title is required").nullable().default(null),
+    price_cents: z.number().int().min(0, "Price cannot be negative").nullable().default(null),
+    is_pay_what_you_can: z.number().int().transform((v) => v === 1).nullable().default(false),
+    min_per_purchase: z.number().int().min(0, "Minimum per purchase cannot be negative").nullable().default(null),
+    max_per_purchase: z.number().int().min(0, "Maximum per purchase cannot be negative").nullable().default(null),
     trip_inventory_caps: z.string().nullable().default(null),
-    created_at: z.string().nullable().default(null),
-    updated_at: z.string().nullable().default(null),
+    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
+    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type TicketTypeInput = z.input<typeof ticketTypesSchema>;

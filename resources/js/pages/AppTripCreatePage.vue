@@ -172,11 +172,9 @@ const onCreateSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
             const pid = getActiveProgramIdRef().value.trim();
             if (pid.length === 0) throw new Error('Select a program before adding trips.');
             const id = ulid();
-            const now = new Date().toISOString();
             const iso = localDatetimeInputValueToIso(String(values.scheduledDepartureAt));
             const cap = Number.parseInt(String(values.capacity), 10);
             if (!Number.isFinite(cap) || cap < 1) throw new Error('Trip capacity must be a positive integer.');
-            const scheduledIso = Number.isNaN(Date.parse(iso)) ? iso : new Date(iso).toISOString();
 
             await col.insert({
                 id,
@@ -184,10 +182,8 @@ const onCreateSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
                 boat_type_id: values.boatTypeId ?? null,
                 water_route_id: values.waterRouteId ?? null,
                 template_day_slot_id: null,
-                scheduled_departure_at: scheduledIso,
+                scheduled_departure_at: iso,
                 capacity: cap,
-                created_at: now,
-                updated_at: now,
             }).isPersisted.promise;
             void refreshOutboxSnapshot();
             resetForm();

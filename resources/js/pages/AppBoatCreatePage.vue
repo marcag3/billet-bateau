@@ -157,7 +157,6 @@ const onCreateSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
             const parsedUserId = Number.parseInt(currentUserIdRef.value, 10);
             const userId = Number.isFinite(parsedUserId) ? parsedUserId : null;
             const id = ulid();
-            const now = new Date().toISOString();
             const name = String(values.name).trim();
             const notes = String(values.notes ?? '').trim();
             const capacity = parseOptionalNonNegativeInt(values.capacity);
@@ -175,8 +174,6 @@ const onCreateSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
                     name: name.length > 0 ? name : 'Untitled',
                     capacity,
                     notes: notes.length > 0 ? notes : null,
-                    created_at: now,
-                    updated_at: now,
                 })
                 .isPersisted.promise;
             void refreshOutboxSnapshot();

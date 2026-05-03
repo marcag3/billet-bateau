@@ -283,15 +283,12 @@ const onCreateSubmit = handleSubmit(async (values: BoatTypeFormValues) => {
             );
             const userId = Number.isFinite(parsedUserId) ? parsedUserId : null;
             const id = ulid();
-            const now = new Date().toISOString();
             const trimmed = String(values.name ?? "").trim();
             await col.insert({
                 id,
                 user_id: userId,
                 program_id: programId.value,
                 name: trimmed.length > 0 ? trimmed : "Untitled",
-                created_at: now,
-                updated_at: now,
             }).isPersisted.promise;
             void refreshOutboxSnapshot();
             resetForm();

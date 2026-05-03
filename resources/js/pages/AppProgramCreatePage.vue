@@ -246,7 +246,6 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
         }
 
         const id = ulid();
-        const now = new Date().toISOString();
         const themeColor = normalizeThemeColor(values.themeColor);
         const addressFields = normalizeAddressRowFields({ ...values.address });
 
@@ -264,8 +263,6 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
                 city: addressFields.city,
                 postal_code: addressFields.postal_code,
                 country: addressFields.country,
-                created_at: now,
-                updated_at: now,
             })
             .isPersisted.promise;
 

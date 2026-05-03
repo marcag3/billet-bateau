@@ -9,26 +9,14 @@ export const tripsSchema = z.object({
     boat_type_id: z.string().nullable().default(null),
     water_route_id: z.string().nullable().default(null),
     template_day_slot_id: z.string().nullable().default(null),
-    scheduled_departure_at: z.string().nullable().default(null),
-    capacity: z.number().int().nullable().default(null),
-    created_at: z.string().nullable().default(null),
-    updated_at: z.string().nullable().default(null),
+    scheduled_departure_at: z.string().transform((v) => new Date(v)).nullable().default(null),
+    capacity: z.number().int().min(0, 'Capacity cannot be negative').nullable().default(null),
+    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
+    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type TripInput = z.input<typeof tripsSchema>;
 export type TripOutput = z.output<typeof tripsSchema>;
-
-export const tripsDeserializationSchema = z.object({
-    id: z.string(),
-    program_id: z.string().nullable().default(null),
-    boat_type_id: z.string().nullable().default(null),
-    water_route_id: z.string().nullable().default(null),
-    template_day_slot_id: z.string().nullable().default(null),
-    scheduled_departure_at: z.string().nullable().default(null),
-    capacity: z.number().int().nullable().default(null),
-    created_at: z.string().nullable().default(null),
-    updated_at: z.string().nullable().default(null),
-});
 
 export function createTripsCollection(
     database: import('@powersync/web').PowerSyncDatabase,

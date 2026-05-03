@@ -8,27 +8,15 @@ export const boatsSchema = z.object({
     user_id: z.number().int().nullable().default(null),
     boat_type_id: z.string().nullable().default(null),
     program_id: z.string().nullable().default(null),
-    name: z.string().nullable().default(null),
-    capacity: z.number().int().nullable().default(null),
+    name: z.string().min(1, "Boat name is required").nullable().default(null),
+    capacity: z.number().int().min(0, "Capacity cannot be negative").nullable().default(null),
     notes: z.string().nullable().default(null),
-    created_at: z.string().nullable().default(null),
-    updated_at: z.string().nullable().default(null),
+    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
+    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type BoatInput = z.input<typeof boatsSchema>;
 export type BoatOutput = z.output<typeof boatsSchema>;
-
-export const boatsDeserializationSchema = z.object({
-    id: z.string(),
-    user_id: z.number().int().nullable().default(null),
-    boat_type_id: z.string().nullable().default(null),
-    program_id: z.string().nullable().default(null),
-    name: z.string().nullable().default(null),
-    capacity: z.number().int().nullable().default(null),
-    notes: z.string().nullable().default(null),
-    created_at: z.string().nullable().default(null),
-    updated_at: z.string().nullable().default(null),
-});
 
 export function createBoatsCollection(
     database: import('@powersync/web').PowerSyncDatabase,
