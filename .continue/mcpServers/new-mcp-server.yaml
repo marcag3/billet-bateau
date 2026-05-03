@@ -1,0 +1,10 @@
+name: mcp
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: boost
+    command: php
+    args:
+      - artisan
+      - boost:mcp
+    env: {}

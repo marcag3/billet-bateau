@@ -1,6 +1,10 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
-import { setProgramSyncScopeId } from '../powersync/app-powersync.runtime';
-import { useAuthStore } from '../store/auth.store';
+import {
+    createRouter,
+    createWebHistory,
+    type RouteRecordRaw,
+} from "vue-router";
+import { setActiveProgramId } from "../powersync/app-powersync.runtime";
+import { useAuthStore } from "../store/auth.store";
 
 const scopedProgramMeta = {
     requiresAuth: true,
@@ -9,146 +13,150 @@ const scopedProgramMeta = {
 
 const programScopeChildren: RouteRecordRaw[] = [
     {
-        path: '',
+        path: "",
         meta: {
             ...scopedProgramMeta,
         },
         redirect: (to) => ({
-            name: 'boats.list',
-            params: { programId: String(to.params.programId ?? '') },
+            name: "boats.list",
+            params: { programId: String(to.params.programId ?? "") },
         }),
     },
     {
-        path: 'edit-context',
-        component: () => import('../layouts/AppProgramEditContextLayout.vue'),
+        path: "edit-context",
+        component: () => import("../layouts/AppProgramEditContextLayout.vue"),
         meta: {
             ...scopedProgramMeta,
         },
         children: [
             {
-                path: '',
+                path: "",
                 meta: scopedProgramMeta,
                 redirect: (to) => ({
-                    name: 'boats.list',
-                    params: { programId: String(to.params.programId ?? '') },
+                    name: "boats.list",
+                    params: { programId: String(to.params.programId ?? "") },
                 }),
             },
             {
-                path: 'boats/create',
-                name: 'boats.create',
-                component: () => import('../pages/AppBoatCreatePage.vue'),
+                path: "boats/create",
+                name: "boats.create",
+                component: () => import("../pages/AppBoatCreatePage.vue"),
                 meta: scopedProgramMeta,
             },
             {
-                path: 'boats/:boatId/edit',
-                name: 'boats.edit',
-                component: () => import('../pages/AppBoatEditPage.vue'),
+                path: "boats/:boatId/edit",
+                name: "boats.edit",
+                component: () => import("../pages/AppBoatEditPage.vue"),
                 meta: scopedProgramMeta,
             },
             {
-                path: 'boats',
-                name: 'boats.list',
-                component: () => import('../pages/AppBoatsPage.vue'),
+                path: "boats",
+                name: "boats.list",
+                component: () => import("../pages/AppBoatsPage.vue"),
                 meta: scopedProgramMeta,
             },
             {
-                path: 'boat-types',
-                name: 'boat-types.list',
-                component: () => import('../pages/AppBoatTypesPage.vue'),
+                path: "boat-types",
+                name: "boat-types.list",
+                component: () => import("../pages/AppBoatTypesPage.vue"),
                 meta: scopedProgramMeta,
             },
             {
-                path: 'water-routes',
-                name: 'water-routes.list',
-                component: () => import('../pages/AppWaterRoutesPage.vue'),
+                path: "water-routes",
+                name: "water-routes.list",
+                component: () => import("../pages/AppWaterRoutesPage.vue"),
                 meta: scopedProgramMeta,
             },
             {
-                path: 'trips/create',
-                name: 'trips.create',
-                component: () => import('../pages/AppTripCreatePage.vue'),
+                path: "trips/create",
+                name: "trips.create",
+                component: () => import("../pages/AppTripCreatePage.vue"),
                 meta: scopedProgramMeta,
             },
             {
-                path: 'trips/:tripId/edit',
-                name: 'trips.edit',
-                component: () => import('../pages/AppTripEditPage.vue'),
+                path: "trips/:tripId/edit",
+                name: "trips.edit",
+                component: () => import("../pages/AppTripEditPage.vue"),
                 meta: scopedProgramMeta,
             },
             {
-                path: 'trips',
-                name: 'trips.list',
-                component: () => import('../pages/AppTripsPage.vue'),
+                path: "trips",
+                name: "trips.list",
+                component: () => import("../pages/AppTripsPage.vue"),
                 meta: scopedProgramMeta,
             },
             {
-                path: 'ticket-types',
-                name: 'ticket-types.list',
-                component: () => import('../pages/AppTicketTypesPage.vue'),
+                path: "ticket-types",
+                name: "ticket-types.list",
+                component: () => import("../pages/AppTicketTypesPage.vue"),
                 meta: scopedProgramMeta,
             },
             {
-                path: 'reports',
-                name: 'reports',
-                component: () => import('../pages/AppReportsPage.vue'),
+                path: "reports",
+                name: "reports",
+                component: () => import("../pages/AppReportsPage.vue"),
                 meta: scopedProgramMeta,
             },
             {
-                path: 'settings',
-                name: 'settings',
-                component: () => import('../pages/AppSettingsPage.vue'),
+                path: "settings",
+                name: "settings",
+                component: () => import("../pages/AppSettingsPage.vue"),
                 meta: scopedProgramMeta,
             },
             {
-                path: 'edit',
-                name: 'programs.edit',
-                component: () => import('../pages/AppProgramEditPage.vue'),
+                path: "edit",
+                name: "programs.edit",
+                component: () => import("../pages/AppProgramEditPage.vue"),
                 meta: scopedProgramMeta,
             },
         ],
     },
     {
-        path: 'control-context',
-        component: () => import('../layouts/AppProgramControlContextLayout.vue'),
+        path: "control-context",
+        component: () =>
+            import("../layouts/AppProgramControlContextLayout.vue"),
         meta: {
             ...scopedProgramMeta,
         },
         children: [
             {
-                path: '',
+                path: "",
                 meta: scopedProgramMeta,
                 redirect: (to) => ({
-                    name: 'programs.control',
-                    params: { programId: String(to.params.programId ?? '') },
+                    name: "programs.control",
+                    params: { programId: String(to.params.programId ?? "") },
                 }),
             },
             {
-                path: 'control',
-                name: 'programs.control',
-                component: () => import('../pages/AppProgramControlPanelPage.vue'),
+                path: "control",
+                name: "programs.control",
+                component: () =>
+                    import("../pages/AppProgramControlPanelPage.vue"),
                 meta: scopedProgramMeta,
             },
         ],
     },
     {
-        path: 'checkin-context',
-        component: () => import('../layouts/AppProgramCheckinContextLayout.vue'),
+        path: "checkin-context",
+        component: () =>
+            import("../layouts/AppProgramCheckinContextLayout.vue"),
         meta: {
             ...scopedProgramMeta,
         },
         children: [
             {
-                path: '',
+                path: "",
                 meta: scopedProgramMeta,
                 redirect: (to) => ({
-                    name: 'programs.checkin',
-                    params: { programId: String(to.params.programId ?? '') },
+                    name: "programs.checkin",
+                    params: { programId: String(to.params.programId ?? "") },
                 }),
             },
             {
-                path: 'checkin',
-                name: 'programs.checkin',
-                component: () => import('../pages/AppProgramCheckinManagerPage.vue'),
+                path: "checkin",
+                name: "programs.checkin",
+                component: () =>
+                    import("../pages/AppProgramCheckinManagerPage.vue"),
                 meta: scopedProgramMeta,
             },
         ],
@@ -157,58 +165,58 @@ const programScopeChildren: RouteRecordRaw[] = [
 
 const routes: RouteRecordRaw[] = [
     {
-        path: '/setup',
-        name: 'setup',
-        component: () => import('../pages/AppSetupPage.vue'),
+        path: "/setup",
+        name: "setup",
+        component: () => import("../pages/AppSetupPage.vue"),
         meta: {
             guestOnly: true,
         },
     },
     {
-        path: '/login',
-        name: 'login',
-        component: () => import('../pages/AppLoginPage.vue'),
+        path: "/login",
+        name: "login",
+        component: () => import("../pages/AppLoginPage.vue"),
         meta: {
             guestOnly: true,
         },
     },
     {
-        path: '/',
-        redirect: '/programs',
+        path: "/",
+        redirect: "/programs",
     },
     {
-        path: '/programs/new',
-        name: 'programs.create',
-        component: () => import('../pages/AppProgramCreatePage.vue'),
+        path: "/programs/new",
+        name: "programs.create",
+        component: () => import("../pages/AppProgramCreatePage.vue"),
         meta: {
             requiresAuth: true,
         },
     },
     {
-        path: '/programs/:programId',
-        component: () => import('../layouts/AppProgramScopeLayout.vue'),
+        path: "/programs/:programId",
+        component: () => import("../layouts/AppProgramScopeLayout.vue"),
         meta: {
             requiresAuth: true,
         },
         children: programScopeChildren,
     },
     {
-        path: '/programs',
-        name: 'programs.list',
-        component: () => import('../pages/AppProgramsPage.vue'),
+        path: "/programs",
+        name: "programs.list",
+        component: () => import("../pages/AppProgramsPage.vue"),
         meta: {
             requiresAuth: true,
         },
     },
     {
-        path: '/:pathMatch(.*)*',
-        name: 'not-found',
-        component: () => import('../pages/AppNotFoundPage.vue'),
+        path: "/:pathMatch(.*)*",
+        name: "not-found",
+        component: () => import("../pages/AppNotFoundPage.vue"),
     },
 ];
 
 const router = createRouter({
-    history: createWebHistory('/app'),
+    history: createWebHistory("/app"),
     routes,
 });
 
@@ -218,23 +226,23 @@ router.beforeEach(async (to) => {
     await authStore.initialize();
     await authStore.fetchSetupStatus();
 
-    if (authStore.installRequired === true && to.name !== 'setup') {
-        return { name: 'setup' };
+    if (authStore.installRequired === true && to.name !== "setup") {
+        return { name: "setup" };
     }
 
-    if (authStore.installRequired === false && to.name === 'setup') {
+    if (authStore.installRequired === false && to.name === "setup") {
         if (authStore.canAccessProtectedRoute()) {
-            return { name: 'programs.list' };
+            return { name: "programs.list" };
         }
 
-        return { name: 'login' };
+        return { name: "login" };
     }
 
     const requiresAuth = to.meta.requiresAuth === true;
     const guestOnly = to.meta.guestOnly === true;
 
     if (guestOnly && authStore.canAccessProtectedRoute()) {
-        return { name: 'programs.list' };
+        return { name: "programs.list" };
     }
 
     if (!requiresAuth) {
@@ -242,22 +250,24 @@ router.beforeEach(async (to) => {
     }
 
     if (authStore.canAccessProtectedRoute()) {
-        const needsProgram = to.matched.some((r) => r.meta.requiresSelectedProgram === true);
+        const needsProgram = to.matched.some(
+            (r) => r.meta.requiresSelectedProgram === true,
+        );
         if (needsProgram) {
-            const programId = String(to.params.programId ?? '').trim();
+            const programId = String(to.params.programId ?? "").trim();
             if (programId.length === 0) {
-                return { name: 'programs.list' };
+                return { name: "programs.list" };
             }
-            await setProgramSyncScopeId(programId);
+            setActiveProgramId(programId);
         } else {
-            await setProgramSyncScopeId('');
+            setActiveProgramId("");
         }
 
         return true;
     }
 
     return {
-        name: 'login',
+        name: "login",
         query: {
             redirect: to.fullPath,
         },

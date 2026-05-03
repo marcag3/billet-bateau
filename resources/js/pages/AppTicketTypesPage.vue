@@ -32,7 +32,11 @@
         >
             <AppCardSection :label="t('ticketTypesList.listForProgram')">
                 <p class="text-body2 text-grey-8 q-mb-none">
-                    {{ t('ticketTypesList.rosterForProgram', { name: selectedProgramName }) }}
+                    {{
+                        t("ticketTypesList.rosterForProgram", {
+                            name: selectedProgramName,
+                        })
+                    }}
                 </p>
             </AppCardSection>
 
@@ -47,7 +51,9 @@
                     class="q-pa-md"
                 >
                     <q-item-section>
-                        <q-item-label class="text-h6">{{ row.title }}</q-item-label>
+                        <q-item-label class="text-h6">{{
+                            row.title
+                        }}</q-item-label>
                         <q-item-label caption>
                             {{ summaryLine(row) }}
                         </q-item-label>
@@ -75,17 +81,18 @@
             </AppEntityList>
         </AppBootstrapGate>
 
-        <q-dialog
-            v-model="showFormDialog"
-            persistent
-        >
+        <q-dialog v-model="showFormDialog" persistent>
             <q-card
                 class="q-pa-none"
                 style="width: min(560px, 92vw); max-width: 100%"
             >
                 <q-card-section class="row items-center q-pb-none">
                     <div class="text-h6">
-                        {{ isEditMode ? t('ticketTypesList.editTitle') : t('ticketTypesList.createTitle') }}
+                        {{
+                            isEditMode
+                                ? t("ticketTypesList.editTitle")
+                                : t("ticketTypesList.createTitle")
+                        }}
                     </div>
                     <q-space />
                     <q-btn
@@ -133,7 +140,9 @@
                                         outlined
                                         dense
                                         type="number"
-                                        :label="t('ticketTypesList.minPerPurchase')"
+                                        :label="
+                                            t('ticketTypesList.minPerPurchase')
+                                        "
                                         :disable="isSubmitting"
                                     />
                                 </div>
@@ -144,9 +153,13 @@
                                         outlined
                                         dense
                                         type="number"
-                                        :label="t('ticketTypesList.maxPerPurchase')"
+                                        :label="
+                                            t('ticketTypesList.maxPerPurchase')
+                                        "
                                         :disable="isSubmitting"
-                                        @update:model-value="onMaxPerPurchaseInput"
+                                        @update:model-value="
+                                            onMaxPerPurchaseInput
+                                        "
                                     />
                                 </div>
                             </AppFormRow>
@@ -158,7 +171,9 @@
                                 type="textarea"
                                 autogrow
                                 :label="t('ticketTypesList.tripInventoryCaps')"
-                                :hint="t('ticketTypesList.tripInventoryCapsHint')"
+                                :hint="
+                                    t('ticketTypesList.tripInventoryCapsHint')
+                                "
                                 :disable="isSubmitting"
                             />
                         </AppFormStack>
@@ -174,7 +189,11 @@
                                 color="primary"
                                 type="submit"
                                 :loading="isSubmitting"
-                                :label="isEditMode ? t('ticketTypesList.save') : t('ticketTypesList.create')"
+                                :label="
+                                    isEditMode
+                                        ? t('ticketTypesList.save')
+                                        : t('ticketTypesList.create')
+                                "
                                 :disable="!meta.valid"
                             />
                         </div>
@@ -186,40 +205,41 @@
 </template>
 
 <script setup lang="ts">
-import { useForm } from 'vee-validate';
-import { computed, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useRoute } from 'vue-router';
-import { useQuasar } from 'quasar';
-import { useLiveQuery } from '@tanstack/vue-db';
-import { ulid } from 'ulid';
+import { useForm } from "vee-validate";
+import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
+import { useQuasar } from "quasar";
+import { useLiveQuery } from "@tanstack/vue-db";
+import { eq } from "@tanstack/db";
+import { ulid } from "ulid";
 import {
     createEmptyTicketTypeFormValues,
     createTicketTypeFormSchema,
     parseTripInventoryCapsJson,
     type TicketTypeFormValues,
-} from '../models/ticket-types/ticket-types.validation';
-import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
+} from "../models/ticket-types/ticket-types.validation";
+import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
 import {
     getAppPowerSyncBootstrappedRef,
     getTicketTypesCollection,
-    getProgramSyncScopeIdRef,
+    getActiveProgramIdRef,
     getProgramsCollection,
     refreshOutboxSnapshot,
     useAppPowerSyncOutbox,
-} from '../powersync/app-powersync.runtime';
-import { useConfirmDialog } from '../composables/useConfirmDialog';
-import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
-import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
-import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
-import AppPageHeader from '../components/ui/AppPageHeader.vue';
-import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
-import AppBootstrapGate from '../components/ui/AppBootstrapGate.vue';
-import AppCardSection from '../components/ui/AppCardSection.vue';
-import AppEntityList from '../components/ui/AppEntityList.vue';
-import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
-import AppFormStack from '../components/ui/AppFormStack.vue';
-import AppFormRow from '../components/ui/AppFormRow.vue';
+} from "../powersync/app-powersync.runtime";
+import { useConfirmDialog } from "../composables/useConfirmDialog";
+import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
+import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
+import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
+import AppPageHeader from "../components/ui/AppPageHeader.vue";
+import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
+import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
+import AppCardSection from "../components/ui/AppCardSection.vue";
+import AppEntityList from "../components/ui/AppEntityList.vue";
+import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
+import AppFormStack from "../components/ui/AppFormStack.vue";
+import AppFormRow from "../components/ui/AppFormRow.vue";
 
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -230,22 +250,17 @@ const { notifyError } = useNotifyErrorFromCatch();
 
 const ticketTypesCollection = getTicketTypesCollection();
 
-const { data: allTicketTypes } = useLiveQuery(
+const { data: ticketTypes } = useLiveQuery(
     (queryBuilder) => {
         const col = ticketTypesCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ tt: col });
+        const pid = getActiveProgramIdRef().value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ tt: col })
+            .where(({ tt }) => eq(tt.program_id, pid));
     },
-    [ticketTypesCollection],
+    [ticketTypesCollection, getActiveProgramIdRef()],
 );
-
-const ticketTypes = computed(() => {
-    const pid = getProgramSyncScopeIdRef().value.trim();
-    if (pid.length === 0) {
-        return [];
-    }
-    return (allTicketTypes.value ?? []).filter((row) => String(row.program_id) === pid);
-});
 
 const programsCollection = getProgramsCollection();
 
@@ -262,43 +277,57 @@ const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
 
-const programId = computed(() => String(route.params.programId ?? '').trim());
+const programId = computed(() => String(route.params.programId ?? "").trim());
+
+// O(1) program name lookup via Map instead of O(n) .find()
+const programNameById = computed(() => {
+    const map = new Map<string, string>();
+    for (const p of programs.value) {
+        if (p != null && p.id) {
+            map.set(String(p.id), String(p.name ?? p.id));
+        }
+    }
+    return map;
+});
 
 const selectedProgramName = computed(() => {
     const id = programId.value;
-    if (id.length === 0) {
-        return '';
-    }
-    const row = (programs.value ?? []).find((p) => p != null && String(p.id) === id);
-    if (row) {
-        return String(row.name ?? id);
-    }
-    return id;
+    if (id.length === 0) return "";
+    return programNameById.value.get(id) ?? id;
 });
 
 const showFormDialog = ref(false);
-const editingId = ref('');
+const editingId = ref("");
 
 const isEditMode = computed(() => editingId.value.trim().length > 0);
 
 const ticketTypeFormSchema = createTicketTypeFormSchema(t);
-const { handleSubmit, defineField, meta, isSubmitting, resetForm, setFieldValue } = useForm<TicketTypeFormValues>({
+const {
+    handleSubmit,
+    defineField,
+    meta,
+    isSubmitting,
+    resetForm,
+    setFieldValue,
+} = useForm<TicketTypeFormValues>({
     validationSchema: ticketTypeFormSchema,
     initialValues: createEmptyTicketTypeFormValues(),
 });
 
 const quasarField = createQuasarFieldBinder(defineField);
-const [title, titleProps] = quasarField('title');
-const [priceCents, priceCentsProps] = quasarField('priceCents');
-const [isPayWhatYouCan] = quasarField('isPayWhatYouCan');
-const [minPerPurchase, minPerPurchaseProps] = quasarField('minPerPurchase');
-const [maxPerPurchase, maxPerPurchaseProps] = quasarField('maxPerPurchase');
-const [tripInventoryCapsJson, tripInventoryCapsJsonProps] = quasarField('tripInventoryCapsJson');
+const [title, titleProps] = quasarField("title");
+const [priceCents, priceCentsProps] = quasarField("priceCents");
+const [isPayWhatYouCan] = quasarField("isPayWhatYouCan");
+const [minPerPurchase, minPerPurchaseProps] = quasarField("minPerPurchase");
+const [maxPerPurchase, maxPerPurchaseProps] = quasarField("maxPerPurchase");
+const [tripInventoryCapsJson, tripInventoryCapsJsonProps] = quasarField(
+    "tripInventoryCapsJson",
+);
 
 const maxPerPurchaseDisplay = computed(() => {
     const v = maxPerPurchase.value;
     if (v === null || v === undefined) {
-        return '';
+        return "";
     }
     return v;
 });
@@ -306,7 +335,7 @@ const maxPerPurchaseDisplay = computed(() => {
 const priceCentsDisplay = computed(() => {
     const v = priceCents.value;
     if (v === null || v === undefined) {
-        return '';
+        return "";
     }
     return v;
 });
@@ -316,16 +345,17 @@ const priceCentsDisplay = computed(() => {
  * @returns {void}
  */
 function onPriceCentsInput(value: unknown) {
-    if (value === '' || value === null || value === undefined) {
-        setFieldValue('priceCents', null);
+    if (value === "" || value === null || value === undefined) {
+        setFieldValue("priceCents", null);
         return;
     }
-    const n = typeof value === 'number' ? value : Number.parseInt(String(value), 10);
+    const n =
+        typeof value === "number" ? value : Number.parseInt(String(value), 10);
     if (!Number.isFinite(n)) {
-        setFieldValue('priceCents', null);
+        setFieldValue("priceCents", null);
         return;
     }
-    setFieldValue('priceCents', n);
+    setFieldValue("priceCents", n);
 }
 
 /**
@@ -333,16 +363,17 @@ function onPriceCentsInput(value: unknown) {
  * @returns {void}
  */
 function onMaxPerPurchaseInput(value: unknown) {
-    if (value === '' || value === null || value === undefined) {
-        setFieldValue('maxPerPurchase', null);
+    if (value === "" || value === null || value === undefined) {
+        setFieldValue("maxPerPurchase", null);
         return;
     }
-    const n = typeof value === 'number' ? value : Number.parseInt(String(value), 10);
+    const n =
+        typeof value === "number" ? value : Number.parseInt(String(value), 10);
     if (!Number.isFinite(n)) {
-        setFieldValue('maxPerPurchase', null);
+        setFieldValue("maxPerPurchase", null);
         return;
     }
-    setFieldValue('maxPerPurchase', n);
+    setFieldValue("maxPerPurchase", n);
 }
 
 /**
@@ -351,14 +382,14 @@ function onMaxPerPurchaseInput(value: unknown) {
  */
 function rowToFormValues(row): TicketTypeFormValues {
     const capsRaw = row.trip_inventory_caps;
-    let capsJson = '';
-    if (typeof capsRaw === 'string' && capsRaw.trim().length > 0) {
+    let capsJson = "";
+    if (typeof capsRaw === "string" && capsRaw.trim().length > 0) {
         try {
             capsJson = JSON.stringify(JSON.parse(capsRaw), null, 2);
         } catch {
             capsJson = String(capsRaw);
         }
-    } else if (capsRaw !== null && typeof capsRaw === 'object') {
+    } else if (capsRaw !== null && typeof capsRaw === "object") {
         capsJson = JSON.stringify(capsRaw, null, 2);
     }
 
@@ -366,15 +397,17 @@ function rowToFormValues(row): TicketTypeFormValues {
     const price = row.price_cents;
 
     return {
-        title: String(row.title ?? ''),
+        title: String(row.title ?? ""),
         priceCents:
-            price === null || price === undefined || price === ''
+            price === null || price === undefined || price === ""
                 ? null
                 : Number(price),
         isPayWhatYouCan: row.is_pay_what_you_can === true,
         minPerPurchase: Number(row.min_per_purchase ?? 0),
         maxPerPurchase:
-            max === null || max === undefined || max === '' ? null : Number(max),
+            max === null || max === undefined || max === ""
+                ? null
+                : Number(max),
         tripInventoryCapsJson: capsJson,
     };
 }
@@ -386,26 +419,28 @@ function rowToFormValues(row): TicketTypeFormValues {
 function summaryLine(row): string {
     const parts: string[] = [];
     if (row.is_pay_what_you_can === true) {
-        parts.push(t('ticketTypesList.summaryPwyc'));
+        parts.push(t("ticketTypesList.summaryPwyc"));
     } else {
         const cents = row.price_cents;
-        if (cents != null && cents !== '' && Number.isFinite(Number(cents))) {
+        if (cents != null && cents !== "" && Number.isFinite(Number(cents))) {
             parts.push(
-                t('ticketTypesList.summaryPrice', {
+                t("ticketTypesList.summaryPrice", {
                     price: formatPriceCents(cents),
                 }),
             );
         } else {
-            parts.push('—');
+            parts.push("—");
         }
     }
     const min = Number(row.min_per_purchase ?? 0);
     const max = row.max_per_purchase;
-    if (max === null || max === undefined || max === '') {
-        parts.push(t('ticketTypesList.summaryMinMaxUnlimited', { min: String(min) }));
+    if (max === null || max === undefined || max === "") {
+        parts.push(
+            t("ticketTypesList.summaryMinMaxUnlimited", { min: String(min) }),
+        );
     } else {
         parts.push(
-            t('ticketTypesList.summaryMinMax', {
+            t("ticketTypesList.summaryMinMax", {
                 min: String(min),
                 max: String(max),
             }),
@@ -413,9 +448,9 @@ function summaryLine(row): string {
     }
     const capN = tripCapsKeyCount(row);
     if (capN > 0) {
-        parts.push(t('ticketTypesList.summaryCaps', { count: String(capN) }));
+        parts.push(t("ticketTypesList.summaryCaps", { count: String(capN) }));
     }
-    return parts.join(' · ');
+    return parts.join(" · ");
 }
 
 /**
@@ -425,11 +460,11 @@ function summaryLine(row): string {
 function formatPriceCents(cents: unknown): string {
     const n = Number(cents);
     if (!Number.isFinite(n)) {
-        return String(cents ?? '');
+        return String(cents ?? "");
     }
-    return new Intl.NumberFormat(locale.value === 'fr' ? 'fr-CA' : 'en-CA', {
-        style: 'currency',
-        currency: 'CAD',
+    return new Intl.NumberFormat(locale.value === "fr" ? "fr-CA" : "en-CA", {
+        style: "currency",
+        currency: "CAD",
     }).format(n / 100);
 }
 
@@ -439,13 +474,17 @@ function formatPriceCents(cents: unknown): string {
  */
 function tripCapsKeyCount(row): number {
     const raw = row.trip_inventory_caps;
-    if (raw == null || raw === '') {
+    if (raw == null || raw === "") {
         return 0;
     }
-    if (typeof raw === 'string') {
+    if (typeof raw === "string") {
         try {
             const parsed: unknown = JSON.parse(raw);
-            if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            if (
+                parsed !== null &&
+                typeof parsed === "object" &&
+                !Array.isArray(parsed)
+            ) {
                 return Object.keys(parsed as Record<string, unknown>).length;
             }
         } catch {
@@ -453,7 +492,7 @@ function tripCapsKeyCount(row): number {
         }
         return 0;
     }
-    if (typeof raw === 'object' && !Array.isArray(raw)) {
+    if (typeof raw === "object" && !Array.isArray(raw)) {
         return Object.keys(raw as Record<string, unknown>).length;
     }
     return 0;
@@ -463,7 +502,7 @@ function tripCapsKeyCount(row): number {
  * @returns {void}
  */
 function openCreateDialog() {
-    editingId.value = '';
+    editingId.value = "";
     resetForm({ values: createEmptyTicketTypeFormValues() });
     showFormDialog.value = true;
 }
@@ -473,7 +512,7 @@ function openCreateDialog() {
  * @returns {void}
  */
 function openEditDialog(row) {
-    editingId.value = String(row.id ?? '').trim();
+    editingId.value = String(row.id ?? "").trim();
     resetForm({ values: rowToFormValues(row) });
     showFormDialog.value = true;
 }
@@ -483,7 +522,7 @@ function openEditDialog(row) {
  */
 function closeFormDialog() {
     showFormDialog.value = false;
-    editingId.value = '';
+    editingId.value = "";
     resetForm({ values: createEmptyTicketTypeFormValues() });
 }
 
@@ -495,7 +534,7 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
     await runWithNotify(
         async () => {
             const col = ticketTypesCollection.value;
-            if (!col) throw new Error('Ticket types collection not ready.');
+            if (!col) throw new Error("Ticket types collection not ready.");
             if (wasEditing) {
                 col.update(idSnapshot, (draft) => {
                     draft.title = values.title;
@@ -508,15 +547,17 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
                 });
                 void refreshOutboxSnapshot();
             } else {
-                const programId = getProgramSyncScopeIdRef().value.trim();
+                const programId = getActiveProgramIdRef().value.trim();
                 if (programId.length === 0) {
-                    throw new Error('Select a program before adding ticket types.');
+                    throw new Error(
+                        "Select a program before adding ticket types.",
+                    );
                 }
                 const id = ulid();
                 const now = new Date().toISOString();
-                const title = String(values.title ?? '').trim();
+                const title = String(values.title ?? "").trim();
                 if (title.length === 0) {
-                    throw new Error('Ticket type title is required.');
+                    throw new Error("Ticket type title is required.");
                 }
                 await col.insert({
                     id,
@@ -535,8 +576,10 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
             closeFormDialog();
         },
         {
-            successMessage: wasEditing ? t('ticketTypesList.changesSaved') : t('ticketTypesList.created'),
-            errorGeneric: t('ticketTypesList.errorGeneric'),
+            successMessage: wasEditing
+                ? t("ticketTypesList.changesSaved")
+                : t("ticketTypesList.created"),
+            errorGeneric: t("ticketTypesList.errorGeneric"),
         },
     );
 });
@@ -547,19 +590,22 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
  */
 function confirmDelete(row) {
     confirm({
-        title: t('ticketTypesList.deleteConfirmTitle'),
-        message: t('ticketTypesList.deleteConfirmMessage', {
-            title: String(row.title ?? ''),
+        title: t("ticketTypesList.deleteConfirmTitle"),
+        message: t("ticketTypesList.deleteConfirmMessage", {
+            title: String(row.title ?? ""),
         }),
         onOk: async () => {
             try {
                 const col = ticketTypesCollection.value;
                 if (!col) return;
-                col.delete(String(row.id ?? ''));
+                col.delete(String(row.id ?? ""));
                 void refreshOutboxSnapshot();
-                $q.notify({ type: 'positive', message: t('ticketTypesList.deleted') });
+                $q.notify({
+                    type: "positive",
+                    message: t("ticketTypesList.deleted"),
+                });
             } catch (e) {
-                notifyError(e, t('ticketTypesList.errorGeneric'));
+                notifyError(e, t("ticketTypesList.errorGeneric"));
             }
         },
     });

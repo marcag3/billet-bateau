@@ -1,0 +1,151 @@
+/**
+ * TanStack DB joined live query collections.
+ *
+ * These derived collections define relations between entities,
+ * eliminating the need for .find() lookups in Vue components.
+ *
+ * Relations defined:
+ *   boats  ->  boat_types   (boats.boat_type_id  -> boat_types.id)
+ *   trips  ->  boat_types   (trips.boat_type_id  -> boat_types.id)
+ *   trips  ->  water_routes (trips.water_route_id -> water_routes.id)
+ */
+
+import { eq } from "@tanstack/db";
+
+interface QbChain {
+    from: (s: Record<string, unknown>) => QbChain;
+    leftJoin: (
+        s: Record<string, unknown>,
+        on: (refs: Record<string, Record<string, unknown>>) => unknown,
+    ) => QbChain;
+    select: (
+        fn: (
+            refs: Record<string, Record<string, unknown>>,
+        ) => Record<string, unknown>,
+    ) => QbChain;
+    where: (...args: unknown[]) => QbChain;
+    orderBy: (...args: unknown[]) => QbChain;
+}
+
+// ---------------------------------------------------------------------------
+// Boats + BoatType join
+// ---------------------------------------------------------------------------
+
+export interface BoatWithBoatTypeRow {
+    id: string;
+    user_id: number | null;
+    boat_type_id: string | null;
+    program_id: string | null;
+    name: string | null;
+    capacity: number | null;
+    notes: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+    /** Resolved boat type name (null if no boat_type_id) */
+    boatTypeName: string | null;
+}
+
+/**
+ * Build a query fragment that joins boats -> boat_types.
+ * Use inside useLiveQuery or createLiveQueryCollection.
+ *
+ * @example
+ * ```ts
+ * const { data: boats } = useLiveQuery((qb) => {
+ *   const col = boatsCollection.value
+ *   const btCol = boatTypesCollection.value
+ *   if (!col || !btCol || pid.length === 0) return undefined
+ *   return joinBoatsWithBoatTypes(qb, col, btCol)
+ *     .where(({ b }) => b.program_id, "=", pid)
+ *     .orderBy(({ b }) => b.updated_at, "desc")
+ * })
+ * ```
+ */
+export function joinBoatsWithBoatTypes(
+    qb: QbChain,
+    boatsCollection: Record<string, unknown>,
+    boatTypesCollection: Record<string, unknown>,
+): QbChain {
+    return qb
+        .from({ b: boatsCollection })
+        .leftJoin({ bt: boatTypesCollection }, ({ b, bt }) =>
+            eq(b.boat_type_id, bt.id),
+        )
+        .select(({ b, bt }) => ({
+            id: b.id,
+            user_id: b.user_id,
+            boat_type_id: b.boat_type_id,
+            program_id: b.program_id,
+            name: b.name,
+            capacity: b.capacity,
+            notes: b.notes,
+            created_at: b.created_at,
+            updated_at: b.updated_at,
+            boatTypeName: bt.name,
+        }));
+}
+
+// ---------------------------------------------------------------------------
+// Trips + BoatType + WaterRoute join
+// ---------------------------------------------------------------------------
+
+export interface TripWithRelationsRow {
+    id: string;
+    program_id: string | null;
+    boat_type_id: string | null;
+    water_route_id: string | null;
+    template_day_slot_id: string | null;
+    scheduled_departure_at: string | null;
+    capacity: number | null;
+    created_at: string | null;
+    updated_at: string | null;
+    /** Resolved boat type name */
+    boatTypeName: string | null;
+    /** Resolved water route name */
+    waterRouteName: string | null;
+}
+
+/**
+ * Build a query fragment that joins trips -> boat_types and trips -> water_routes.
+ *
+ * @example
+ * ```ts
+ * const { data: trips } = useLiveQuery((qb) => {
+ *   const col = tripsCollection.value
+ *   const btCol = boatTypesCollection.value
+ *   const wrCol = waterRoutesCollection.value
+ *   if (!col || !btCol || !wrCol || pid.length === 0) return undefined
+ *   return joinTripsWithRelations(qb, col, btCol, wrCol)
+ *     .where(({ t }) => t.program_id, "=", pid)
+ *     .orderBy(({ t }) => t.scheduled_departure_at, "desc")
+ * })
+ * ```
+ */
+export function joinTripsWithRelations(
+    qb: QbChain,
+    tripsCollection: Record<string, unknown>,
+    boatTypesCollection: Record<string, unknown>,
+    waterRoutesCollection: Record<string, unknown>,
+): QbChain {
+    return qb
+        .from({ t: tripsCollection })
+        .leftJoin({ bt: boatTypesCollection }, ({ t, bt }) =>
+            eq(t.boat_type_id, bt.id),
+        )
+        .leftJoin({ wr: waterRoutesCollection }, ({ t, wr }) =>
+            eq(t.water_route_id, wr.id),
+        )
+        .select(({ t, bt, wr }) => ({
+            id: t.id,
+            program_id: t.program_id,
+            boat_type_id: t.boat_type_id,
+            water_route_id: t.water_route_id,
+            template_day_slot_id: t.template_day_slot_id,
+            scheduled_departure_at: t.scheduled_departure_at,
+            capacity: t.capacity,
+            created_at: t.created_at,
+            updated_at: t.updated_at,
+            boatTypeName: bt.name,
+            waterRouteName: wr.name,
+        }));
+}

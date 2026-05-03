@@ -104,28 +104,28 @@
                     >
                         <q-item-section>
                             <q-item-label class="text-h6">{{ b.name }}</q-item-label>
+                        <q-item-label
+                            v-if="b.notes"
+                            caption
+                            lines="2"
+                        >
+                            {{ b.notes }}
+                        </q-item-label>
+                    </q-item-section>
+                    <q-item-section side>
+                        <div class="row q-gutter-y-xs items-end" style="flex-direction: column">
                             <q-item-label
-                                v-if="b.notes"
-                                caption
-                                lines="2"
+                                v-if="b.capacity != null"
+                                class="text-body2"
                             >
-                                {{ b.notes }}
+                                {{ t('boatsList.capacity') }}: {{ b.capacity }}
                             </q-item-label>
-                        </q-item-section>
-                        <q-item-section side>
-                            <div class="row q-gutter-y-xs items-end" style="flex-direction: column">
-                                <q-item-label
-                                    v-if="b.capacity != null"
-                                    class="text-body2"
-                                >
-                                    {{ t('boatsList.capacity') }}: {{ b.capacity }}
-                                </q-item-label>
-                                <q-item-label
-                                    v-if="boatTypeLabelFor(b)"
-                                    class="text-body2"
-                                >
-                                    {{ t('boatsList.boatType') }}: {{ boatTypeLabelFor(b) }}
-                                </q-item-label>
+                            <q-item-label
+                                v-if="(b as any).boatTypeName"
+                                class="text-body2"
+                            >
+                                {{ t('boatsList.boatType') }}: {{ (b as any).boatTypeName }}
+                            </q-item-label>
                                 <q-btn
                                     color="primary"
                                     outline
@@ -158,7 +158,9 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection, getBoatTypesCollection, getBoatsCollection, getProgramSyncScopeIdRef } from '../powersync/app-powersync.runtime';
+import { eq } from '@tanstack/db';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection, getBoatTypesCollection, getBoatsCollection, getActiveProgramIdRef } from '../powersync/app-powersync.runtime';
+import { joinBoatsWithBoatTypes } from '../powersync/joined-queries';
 import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -173,22 +175,25 @@ const PAGE_SIZE = 20;
 const { t } = useI18n();
 const route = useRoute();
 const boatsCollection = getBoatsCollection();
-const programSyncScopeIdRef = getProgramSyncScopeIdRef();
+const boatTypesCollection = getBoatTypesCollection();
+const activeProgramIdRef = getActiveProgramIdRef();
+
 const { data: allBoats } = useLiveQuery(
     (queryBuilder) => {
         const col = boatsCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ b: col })
-            .orderBy(({ b }) => b.updated_at, 'desc')
-            .orderBy(({ b }) => b.created_at, 'desc')
-            .orderBy(({ b }) => b.id, 'desc');
+        const btCol = boatTypesCollection.value;
+        const pid = activeProgramIdRef.value.trim();
+        if (!col || !btCol || pid.length === 0) return undefined;
+        return joinBoatsWithBoatTypes(queryBuilder, col, btCol)
+            .where(({ b }: any) => eq(b.program_id, pid))
+            .orderBy(({ b }: any) => b.updated_at, 'desc')
+            .orderBy(({ b }: any) => b.created_at, 'desc')
+            .orderBy(({ b }: any) => b.id, 'desc');
     },
-    [boatsCollection],
+    [boatsCollection, boatTypesCollection, activeProgramIdRef],
 );
 const boats = computed(() => {
-    const pid = programSyncScopeIdRef.value.trim();
-    if (pid.length === 0) return [];
-    return (allBoats.value ?? []).filter((b) => String(b.program_id) === pid);
+    return allBoats.value ?? [];
 });
 const programsCollection = getProgramsCollection();
 
@@ -201,33 +206,27 @@ const { data: programs } = useLiveQuery(
     [programsCollection],
 );
 
-const boatTypesCollection = getBoatTypesCollection();
-
-const { data: boatTypes } = useLiveQuery(
-    (queryBuilder) => {
-        const col = boatTypesCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ bt: col });
-    },
-    [boatTypesCollection],
-);
-
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
 
 const programId = computed(() => String(route.params.programId ?? '').trim());
 
+// O(1) program name lookup via Map instead of O(n) .find()
+const programNameById = computed(() => {
+    const map = new Map<string, string>();
+    for (const p of programs.value) {
+        if (p != null && p.id) {
+            map.set(String(p.id), String(p.name ?? p.id));
+        }
+    }
+    return map;
+});
+
 const selectedProgramName = computed(() => {
     const id = programId.value;
-    if (id.length === 0) {
-        return '';
-    }
-    const row = (programs.value ?? []).find((p) => p != null && String(p.id) === id);
-    if (row) {
-        return String(row.name ?? id);
-    }
-    return id;
+    if (id.length === 0) return '';
+    return programNameById.value.get(id) ?? id;
 });
 
 const filterName = ref('');
@@ -237,8 +236,22 @@ const filterBoatTypeId = ref<string | null>(null);
 
 const visibleCount = ref(PAGE_SIZE);
 
+// Scoped boat types query for the filter dropdown (all types in program, not just those with boats)
+const scopedBoatTypesCollection = getBoatTypesCollection();
+const { data: scopedBoatTypes } = useLiveQuery(
+    (queryBuilder) => {
+        const col = scopedBoatTypesCollection.value;
+        const pid = activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ bt: col })
+            .where(({ bt }) => eq(bt.program_id, pid));
+    },
+    [scopedBoatTypesCollection, activeProgramIdRef],
+);
+
 const boatTypeOptions = computed(() =>
-    boatTypes.value.map((bt) => ({
+    (scopedBoatTypes.value ?? []).map((bt) => ({
         label: String(bt.name ?? ''),
         value: String(bt.id),
     })),
@@ -298,15 +311,6 @@ const emptyListMessage = computed(() => {
     }
     return t('boatsList.empty');
 });
-
-function boatTypeLabelFor(b: Record<string, unknown>) {
-    const id = b.boat_type_id;
-    if (id == null || String(id) === '') {
-        return '';
-    }
-    const opt = boatTypeOptions.value.find((o) => o.value === String(id));
-    return opt?.label ?? '';
-}
 
 function clearFilters() {
     filterName.value = '';

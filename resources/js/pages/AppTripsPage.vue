@@ -32,7 +32,11 @@
         >
             <AppCardSection :label="t('tripsList.listForProgram')">
                 <p class="text-body2 text-grey-8 q-mb-none">
-                    {{ t('tripsList.rosterForProgram', { name: selectedProgramName }) }}
+                    {{
+                        t("tripsList.rosterForProgram", {
+                            name: selectedProgramName,
+                        })
+                    }}
                 </p>
             </AppCardSection>
 
@@ -47,14 +51,18 @@
                     class="q-pa-md"
                 >
                     <q-item-section>
-                        <q-item-label class="text-h6">{{ formatDeparture(tr) }}</q-item-label>
+                        <q-item-label class="text-h6">{{
+                            formatDeparture(tr)
+                        }}</q-item-label>
                         <q-item-label caption>
-                            {{ t('tripsList.capacity') }}: {{ tr.capacity }}
-                            <template v-if="boatTypeLabelFor(tr)">
-                                · {{ t('tripsList.boatType') }}: {{ boatTypeLabelFor(tr) }}
+                            {{ t("tripsList.capacity") }}: {{ tr.capacity }}
+                            <template v-if="tr.boatTypeName">
+                                · {{ t("tripsList.boatType") }}:
+                                {{ tr.boatTypeName }}
                             </template>
-                            <template v-if="waterRouteLabelFor(tr)">
-                                · {{ t('tripsList.waterRoute') }}: {{ waterRouteLabelFor(tr) }}
+                            <template v-if="tr.waterRouteName">
+                                · {{ t("tripsList.waterRoute") }}:
+                                {{ tr.waterRouteName }}
                             </template>
                         </q-item-label>
                     </q-item-section>
@@ -77,41 +85,61 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useRoute } from 'vue-router';
-import { useLiveQuery } from '@tanstack/vue-db';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getProgramsCollection, getBoatTypesCollection, getWaterRoutesCollection, getTripsCollection, getProgramSyncScopeIdRef } from '../powersync/app-powersync.runtime';
-import type { TripOutput } from '../powersync/trips.collection';
-import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
-import AppPageHeader from '../components/ui/AppPageHeader.vue';
-import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
-import AppBootstrapGate from '../components/ui/AppBootstrapGate.vue';
-import AppCardSection from '../components/ui/AppCardSection.vue';
-import AppEntityList from '../components/ui/AppEntityList.vue';
-import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
+import { useLiveQuery } from "@tanstack/vue-db";
+import { eq } from "@tanstack/db";
+import {
+    getAppPowerSyncBootstrappedRef,
+    useAppPowerSyncOutbox,
+    getProgramsCollection,
+    getBoatTypesCollection,
+    getWaterRoutesCollection,
+    getTripsCollection,
+
+    getActiveProgramIdRef,
+} from "../powersync/app-powersync.runtime";
+import { joinTripsWithRelations } from "../powersync/joined-queries";
+import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
+import AppPageHeader from "../components/ui/AppPageHeader.vue";
+import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
+import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
+import AppCardSection from "../components/ui/AppCardSection.vue";
+import AppEntityList from "../components/ui/AppEntityList.vue";
+import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 
 const { t, locale } = useI18n();
 const route = useRoute();
 const tripsCollection = getTripsCollection();
-const { data: allTrips } = useLiveQuery(
+const boatTypesCollection = getBoatTypesCollection();
+const waterRoutesCollection = getWaterRoutesCollection();
+
+// Trips joined with boat_types and water_routes — eliminates per-row .find() lookups
+const { data: trips } = useLiveQuery(
     (queryBuilder) => {
         const col = tripsCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ t: col })
-            .orderBy(({ t }) => t.scheduled_departure_at, 'desc')
-            .orderBy(({ t }) => t.updated_at, 'desc')
-            .orderBy(({ t }) => t.id, 'desc');
+        const btCol = boatTypesCollection.value;
+        const wrCol = waterRoutesCollection.value;
+
+        const pid = getActiveProgramIdRef().value.trim();
+        if (!col || !btCol || !wrCol || pid.length === 0) return undefined;
+        return joinTripsWithRelations(queryBuilder, col, btCol, wrCol)
+            .where(({ t }: any) => eq(t.program_id, pid))
+            .orderBy(({ t }: any) => t.scheduled_departure_at, "desc")
+            .orderBy(({ t }: any) => t.updated_at, "desc")
+            .orderBy(({ t }: any) => t.id, "desc");
     },
-    [tripsCollection],
+    [
+        tripsCollection,
+        boatTypesCollection,
+        waterRoutesCollection,
+
+        getActiveProgramIdRef(),
+    ],
 );
 
-const trips = computed(() => {
-    const pid = getProgramSyncScopeIdRef().value.trim();
-    if (pid.length === 0) return [];
-    return (allTrips.value ?? []).filter((row) => String(row.program_id) === pid);
-});
-
+// Programs loaded for the header name display (small table, efficient)
 const programsCollection = getProgramsCollection();
 
 const { data: programs } = useLiveQuery(
@@ -123,91 +151,41 @@ const { data: programs } = useLiveQuery(
     [programsCollection],
 );
 
-const boatTypesCollection = getBoatTypesCollection();
-
-const { data: boatTypes } = useLiveQuery(
-    (queryBuilder) => {
-        const col = boatTypesCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ bt: col });
-    },
-    [boatTypesCollection],
-);
-
-const waterRoutesCollection = getWaterRoutesCollection();
-const { data: waterRoutes } = useLiveQuery(
-    (queryBuilder) => {
-        const col = waterRoutesCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ wr: col });
-    },
-    [waterRoutesCollection],
-);
-
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
 
-const programId = computed(() => String(route.params.programId ?? '').trim());
+const programId = computed(() => String(route.params.programId ?? "").trim());
+
+// O(1) program name lookup via Map instead of O(n) .find()
+const programNameById = computed(() => {
+    const map = new Map<string, string>();
+    for (const p of programs.value) {
+        if (p != null && p.id) {
+            map.set(String(p.id), String(p.name ?? p.id));
+        }
+    }
+    return map;
+});
 
 const selectedProgramName = computed(() => {
     const id = programId.value;
-    if (id.length === 0) {
-        return '';
-    }
-    const row = (programs.value ?? []).find((p) => p != null && String(p.id) === id);
-    if (row) {
-        return String(row.name ?? id);
-    }
-    return id;
+    if (id.length === 0) return "";
+    return programNameById.value.get(id) ?? id;
 });
 
-const boatTypeOptions = computed(() =>
-    boatTypes.value.map((bt) => ({
-        label: String(bt.name ?? ''),
-        value: String(bt.id),
-    })),
-);
-
-const waterRouteOptions = computed(() =>
-    waterRoutes.value.map((wr) => ({
-        label: String(wr.name ?? ''),
-        value: String(wr.id),
-    })),
-);
-
-function formatDeparture(tr: TripOutput) {
+function formatDeparture(tr: { scheduled_departure_at?: string | null }) {
     const raw = tr.scheduled_departure_at;
-    if (raw == null || String(raw) === '') {
-        return '—';
+    if (raw == null || String(raw) === "") {
+        return "—";
     }
     const d = new Date(String(raw));
     if (Number.isNaN(d.getTime())) {
         return String(raw);
     }
-    return new Intl.DateTimeFormat(locale.value === 'fr' ? 'fr-CA' : 'en-CA', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
+    return new Intl.DateTimeFormat(locale.value === "fr" ? "fr-CA" : "en-CA", {
+        dateStyle: "medium",
+        timeStyle: "short",
     }).format(d);
 }
-
-function boatTypeLabelFor(tr: TripOutput) {
-    const id = tr.boat_type_id;
-    if (id == null || String(id) === '') {
-        return '';
-    }
-    const opt = boatTypeOptions.value.find((o) => o.value === String(id));
-    return opt?.label ?? '';
-}
-
-function waterRouteLabelFor(tr: TripOutput) {
-    const id = tr.water_route_id;
-    if (id == null || String(id) === '') {
-        return '';
-    }
-    const opt = waterRouteOptions.value.find((o) => o.value === String(id));
-    return opt?.label ?? '';
-}
-
-
 </script>

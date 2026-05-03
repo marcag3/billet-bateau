@@ -84,7 +84,8 @@ import { ulid } from 'ulid';
 import { localDatetimeInputValueToIso } from '../utilities/datetime-input';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useLiveQuery } from '@tanstack/vue-db';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection, getWaterRoutesCollection, getTripsCollection, getProgramSyncScopeIdRef, refreshOutboxSnapshot } from '../powersync/app-powersync.runtime';
+import { eq } from '@tanstack/db';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection, getWaterRoutesCollection, getTripsCollection, getActiveProgramIdRef, refreshOutboxSnapshot } from '../powersync/app-powersync.runtime';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import AppEntityCreatePageLayout from '../layouts/AppEntityCreatePageLayout.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -100,20 +101,26 @@ const boatTypesCollection = getBoatTypesCollection();
 const { data: boatTypes } = useLiveQuery(
     (queryBuilder) => {
         const col = boatTypesCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ bt: col });
+        const pid = getActiveProgramIdRef().value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ bt: col })
+            .where(({ bt }) => eq(bt.program_id, pid));
     },
-    [boatTypesCollection],
+    [boatTypesCollection, getActiveProgramIdRef()],
 );
 
 const waterRoutesCollection = getWaterRoutesCollection();
 const { data: waterRoutes } = useLiveQuery(
     (queryBuilder) => {
         const col = waterRoutesCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ wr: col });
+        const pid = getActiveProgramIdRef().value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ wr: col })
+            .where(({ wr }) => eq(wr.program_id, pid));
     },
-    [waterRoutesCollection],
+    [waterRoutesCollection, getActiveProgramIdRef()],
 );
 const { runWithNotify } = useNotifyAsyncAction();
 
@@ -162,7 +169,7 @@ const onCreateSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
         async () => {
             const col = tripsCollection.value;
             if (!col) throw new Error('Trips collection not ready.');
-            const pid = getProgramSyncScopeIdRef().value.trim();
+            const pid = getActiveProgramIdRef().value.trim();
             if (pid.length === 0) throw new Error('Select a program before adding trips.');
             const id = ulid();
             const now = new Date().toISOString();

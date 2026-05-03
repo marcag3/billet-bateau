@@ -1,125 +1,125 @@
 services:
-  pgsql:
-    image: "postgis/postgis:18-3.6"
-    restart: unless-stopped
-    command:
-      - postgres
-      - -c
-      - wal_level=logical
-      - -c
-      - max_replication_slots=10
-      - -c
-      - max_wal_senders=10
-    environment:
-      POSTGRES_DB: "${DB_DATABASE}"
-      POSTGRES_USER: "${DB_USERNAME}"
-      POSTGRES_PASSWORD: "${DB_PASSWORD}"
-    volumes:
-      - "./database/schema:/schema"
-      - "./docker/pgsql/create-powersync-user.sh:/docker-entrypoint-initdb.d/20-create-powersync-user.sh:ro"
-      - "pgsql:/var/lib/postgresql/data"
-    networks:
-      - app
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - pg_isready -q -d "$${POSTGRES_DB}" -U "$${POSTGRES_USER}"
-      interval: 10s
-      retries: 5
-      timeout: 5s
-      start_period: 30s
+    pgsql:
+        image: "postgis/postgis:18-3.6"
+        restart: unless-stopped
+        command:
+            - postgres
+            - -c
+            - wal_level=logical
+            - -c
+            - max_replication_slots=10
+            - -c
+            - max_wal_senders=10
+        environment:
+            POSTGRES_DB: "${DB_DATABASE}"
+            POSTGRES_USER: "${DB_USERNAME}"
+            POSTGRES_PASSWORD: "${DB_PASSWORD}"
+        volumes:
+            - "./database/schema:/schema"
+            - "./docker/pgsql/create-powersync-user.sh:/docker-entrypoint-initdb.d/20-create-powersync-user.sh:ro"
+            - "pgsql:/var/lib/postgresql"
+        networks:
+            - app
+        healthcheck:
+            test:
+                - CMD-SHELL
+                - pg_isready -q -d "$${POSTGRES_DB}" -U "$${POSTGRES_USER}"
+            interval: 10s
+            retries: 5
+            timeout: 5s
+            start_period: 30s
 
-  powersync:
-    # Sync Streams (sync-config.yaml edition: 3) require PowerSync Service v1.20.0+.
-    image: "journeyapps/powersync-service:latest"
-    restart: unless-stopped
-    command: ["start", "-r", "unified"]
-    volumes:
-      - "./docker/powersync:/config:ro"
-    environment:
-      POWERSYNC_CONFIG_PATH: /config/service.yaml
-      NODE_OPTIONS: --max-old-space-size=1000
-      PS_PORT: "8080"
-      PS_DATA_SOURCE_URI: "${POWERSYNC_DATA_SOURCE_URI:-postgresql://powersync:password@pgsql:5432/${DB_DATABASE}?sslmode=disable}"
-      PS_STORAGE_SOURCE_URI: "${POWERSYNC_STORAGE_SOURCE_URI:-postgresql://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/powersync_storage?sslmode=disable}"
-      PS_JWT_SECRET_B64URL: "${POWERSYNC_JWT_SECRET_B64URL}"
-    depends_on:
-      pgsql:
-        condition: service_healthy
-    networks:
-      - app
-    healthcheck:
-      test:
-        - CMD
-        - node
-        - -e
-        - "fetch('http://localhost:8080/probes/liveness').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
-      interval: 5s
-      timeout: 2s
-      retries: 15
-    ports:
-      - "${FORWARD_POWERSYNC_PORT:-6080}:8080"
+    powersync:
+        # Sync Streams (sync-config.yaml edition: 3) require PowerSync Service v1.20.0+.
+        image: "journeyapps/powersync-service:latest"
+        restart: unless-stopped
+        command: ["start", "-r", "unified"]
+        volumes:
+            - "./docker/powersync:/config:ro"
+        environment:
+            POWERSYNC_CONFIG_PATH: /config/service.yaml
+            NODE_OPTIONS: --max-old-space-size=1000
+            PS_PORT: "8080"
+            PS_DATA_SOURCE_URI: "${POWERSYNC_DATA_SOURCE_URI:-postgresql://powersync:password@pgsql:5432/${DB_DATABASE}?sslmode=disable}"
+            PS_STORAGE_SOURCE_URI: "${POWERSYNC_STORAGE_SOURCE_URI:-postgresql://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/powersync_storage?sslmode=disable}"
+            PS_JWT_SECRET_B64URL: "${POWERSYNC_JWT_SECRET_B64URL}"
+        depends_on:
+            pgsql:
+                condition: service_healthy
+        networks:
+            - app
+        healthcheck:
+            test:
+                - CMD
+                - node
+                - -e
+                - "fetch('http://localhost:8080/probes/liveness').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+            interval: 5s
+            timeout: 2s
+            retries: 15
+        ports:
+            - "${FORWARD_POWERSYNC_PORT:-6080}:8080"
 
-  redis:
-    image: "redis:alpine"
-    restart: unless-stopped
-    volumes:
-      - "redis:/data"
-    networks:
-      - app
-    healthcheck:
-      test:
-        - CMD
-        - redis-cli
-        - ping
-      retries: 3
-      timeout: 5s
+    redis:
+        image: "redis:alpine"
+        restart: unless-stopped
+        volumes:
+            - "redis:/data"
+        networks:
+            - app
+        healthcheck:
+            test:
+                - CMD
+                - redis-cli
+                - ping
+            retries: 3
+            timeout: 5s
 
-  gotenberg:
-    image: "gotenberg/gotenberg:8-chromium"
-    restart: unless-stopped
-    environment:
-      CHROMIUM_ALLOW_INSECURE_LOCALHOST: true
-      CHROMIUM_IGNORE_CERTIFICATE_ERRORS: true
-      CHROMIUM_DISABLE_WEB_SECURITY: true
-      CHROMIUM_AUTO_START: true
-    networks:
-      - app
+    gotenberg:
+        image: "gotenberg/gotenberg:8-chromium"
+        restart: unless-stopped
+        environment:
+            CHROMIUM_ALLOW_INSECURE_LOCALHOST: true
+            CHROMIUM_IGNORE_CERTIFICATE_ERRORS: true
+            CHROMIUM_DISABLE_WEB_SECURITY: true
+            CHROMIUM_AUTO_START: true
+        networks:
+            - app
 
-  garage:
-    image: "dxflrs/garage:v2.3.0"
-    restart: unless-stopped
-    command: "/garage -c /etc/garage.toml server --single-node --default-bucket"
-    environment:
-      GARAGE_DEFAULT_ACCESS_KEY: "${AWS_ACCESS_KEY_ID:-GKb69252a3b0643e8bd08d4cd4}"
-      GARAGE_DEFAULT_SECRET_KEY: "${AWS_SECRET_ACCESS_KEY:-9115be9c9e4994306a4176543b0db461f4eb04c5c8a388676d1b57392d0f4e93}"
-      GARAGE_DEFAULT_BUCKET: "${AWS_BUCKET:-app}"
-    volumes:
-      - "./docker/garage/garage.toml:/etc/garage.toml:ro"
-      - "garage-meta:/var/lib/garage/meta"
-      - "garage-data:/var/lib/garage/data"
-    networks:
-      - app
-    healthcheck:
-      test:
-        - CMD
-        - /garage
-        - -c
-        - /etc/garage.toml
-        - status
-      retries: 3
-      timeout: 5s
+    garage:
+        image: "dxflrs/garage:v2.3.0"
+        restart: unless-stopped
+        command: "/garage -c /etc/garage.toml server --single-node --default-bucket"
+        environment:
+            GARAGE_DEFAULT_ACCESS_KEY: "${AWS_ACCESS_KEY_ID:-GKb69252a3b0643e8bd08d4cd4}"
+            GARAGE_DEFAULT_SECRET_KEY: "${AWS_SECRET_ACCESS_KEY:-9115be9c9e4994306a4176543b0db461f4eb04c5c8a388676d1b57392d0f4e93}"
+            GARAGE_DEFAULT_BUCKET: "${AWS_BUCKET:-app}"
+        volumes:
+            - "./docker/garage/garage.toml:/etc/garage.toml:ro"
+            - "garage-meta:/var/lib/garage/meta"
+            - "garage-data:/var/lib/garage/data"
+        networks:
+            - app
+        healthcheck:
+            test:
+                - CMD
+                - /garage
+                - -c
+                - /etc/garage.toml
+                - status
+            retries: 3
+            timeout: 5s
 
 networks:
-  app:
-    driver: bridge
+    app:
+        driver: bridge
 
 volumes:
-  pgsql:
-    driver: local
-  redis:
-    driver: local
-  garage-meta:
-    driver: local
-  garage-data:
-    driver: local
+    pgsql:
+        driver: local
+    redis:
+        driver: local
+    garage-meta:
+        driver: local
+    garage-data:
+        driver: local

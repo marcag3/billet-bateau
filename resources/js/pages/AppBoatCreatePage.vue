@@ -81,7 +81,8 @@ import { parseOptionalNonNegativeInt } from '../validation/zod-fields';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { ulid } from 'ulid';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection, getBoatsCollection, getCurrentUserIdRef, getProgramSyncScopeIdRef, refreshOutboxSnapshot } from '../powersync/app-powersync.runtime';
+import { eq } from '@tanstack/db';
+import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection, getBoatsCollection, getCurrentUserIdRef, getActiveProgramIdRef, refreshOutboxSnapshot } from '../powersync/app-powersync.runtime';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import AppEntityCreatePageLayout from '../layouts/AppEntityCreatePageLayout.vue';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
@@ -93,16 +94,19 @@ const route = useRoute();
 const router = useRouter();
 const boatsCollection = getBoatsCollection();
 const currentUserIdRef = getCurrentUserIdRef();
-const programSyncScopeIdRef = getProgramSyncScopeIdRef();
+const activeProgramIdRef = getActiveProgramIdRef();
 const boatTypesCollection = getBoatTypesCollection();
 
 const { data: boatTypes } = useLiveQuery(
     (queryBuilder) => {
         const col = boatTypesCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ bt: col });
+        const pid = activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ bt: col })
+            .where(({ bt }) => eq(bt.program_id, pid));
     },
-    [boatTypesCollection],
+    [boatTypesCollection, activeProgramIdRef],
 );
 const { runWithNotify } = useNotifyAsyncAction();
 
@@ -142,7 +146,7 @@ const [createBoatTypeId, createBoatTypeIdProps] = quasarField('boatTypeId');
 const onCreateSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
     await runWithNotify(
         async () => {
-            const pid = programSyncScopeIdRef.value.trim();
+            const pid = activeProgramIdRef.value.trim();
             if (pid.length === 0) {
                 throw new Error('Select a program roster before adding boats.');
             }

@@ -62,7 +62,7 @@
                         class="col-12 text-caption text-grey-8"
                     >
                         {{
-                            t('boatsList.positionInList', {
+                            t("boatsList.positionInList", {
                                 index: neighbors.index + 1,
                                 total: neighbors.total,
                             })
@@ -77,7 +77,7 @@
             class="bg-warning text-dark q-mb-md"
             rounded
         >
-            {{ t('boatsList.notFound') }}
+            {{ t("boatsList.notFound") }}
             <template #action>
                 <q-btn
                     color="primary"
@@ -88,10 +88,7 @@
             </template>
         </q-banner>
 
-        <AppCardSection
-            v-else-if="currentBoat"
-            :label="formSectionLabel"
-        >
+        <AppCardSection v-else-if="currentBoat" :label="formSectionLabel">
             <q-form @submit.prevent="onSaveSubmit">
                 <AppFormStack>
                     <q-input
@@ -154,23 +151,34 @@
 </template>
 
 <script setup lang="ts">
-import { useForm } from 'vee-validate';
-import { computed, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useQuasar } from 'quasar';
-import { useRoute, useRouter } from 'vue-router';
-import { createBoatCreateFormSchema, type BoatCreateFormValues } from '../models/boats/boats.validation';
-import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
-import { useLiveQuery } from '@tanstack/vue-db';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection, getBoatsCollection, refreshOutboxSnapshot } from '../powersync/app-powersync.runtime';
-import { useConfirmDialog } from '../composables/useConfirmDialog';
-import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
-import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
-import { parseOptionalNonNegativeInt } from '../validation/zod-fields';
-import AppEntityEditPageLayout from '../layouts/AppEntityEditPageLayout.vue';
-import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
-import AppCardSection from '../components/ui/AppCardSection.vue';
-import AppFormStack from '../components/ui/AppFormStack.vue';
+import { useForm } from "vee-validate";
+import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import { useQuasar } from "quasar";
+import { useRoute, useRouter } from "vue-router";
+import {
+    createBoatCreateFormSchema,
+    type BoatCreateFormValues,
+} from "../models/boats/boats.validation";
+import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
+import { useLiveQuery } from "@tanstack/vue-db";
+import { eq } from "@tanstack/db";
+import {
+    getAppPowerSyncBootstrappedRef,
+    useAppPowerSyncOutbox,
+    getBoatTypesCollection,
+    getBoatsCollection,
+    getActiveProgramIdRef,
+    refreshOutboxSnapshot,
+} from "../powersync/app-powersync.runtime";
+import { useConfirmDialog } from "../composables/useConfirmDialog";
+import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
+import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
+import { parseOptionalNonNegativeInt } from "../validation/zod-fields";
+import AppEntityEditPageLayout from "../layouts/AppEntityEditPageLayout.vue";
+import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
+import AppCardSection from "../components/ui/AppCardSection.vue";
+import AppFormStack from "../components/ui/AppFormStack.vue";
 
 const { t } = useI18n();
 const $q = useQuasar();
@@ -181,33 +189,31 @@ const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
 const boatsCollection = getBoatsCollection();
 
-const { data: allBoats } = useLiveQuery(
+const { data: boats } = useLiveQuery(
     (queryBuilder) => {
         const col = boatsCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ b: col });
+        const pid = programId.value;
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ b: col })
+            .where(({ b }) => eq(b.program_id, pid));
     },
-    [boatsCollection],
+    [boatsCollection, programId],
 );
-
-const programBoats = computed(() => {
-    const pid = programId.value;
-    if (pid.length === 0) return [];
-    return (allBoats.value ?? []).filter((b) => String(b.program_id) === pid);
-});
 
 const currentBoat = computed(() => {
     const id = boatId.value;
     if (id.length === 0) return null;
-    return programBoats.value.find((b) => String(b.id) === id) ?? null;
+    return (boats.value ?? []).find((b) => String(b.id) === id) ?? null;
 });
 
 const neighbors = computed(() => {
     const id = boatId.value;
-    const list = programBoats.value;
+    const list = boats.value ?? [];
     const ids = list.map((b) => String(b.id));
     const idx = id.length === 0 ? -1 : ids.indexOf(id);
-    if (idx < 0) return { prev: null, next: null, index: -1, total: ids.length };
+    if (idx < 0)
+        return { prev: null, next: null, index: -1, total: ids.length };
     return {
         prev: idx > 0 ? String(ids[idx - 1]) : null,
         next: idx < ids.length - 1 ? String(ids[idx + 1]) : null,
@@ -221,10 +227,13 @@ const boatTypesCollection = getBoatTypesCollection();
 const { data: boatTypes } = useLiveQuery(
     (queryBuilder) => {
         const col = boatTypesCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ bt: col });
+        const pid = getActiveProgramIdRef().value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ bt: col })
+            .where(({ bt }) => eq(bt.program_id, pid));
     },
-    [boatTypesCollection],
+    [boatTypesCollection, getActiveProgramIdRef()],
 );
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
@@ -233,56 +242,63 @@ const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
 
 const isDeleting = ref(false);
 
-const programId = computed(() => String(route.params.programId ?? '').trim());
-const boatId = computed(() => String(route.params.boatId ?? '').trim());
+const programId = computed(() => String(route.params.programId ?? "").trim());
+const boatId = computed(() => String(route.params.boatId ?? "").trim());
 
-const backTo = computed(() => ({ name: 'boats.list' as const, params: { programId: programId.value } }));
+const backTo = computed(() => ({
+    name: "boats.list" as const,
+    params: { programId: programId.value },
+}));
 
 // currentBoat and neighbors are computed above from allBoats
 
 const showNotFound = computed(
-    () => hasBootstrapped.value && boatId.value.length > 0 && currentBoat.value == null,
+    () =>
+        hasBootstrapped.value &&
+        boatId.value.length > 0 &&
+        currentBoat.value == null,
 );
 
 const formSectionLabel = computed(() => {
     const b = currentBoat.value;
     if (b) {
-        return String(b.name ?? t('boatsList.editPageTitle'));
+        return String(b.name ?? t("boatsList.editPageTitle"));
     }
-    return t('boatsList.editPageTitle');
+    return t("boatsList.editPageTitle");
 });
 
 const boatSwitcherOptions = computed(() =>
-    programBoats.value.map((b) => ({
-        label: String(b.name ?? ''),
+    boats.value.map((b) => ({
+        label: String(b.name ?? ""),
         value: String(b.id),
     })),
 );
 
 const boatTypeOptions = computed(() =>
     boatTypes.value.map((bt) => ({
-        label: String(bt.name ?? ''),
+        label: String(bt.name ?? ""),
         value: String(bt.id),
     })),
 );
 
 const editSchema = createBoatCreateFormSchema(t);
-const { handleSubmit, defineField, meta, isSubmitting, setValues, resetForm } = useForm<BoatCreateFormValues>({
-    validationSchema: editSchema,
-    initialValues: {
-        name: '',
-        capacity: null,
-        notes: '',
-        boatTypeId: null,
-    } as unknown as BoatCreateFormValues,
-});
+const { handleSubmit, defineField, meta, isSubmitting, setValues, resetForm } =
+    useForm<BoatCreateFormValues>({
+        validationSchema: editSchema,
+        initialValues: {
+            name: "",
+            capacity: null,
+            notes: "",
+            boatTypeId: null,
+        } as unknown as BoatCreateFormValues,
+    });
 
 const quasarField = createQuasarFieldBinder(defineField);
 
-const [editName, editNameProps] = quasarField('name');
-const [editCapacity, editCapacityProps] = quasarField('capacity');
-const [editNotes, editNotesProps] = quasarField('notes');
-const [editBoatTypeId, editBoatTypeIdProps] = quasarField('boatTypeId');
+const [editName, editNameProps] = quasarField("name");
+const [editCapacity, editCapacityProps] = quasarField("capacity");
+const [editNotes, editNotesProps] = quasarField("notes");
+const [editBoatTypeId, editBoatTypeIdProps] = quasarField("boatTypeId");
 
 function syncFormFromBoat() {
     const b = currentBoat.value;
@@ -290,12 +306,12 @@ function syncFormFromBoat() {
         return;
     }
     setValues({
-        name: String(b.name ?? ''),
+        name: String(b.name ?? ""),
         capacity:
             b.capacity === null || b.capacity === undefined
                 ? null
                 : Number(b.capacity),
-        notes: String(b.notes ?? ''),
+        notes: String(b.notes ?? ""),
         boatTypeId:
             b.boat_type_id == null || String(b.boat_type_id).length === 0
                 ? null
@@ -303,20 +319,24 @@ function syncFormFromBoat() {
     });
 }
 
-watch([currentBoat, boatId], () => {
-    if (currentBoat.value) {
-        syncFormFromBoat();
-    } else {
-        resetForm();
-    }
-}, { immediate: true });
+watch(
+    [currentBoat, boatId],
+    () => {
+        if (currentBoat.value) {
+            syncFormFromBoat();
+        } else {
+            resetForm();
+        }
+    },
+    { immediate: true },
+);
 
 function onSwitchBoat(nextId: string | null | undefined) {
     if (nextId == null || String(nextId) === String(boatId.value)) {
         return;
     }
     void router.push({
-        name: 'boats.edit',
+        name: "boats.edit",
         params: { programId: programId.value, boatId: String(nextId) },
     });
 }
@@ -344,13 +364,16 @@ const onSaveSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
         async () => {
             const cap = parseOptionalNonNegativeInt(values.capacity);
             if (cap === null) {
-                throw new Error('capacity');
+                throw new Error("capacity");
             }
-            const notes = String(values.notes ?? '').trim();
+            const notes = String(values.notes ?? "").trim();
             const nextType = values.boatTypeId;
-            const nextTypeId = nextType != null && String(nextType).length > 0 ? String(nextType) : null;
+            const nextTypeId =
+                nextType != null && String(nextType).length > 0
+                    ? String(nextType)
+                    : null;
             const col = boatsCollection.value;
-            if (!col) throw new Error('Boats collection not ready.');
+            if (!col) throw new Error("Boats collection not ready.");
             col.update(id, (draft) => {
                 draft.name = String(values.name).trim();
                 draft.capacity = cap;
@@ -360,7 +383,10 @@ const onSaveSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
             });
             void refreshOutboxSnapshot();
         },
-        { successMessage: t('boatsList.changesSaved'), errorGeneric: t('boatsList.errorGeneric') },
+        {
+            successMessage: t("boatsList.changesSaved"),
+            errorGeneric: t("boatsList.errorGeneric"),
+        },
     );
 });
 
@@ -370,8 +396,10 @@ function confirmDelete() {
         return;
     }
     confirm({
-        title: t('boatsList.deleteConfirmTitle'),
-        message: t('boatsList.deleteConfirmMessage', { name: String(b.name ?? '') }),
+        title: t("boatsList.deleteConfirmTitle"),
+        message: t("boatsList.deleteConfirmMessage", {
+            name: String(b.name ?? ""),
+        }),
         onOk: async () => {
             isDeleting.value = true;
             try {
@@ -379,16 +407,20 @@ function confirmDelete() {
                 if (!col) return;
                 col.delete(String(b.id));
                 void refreshOutboxSnapshot();
-                $q.notify({ type: 'positive', message: t('boatsList.deleted') });
-                await router.push({ name: 'boats.list', params: { programId: programId.value } });
+                $q.notify({
+                    type: "positive",
+                    message: t("boatsList.deleted"),
+                });
+                await router.push({
+                    name: "boats.list",
+                    params: { programId: programId.value },
+                });
             } catch (e) {
-                notifyError(e, t('boatsList.errorGeneric'));
+                notifyError(e, t("boatsList.errorGeneric"));
             } finally {
                 isDeleting.value = false;
             }
         },
     });
 }
-
-
 </script>

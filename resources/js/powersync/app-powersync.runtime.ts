@@ -1,24 +1,9 @@
-import { createCollection } from "@tanstack/db";
-import { powerSyncCollectionOptions } from "@tanstack/powersync-db-collection";
 import { PowerSyncDatabase } from "@powersync/web";
 import { computed, ref, shallowRef } from "vue";
 import { fetchCurrentSession } from "../models/auth.api";
 import { useAuthStore } from "../store/auth.store";
 import { createAppPowerSyncConnector } from "../services/powersync.connector";
-import {
-    appBookingTicketsPowerSyncTable,
-    appBoatTypesPowerSyncTable,
-    appBoatsPowerSyncTable,
-    appTicketTypesPowerSyncTable,
-    appProgramsPowerSyncTable,
-    appMediaPowerSyncTable,
-    appPowerSyncSchema,
-    appTemplateDayDatesPowerSyncTable,
-    appTemplateDaysPowerSyncTable,
-    appTemplateDaySlotsPowerSyncTable,
-    appTripsPowerSyncTable,
-    appWaterRoutesPowerSyncTable,
-} from "./app.powersync-schema";
+import { appPowerSyncSchema } from "./app.powersync-schema";
 import { createProgramsCollection } from "./programs.collection";
 import { createBoatTypesCollection } from "./boat-types.collection";
 import { createTicketTypesCollection } from "./ticket-types.collection";
@@ -156,87 +141,24 @@ const collectionRefs = {
     media: shallowRef<ReturnType<typeof createMediaCollection> | null>(null),
 };
 
-const tableByName = {
-    programs: appProgramsPowerSyncTable,
-    boat_types: appBoatTypesPowerSyncTable,
-    boats: appBoatsPowerSyncTable,
-    trips: appTripsPowerSyncTable,
-    ticket_types: appTicketTypesPowerSyncTable,
-    booking_tickets: appBookingTicketsPowerSyncTable,
-    water_routes: appWaterRoutesPowerSyncTable,
-    template_days: appTemplateDaysPowerSyncTable,
-    template_day_slots: appTemplateDaySlotsPowerSyncTable,
-    template_day_dates: appTemplateDayDatesPowerSyncTable,
-    media: appMediaPowerSyncTable,
-};
-
 /** @type {import('vue').Ref<string>} */
-const programSyncScopeIdRef = ref("");
-
-/** @type {{ unsubscribe: () => void } | null} */
-let userScopeSubscription = null;
-
-/** @type {{ unsubscribe: () => void } | null} */
-let programScopeSubscription = null;
+const activeProgramIdRef = ref("");
 
 /**
  * Active program id for `program_scope` PowerSync stream (boat types, media, roster, trips, water routes, template days).
  *
  * @returns {import('vue').Ref<string>}
  */
-export function getProgramSyncScopeIdRef() {
-    return programSyncScopeIdRef;
+export function getActiveProgramIdRef() {
+    return activeProgramIdRef;
 }
 
 /**
  * @param {string | null | undefined} programId
- * @returns {Promise<void>}
  */
-export async function setProgramSyncScopeId(programId) {
-    programSyncScopeIdRef.value =
+export function setActiveProgramId(programId) {
+    activeProgramIdRef.value =
         programId == null || programId === "" ? "" : String(programId).trim();
-    await resyncProgramScopeSubscription();
-}
-
-/**
- * @returns {Promise<void>}
- */
-async function resyncUserScopeSubscription() {
-    const db = powerSyncDbRef.value;
-    if (!db) {
-        return;
-    }
-
-    if (userScopeSubscription) {
-        userScopeSubscription.unsubscribe();
-        userScopeSubscription = null;
-    }
-
-    userScopeSubscription = await db.syncStream("user_scope").subscribe();
-}
-
-/**
- * @returns {Promise<void>}
- */
-async function resyncProgramScopeSubscription() {
-    const db = powerSyncDbRef.value;
-    if (!db) {
-        return;
-    }
-
-    if (programScopeSubscription) {
-        programScopeSubscription.unsubscribe();
-        programScopeSubscription = null;
-    }
-
-    const pid = programSyncScopeIdRef.value.trim();
-    if (pid.length === 0) {
-        return;
-    }
-
-    programScopeSubscription = await db
-        .syncStream("program_scope", { program_id: pid })
-        .subscribe();
 }
 
 export async function refreshOutboxSnapshot() {
@@ -280,25 +202,46 @@ async function resolveAuthenticatedUserId() {
     return String(u.id);
 }
 
+const collectionFactories = {
+    programs: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
+        createProgramsCollection(db, (error) => {
+            programsDeserializationError.value = error;
+            onError(error);
+        }),
+    boat_types: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
+        createBoatTypesCollection(db, onError),
+    boats: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
+        createBoatsCollection(db, onError),
+    trips: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
+        createTripsCollection(db, onError),
+    ticket_types: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
+        createTicketTypesCollection(db, onError),
+    booking_tickets: (
+        db: PowerSyncDatabase,
+        onError: (error: unknown) => void,
+    ) => createBookingTicketsCollection(db, onError),
+    water_routes: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
+        createWaterRoutesCollection(db, onError),
+    template_days: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
+        createTemplateDaysCollection(db, onError),
+    template_day_slots: (
+        db: PowerSyncDatabase,
+        onError: (error: unknown) => void,
+    ) => createTemplateDaySlotsCollection(db, onError),
+    template_day_dates: (
+        db: PowerSyncDatabase,
+        onError: (error: unknown) => void,
+    ) => createTemplateDayDatesCollection(db, onError),
+    media: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
+        createMediaCollection(db, onError),
+};
+
 /**
  * @returns {Promise<void>}
  */
 export async function bootstrapAppPowerSync() {
     if (hasBootstrappedCollection.value && powerSyncDbRef.value) {
-        try {
-            await Promise.all(
-                Object.values(collectionRefs)
-                    .map((r) => r.value)
-                    .filter(Boolean)
-                    .map((c) => c.preload()),
-            );
-            errorMessage.value = "";
-        } catch (error) {
-            errorMessage.value =
-                error instanceof Error ? error.message : loadFailedMessage;
-        }
-
-        await refreshOutboxSnapshot();
+        errorMessage.value = "";
         return;
     }
 
@@ -338,128 +281,49 @@ export async function bootstrapAppPowerSync() {
                 },
             });
 
-            for (const name of Object.keys(tableByName)) {
-                const table = tableByName[name];
-                let collection;
+            const sharedOnError = (error: unknown) => {
+                errorMessage.value =
+                    error instanceof Error ? error.message : loadFailedMessage;
+            };
+
+            for (const name of Object.keys(collectionRefs)) {
+                const factory =
+                    collectionFactories[
+                        name as keyof typeof collectionFactories
+                    ];
+                if (!factory) continue;
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const collection: any = factory(db, sharedOnError);
+
                 if (name === "programs") {
-                    collection = createProgramsCollection(db, (error) => {
-                        programsDeserializationError.value = error;
-                        errorMessage.value =
-                            error instanceof Error
-                                ? error.message
-                                : loadFailedMessage;
-                    });
-                } else if (name === "boat_types") {
-                    collection = createBoatTypesCollection(db, (error) => {
-                        errorMessage.value =
-                            error instanceof Error
-                                ? error.message
-                                : loadFailedMessage;
-                    });
-                } else if (name === "ticket_types") {
-                    collection = createTicketTypesCollection(db, (error) => {
-                        errorMessage.value =
-                            error instanceof Error
-                                ? error.message
-                                : loadFailedMessage;
-                    });
-                } else if (name === "boats") {
-                    collection = createBoatsCollection(db, (error) => {
-                        errorMessage.value =
-                            error instanceof Error
-                                ? error.message
-                                : loadFailedMessage;
-                    });
-                } else if (name === "water_routes") {
-                    collection = createWaterRoutesCollection(db, (error) => {
-                        errorMessage.value =
-                            error instanceof Error
-                                ? error.message
-                                : loadFailedMessage;
-                    });
-                } else if (name === "trips") {
-                    collection = createTripsCollection(db, (error) => {
-                        errorMessage.value =
-                            error instanceof Error
-                                ? error.message
-                                : loadFailedMessage;
-                    });
-                } else if (name === "booking_tickets") {
-                    collection = createBookingTicketsCollection(db, (error) => {
-                        errorMessage.value =
-                            error instanceof Error
-                                ? error.message
-                                : loadFailedMessage;
-                    });
-                } else if (name === "template_days") {
-                    collection = createTemplateDaysCollection(db, (error) => {
-                        errorMessage.value =
-                            error instanceof Error
-                                ? error.message
-                                : loadFailedMessage;
-                    });
-                } else if (name === "template_day_slots") {
-                    collection = createTemplateDaySlotsCollection(
-                        db,
-                        (error) => {
-                            errorMessage.value =
-                                error instanceof Error
-                                    ? error.message
-                                    : loadFailedMessage;
-                        },
-                    );
-                } else if (name === "template_day_dates") {
-                    collection = createTemplateDayDatesCollection(
-                        db,
-                        (error) => {
-                            errorMessage.value =
-                                error instanceof Error
-                                    ? error.message
-                                    : loadFailedMessage;
-                        },
-                    );
-                } else if (name === "media") {
-                    collection = createMediaCollection(db, (error) => {
-                        errorMessage.value =
-                            error instanceof Error
-                                ? error.message
-                                : loadFailedMessage;
+                    collection.onLoad(async () => {
+                        const sub = await db
+                            .syncStream("user_scope")
+                            .subscribe();
+                        return () => {
+                            sub.unsubscribe();
+                        };
                     });
                 } else {
-                    const collectionOptions = powerSyncCollectionOptions({
-                        database: db,
-                        table,
+                    collection.onLoad(async () => {
+                        const pid = activeProgramIdRef.value.trim();
+                        if (pid.length === 0) return;
+                        const sub = await db
+                            .syncStream("program_scope", { program_id: pid })
+                            .subscribe();
+                        return () => {
+                            sub.unsubscribe();
+                        };
                     });
-                    collection = createCollection(
-                        /** @type {any} */ collectionOptions,
-                    );
                 }
+
                 collectionRefs[name].value = collection;
             }
 
             const connector = createAppPowerSyncConnector();
 
             await db.connect(connector);
-
-            await resyncUserScopeSubscription();
-            await resyncProgramScopeSubscription();
-
-            try {
-                await Promise.all(
-                    Object.values(collectionRefs)
-                        .map((r) => r.value)
-                        .filter(Boolean)
-                        .map((c) => c.preload()),
-                );
-            } catch (preloadError) {
-                bootstrapPromise = null;
-                errorMessage.value =
-                    preloadError instanceof Error
-                        ? preloadError.message
-                        : loadFailedMessage;
-                await refreshOutboxSnapshot();
-                return;
-            }
 
             hasBootstrappedCollection.value = true;
             errorMessage.value = "";
@@ -468,14 +332,7 @@ export async function bootstrapAppPowerSync() {
         } catch (error) {
             bootstrapPromise = null;
             hasBootstrappedCollection.value = false;
-            if (userScopeSubscription) {
-                userScopeSubscription.unsubscribe();
-                userScopeSubscription = null;
-            }
-            if (programScopeSubscription) {
-                programScopeSubscription.unsubscribe();
-                programScopeSubscription = null;
-            }
+
             powerSyncStatusUnsubscribe?.();
             powerSyncStatusUnsubscribe = null;
             try {

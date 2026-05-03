@@ -62,7 +62,7 @@
                         class="col-12 text-caption text-grey-8"
                     >
                         {{
-                            t('tripsList.positionInList', {
+                            t("tripsList.positionInList", {
                                 index: neighbors.index + 1,
                                 total: neighbors.total,
                             })
@@ -77,7 +77,7 @@
             class="bg-warning text-dark q-mb-md"
             rounded
         >
-            {{ t('tripsList.notFound') }}
+            {{ t("tripsList.notFound") }}
             <template #action>
                 <q-btn
                     color="primary"
@@ -157,25 +157,40 @@
 </template>
 
 <script setup lang="ts">
-import { useForm } from 'vee-validate';
-import { computed, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useQuasar } from 'quasar';
-import { useRoute, useRouter } from 'vue-router';
-import { createTripUpsertFormSchema, type TripUpsertFormValues } from '../models/trips/trips.validation';
-import { isoToLocalDatetimeInputValue, localDatetimeInputValueToIso } from '../utilities/datetime-input';
-import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
-import { useLiveQuery } from '@tanstack/vue-db';
-import { getAppPowerSyncBootstrappedRef, useAppPowerSyncOutbox, getBoatTypesCollection, getWaterRoutesCollection, getTripsCollection, getProgramSyncScopeIdRef, refreshOutboxSnapshot } from '../powersync/app-powersync.runtime';
-import type { TripOutput } from '../powersync/trips.collection';
-import { useConfirmDialog } from '../composables/useConfirmDialog';
-import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
-import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
-import { parsePositiveInt } from '../validation/zod-fields';
-import AppEntityEditPageLayout from '../layouts/AppEntityEditPageLayout.vue';
-import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
-import AppCardSection from '../components/ui/AppCardSection.vue';
-import AppFormStack from '../components/ui/AppFormStack.vue';
+import { useForm } from "vee-validate";
+import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import { useQuasar } from "quasar";
+import { useRoute, useRouter } from "vue-router";
+import {
+    createTripUpsertFormSchema,
+    type TripUpsertFormValues,
+} from "../models/trips/trips.validation";
+import {
+    isoToLocalDatetimeInputValue,
+    localDatetimeInputValueToIso,
+} from "../utilities/datetime-input";
+import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
+import { useLiveQuery } from "@tanstack/vue-db";
+import { eq } from "@tanstack/db";
+import {
+    getAppPowerSyncBootstrappedRef,
+    useAppPowerSyncOutbox,
+    getBoatTypesCollection,
+    getWaterRoutesCollection,
+    getTripsCollection,
+    getActiveProgramIdRef,
+    refreshOutboxSnapshot,
+} from "../powersync/app-powersync.runtime";
+import type { TripOutput } from "../powersync/trips.collection";
+import { useConfirmDialog } from "../composables/useConfirmDialog";
+import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
+import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
+import { parsePositiveInt } from "../validation/zod-fields";
+import AppEntityEditPageLayout from "../layouts/AppEntityEditPageLayout.vue";
+import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
+import AppCardSection from "../components/ui/AppCardSection.vue";
+import AppFormStack from "../components/ui/AppFormStack.vue";
 
 const { t, locale } = useI18n();
 const $q = useQuasar();
@@ -185,33 +200,31 @@ const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
 const tripsCollection = getTripsCollection();
-const { data: allTrips } = useLiveQuery(
+const { data: trips } = useLiveQuery(
     (queryBuilder) => {
         const col = tripsCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ t: col });
+        const pid = getActiveProgramIdRef().value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ t: col })
+            .where(({ t }) => eq(t.program_id, pid));
     },
-    [tripsCollection],
+    [tripsCollection, getActiveProgramIdRef()],
 );
-
-const programTrips = computed(() => {
-    const pid = getProgramSyncScopeIdRef().value.trim();
-    if (pid.length === 0) return [];
-    return (allTrips.value ?? []).filter((row) => String(row.program_id) === pid);
-});
 
 const currentTrip = computed(() => {
     const id = tripId.value;
     if (id.length === 0) return null;
-    return programTrips.value.find((t) => String(t.id) === id) ?? null;
+    return (trips.value ?? []).find((t) => String(t.id) === id) ?? null;
 });
 
 const neighbors = computed(() => {
     const id = tripId.value;
-    const list = programTrips.value;
+    const list = trips.value ?? [];
     const ids = list.map((t) => String(t.id));
     const idx = id.length === 0 ? -1 : ids.indexOf(id);
-    if (idx < 0) return { prev: null, next: null, index: -1, total: ids.length };
+    if (idx < 0)
+        return { prev: null, next: null, index: -1, total: ids.length };
     return {
         prev: idx > 0 ? String(ids[idx - 1]) : null,
         next: idx < ids.length - 1 ? String(ids[idx + 1]) : null,
@@ -220,27 +233,31 @@ const neighbors = computed(() => {
     };
 });
 
-const trips = programTrips;
-
 const boatTypesCollection = getBoatTypesCollection();
 
 const { data: boatTypes } = useLiveQuery(
     (queryBuilder) => {
         const col = boatTypesCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ bt: col });
+        const pid = getActiveProgramIdRef().value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ bt: col })
+            .where(({ bt }) => eq(bt.program_id, pid));
     },
-    [boatTypesCollection],
+    [boatTypesCollection, getActiveProgramIdRef()],
 );
 
 const waterRoutesCollection = getWaterRoutesCollection();
 const { data: waterRoutes } = useLiveQuery(
     (queryBuilder) => {
         const col = waterRoutesCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ wr: col });
+        const pid = getActiveProgramIdRef().value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ wr: col })
+            .where(({ wr }) => eq(wr.program_id, pid));
     },
-    [waterRoutesCollection],
+    [waterRoutesCollection, getActiveProgramIdRef()],
 );
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
@@ -249,27 +266,33 @@ const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
 
 const isDeleting = ref(false);
 
-const programId = computed(() => String(route.params.programId ?? '').trim());
-const tripId = computed(() => String(route.params.tripId ?? '').trim());
+const programId = computed(() => String(route.params.programId ?? "").trim());
+const tripId = computed(() => String(route.params.tripId ?? "").trim());
 
-const backTo = computed(() => ({ name: 'trips.list' as const, params: { programId: programId.value } }));
+const backTo = computed(() => ({
+    name: "trips.list" as const,
+    params: { programId: programId.value },
+}));
 
 const showNotFound = computed(
-    () => hasBootstrapped.value && tripId.value.length > 0 && currentTrip.value == null,
+    () =>
+        hasBootstrapped.value &&
+        tripId.value.length > 0 &&
+        currentTrip.value == null,
 );
 
 function formatSwitcherLabel(tr: TripOutput) {
     const raw = tr.scheduled_departure_at;
-    if (raw == null || String(raw) === '') {
-        return String(tr.id ?? '');
+    if (raw == null || String(raw) === "") {
+        return String(tr.id ?? "");
     }
     const d = new Date(String(raw));
     if (Number.isNaN(d.getTime())) {
         return String(raw);
     }
-    return new Intl.DateTimeFormat(locale.value === 'fr' ? 'fr-CA' : 'en-CA', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
+    return new Intl.DateTimeFormat(locale.value === "fr" ? "fr-CA" : "en-CA", {
+        dateStyle: "medium",
+        timeStyle: "short",
     }).format(d);
 }
 
@@ -282,35 +305,36 @@ const tripSwitcherOptions = computed(() =>
 
 const boatTypeOptions = computed(() =>
     boatTypes.value.map((bt) => ({
-        label: String(bt.name ?? ''),
+        label: String(bt.name ?? ""),
         value: String(bt.id),
     })),
 );
 
 const waterRouteOptions = computed(() =>
     waterRoutes.value.map((wr) => ({
-        label: String(wr.name ?? ''),
+        label: String(wr.name ?? ""),
         value: String(wr.id),
     })),
 );
 
 const editSchema = createTripUpsertFormSchema(t);
-const { handleSubmit, defineField, meta, isSubmitting, setValues, resetForm } = useForm<TripUpsertFormValues>({
-    validationSchema: editSchema,
-    initialValues: {
-        scheduledDepartureAt: '',
-        capacity: null,
-        boatTypeId: null,
-        waterRouteId: null,
-    } as unknown as TripUpsertFormValues,
-});
+const { handleSubmit, defineField, meta, isSubmitting, setValues, resetForm } =
+    useForm<TripUpsertFormValues>({
+        validationSchema: editSchema,
+        initialValues: {
+            scheduledDepartureAt: "",
+            capacity: null,
+            boatTypeId: null,
+            waterRouteId: null,
+        } as unknown as TripUpsertFormValues,
+    });
 
 const quasarField = createQuasarFieldBinder(defineField);
 
-const [editScheduled, editScheduledProps] = quasarField('scheduledDepartureAt');
-const [editCapacity, editCapacityProps] = quasarField('capacity');
-const [editBoatTypeId, editBoatTypeIdProps] = quasarField('boatTypeId');
-const [editWaterRouteId, editWaterRouteIdProps] = quasarField('waterRouteId');
+const [editScheduled, editScheduledProps] = quasarField("scheduledDepartureAt");
+const [editCapacity, editCapacityProps] = quasarField("capacity");
+const [editBoatTypeId, editBoatTypeIdProps] = quasarField("boatTypeId");
+const [editWaterRouteId, editWaterRouteIdProps] = quasarField("waterRouteId");
 
 function syncFormFromTrip() {
     const tr = currentTrip.value;
@@ -319,7 +343,9 @@ function syncFormFromTrip() {
     }
     const cap = parsePositiveInt(tr.capacity);
     setValues({
-        scheduledDepartureAt: isoToLocalDatetimeInputValue(String(tr.scheduled_departure_at ?? '')),
+        scheduledDepartureAt: isoToLocalDatetimeInputValue(
+            String(tr.scheduled_departure_at ?? ""),
+        ),
         capacity: cap,
         boatTypeId:
             tr.boat_type_id == null || String(tr.boat_type_id).length === 0
@@ -332,20 +358,24 @@ function syncFormFromTrip() {
     });
 }
 
-watch([currentTrip, tripId], () => {
-    if (currentTrip.value) {
-        syncFormFromTrip();
-    } else {
-        resetForm();
-    }
-}, { immediate: true });
+watch(
+    [currentTrip, tripId],
+    () => {
+        if (currentTrip.value) {
+            syncFormFromTrip();
+        } else {
+            resetForm();
+        }
+    },
+    { immediate: true },
+);
 
 function onSwitchTrip(nextId: string | null | undefined) {
     if (nextId == null || String(nextId) === String(tripId.value)) {
         return;
     }
     void router.push({
-        name: 'trips.edit',
+        name: "trips.edit",
         params: { programId: programId.value, tripId: String(nextId) },
     });
 }
@@ -373,19 +403,23 @@ const onSaveSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
         async () => {
             const cap = parsePositiveInt(values.capacity);
             if (cap === null) {
-                throw new Error('capacity');
+                throw new Error("capacity");
             }
-            const iso = localDatetimeInputValueToIso(String(values.scheduledDepartureAt));
+            const iso = localDatetimeInputValueToIso(
+                String(values.scheduledDepartureAt),
+            );
             const nextBoatType =
-                values.boatTypeId != null && String(values.boatTypeId).length > 0
+                values.boatTypeId != null &&
+                String(values.boatTypeId).length > 0
                     ? String(values.boatTypeId)
                     : null;
             const nextWaterRoute =
-                values.waterRouteId != null && String(values.waterRouteId).length > 0
+                values.waterRouteId != null &&
+                String(values.waterRouteId).length > 0
                     ? String(values.waterRouteId)
                     : null;
             const col = tripsCollection.value;
-            if (!col) throw new Error('Trips collection not ready.');
+            if (!col) throw new Error("Trips collection not ready.");
             col.update(id, (draft) => {
                 draft.scheduled_departure_at = iso;
                 draft.capacity = cap;
@@ -395,7 +429,10 @@ const onSaveSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
             });
             void refreshOutboxSnapshot();
         },
-        { successMessage: t('tripsList.changesSaved'), errorGeneric: t('tripsList.errorGeneric') },
+        {
+            successMessage: t("tripsList.changesSaved"),
+            errorGeneric: t("tripsList.errorGeneric"),
+        },
     );
 });
 
@@ -405,8 +442,8 @@ function confirmDelete() {
         return;
     }
     confirm({
-        title: t('tripsList.deleteConfirmTitle'),
-        message: t('tripsList.deleteConfirmMessage'),
+        title: t("tripsList.deleteConfirmTitle"),
+        message: t("tripsList.deleteConfirmMessage"),
         onOk: async () => {
             isDeleting.value = true;
             try {
@@ -414,15 +451,20 @@ function confirmDelete() {
                 if (!col) return;
                 col.delete(String(tr.id));
                 void refreshOutboxSnapshot();
-                $q.notify({ type: 'positive', message: t('tripsList.deleted') });
-                await router.push({ name: 'trips.list', params: { programId: programId.value } });
+                $q.notify({
+                    type: "positive",
+                    message: t("tripsList.deleted"),
+                });
+                await router.push({
+                    name: "trips.list",
+                    params: { programId: programId.value },
+                });
             } catch (e) {
-                notifyError(e, t('tripsList.errorGeneric'));
+                notifyError(e, t("tripsList.errorGeneric"));
             } finally {
                 isDeleting.value = false;
             }
         },
     });
 }
-
 </script>

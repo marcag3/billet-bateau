@@ -1,12 +1,19 @@
 {
     "agents": [
-        "cursor"
+        "cursor",
+        "copilot"
     ],
+    "cloud": false,
     "guidelines": true,
     "mcp": true,
-    "nightwatch_mcp": false,
+    "nightwatch": false,
+    "packages": [
+        "lorisleiva/laravel-actions"
+    ],
     "sail": false,
     "skills": [
-        "laravel-best-practices"
+        "laravel-best-practices",
+        "wayfinder-development",
+        "laravel-actions"
     ]
 }

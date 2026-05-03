@@ -170,6 +170,7 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
 import { useLiveQuery } from '@tanstack/vue-db';
+import { eq } from '@tanstack/db';
 import {
     getAppPowerSyncBootstrappedRef,
     getMediaCollection,
@@ -215,6 +216,7 @@ const { data: mediaRows } = useLiveQuery(
         if (!col) return undefined;
         return queryBuilder
             .from({ m: col })
+            .where(({ m }) => eq(m.collection_name, 'images'))
             .orderBy(({ m }) => m.order_column, 'asc')
             .orderBy(({ m }) => m.created_at, 'asc');
     },

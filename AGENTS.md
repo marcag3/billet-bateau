@@ -12,14 +12,19 @@ This application is a fullstack laravel api + vue local-first + completly offlin
 - php - 8.5
 - laravel/framework (LARAVEL) - v13
 - laravel/prompts (PROMPTS) - v0
+- laravel/sanctum (SANCTUM) - v4
+- laravel/telescope (TELESCOPE) - v5
+- laravel/wayfinder (WAYFINDER) - v0
 - laravel/boost (BOOST) - v2
 - laravel/mcp (MCP) - v0
 - laravel/pail (PAIL) - v1
 - laravel/pint (PINT) - v1
-- phpunit/phpunit (PHPUNIT) - v12
+- laravel/sail (SAIL) - v1
+- phpunit/phpunit (PHPUNIT) - v13
 - vue (VUE) - v3
 - Quasar.dev
-- Tanstack-db + PowerSync sync
+- @laravel/vite-plugin-wayfinder (WAYFINDER_VITE) - v0
+- eslint (ESLINT) - v9
 
 ## Skills Activation
 
@@ -32,11 +37,6 @@ This project has domain-specific skills available. You MUST activate the relevan
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
-
-## Data scoping (programs, boat types, boats)
-
-- Do **not** scope models by `user_id` in Eloquent, PowerSync sync rules, or the Vue app. This product uses shared staff data; any `user_id` column is **optional metadata/audit** only, not a visibility or tenancy key.
-- Do not add per-user list filtering or `whereBelongsTo($user)` for these models unless the user explicitly requests a new product decision.
 
 ## Verification Scripts
 
@@ -85,7 +85,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
 - Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
-    - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
+  - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
 
 === php rules ===
 

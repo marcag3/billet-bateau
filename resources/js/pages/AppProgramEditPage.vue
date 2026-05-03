@@ -19,10 +19,7 @@
                 </div>
             </AppAlertBanner>
 
-            <AppCardSection
-                v-else
-                :label="t('programsCreate.formSection')"
-            >
+            <AppCardSection v-else :label="t('programsCreate.formSection')">
                 <AppAlertBanner v-if="errorMessage.length > 0" variant="error">
                     {{ errorMessage }}
                 </AppAlertBanner>
@@ -37,7 +34,9 @@
                     >
                         <template #label>
                             {{ t("programsCreate.name") }}
-                            <span class="text-negative" aria-hidden="true">*</span>
+                            <span class="text-negative" aria-hidden="true"
+                                >*</span
+                            >
                         </template>
                     </q-input>
 
@@ -60,7 +59,9 @@
                     >
                         <template #label>
                             {{ t("programsCreate.themeColor") }}
-                            <span class="text-negative" aria-hidden="true">*</span>
+                            <span class="text-negative" aria-hidden="true"
+                                >*</span
+                            >
                         </template>
                         <template #append>
                             <q-icon name="colorize" class="cursor-pointer">
@@ -194,7 +195,8 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { computed, ref, watch } from "vue";
-import { useLiveQuery } from '@tanstack/vue-db';
+import { useLiveQuery } from "@tanstack/vue-db";
+import { eq } from "@tanstack/db";
 import {
     createProgramEditFormSchema,
     type ProgramEditFormValues,
@@ -206,7 +208,10 @@ import {
     refreshOutboxSnapshot,
 } from "../powersync/app-powersync.runtime";
 import type { ProgramOutput } from "../powersync/programs.collection";
-import { normalizeThemeColor, normalizeAddressRowFields } from "../utilities/program-helpers";
+import {
+    normalizeThemeColor,
+    normalizeAddressRowFields,
+} from "../utilities/program-helpers";
 import mediaRoutes from "../routes/api/media";
 import { requestFormData } from "../services/http.client";
 import { normalizeImageFiles } from "../utilities/image-files";
@@ -224,10 +229,11 @@ const programsCollection = getProgramsCollection();
 const { data: programs } = useLiveQuery(
     (queryBuilder) => {
         const col = programsCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ p: col });
+        const pid = programId.value;
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder.from({ p: col }).where(({ p }) => eq(p.id, pid));
     },
-    [programsCollection],
+    [programsCollection, programId],
 );
 
 const errorMessage = ref("");
@@ -329,7 +335,8 @@ watch(
                 description:
                     typeof p.description === "string" ? p.description : "",
                 themeColor:
-                    typeof p.theme_color === "string" && p.theme_color.length > 0
+                    typeof p.theme_color === "string" &&
+                    p.theme_color.length > 0
                         ? String(p.theme_color).trim()
                         : "#08758A",
                 slug: String(p.slug ?? "")
@@ -342,16 +349,13 @@ watch(
                         typeof p.line_1 === "string" ? String(p.line_1) : "",
                     line_2:
                         typeof p.line_2 === "string" ? String(p.line_2) : "",
-                    city:
-                        typeof p.city === "string" ? String(p.city) : "",
+                    city: typeof p.city === "string" ? String(p.city) : "",
                     postal_code:
                         typeof p.postal_code === "string"
                             ? String(p.postal_code)
                             : "",
                     country:
-                        typeof p.country === "string"
-                            ? String(p.country)
-                            : "",
+                        typeof p.country === "string" ? String(p.country) : "",
                 },
                 imagesModel: null,
             } satisfies ProgramEditFormValues,
@@ -383,7 +387,10 @@ const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
 
         col.update(id, (draft) => {
             draft.name = values.name.trim();
-            draft.description = values.description.trim().length > 0 ? values.description.trim() : null;
+            draft.description =
+                values.description.trim().length > 0
+                    ? values.description.trim()
+                    : null;
             draft.theme_color = themeColor;
             draft.slug = values.slug;
             draft.is_active = values.isActive ? 1 : 0;

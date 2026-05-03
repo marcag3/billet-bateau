@@ -1,38 +1,38 @@
-import { defineStore } from 'pinia';
+import { defineStore } from "pinia";
 import {
     completeSetup as completeSetupRequest,
     fetchCurrentSession,
     fetchSetupStatus as fetchSetupStatusRequest,
     login as loginRequest,
     logout as logoutRequest,
-} from '../models/auth.api';
-import { translate } from '../utilities/i18n';
-import { setProgramSyncScopeId } from '../powersync/app-powersync.runtime';
+} from "../models/auth.api";
+import { translate } from "../utilities/i18n";
+import { setActiveProgramId } from "../powersync/app-powersync.runtime";
 
-const AUTH_MARKER_STORAGE_KEY = 'app.hasAuthenticatedOnce';
+const AUTH_MARKER_STORAGE_KEY = "app.hasAuthenticatedOnce";
 
 function readInitialAuthMarker() {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
         return false;
     }
 
-    return window.localStorage.getItem(AUTH_MARKER_STORAGE_KEY) === '1';
+    return window.localStorage.getItem(AUTH_MARKER_STORAGE_KEY) === "1";
 }
 
 function persistAuthMarker(enabled) {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
         return;
     }
 
     if (enabled) {
-        window.localStorage.setItem(AUTH_MARKER_STORAGE_KEY, '1');
+        window.localStorage.setItem(AUTH_MARKER_STORAGE_KEY, "1");
         return;
     }
 
     window.localStorage.removeItem(AUTH_MARKER_STORAGE_KEY);
 }
 
-export const useAuthStore = defineStore('auth', {
+export const useAuthStore = defineStore("auth", {
     state: () => ({
         isInitialized: false,
         isAuthenticated: false,
@@ -40,7 +40,7 @@ export const useAuthStore = defineStore('auth', {
         installRequired: null,
         user: null,
         requiresReauthentication: false,
-        authErrorMessage: '',
+        authErrorMessage: "",
     }),
     actions: {
         markAuthenticated(user) {
@@ -48,11 +48,11 @@ export const useAuthStore = defineStore('auth', {
             this.user = user;
             this.hasAuthenticatedBefore = true;
             this.requiresReauthentication = false;
-            this.authErrorMessage = '';
+            this.authErrorMessage = "";
 
             persistAuthMarker(true);
         },
-        markAuthExpired(message = translate('auth.sessionExpired')) {
+        markAuthExpired(message = translate("auth.sessionExpired")) {
             this.isAuthenticated = false;
             this.user = null;
             this.requiresReauthentication = true;
@@ -63,7 +63,11 @@ export const useAuthStore = defineStore('auth', {
                 return;
             }
 
-            await this.refreshSession({ allowOfflineFallback: true, markInitialized: true, silent: true });
+            await this.refreshSession({
+                allowOfflineFallback: true,
+                markInitialized: true,
+                silent: true,
+            });
 
             try {
                 await this.fetchSetupStatus({ force: true });
@@ -79,7 +83,11 @@ export const useAuthStore = defineStore('auth', {
             this.installRequired = await fetchSetupStatusRequest();
             return this.installRequired;
         },
-        async refreshSession({ allowOfflineFallback = false, markInitialized = false, silent = false } = {}) {
+        async refreshSession({
+            allowOfflineFallback = false,
+            markInitialized = false,
+            silent = false,
+        } = {}) {
             try {
                 const session = await fetchCurrentSession();
 
@@ -89,7 +97,9 @@ export const useAuthStore = defineStore('auth', {
                     this.requiresReauthentication = false;
 
                     if (!silent) {
-                        this.authErrorMessage = translate('auth.pleaseSignInContinue');
+                        this.authErrorMessage = translate(
+                            "auth.pleaseSignInContinue",
+                        );
                     }
 
                     if (markInitialized) {
@@ -107,7 +117,11 @@ export const useAuthStore = defineStore('auth', {
 
                 return true;
             } catch (error) {
-                if (allowOfflineFallback && !navigator.onLine && this.hasAuthenticatedBefore) {
+                if (
+                    allowOfflineFallback &&
+                    !navigator.onLine &&
+                    this.hasAuthenticatedBefore
+                ) {
                     if (markInitialized) {
                         this.isInitialized = true;
                     }
@@ -120,7 +134,9 @@ export const useAuthStore = defineStore('auth', {
 
                 if (!silent) {
                     this.authErrorMessage =
-                        error instanceof Error ? error.message : translate('auth.unableVerifySession');
+                        error instanceof Error
+                            ? error.message
+                            : translate("auth.unableVerifySession");
                 }
 
                 if (markInitialized) {
@@ -151,13 +167,13 @@ export const useAuthStore = defineStore('auth', {
                 passwordConfirmation,
             });
 
-            void setProgramSyncScopeId('');
+            setActiveProgramId("");
 
             this.isAuthenticated = false;
             this.user = null;
             this.hasAuthenticatedBefore = false;
             this.requiresReauthentication = false;
-            this.authErrorMessage = '';
+            this.authErrorMessage = "";
             this.installRequired = false;
 
             persistAuthMarker(false);
@@ -165,13 +181,13 @@ export const useAuthStore = defineStore('auth', {
         async logout() {
             await logoutRequest();
 
-            void setProgramSyncScopeId('');
+            setActiveProgramId("");
 
             this.isAuthenticated = false;
             this.user = null;
             this.hasAuthenticatedBefore = false;
             this.requiresReauthentication = false;
-            this.authErrorMessage = '';
+            this.authErrorMessage = "";
 
             persistAuthMarker(false);
         },
@@ -204,7 +220,7 @@ export const useAuthStore = defineStore('auth', {
         },
         clearReauthenticationPrompt() {
             this.requiresReauthentication = false;
-            this.authErrorMessage = '';
+            this.authErrorMessage = "";
         },
     },
 });
