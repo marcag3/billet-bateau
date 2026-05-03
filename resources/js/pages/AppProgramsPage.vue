@@ -3,9 +3,7 @@
         <AppPageHeader :title="t('programsList.title')">
             <template #actions>
                 <q-btn
-                    unelevated
-                    color="white"
-                    text-color="primary"
+                    color="secondary"
                     icon="add"
                     :label="t('programsList.addProgram')"
                     :to="{ name: 'programs.create' }"
@@ -93,7 +91,7 @@
                         <q-card-actions align="evenly">
                             <q-btn
                                 icon="edit"
-                                color="primary"
+                                color="secondary"
                                 flat
                                 no-caps
                                 :label="t('programsList.editProgram')"
@@ -104,7 +102,7 @@
                             />
                             <q-btn
                                 icon="dashboard"
-                                color="primary"
+                                color="secondary"
                                 flat
                                 no-caps
                                 :label="t('programsList.controlPanel')"
@@ -115,7 +113,7 @@
                             />
                             <q-btn
                                 icon="confirmation_number"
-                                color="primary"
+                                color="secondary"
                                 flat
                                 no-caps
                                 :label="t('programsList.checkinManager')"

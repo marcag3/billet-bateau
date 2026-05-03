@@ -1,5 +1,5 @@
 <template>
-    <q-layout view="lHh LpR fFf" class="app-shell">
+    <q-layout view="lHh LpR fFf">
         <q-header elevated reveal class="app-header">
             <q-toolbar class="app-toolbar">
                 <q-btn
@@ -14,7 +14,11 @@
                 />
                 <q-toolbar-title class="app-toolbar-title">
                     <q-btn-dropdown
-                        v-if="showAppNav && hasSelectedProgram && allowsInPlaceProgramIdSwitch"
+                        v-if="
+                            showAppNav &&
+                            hasSelectedProgram &&
+                            allowsInPlaceProgramIdSwitch
+                        "
                         flat
                         dense
                         color="white"
@@ -165,8 +169,7 @@ const layoutStore = useAppLayoutStore();
 const { t, locale } = useI18n();
 const leftDrawerOpen = ref(false);
 
-const baseDocumentTitle =
-    typeof document !== "undefined" ? document.title : "";
+const baseDocumentTitle = typeof document !== "undefined" ? document.title : "";
 
 watch(
     [() => layoutStore.pageLayoutOverrides?.documentTitleKey, locale],
@@ -239,15 +242,12 @@ async function logout() {
 </script>
 
 <style scoped>
-.app-shell {
-    background: linear-gradient(280deg,
-    color-mix(in lch, var(--q-accent) 30%, white) 0%,
-    color-mix(in lch, var(--q-positive) 40%, white) 40%
-      );
-}
-
 .app-header {
-    background: color-mix(var(--q-secondary) 90%, white) ;
+    background: linear-gradient(
+        180deg,
+        color-mix(var(--q-primary) 90%, white) 90%,
+        var(--q-secondary)
+    );
     color: #ffffff;
 }
 

@@ -6,16 +6,15 @@
  */
 :root {
     /* ── Quasar brand colors (single source of truth) ─ */
-    --q-primary:    hsla(358, 84%, 52%, 1);
-    --q-secondary:  hsla(226, 97%, 12%, 1);
-    --q-accent:     hsla(255, 2%, 62%, 1);
-    --q-positive:   hsla(195, 89%, 28%, 1);
-    --q-negative:   hsla(358, 84%, 52%, 1);
-    --q-info:       hsla(195, 89%, 28%, 1);
-    --q-warning:    hsla(54, 100%, 73%, 1);
-    --q-dark:       hsla(226, 97%, 12%, 1);
-    --q-dark-page:  hsla(226, 97%, 7%, 1);
-
+    --q-primary: hsla(226, 97%, 12%, 1);
+    --q-secondary: hsla(358, 84%, 52%, 1);
+    --q-accent: hsla(255, 2%, 62%, 1);
+    --q-positive: hsla(195, 89%, 28%, 1);
+    --q-negative: hsla(358, 84%, 52%, 1);
+    --q-info: hsla(195, 89%, 28%, 1);
+    --q-warning: hsla(54, 100%, 73%, 1);
+    --q-dark: hsla(226, 97%, 12%, 1);
+    --q-dark-page: hsla(226, 97%, 7%, 1);
 
     /* ── Radii ──────────────────────────────────────── */
     --app-radius-lg: 1.15rem;
