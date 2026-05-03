@@ -47,7 +47,7 @@ const showHomeTab = computed(
 }
 
 .public-header {
-    background: linear-gradient(90deg, var(--deep-navy) 0%, hsla(222, 86%, 28%, 1) 50%, var(--racing-red) 100%);
+    background: linear-gradient(90deg, var(--q-secondary) 0%, hsla(222, 86%, 28%, 1) 50%, var(--q-primary) 100%);
     color: #ffffff;
 }
 

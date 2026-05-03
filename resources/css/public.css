@@ -1,4 +1,4 @@
-@import 'tokens.css';
+@import "tokens.css";
 
 .public-shell {
     min-height: 100vh;
@@ -7,10 +7,20 @@
     margin: 0;
     padding: 2rem;
     background:
-        linear-gradient(130deg, hsla(226, 97%, 12%, 0.08) 0%, rgba(255, 255, 255, 0.96) 40%),
+        linear-gradient(
+            130deg,
+            hsla(226, 97%, 12%, 0.08) 0%,
+            rgba(255, 255, 255, 0.96) 40%
+        ),
         linear-gradient(180deg, #f6f8ff 0%, #eef2ff 100%);
-    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    color: var(--deep-navy);
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    color: var(--q-secondary);
 }
 
 .public-card {
@@ -34,7 +44,11 @@
 
 .cta-link {
     display: inline-block;
-    background: linear-gradient(90deg, var(--racing-red) 0%, hsla(358, 84%, 62%, 1) 100%);
+    background: linear-gradient(
+        90deg,
+        var(--q-primary) 0%,
+        hsla(358, 84%, 62%, 1) 100%
+    );
     color: #fff;
     text-decoration: none;
     border-radius: 9999px;

@@ -249,22 +249,23 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
         const themeColor = normalizeThemeColor(values.themeColor);
         const addressFields = normalizeAddressRowFields({ ...values.address });
 
-        await col
-            .insert({
-                id,
-                name: values.name.trim(),
-                description: values.description.trim().length > 0 ? values.description.trim() : null,
-                theme_color: themeColor,
-                is_active: values.isActive ? 1 : 0,
-                is_archived: 0,
-                slug: buildInitialProgramSlug(values.name, id),
-                line_1: addressFields.line_1,
-                line_2: addressFields.line_2,
-                city: addressFields.city,
-                postal_code: addressFields.postal_code,
-                country: addressFields.country,
-            })
-            .isPersisted.promise;
+        await col.insert({
+            id,
+            name: values.name.trim(),
+            description:
+                values.description.trim().length > 0
+                    ? values.description.trim()
+                    : null,
+            theme_color: themeColor,
+            is_active: values.isActive ? 1 : 0,
+            is_archived: 0,
+            slug: buildInitialProgramSlug(values.name, id),
+            line_1: addressFields.line_1,
+            line_2: addressFields.line_2,
+            city: addressFields.city,
+            postal_code: addressFields.postal_code,
+            country: addressFields.country,
+        }).isPersisted.promise;
 
         void refreshOutboxSnapshot();
 

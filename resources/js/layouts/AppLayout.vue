@@ -241,13 +241,13 @@ async function logout() {
 <style scoped>
 .app-shell {
     background: linear-gradient(280deg,
-    color-mix(in lch, var(--rosy-granite) 30%, white) 0%,
-    color-mix(in lch, var(--cerulean) 40%, white) 40%
+    color-mix(in lch, var(--q-accent) 30%, white) 0%,
+    color-mix(in lch, var(--q-positive) 40%, white) 40%
       );
 }
 
 .app-header {
-    background: color-mix(var(--deep-navy) 90%, white) ;
+    background: color-mix(var(--q-secondary) 90%, white) ;
     color: #ffffff;
 }
 
@@ -281,14 +281,14 @@ async function logout() {
 
 .app-nav-list :deep(.app-nav-item--active) {
     background: hsla(358, 84%, 52%, 0.1);
-    color: var(--deep-navy);
+    color: var(--q-secondary);
     font-weight: 600;
-    border-left: 3px solid var(--racing-red);
+    border-left: 3px solid var(--q-primary);
 }
 
 .app-nav-list :deep(.app-nav-item--back) {
     font-weight: 600;
-    color: var(--deep-navy);
+    color: var(--q-secondary);
 }
 
 .app-locale-toggle {
