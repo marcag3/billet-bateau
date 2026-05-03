@@ -79,10 +79,10 @@ async function onCreateSubmit() {
     isSubmitting.value = true;
     await runWithNotify(
         async () => {
-            await createTemplateDayRow({ name: createName.value });
+            const id = await createTemplateDayRow({ name: createName.value });
             await router.push({
-                name: "template-days.list",
-                params: { programId: programId.value },
+                name: "template-days.edit",
+                params: { programId: programId.value, templateDayId: id },
             });
         },
         {

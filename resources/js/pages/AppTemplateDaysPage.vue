@@ -58,6 +58,33 @@
                             td.name ?? "Untitled"
                         }}</q-item-label>
                     </q-item-section>
+                    <q-item-section side>
+                        <div class="row q-gutter-xs">
+                            <q-btn
+                                flat
+                                round
+                                dense
+                                icon="edit"
+                                :aria-label="t('templateDaysList.edit')"
+                                :to="{
+                                    name: 'template-days.edit',
+                                    params: {
+                                        programId: programId,
+                                        templateDayId: String(td.id),
+                                    },
+                                }"
+                            />
+                            <q-btn
+                                flat
+                                round
+                                dense
+                                icon="delete"
+                                color="negative"
+                                :aria-label="t('templateDaysList.delete')"
+                                @click="confirmDeleteTemplateDay(td)"
+                            />
+                        </div>
+                    </q-item-section>
                 </q-item>
             </AppEntityList>
         </AppBootstrapGate>
@@ -75,8 +102,12 @@ import {
     getAppPowerSyncBootstrappedRef,
     getProgramsCollection,
     getTemplateDaysCollection,
+    refreshOutboxSnapshot,
     useAppPowerSyncOutbox,
 } from "../powersync/app-powersync.runtime";
+import { useConfirmDialog } from "../composables/useConfirmDialog";
+import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
+import type { TemplateDayOutput } from "../powersync/template-days.collection";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
@@ -87,6 +118,8 @@ import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 
 const { t } = useI18n();
 const route = useRoute();
+const { confirm } = useConfirmDialog();
+const { notifyError } = useNotifyErrorFromCatch();
 const templateDaysCollection = getTemplateDaysCollection();
 
 const { data: templateDays } = useLiveQuery(
@@ -134,4 +167,22 @@ const selectedProgramName = computed(() => {
     if (id.length === 0) return "";
     return programNameById.value.get(id) ?? id;
 });
+
+function confirmDeleteTemplateDay(td: TemplateDayOutput) {
+    const name = String(td.name ?? "Untitled");
+    confirm({
+        title: t("templateDaysList.deleteConfirmTitle"),
+        message: t("templateDaysList.deleteConfirmMessage", { name }),
+        onOk: async () => {
+            const col = templateDaysCollection.value;
+            if (!col) return;
+            try {
+                await col.delete(String(td.id)).isPersisted.promise;
+                void refreshOutboxSnapshot();
+            } catch (e) {
+                notifyError(e, t("templateDaysList.errorGeneric"));
+            }
+        },
+    });
+}
 </script>
