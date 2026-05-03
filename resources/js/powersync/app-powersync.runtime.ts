@@ -202,38 +202,33 @@ async function resolveAuthenticatedUserId() {
     return String(u.id);
 }
 
+/** @type {Record<string, (db: PowerSyncDatabase, onError: (error: unknown) => void, onLoad?: () => void | (() => void) | Promise<void | (() => void)>) => ReturnType<typeof createProgramsCollection>>} */
 const collectionFactories = {
-    programs: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
+    programs: (db, onError, onLoad) =>
         createProgramsCollection(db, (error) => {
             programsDeserializationError.value = error;
             onError(error);
-        }),
-    boat_types: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
-        createBoatTypesCollection(db, onError),
-    boats: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
-        createBoatsCollection(db, onError),
-    trips: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
-        createTripsCollection(db, onError),
-    ticket_types: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
-        createTicketTypesCollection(db, onError),
-    booking_tickets: (
-        db: PowerSyncDatabase,
-        onError: (error: unknown) => void,
-    ) => createBookingTicketsCollection(db, onError),
-    water_routes: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
-        createWaterRoutesCollection(db, onError),
-    template_days: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
-        createTemplateDaysCollection(db, onError),
-    template_day_slots: (
-        db: PowerSyncDatabase,
-        onError: (error: unknown) => void,
-    ) => createTemplateDaySlotsCollection(db, onError),
-    template_day_dates: (
-        db: PowerSyncDatabase,
-        onError: (error: unknown) => void,
-    ) => createTemplateDayDatesCollection(db, onError),
-    media: (db: PowerSyncDatabase, onError: (error: unknown) => void) =>
-        createMediaCollection(db, onError),
+        }, onLoad),
+    boat_types: (db, onError, onLoad) =>
+        createBoatTypesCollection(db, onError, onLoad),
+    boats: (db, onError, onLoad) =>
+        createBoatsCollection(db, onError, onLoad),
+    trips: (db, onError, onLoad) =>
+        createTripsCollection(db, onError, onLoad),
+    ticket_types: (db, onError, onLoad) =>
+        createTicketTypesCollection(db, onError, onLoad),
+    booking_tickets: (db, onError, onLoad) =>
+        createBookingTicketsCollection(db, onError, onLoad),
+    water_routes: (db, onError, onLoad) =>
+        createWaterRoutesCollection(db, onError, onLoad),
+    template_days: (db, onError, onLoad) =>
+        createTemplateDaysCollection(db, onError, onLoad),
+    template_day_slots: (db, onError, onLoad) =>
+        createTemplateDaySlotsCollection(db, onError, onLoad),
+    template_day_dates: (db, onError, onLoad) =>
+        createTemplateDayDatesCollection(db, onError, onLoad),
+    media: (db, onError, onLoad) =>
+        createMediaCollection(db, onError, onLoad),
 };
 
 /**
@@ -293,31 +288,30 @@ export async function bootstrapAppPowerSync() {
                     ];
                 if (!factory) continue;
 
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const collection: any = factory(db, sharedOnError);
+                const onLoad =
+                    name === "programs"
+                        ? async () => {
+                              const sub = await db
+                                  .syncStream("user_scope")
+                                  .subscribe();
+                              return () => {
+                                  sub.unsubscribe();
+                              };
+                          }
+                        : async () => {
+                              const pid = activeProgramIdRef.value.trim();
+                              if (pid.length === 0) return;
+                              const sub = await db
+                                  .syncStream("program_scope", {
+                                      program_id: pid,
+                                  })
+                                  .subscribe();
+                              return () => {
+                                  sub.unsubscribe();
+                              };
+                          };
 
-                if (name === "programs") {
-                    collection.onLoad(async () => {
-                        const sub = await db
-                            .syncStream("user_scope")
-                            .subscribe();
-                        return () => {
-                            sub.unsubscribe();
-                        };
-                    });
-                } else {
-                    collection.onLoad(async () => {
-                        const pid = activeProgramIdRef.value.trim();
-                        if (pid.length === 0) return;
-                        const sub = await db
-                            .syncStream("program_scope", { program_id: pid })
-                            .subscribe();
-                        return () => {
-                            sub.unsubscribe();
-                        };
-                    });
-                }
-
+                const collection = factory(db, sharedOnError, onLoad);
                 collectionRefs[name].value = collection;
             }
 

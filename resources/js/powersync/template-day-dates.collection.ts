@@ -27,6 +27,7 @@ export const templateDayDatesDeserializationSchema = z.object({
 export function createTemplateDayDatesCollection(
     database: import('@powersync/web').PowerSyncDatabase,
     onError: (error: unknown) => void,
+    onLoad?: () => void | (() => void) | Promise<void | (() => void)>,
 ) {
     return createCollection(
         powerSyncCollectionOptions({
@@ -36,6 +37,7 @@ export function createTemplateDayDatesCollection(
             onDeserializationError: (error) => {
                 onError(error);
             },
+            ...(onLoad ? { onLoad } : {}),
         }),
     );
 }

@@ -33,6 +33,7 @@ export const boatsDeserializationSchema = z.object({
 export function createBoatsCollection(
     database: import('@powersync/web').PowerSyncDatabase,
     onError: (error: unknown) => void,
+    onLoad?: () => void | (() => void) | Promise<void | (() => void)>,
 ) {
     return createCollection(
         powerSyncCollectionOptions({
@@ -42,6 +43,7 @@ export function createBoatsCollection(
             onDeserializationError: (error) => {
                 onError(error);
             },
+            ...(onLoad ? { onLoad } : {}),
         }),
     );
 }

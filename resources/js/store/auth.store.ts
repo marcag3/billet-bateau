@@ -71,7 +71,8 @@ export const useAuthStore = defineStore("auth", {
 
             try {
                 await this.fetchSetupStatus({ force: true });
-            } catch {
+            } catch (error) {
+                console.error(error);
                 this.installRequired = false;
             }
         },

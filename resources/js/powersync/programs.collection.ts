@@ -26,6 +26,7 @@ export type ProgramOutput = z.output<typeof programSchema>;
 export function createProgramsCollection(
     database: import('@powersync/web').PowerSyncDatabase,
     onError: (error: unknown) => void,
+    onLoad?: () => void | (() => void) | Promise<void | (() => void)>,
 ) {
     return createCollection(
         powerSyncCollectionOptions({
@@ -35,6 +36,7 @@ export function createProgramsCollection(
             onDeserializationError: (error) => {
                 onError(error);
             },
+            ...(onLoad ? { onLoad } : {}),
         }),
     );
 }

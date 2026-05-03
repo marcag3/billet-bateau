@@ -33,6 +33,7 @@ export const tripsDeserializationSchema = z.object({
 export function createTripsCollection(
     database: import('@powersync/web').PowerSyncDatabase,
     onError: (error: unknown) => void,
+    onLoad?: () => void | (() => void) | Promise<void | (() => void)>,
 ) {
     return createCollection(
         powerSyncCollectionOptions({
@@ -42,6 +43,7 @@ export function createTripsCollection(
             onDeserializationError: (error) => {
                 onError(error);
             },
+            ...(onLoad ? { onLoad } : {}),
         }),
     );
 }

@@ -22,6 +22,7 @@ export type TicketTypeOutput = z.output<typeof ticketTypesSchema>;
 export function createTicketTypesCollection(
     database: import('@powersync/web').PowerSyncDatabase,
     onError: (error: unknown) => void,
+    onLoad?: () => void | (() => void) | Promise<void | (() => void)>,
 ) {
     return createCollection(
         powerSyncCollectionOptions({
@@ -31,6 +32,7 @@ export function createTicketTypesCollection(
             onDeserializationError: (error) => {
                 onError(error);
             },
+            ...(onLoad ? { onLoad } : {}),
         }),
     );
 }
