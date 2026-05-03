@@ -225,6 +225,7 @@ const route = useRoute();
 const router = useRouter();
 const $q = useQuasar();
 const programsCollection = getProgramsCollection();
+const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const { data: programs } = useLiveQuery(
     (queryBuilder) => {
@@ -239,8 +240,6 @@ const { data: programs } = useLiveQuery(
 const errorMessage = ref("");
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const lastHydratedSignature = ref("");
-
-const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const showNotFound = computed(() => {
     if (!hasBootstrapped.value) {

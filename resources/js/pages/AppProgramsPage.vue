@@ -11,16 +11,6 @@
             </template>
         </AppPageHeader>
 
-        <AppAlertBanner
-            v-if="hasOutboxCommitError"
-            variant="warning"
-            dismissible
-            :dismiss-label="t('common.dismiss')"
-            @dismiss="dismissOutboxCommitError"
-        >
-            {{ outboxCommitError }}
-        </AppAlertBanner>
-
         <AppBootstrapGate :ready="hasBootstrapped">
             <q-tabs
                 v-model="programTab"
@@ -133,18 +123,16 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useQuasar } from "quasar";
+
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import {
     getAppPowerSyncBootstrappedRef,
     getMediaCollection,
     getProgramsCollection,
-    useAppPowerSyncOutbox,
 } from "../powersync/app-powersync.runtime";
 import type { ProgramOutput } from "../powersync/programs.collection";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
-import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 import { usePageLayout } from "../composables/usePageLayout";
@@ -154,7 +142,7 @@ const PROGRAM_MODEL = "App\\Models\\Program";
 const { t } = useI18n();
 
 usePageLayout({ documentTitleKey: "programsList.title" });
-const $q = useQuasar();
+
 const programsCollection = getProgramsCollection();
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 
@@ -170,9 +158,6 @@ const { data: programs } = useLiveQuery(
     },
     [programsCollection],
 );
-
-const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
-    useAppPowerSyncOutbox();
 
 const mediaCollection = getMediaCollection();
 const { data: mediaRows } = useLiveQuery(
@@ -276,13 +261,6 @@ function placeholderStyle(p: ProgramOutput) {
     const hex =
         typeof p.theme_color === "string" ? p.theme_color.trim() : "#e0e0e0";
     return { background: hex || "#e0e0e0" };
-}
-
-function copyPublicUrl(p: ProgramOutput) {
-    const path = "/programs/" + encodeURIComponent(String(p.slug ?? "").trim());
-    const url = `${window.location.origin}${path}`;
-    void navigator.clipboard.writeText(url);
-    $q.notify({ type: "positive", message: t("programsList.copied") });
 }
 </script>
 

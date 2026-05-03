@@ -10,22 +10,7 @@
  *   trips  ->  water_routes (trips.water_route_id -> water_routes.id)
  */
 
-import { eq } from "@tanstack/db";
-
-interface QbChain {
-    from: (s: Record<string, unknown>) => QbChain;
-    leftJoin: (
-        s: Record<string, unknown>,
-        on: (refs: Record<string, Record<string, unknown>>) => unknown,
-    ) => QbChain;
-    select: (
-        fn: (
-            refs: Record<string, Record<string, unknown>>,
-        ) => Record<string, unknown>,
-    ) => QbChain;
-    where: (...args: unknown[]) => QbChain;
-    orderBy: (...args: unknown[]) => QbChain;
-}
+import { eq, type Collection, type InitialQueryBuilder } from "@tanstack/db";
 
 // ---------------------------------------------------------------------------
 // Boats + BoatType join
@@ -61,11 +46,10 @@ export interface BoatWithBoatTypeRow {
  * })
  * ```
  */
-export function joinBoatsWithBoatTypes(
-    qb: QbChain,
-    boatsCollection: Record<string, unknown>,
-    boatTypesCollection: Record<string, unknown>,
-): QbChain {
+export function joinBoatsWithBoatTypes<
+    B extends Collection<any, any>,
+    BT extends Collection<any, any>,
+>(qb: InitialQueryBuilder, boatsCollection: B, boatTypesCollection: BT) {
     return qb
         .from({ b: boatsCollection })
         .leftJoin({ bt: boatTypesCollection }, ({ b, bt }) =>
@@ -121,12 +105,16 @@ export interface TripWithRelationsRow {
  * })
  * ```
  */
-export function joinTripsWithRelations(
-    qb: QbChain,
-    tripsCollection: Record<string, unknown>,
-    boatTypesCollection: Record<string, unknown>,
-    waterRoutesCollection: Record<string, unknown>,
-): QbChain {
+export function joinTripsWithRelations<
+    T extends Collection<any, any>,
+    BT extends Collection<any, any>,
+    WR extends Collection<any, any>,
+>(
+    qb: InitialQueryBuilder,
+    tripsCollection: T,
+    boatTypesCollection: BT,
+    waterRoutesCollection: WR,
+) {
     return qb
         .from({ t: tripsCollection })
         .leftJoin({ bt: boatTypesCollection }, ({ t, bt }) =>

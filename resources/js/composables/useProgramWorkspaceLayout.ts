@@ -5,7 +5,6 @@ import { useLiveQuery } from "@tanstack/vue-db";
 import { useAuthStore } from "../store/auth.store";
 import {
     getProgramsCollection,
-    getAppPowerSyncBootstrappedRef,
 } from "../powersync/app-powersync.runtime";
 import { useAppLayoutStore } from "../store/app-layout.store";
 

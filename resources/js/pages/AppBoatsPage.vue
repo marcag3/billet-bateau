@@ -185,10 +185,10 @@ const { data: allBoats } = useLiveQuery(
         const pid = activeProgramIdRef.value.trim();
         if (!col || !btCol || pid.length === 0) return undefined;
         return joinBoatsWithBoatTypes(queryBuilder, col, btCol)
-            .where(({ b }: any) => eq(b.program_id, pid))
-            .orderBy(({ b }: any) => b.updated_at, 'desc')
-            .orderBy(({ b }: any) => b.created_at, 'desc')
-            .orderBy(({ b }: any) => b.id, 'desc');
+            .where(({ b }: Record<string, Record<string, unknown>>) => eq(b.program_id, pid))
+            .orderBy(({ b }: Record<string, Record<string, unknown>>) => b.updated_at, 'desc')
+            .orderBy(({ b }: Record<string, Record<string, unknown>>) => b.created_at, 'desc')
+            .orderBy(({ b }: Record<string, Record<string, unknown>>) => b.id, 'desc');
     },
     [boatsCollection, boatTypesCollection, activeProgramIdRef],
 );

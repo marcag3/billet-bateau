@@ -125,10 +125,10 @@ const { data: trips } = useLiveQuery(
         const pid = getActiveProgramIdRef().value.trim();
         if (!col || !btCol || !wrCol || pid.length === 0) return undefined;
         return joinTripsWithRelations(queryBuilder, col, btCol, wrCol)
-            .where(({ t }: any) => eq(t.program_id, pid))
-            .orderBy(({ t }: any) => t.scheduled_departure_at, "desc")
-            .orderBy(({ t }: any) => t.updated_at, "desc")
-            .orderBy(({ t }: any) => t.id, "desc");
+            .where(({ t }: Record<string, Record<string, unknown>>) => eq(t.program_id, pid))
+            .orderBy(({ t }: Record<string, Record<string, unknown>>) => t.scheduled_departure_at, "desc")
+            .orderBy(({ t }: Record<string, Record<string, unknown>>) => t.updated_at, "desc")
+            .orderBy(({ t }: Record<string, Record<string, unknown>>) => t.id, "desc");
     },
     [
         tripsCollection,
@@ -174,7 +174,7 @@ const selectedProgramName = computed(() => {
     return programNameById.value.get(id) ?? id;
 });
 
-function formatDeparture(tr: { scheduled_departure_at?: string | null }) {
+function formatDeparture(tr: { scheduled_departure_at?: unknown }) {
     const raw = tr.scheduled_departure_at;
     if (raw == null || String(raw) === "") {
         return "—";

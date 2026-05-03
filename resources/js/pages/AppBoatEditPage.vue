@@ -189,6 +189,9 @@ const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
 const boatsCollection = getBoatsCollection();
 
+const programId = computed(() => String(route.params.programId ?? "").trim());
+const boatId = computed(() => String(route.params.boatId ?? "").trim());
+
 const { data: boats } = useLiveQuery(
     (queryBuilder) => {
         const col = boatsCollection.value;
@@ -241,9 +244,6 @@ const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
     useAppPowerSyncOutbox();
 
 const isDeleting = ref(false);
-
-const programId = computed(() => String(route.params.programId ?? "").trim());
-const boatId = computed(() => String(route.params.boatId ?? "").trim());
 
 const backTo = computed(() => ({
     name: "boats.list" as const,
