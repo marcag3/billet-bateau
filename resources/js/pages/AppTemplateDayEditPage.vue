@@ -166,6 +166,7 @@
                                     dense
                                     icon="delete"
                                     color="negative"
+                                    :disable="isDeletingSlot"
                                     :aria-label="t('templateDaysList.deleteSlot')"
                                     @click="confirmDeleteSlot(slot)"
                                 />
@@ -366,6 +367,7 @@ import {
     patchTemplateDaySlotRow,
     deleteTemplateDaySlotRow,
 } from "../models/template-day-slots/template-day-slots.model";
+import { normalizeTime } from "../utilities/datetime-input";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
@@ -621,6 +623,7 @@ const slotDialogOpen = ref(false);
 const editingSlotId = ref<string | null>(null);
 const slotForm = ref<SlotFormState>(createEmptySlotForm());
 const isSavingSlot = ref(false);
+const isDeletingSlot = ref(false);
 
 const ticketPolicyOptions = [
     {
@@ -820,17 +823,6 @@ async function onSaveSlotSubmit() {
     isSavingSlot.value = false;
 }
 
-function normalizeTime(val: string): string {
-    // Accept HH:MM from time input, ensure HH:MM:SS
-    if (val.length === 5) {
-        return val + ":00";
-    }
-    if (val.length === 8 && val[2] === ":" && val[5] === ":") {
-        return val;
-    }
-    return val;
-}
-
 function formatDepartureTime(
     raw: string | null | undefined,
 ): string {
@@ -891,11 +883,13 @@ async function moveSlotDown(
 // --- Delete slot ---
 
 function confirmDeleteSlot(slot: TemplateDaySlotOutput) {
+    if (isDeletingSlot.value) return;
     const time = formatDepartureTime(slot.departure_time);
     confirm({
         title: t("templateDaysList.deleteSlotConfirmTitle"),
         message: t("templateDaysList.deleteSlotConfirmMessage", { time }),
         onOk: async () => {
+            isDeletingSlot.value = true;
             try {
                 await deleteTemplateDaySlotRow(String(slot.id));
                 $q.notify({
@@ -904,6 +898,8 @@ function confirmDeleteSlot(slot: TemplateDaySlotOutput) {
                 });
             } catch (e) {
                 notifyError(e, t("templateDaysList.errorGeneric"));
+            } finally {
+                isDeletingSlot.value = false;
             }
         },
     });
