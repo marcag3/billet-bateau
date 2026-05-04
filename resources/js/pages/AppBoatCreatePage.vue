@@ -6,18 +6,6 @@
         :back-to="backTo"
         :back-label="t('boatsList.backToList')"
     >
-        <template #alerts>
-            <AppAlertBanner
-                v-if="hasOutboxCommitError"
-                variant="warning"
-                dismissible
-                :dismiss-label="t('common.dismiss')"
-                @dismiss="dismissOutboxCommitError"
-            >
-                {{ outboxCommitError }}
-            </AppAlertBanner>
-        </template>
-
         <AppCardSection :label="t('boatsList.addNew')">
             <q-form @submit.prevent="onCreateSubmit">
                 <AppFormStack>
@@ -91,7 +79,6 @@ import { ulid } from "ulid";
 import { eq } from "@tanstack/db";
 import {
     getAppPowerSyncBootstrappedRef,
-    useAppPowerSyncOutbox,
     getBoatTypesCollection,
     getBoatsCollection,
     getCurrentUserIdRef,
@@ -100,7 +87,6 @@ import {
 } from "../powersync/app-powersync.runtime";
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import AppEntityCreatePageLayout from "../layouts/AppEntityCreatePageLayout.vue";
-import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
 
@@ -126,9 +112,6 @@ const { data: boatTypes } = useLiveQuery(
 const { runWithNotify } = useNotifyAsyncAction();
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
-const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
-    useAppPowerSyncOutbox();
-
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const backTo = computed(() => ({

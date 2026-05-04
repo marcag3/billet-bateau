@@ -5,16 +5,6 @@
             :description="t('waterRoutesList.description')"
         />
 
-        <AppAlertBanner
-            v-if="hasOutboxCommitError"
-            variant="warning"
-            dismissible
-            :dismiss-label="t('common.dismiss')"
-            @dismiss="dismissOutboxCommitError"
-        >
-            {{ outboxCommitError }}
-        </AppAlertBanner>
-
         <AppBootstrapGate
             :ready="hasBootstrapped"
             content-class="q-gutter-y-md"
@@ -162,14 +152,12 @@ import {
     getAppPowerSyncBootstrappedRef,
     getActiveProgramIdRef,
     getWaterRoutesCollection,
-    useAppPowerSyncOutbox,
     refreshOutboxSnapshot,
 } from "../powersync/app-powersync.runtime";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
-import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
@@ -202,9 +190,6 @@ const { data: waterRoutes } = useLiveQuery(
 );
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
-const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
-    useAppPowerSyncOutbox();
-
 const createSchema = createWaterRouteCreateFormSchema(t);
 const { handleSubmit, defineField, meta, isSubmitting, resetForm } =
     useForm<WaterRouteCreateFormValues>({

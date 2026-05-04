@@ -6,18 +6,6 @@
         :back-to="backTo"
         :back-label="t('templateDaysList.backToList')"
     >
-        <template #alerts>
-            <AppAlertBanner
-                v-if="hasOutboxCommitError"
-                variant="warning"
-                dismissible
-                :dismiss-label="t('common.dismiss')"
-                @dismiss="dismissOutboxCommitError"
-            >
-                {{ outboxCommitError }}
-            </AppAlertBanner>
-        </template>
-
         <q-banner
             v-if="showNotFound"
             class="bg-warning text-dark q-mb-md"
@@ -359,7 +347,6 @@ import {
     getTicketTypesCollection,
     getWaterRoutesCollection,
     refreshOutboxSnapshot,
-    useAppPowerSyncOutbox,
 } from "../powersync/app-powersync.runtime";
 import type { TemplateDaySlotOutput } from "../powersync/template-day-slots.collection";
 import {
@@ -372,7 +359,6 @@ import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
 import AppEntityEditPageLayout from "../layouts/AppEntityEditPageLayout.vue";
-import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
@@ -404,11 +390,7 @@ const backTo = computed(() => ({
     params: { programId: programId.value },
 }));
 
-// --- Bootstrap & outbox ---
-
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
-const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
-    useAppPowerSyncOutbox();
 
 // --- Template day query ---
 

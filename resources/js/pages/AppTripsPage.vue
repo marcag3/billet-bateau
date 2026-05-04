@@ -16,16 +16,6 @@
             </AppPageHeader>
         </template>
 
-        <AppAlertBanner
-            v-if="hasOutboxCommitError"
-            variant="warning"
-            dismissible
-            :dismiss-label="t('common.dismiss')"
-            @dismiss="dismissOutboxCommitError"
-        >
-            {{ outboxCommitError }}
-        </AppAlertBanner>
-
         <AppBootstrapGate
             :ready="hasBootstrapped"
             content-class="q-gutter-y-md"
@@ -92,7 +82,6 @@ import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import {
     getAppPowerSyncBootstrappedRef,
-    useAppPowerSyncOutbox,
     getProgramsCollection,
     getBoatTypesCollection,
     getWaterRoutesCollection,
@@ -103,7 +92,6 @@ import {
 import { joinTripsWithRelations } from "../powersync/joined-queries";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
-import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppEntityList from "../components/ui/AppEntityList.vue";
@@ -152,9 +140,6 @@ const { data: programs } = useLiveQuery(
 );
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
-const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
-    useAppPowerSyncOutbox();
-
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
 // O(1) program name lookup via Map instead of O(n) .find()

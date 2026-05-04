@@ -19,16 +19,6 @@
             </AppPageHeader>
         </template>
 
-        <AppAlertBanner
-            v-if="hasOutboxCommitError"
-            variant="warning"
-            dismissible
-            :dismiss-label="t('common.dismiss')"
-            @dismiss="dismissOutboxCommitError"
-        >
-            {{ outboxCommitError }}
-        </AppAlertBanner>
-
         <AppBootstrapGate
             :ready="hasBootstrapped"
             content-class="q-gutter-y-md"
@@ -103,14 +93,12 @@ import {
     getProgramsCollection,
     getTemplateDaysCollection,
     refreshOutboxSnapshot,
-    useAppPowerSyncOutbox,
 } from "../powersync/app-powersync.runtime";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
 import type { TemplateDayOutput } from "../powersync/template-days.collection";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
-import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppEntityList from "../components/ui/AppEntityList.vue";
@@ -147,9 +135,6 @@ const { data: programs } = useLiveQuery(
 );
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
-const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
-    useAppPowerSyncOutbox();
-
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const programNameById = computed(() => {

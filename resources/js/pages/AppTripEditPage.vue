@@ -6,18 +6,6 @@
         :back-to="backTo"
         :back-label="t('tripsList.backToList')"
     >
-        <template #alerts>
-            <AppAlertBanner
-                v-if="hasOutboxCommitError"
-                variant="warning"
-                dismissible
-                :dismiss-label="t('common.dismiss')"
-                @dismiss="dismissOutboxCommitError"
-            >
-                {{ outboxCommitError }}
-            </AppAlertBanner>
-        </template>
-
         <template
             v-if="currentTrip && tripSwitcherOptions.length > 0"
             #quickNav
@@ -175,7 +163,6 @@ import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import {
     getAppPowerSyncBootstrappedRef,
-    useAppPowerSyncOutbox,
     getBoatTypesCollection,
     getWaterRoutesCollection,
     getTripsCollection,
@@ -188,7 +175,6 @@ import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
 import { parsePositiveInt } from "../validation/zod-fields";
 import AppEntityEditPageLayout from "../layouts/AppEntityEditPageLayout.vue";
-import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
 
@@ -261,9 +247,6 @@ const { data: waterRoutes } = useLiveQuery(
 );
 
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
-const { outboxCommitError, hasOutboxCommitError, dismissOutboxCommitError } =
-    useAppPowerSyncOutbox();
-
 const isDeleting = ref(false);
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
