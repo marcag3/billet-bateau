@@ -5,132 +5,123 @@
             :description="t('waterRoutesList.description')"
         />
 
-        <AppBootstrapGate
-            :ready="hasBootstrapped"
-            content-class="q-gutter-y-md"
-        >
-            <AppCardSection :label="t('waterRoutesList.addNew')">
-                <q-form @submit.prevent="onCreateSubmit">
-                    <AppFormStack>
-                        <q-input
-                            v-model="createName"
-                            v-bind="createNameProps"
-                            outlined
-                            dense
-                            :label="t('waterRoutesList.name')"
-                            :disable="isSubmitting"
-                        />
-                        <q-input
-                            v-model.number="createDuration"
-                            v-bind="createDurationProps"
-                            outlined
-                            dense
-                            type="number"
-                            :label="t('waterRoutesList.duration')"
-                            :hint="t('waterRoutesList.durationHint')"
-                            :disable="isSubmitting"
-                        />
-                        <q-input
-                            v-model="createTrace"
-                            v-bind="createTraceProps"
-                            outlined
-                            dense
-                            type="textarea"
-                            autogrow
-                            :label="t('waterRoutesList.traceOptional')"
-                            :hint="t('waterRoutesList.traceHint')"
-                            :disable="isSubmitting"
-                        />
-                        <q-btn
-                            type="submit"
-                            color="primary"
-                            :label="t('waterRoutesList.create')"
-                            :loading="isSubmitting"
-                            :disable="!meta.valid || isSubmitting"
-                            class="self-start"
-                        />
-                    </AppFormStack>
-                </q-form>
-            </AppCardSection>
+        <AppCardSection :label="t('waterRoutesList.addNew')">
+            <q-form @submit.prevent="onCreateSubmit">
+                <AppFormStack>
+                    <q-input
+                        v-model="createName"
+                        v-bind="createNameProps"
+                        outlined
+                        dense
+                        :label="t('waterRoutesList.name')"
+                        :disable="isSubmitting"
+                    />
+                    <q-input
+                        v-model.number="createDuration"
+                        v-bind="createDurationProps"
+                        outlined
+                        dense
+                        type="number"
+                        :label="t('waterRoutesList.duration')"
+                        :hint="t('waterRoutesList.durationHint')"
+                        :disable="isSubmitting"
+                    />
+                    <q-input
+                        v-model="createTrace"
+                        v-bind="createTraceProps"
+                        outlined
+                        dense
+                        type="textarea"
+                        autogrow
+                        :label="t('waterRoutesList.traceOptional')"
+                        :hint="t('waterRoutesList.traceHint')"
+                        :disable="isSubmitting"
+                    />
+                    <q-btn
+                        type="submit"
+                        color="primary"
+                        :label="t('waterRoutesList.create')"
+                        :loading="isSubmitting"
+                        :disable="!meta.valid || isSubmitting"
+                        class="self-start"
+                    />
+                </AppFormStack>
+            </q-form>
+        </AppCardSection>
 
-            <AppEntityList>
-                <AppEmptyListRow
-                    :show="waterRoutes.length === 0"
-                    :message="t('waterRoutesList.empty')"
-                />
-                <q-item
-                    v-for="wr in waterRoutes"
-                    :key="String(wr.id)"
-                    class="q-pa-md"
-                    style="align-items: flex-start"
-                >
-                    <q-item-section>
-                        <q-item-label class="text-h6 q-mb-sm">{{
-                            wr.name
-                        }}</q-item-label>
-                        <q-input
-                            :model-value="String(wr.name ?? '')"
-                            outlined
-                            dense
-                            class="q-mb-sm"
-                            :label="t('waterRoutesList.rename')"
-                            :disable="patchingId === String(wr.id)"
-                            @update:model-value="
-                                (v) => setNameDraft(String(wr.id), v)
-                            "
-                            @blur="() => commitName(wr)"
-                        />
-                        <q-input
-                            :model-value="
-                                String(
-                                    durationDrafts[String(wr.id)] ??
-                                        wr.duration_minutes ??
-                                        '',
-                                )
-                            "
-                            outlined
-                            dense
-                            type="number"
-                            class="q-mb-sm"
-                            :label="t('waterRoutesList.editDuration')"
-                            :disable="patchingId === String(wr.id)"
-                            @update:model-value="
-                                (v) => setDurationDraft(String(wr.id), v)
-                            "
-                            @blur="() => commitDuration(wr)"
-                        />
-                        <q-input
-                            :model-value="
-                                String(
-                                    traceDrafts[String(wr.id)] ??
-                                        wr.trace ??
-                                        '',
-                                )
-                            "
-                            outlined
-                            dense
-                            type="textarea"
-                            autogrow
-                            class="q-mb-sm"
-                            :label="t('waterRoutesList.traceOptional')"
-                            :disable="patchingId === String(wr.id)"
-                            @update:model-value="
-                                (v) => setTraceDraft(String(wr.id), v)
-                            "
-                            @blur="() => commitTrace(wr)"
-                        />
-                        <q-btn
-                            flat
-                            color="negative"
-                            icon="delete"
-                            :label="t('waterRoutesList.delete')"
-                            :disable="patchingId === String(wr.id)"
-                            @click="() => confirmDelete(wr)"
-                        />
-                    </q-item-section>
-                </q-item>
-            </AppEntityList>
-        </AppBootstrapGate>
+        <AppEntityList>
+            <AppEmptyListRow
+                :show="waterRoutes.length === 0"
+                :message="t('waterRoutesList.empty')"
+            />
+            <q-item
+                v-for="wr in waterRoutes"
+                :key="String(wr.id)"
+                class="q-pa-md"
+                style="align-items: flex-start"
+            >
+                <q-item-section>
+                    <q-item-label class="text-h6 q-mb-sm">{{
+                        wr.name
+                    }}</q-item-label>
+                    <q-input
+                        :model-value="String(wr.name ?? '')"
+                        outlined
+                        dense
+                        class="q-mb-sm"
+                        :label="t('waterRoutesList.rename')"
+                        :disable="patchingId === String(wr.id)"
+                        @update:model-value="
+                            (v) => setNameDraft(String(wr.id), v)
+                        "
+                        @blur="() => commitName(wr)"
+                    />
+                    <q-input
+                        :model-value="
+                            String(
+                                durationDrafts[String(wr.id)] ??
+                                    wr.duration_minutes ??
+                                    '',
+                            )
+                        "
+                        outlined
+                        dense
+                        type="number"
+                        class="q-mb-sm"
+                        :label="t('waterRoutesList.editDuration')"
+                        :disable="patchingId === String(wr.id)"
+                        @update:model-value="
+                            (v) => setDurationDraft(String(wr.id), v)
+                        "
+                        @blur="() => commitDuration(wr)"
+                    />
+                    <q-input
+                        :model-value="
+                            String(traceDrafts[String(wr.id)] ?? wr.trace ?? '')
+                        "
+                        outlined
+                        dense
+                        type="textarea"
+                        autogrow
+                        class="q-mb-sm"
+                        :label="t('waterRoutesList.traceOptional')"
+                        :disable="patchingId === String(wr.id)"
+                        @update:model-value="
+                            (v) => setTraceDraft(String(wr.id), v)
+                        "
+                        @blur="() => commitTrace(wr)"
+                    />
+                    <q-btn
+                        flat
+                        color="negative"
+                        icon="delete"
+                        :label="t('waterRoutesList.delete')"
+                        :disable="patchingId === String(wr.id)"
+                        @click="() => confirmDelete(wr)"
+                    />
+                </q-item-section>
+            </q-item>
+        </AppEntityList>
     </q-page>
 </template>
 
@@ -158,7 +149,6 @@ import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
-import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
 import AppEntityList from "../components/ui/AppEntityList.vue";

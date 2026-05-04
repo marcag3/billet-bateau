@@ -6,186 +6,180 @@
             description-size="body2"
         />
 
-        <AppBootstrapGate :ready="hasBootstrapped">
-            <AppAlertBanner v-if="showNotFound" variant="error">
-                {{ t("programsEdit.notFound") }}
-                <div class="q-mt-sm">
-                    <q-btn
-                        color="primary"
-                        outline
-                        :label="t('programsEdit.backToList')"
-                        :to="{ name: 'programs.list' }"
-                    />
-                </div>
+        <AppAlertBanner v-if="showNotFound" variant="error">
+            {{ t("programsEdit.notFound") }}
+            <div class="q-mt-sm">
+                <q-btn
+                    color="primary"
+                    outline
+                    :label="t('programsEdit.backToList')"
+                    :to="{ name: 'programs.list' }"
+                />
+            </div>
+        </AppAlertBanner>
+
+        <AppCardSection v-else :label="t('programsCreate.formSection')">
+            <AppAlertBanner v-if="errorMessage.length > 0" variant="error">
+                {{ errorMessage }}
             </AppAlertBanner>
 
-            <AppCardSection v-else :label="t('programsCreate.formSection')">
-                <AppAlertBanner v-if="errorMessage.length > 0" variant="error">
-                    {{ errorMessage }}
-                </AppAlertBanner>
+            <q-form class="q-gutter-md" @submit.prevent="onFormSubmit">
+                <q-input
+                    v-model="name"
+                    v-bind="nameProps"
+                    outlined
+                    label-slot
+                    :disable="isSubmitting"
+                >
+                    <template #label>
+                        {{ t("programsCreate.name") }}
+                        <span class="text-negative" aria-hidden="true">*</span>
+                    </template>
+                </q-input>
 
-                <q-form class="q-gutter-md" @submit.prevent="onFormSubmit">
-                    <q-input
-                        v-model="name"
-                        v-bind="nameProps"
-                        outlined
-                        label-slot
-                        :disable="isSubmitting"
-                    >
-                        <template #label>
-                            {{ t("programsCreate.name") }}
-                            <span class="text-negative" aria-hidden="true"
-                                >*</span
+                <q-input
+                    v-model="description"
+                    v-bind="descriptionProps"
+                    type="textarea"
+                    outlined
+                    autogrow
+                    :label="t('programsCreate.description')"
+                    :disable="isSubmitting"
+                />
+
+                <q-input
+                    v-model="themeColor"
+                    v-bind="themeColorProps"
+                    outlined
+                    label-slot
+                    :disable="isSubmitting"
+                >
+                    <template #label>
+                        {{ t("programsCreate.themeColor") }}
+                        <span class="text-negative" aria-hidden="true">*</span>
+                    </template>
+                    <template #append>
+                        <q-icon name="colorize" class="cursor-pointer">
+                            <q-popup-proxy
+                                cover
+                                transition-show="scale"
+                                transition-hide="scale"
                             >
-                        </template>
-                    </q-input>
+                                <q-color
+                                    v-model="themeColor"
+                                    format-model="hex"
+                                    default-view="palette"
+                                />
+                            </q-popup-proxy>
+                        </q-icon>
+                    </template>
+                </q-input>
 
-                    <q-input
-                        v-model="description"
-                        v-bind="descriptionProps"
-                        type="textarea"
-                        outlined
-                        autogrow
-                        :label="t('programsCreate.description')"
-                        :disable="isSubmitting"
-                    />
+                <q-input
+                    v-model="slug"
+                    v-bind="slugProps"
+                    outlined
+                    :label="t('programsList.slug')"
+                    :hint="t('programsList.slugHint')"
+                    :disable="isSubmitting"
+                />
 
-                    <q-input
-                        v-model="themeColor"
-                        v-bind="themeColorProps"
-                        outlined
-                        label-slot
-                        :disable="isSubmitting"
-                    >
-                        <template #label>
-                            {{ t("programsCreate.themeColor") }}
-                            <span class="text-negative" aria-hidden="true"
-                                >*</span
-                            >
-                        </template>
-                        <template #append>
-                            <q-icon name="colorize" class="cursor-pointer">
-                                <q-popup-proxy
-                                    cover
-                                    transition-show="scale"
-                                    transition-hide="scale"
-                                >
-                                    <q-color
-                                        v-model="themeColor"
-                                        format-model="hex"
-                                        default-view="palette"
-                                    />
-                                </q-popup-proxy>
-                            </q-icon>
-                        </template>
-                    </q-input>
+                <q-toggle
+                    v-model="isActive"
+                    v-bind="isActiveProps"
+                    :label="t('programsList.isActive')"
+                    :disable="isSubmitting"
+                />
 
-                    <q-input
-                        v-model="slug"
-                        v-bind="slugProps"
-                        outlined
-                        :label="t('programsList.slug')"
-                        :hint="t('programsList.slugHint')"
-                        :disable="isSubmitting"
-                    />
+                <q-toggle
+                    v-model="isArchived"
+                    v-bind="isArchivedProps"
+                    :label="t('programsEdit.isArchived')"
+                    :disable="isSubmitting"
+                />
 
-                    <q-toggle
-                        v-model="isActive"
-                        v-bind="isActiveProps"
-                        :label="t('programsList.isActive')"
-                        :disable="isSubmitting"
-                    />
-
-                    <q-toggle
-                        v-model="isArchived"
-                        v-bind="isArchivedProps"
-                        :label="t('programsEdit.isArchived')"
-                        :disable="isSubmitting"
-                    />
-
-                    <q-expansion-item
-                        :label="t('programsCreate.addressOptional')"
-                        icon="place"
-                        class="bg-grey-1 rounded-borders"
-                        dense-toggle
-                        :disable="isSubmitting"
-                    >
-                        <div class="q-pa-md q-gutter-y-md">
-                            <q-input
-                                v-model="line1"
-                                v-bind="line1Props"
-                                outlined
-                                :label="t('programsCreate.line1')"
-                                :disable="isSubmitting"
-                            />
-                            <q-input
-                                v-model="line2"
-                                v-bind="line2Props"
-                                outlined
-                                :label="t('programsCreate.line2')"
-                                :disable="isSubmitting"
-                            />
-                            <div class="row q-col-gutter-sm">
-                                <div class="col-12 col-sm-6">
-                                    <q-input
-                                        v-model="city"
-                                        v-bind="cityProps"
-                                        outlined
-                                        :label="t('programsCreate.city')"
-                                        :disable="isSubmitting"
-                                    />
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <q-input
-                                        v-model="postalCode"
-                                        v-bind="postalCodeProps"
-                                        outlined
-                                        :label="t('programsCreate.postalCode')"
-                                        :disable="isSubmitting"
-                                    />
-                                </div>
-                            </div>
-                            <q-input
-                                v-model="country"
-                                v-bind="countryProps"
-                                outlined
-                                :label="t('programsCreate.country')"
-                                :disable="isSubmitting"
-                            />
-                        </div>
-                    </q-expansion-item>
-
-                    <q-file
-                        v-model="imagesModel"
-                        v-bind="imagesModelProps"
-                        outlined
-                        multiple
-                        use-chips
-                        counter
-                        :label="t('programsCreate.images')"
-                        accept="image/jpeg,image/png,image/webp"
-                        :disable="isSubmitting"
-                    />
-
-                    <div class="row q-gutter-sm">
-                        <q-btn
-                            color="primary"
-                            type="submit"
-                            :loading="isSubmitting"
-                            :disable="isSubmitting || showNotFound"
-                            :label="t('programsEdit.submit')"
-                        />
-                        <q-btn
-                            flat
-                            color="primary"
+                <q-expansion-item
+                    :label="t('programsCreate.addressOptional')"
+                    icon="place"
+                    class="bg-grey-1 rounded-borders"
+                    dense-toggle
+                    :disable="isSubmitting"
+                >
+                    <div class="q-pa-md q-gutter-y-md">
+                        <q-input
+                            v-model="line1"
+                            v-bind="line1Props"
+                            outlined
+                            :label="t('programsCreate.line1')"
                             :disable="isSubmitting"
-                            :label="t('common.programs')"
-                            @click="goToProgramsList"
+                        />
+                        <q-input
+                            v-model="line2"
+                            v-bind="line2Props"
+                            outlined
+                            :label="t('programsCreate.line2')"
+                            :disable="isSubmitting"
+                        />
+                        <div class="row q-col-gutter-sm">
+                            <div class="col-12 col-sm-6">
+                                <q-input
+                                    v-model="city"
+                                    v-bind="cityProps"
+                                    outlined
+                                    :label="t('programsCreate.city')"
+                                    :disable="isSubmitting"
+                                />
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <q-input
+                                    v-model="postalCode"
+                                    v-bind="postalCodeProps"
+                                    outlined
+                                    :label="t('programsCreate.postalCode')"
+                                    :disable="isSubmitting"
+                                />
+                            </div>
+                        </div>
+                        <q-input
+                            v-model="country"
+                            v-bind="countryProps"
+                            outlined
+                            :label="t('programsCreate.country')"
+                            :disable="isSubmitting"
                         />
                     </div>
-                </q-form>
-            </AppCardSection>
-        </AppBootstrapGate>
+                </q-expansion-item>
+
+                <q-file
+                    v-model="imagesModel"
+                    v-bind="imagesModelProps"
+                    outlined
+                    multiple
+                    use-chips
+                    counter
+                    :label="t('programsCreate.images')"
+                    accept="image/jpeg,image/png,image/webp"
+                    :disable="isSubmitting"
+                />
+
+                <div class="row q-gutter-sm">
+                    <q-btn
+                        color="primary"
+                        type="submit"
+                        :loading="isSubmitting"
+                        :disable="isSubmitting || showNotFound"
+                        :label="t('programsEdit.submit')"
+                    />
+                    <q-btn
+                        flat
+                        color="primary"
+                        :disable="isSubmitting"
+                        :label="t('common.programs')"
+                        @click="goToProgramsList"
+                    />
+                </div>
+            </q-form>
+        </AppCardSection>
     </q-page>
 </template>
 
@@ -218,7 +212,6 @@ import { normalizeImageFiles } from "../utilities/image-files";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
-import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 
 const { t } = useI18n();
 const route = useRoute();

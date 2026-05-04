@@ -1,6 +1,5 @@
 <template>
     <AppEntityEditPageLayout
-        :ready="hasBootstrapped"
         :title="t('templateDaysList.editPageTitle')"
         :description="t('templateDaysList.editPageDescription')"
         :back-to="backTo"

@@ -1,6 +1,5 @@
 <template>
     <AppEntityCreatePageLayout
-        :ready="hasBootstrapped"
         :title="t('tripsList.createPageTitle')"
         :description="t('tripsList.createPageDescription')"
         :back-to="backTo"

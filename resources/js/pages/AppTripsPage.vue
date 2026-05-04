@@ -16,61 +16,52 @@
             </AppPageHeader>
         </template>
 
-        <AppBootstrapGate
-            :ready="hasBootstrapped"
-            content-class="q-gutter-y-md"
-        >
-            <AppCardSection :label="t('tripsList.listForProgram')">
-                <p class="text-body2 text-grey-8 q-mb-none">
-                    {{
-                        t("tripsList.rosterForProgram", {
-                            name: selectedProgramName,
-                        })
-                    }}
-                </p>
-            </AppCardSection>
+        <AppCardSection :label="t('tripsList.listForProgram')">
+            <p class="text-body2 text-grey-8 q-mb-none">
+                {{
+                    t("tripsList.rosterForProgram", {
+                        name: selectedProgramName,
+                    })
+                }}
+            </p>
+        </AppCardSection>
 
-            <AppEntityList>
-                <AppEmptyListRow
-                    :show="trips.length === 0"
-                    :message="t('tripsList.empty')"
-                />
-                <q-item
-                    v-for="tr in trips"
-                    :key="String(tr.id)"
-                    class="q-pa-md"
-                >
-                    <q-item-section>
-                        <q-item-label class="text-h6">{{
-                            formatDeparture(tr)
-                        }}</q-item-label>
-                        <q-item-label caption>
-                            {{ t("tripsList.capacity") }}: {{ tr.capacity }}
-                            <template v-if="tr.boatTypeName">
-                                · {{ t("tripsList.boatType") }}:
-                                {{ tr.boatTypeName }}
-                            </template>
-                            <template v-if="tr.waterRouteName">
-                                · {{ t("tripsList.waterRoute") }}:
-                                {{ tr.waterRouteName }}
-                            </template>
-                        </q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                        <q-btn
-                            color="primary"
-                            outline
-                            dense
-                            :label="t('tripsList.edit')"
-                            :to="{
-                                name: 'trips.edit',
-                                params: { programId, tripId: String(tr.id) },
-                            }"
-                        />
-                    </q-item-section>
-                </q-item>
-            </AppEntityList>
-        </AppBootstrapGate>
+        <AppEntityList>
+            <AppEmptyListRow
+                :show="trips.length === 0"
+                :message="t('tripsList.empty')"
+            />
+            <q-item v-for="tr in trips" :key="String(tr.id)" class="q-pa-md">
+                <q-item-section>
+                    <q-item-label class="text-h6">{{
+                        formatDeparture(tr)
+                    }}</q-item-label>
+                    <q-item-label caption>
+                        {{ t("tripsList.capacity") }}: {{ tr.capacity }}
+                        <template v-if="tr.boatTypeName">
+                            · {{ t("tripsList.boatType") }}:
+                            {{ tr.boatTypeName }}
+                        </template>
+                        <template v-if="tr.waterRouteName">
+                            · {{ t("tripsList.waterRoute") }}:
+                            {{ tr.waterRouteName }}
+                        </template>
+                    </q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                    <q-btn
+                        color="primary"
+                        outline
+                        dense
+                        :label="t('tripsList.edit')"
+                        :to="{
+                            name: 'trips.edit',
+                            params: { programId, tripId: String(tr.id) },
+                        }"
+                    />
+                </q-item-section>
+            </q-item>
+        </AppEntityList>
     </AppEntityIndexPageLayout>
 </template>
 
@@ -86,13 +77,11 @@ import {
     getBoatTypesCollection,
     getWaterRoutesCollection,
     getTripsCollection,
-
     getActiveProgramIdRef,
 } from "../powersync/app-powersync.runtime";
 import { joinTripsWithRelations } from "../powersync/joined-queries";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
-import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppEntityList from "../components/ui/AppEntityList.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
@@ -113,10 +102,23 @@ const { data: trips } = useLiveQuery(
         const pid = getActiveProgramIdRef().value.trim();
         if (!col || !btCol || !wrCol || pid.length === 0) return undefined;
         return joinTripsWithRelations(queryBuilder, col, btCol, wrCol)
-            .where(({ t }: Record<string, Record<string, unknown>>) => eq(t.program_id, pid))
-            .orderBy(({ t }: Record<string, Record<string, unknown>>) => t.scheduled_departure_at, "desc")
-            .orderBy(({ t }: Record<string, Record<string, unknown>>) => t.updated_at, "desc")
-            .orderBy(({ t }: Record<string, Record<string, unknown>>) => t.id, "desc");
+            .where(({ t }: Record<string, Record<string, unknown>>) =>
+                eq(t.program_id, pid),
+            )
+            .orderBy(
+                ({ t }: Record<string, Record<string, unknown>>) =>
+                    t.scheduled_departure_at,
+                "desc",
+            )
+            .orderBy(
+                ({ t }: Record<string, Record<string, unknown>>) =>
+                    t.updated_at,
+                "desc",
+            )
+            .orderBy(
+                ({ t }: Record<string, Record<string, unknown>>) => t.id,
+                "desc",
+            );
     },
     [
         tripsCollection,

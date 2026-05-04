@@ -1,12 +1,7 @@
 <template>
     <div>
         <q-inner-loading :showing="!ready" />
-        <div
-            v-if="ready"
-            :class="contentClass"
-        >
-            <slot />
-        </div>
+        <slot v-if="ready" />
     </div>
 </template>
 
@@ -14,12 +9,9 @@
 withDefaults(
     defineProps<{
         ready?: boolean;
-        /** Optional wrapper class for the ready slot (e.g. `q-gutter-y-md`). */
-        contentClass?: string;
     }>(),
     {
         ready: false,
-        contentClass: '',
     },
 );
 </script>

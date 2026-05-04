@@ -26,12 +26,7 @@
                 </template>
             </AppPageHeader>
             <slot name="alerts" />
-            <AppBootstrapGate
-                :ready="ready"
-                :content-class="bootstrapContentClass"
-            >
-                <slot />
-            </AppBootstrapGate>
+            <slot />
         </div>
     </q-page>
 </template>
@@ -40,7 +35,6 @@
 import { computed } from 'vue';
 import type { RouteLocationRaw } from 'vue-router';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
-import AppBootstrapGate from '../components/ui/AppBootstrapGate.vue';
 
 const props = withDefaults(
     defineProps<{
@@ -48,10 +42,7 @@ const props = withDefaults(
         description?: string;
         backTo?: RouteLocationRaw | null;
         backLabel?: string;
-        ready: boolean;
         paddingClass?: string;
-        /** Passed to `AppBootstrapGate` for vertical spacing. */
-        bootstrapContentClass?: string;
     }>(),
     {
         title: '',
@@ -59,7 +50,6 @@ const props = withDefaults(
         backTo: null,
         backLabel: '',
         paddingClass: 'q-pa-xl',
-        bootstrapContentClass: 'q-gutter-y-md',
     },
 );
 

@@ -1,10 +1,7 @@
 <template>
     <q-page :class="pageClass">
         <div class="q-gutter-y-md">
-            <div
-                v-if="backTo"
-                class="row items-center"
-            >
+            <div v-if="backTo" class="row items-center">
                 <q-btn
                     flat
                     color="primary"
@@ -18,10 +15,7 @@
                 :title="title"
                 :description="description"
             >
-                <template
-                    v-if="$slots['header-extra']"
-                    #actions
-                >
+                <template v-if="$slots['header-extra']" #actions>
                     <slot name="header-extra" />
                 </template>
             </AppPageHeader>
@@ -29,21 +23,15 @@
             <div v-if="$slots.quickNav">
                 <slot name="quickNav" />
             </div>
-            <AppBootstrapGate
-                :ready="ready"
-                :content-class="bootstrapContentClass"
-            >
-                <slot />
-            </AppBootstrapGate>
+            <slot />
         </div>
     </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { RouteLocationRaw } from 'vue-router';
-import AppPageHeader from '../components/ui/AppPageHeader.vue';
-import AppBootstrapGate from '../components/ui/AppBootstrapGate.vue';
+import { computed } from "vue";
+import type { RouteLocationRaw } from "vue-router";
+import AppPageHeader from "../components/ui/AppPageHeader.vue";
 
 const props = withDefaults(
     defineProps<{
@@ -51,17 +39,14 @@ const props = withDefaults(
         description?: string;
         backTo?: RouteLocationRaw | null;
         backLabel?: string;
-        ready: boolean;
         paddingClass?: string;
-        bootstrapContentClass?: string;
     }>(),
     {
-        title: '',
-        description: '',
+        title: "",
+        description: "",
         backTo: null,
-        backLabel: '',
-        paddingClass: 'q-pa-xl',
-        bootstrapContentClass: 'q-gutter-y-md',
+        backLabel: "",
+        paddingClass: "q-pa-xl",
     },
 );
 

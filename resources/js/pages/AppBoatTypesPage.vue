@@ -5,103 +5,93 @@
             :description="t('boatTypesList.description')"
         />
 
-        <AppBootstrapGate
-            :ready="hasBootstrapped"
-            content-class="q-gutter-y-md"
-        >
-            <AppCardSection :label="t('boatTypesList.addNew')">
-                <q-form @submit.prevent="onCreateSubmit">
-                    <AppFormStack>
-                        <q-input
-                            v-model="createName"
-                            v-bind="createNameProps"
-                            outlined
-                            dense
-                            :label="t('boatTypesList.name')"
-                            :disable="isSubmitting"
-                        />
-                        <q-btn
-                            type="submit"
-                            color="primary"
-                            :label="t('boatTypesList.create')"
-                            :loading="isSubmitting"
-                            :disable="!meta.valid || isSubmitting"
-                            class="self-start"
-                        />
-                    </AppFormStack>
-                </q-form>
-            </AppCardSection>
+        <AppCardSection :label="t('boatTypesList.addNew')">
+            <q-form @submit.prevent="onCreateSubmit">
+                <AppFormStack>
+                    <q-input
+                        v-model="createName"
+                        v-bind="createNameProps"
+                        outlined
+                        dense
+                        :label="t('boatTypesList.name')"
+                        :disable="isSubmitting"
+                    />
+                    <q-btn
+                        type="submit"
+                        color="primary"
+                        :label="t('boatTypesList.create')"
+                        :loading="isSubmitting"
+                        :disable="!meta.valid || isSubmitting"
+                        class="self-start"
+                    />
+                </AppFormStack>
+            </q-form>
+        </AppCardSection>
 
-            <AppEntityList>
-                <AppEmptyListRow
-                    :show="boatTypes.length === 0"
-                    :message="t('boatTypesList.empty')"
-                />
-                <q-item
-                    v-for="bt in boatTypes"
-                    :key="bt.id"
-                    class="q-pa-md"
-                    style="align-items: flex-start"
-                >
-                    <q-item-section>
-                        <q-item-label class="text-h6 q-mb-sm">{{
-                            bt.name
-                        }}</q-item-label>
-                        <q-input
-                            :model-value="String(bt.name ?? '')"
-                            outlined
-                            dense
-                            class="q-mb-sm"
-                            :label="t('boatTypesList.rename')"
-                            :disable="patchingId === bt.id"
-                            @update:model-value="(v) => setNameDraft(bt.id, v)"
-                            @blur="() => commitName(bt)"
-                        />
-                        <AppFormRow class="q-mb-sm">
-                            <div class="col-12 col-md-6">
-                                <div
-                                    v-if="primaryImageFor(bt.id)"
-                                    class="q-mb-xs"
-                                >
-                                    <q-img
-                                        :src="primaryImageFor(bt.id)"
-                                        ratio="16/9"
-                                        class="rounded-borders"
-                                        style="max-height: 12rem"
-                                        fit="cover"
-                                    />
-                                </div>
-                                <q-file
-                                    :model-value="null"
-                                    outlined
-                                    dense
-                                    multiple
-                                    use-chips
-                                    counter
-                                    :label="t('boatTypesList.images')"
-                                    accept="image/jpeg,image/png,image/webp"
-                                    :disable="uploadingId === bt.id"
-                                    @update:model-value="
-                                        (files) =>
-                                            onPickImages(String(bt.id), files)
-                                    "
+        <AppEntityList>
+            <AppEmptyListRow
+                :show="boatTypes.length === 0"
+                :message="t('boatTypesList.empty')"
+            />
+            <q-item
+                v-for="bt in boatTypes"
+                :key="bt.id"
+                class="q-pa-md"
+                style="align-items: flex-start"
+            >
+                <q-item-section>
+                    <q-item-label class="text-h6 q-mb-sm">{{
+                        bt.name
+                    }}</q-item-label>
+                    <q-input
+                        :model-value="String(bt.name ?? '')"
+                        outlined
+                        dense
+                        class="q-mb-sm"
+                        :label="t('boatTypesList.rename')"
+                        :disable="patchingId === bt.id"
+                        @update:model-value="(v) => setNameDraft(bt.id, v)"
+                        @blur="() => commitName(bt)"
+                    />
+                    <AppFormRow class="q-mb-sm">
+                        <div class="col-12 col-md-6">
+                            <div v-if="primaryImageFor(bt.id)" class="q-mb-xs">
+                                <q-img
+                                    :src="primaryImageFor(bt.id)"
+                                    ratio="16/9"
+                                    class="rounded-borders"
+                                    style="max-height: 12rem"
+                                    fit="cover"
                                 />
                             </div>
-                        </AppFormRow>
-                        <q-btn
-                            flat
-                            color="negative"
-                            icon="delete"
-                            :label="t('boatTypesList.delete')"
-                            :disable="
-                                patchingId === bt.id || uploadingId === bt.id
-                            "
-                            @click="() => confirmDelete(bt)"
-                        />
-                    </q-item-section>
-                </q-item>
-            </AppEntityList>
-        </AppBootstrapGate>
+                            <q-file
+                                :model-value="null"
+                                outlined
+                                dense
+                                multiple
+                                use-chips
+                                counter
+                                :label="t('boatTypesList.images')"
+                                accept="image/jpeg,image/png,image/webp"
+                                :disable="uploadingId === bt.id"
+                                @update:model-value="
+                                    (files) =>
+                                        onPickImages(String(bt.id), files)
+                                "
+                            />
+                        </div>
+                    </AppFormRow>
+                    <q-btn
+                        flat
+                        color="negative"
+                        icon="delete"
+                        :label="t('boatTypesList.delete')"
+                        :disable="patchingId === bt.id || uploadingId === bt.id"
+                        @click="() => confirmDelete(bt)"
+                    />
+                </q-item-section>
+            </q-item>
+        </AppEntityList>
     </q-page>
 </template>
 
@@ -134,7 +124,6 @@ import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
-import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
 import AppFormRow from "../components/ui/AppFormRow.vue";

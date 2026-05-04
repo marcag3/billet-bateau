@@ -16,11 +16,7 @@
             </AppPageHeader>
         </template>
 
-        <AppBootstrapGate
-            :ready="hasBootstrapped"
-            content-class="q-gutter-y-md"
-        >
-            <AppCardSection :label="t('ticketTypesList.listForProgram')">
+        <AppCardSection :label="t('ticketTypesList.listForProgram')">
                 <p class="text-body2 text-grey-8 q-mb-none">
                     {{
                         t("ticketTypesList.rosterForProgram", {
@@ -69,7 +65,7 @@
                     </q-item-section>
                 </q-item>
             </AppEntityList>
-        </AppBootstrapGate>
+        </AppCardSection>
 
         <q-dialog v-model="showFormDialog" persistent>
             <q-card
@@ -222,7 +218,6 @@ import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
-import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppEntityList from "../components/ui/AppEntityList.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
