@@ -63,22 +63,23 @@ The `program_scope` subscription is managed in `resources/js/powersync/app-power
 **If `program_scope` is never subscribed, zero program-scoped data will appear on screen** — even if the data exists in the PostgreSQL database and even if local inserts succeed. The local PowerSync SQLite database will be empty for those tables.
 
 Always verify:
+
 1. `activeProgramIdRef` is set to a non-empty value before or during bootstrap.
 2. The `watch` on `activeProgramIdRef` eagerly handles program switching after bootstrap.
 3. The `accessible_program_ids` CTE in sync rules includes the user's programs (via `program_user` pivot).
 
 ### Where to Look
 
-| Concern | File |
-|---------|------|
-| Sync stream queries | `docker/powersync/sync-config.yaml` |
-| Subscription management | `resources/js/powersync/app-powersync.runtime.ts` |
-| Router guard (sets program) | `resources/js/router/index.ts` |
-| PowerSync connector (upload) | `resources/js/services/powersync.connector.ts` |
-| Upload handler (server) | `app/Http/Controllers/Api/PowerSyncUploadController.php` |
-| CRUD action (server) | `app/Actions/PowerSync/Apply*PowerSyncCrudAction.php` |
-| Collection definitions | `resources/js/powersync/*.collection.ts` |
-| PowerSync schema | `resources/js/powersync/app.powersync-schema.ts` |
+| Concern                      | File                                                     |
+| ---------------------------- | -------------------------------------------------------- |
+| Sync stream queries          | `docker/powersync/sync-config.yaml`                      |
+| Subscription management      | `resources/js/powersync/app-powersync.runtime.ts`        |
+| Router guard (sets program)  | `resources/js/router/index.ts`                           |
+| PowerSync connector (upload) | `resources/js/services/powersync.connector.ts`           |
+| Upload handler (server)      | `app/Http/Controllers/Api/PowerSyncUploadController.php` |
+| CRUD action (server)         | `app/Actions/PowerSync/Apply*PowerSyncCrudAction.php`    |
+| Collection definitions       | `resources/js/powersync/*.collection.ts`                 |
+| PowerSync schema             | `resources/js/powersync/app.powersync-schema.ts`         |
 
 ## Verification Scripts
 
@@ -127,7 +128,7 @@ Always verify:
 
 - Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
 - Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
-  - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
+    - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
 
 === php rules ===
 

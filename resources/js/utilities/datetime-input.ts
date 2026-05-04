@@ -4,10 +4,10 @@
 export function isoToLocalDatetimeInputValue(iso: string): string {
     const date = new Date(String(iso).trim());
     if (Number.isNaN(date.getTime())) {
-        return '';
+        return "";
     }
 
-    const pad = (n: number) => String(n).padStart(2, '0');
+    const pad = (n: number) => String(n).padStart(2, "0");
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
@@ -30,11 +30,11 @@ export function localDatetimeInputValueToIso(local: string): string {
  */
 export function normalizeTime(val: string): string {
     // Accept HH:MM from time input, ensure HH:MM:SS
-    if (val.length === 5 && val[2] === ':') {
-        return val + ':00';
+    if (val.length === 5 && val[2] === ":") {
+        return val + ":00";
     }
     // Already HH:MM:SS
-    if (val.length === 8 && val[2] === ':' && val[5] === ':') {
+    if (val.length === 8 && val[2] === ":" && val[5] === ":") {
         return val;
     }
     return val;

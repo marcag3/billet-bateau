@@ -241,16 +241,18 @@ async function resolveAuthenticatedUserId() {
 /** @type {Record<string, (db: PowerSyncDatabase, onError: (error: unknown) => void, onLoad?: () => void | (() => void) | Promise<void | (() => void)>) => ReturnType<typeof createProgramsCollection>>} */
 const collectionFactories = {
     programs: (db, onError, onLoad) =>
-        createProgramsCollection(db, (error) => {
-            programsDeserializationError.value = error;
-            onError(error);
-        }, onLoad),
+        createProgramsCollection(
+            db,
+            (error) => {
+                programsDeserializationError.value = error;
+                onError(error);
+            },
+            onLoad,
+        ),
     boat_types: (db, onError, onLoad) =>
         createBoatTypesCollection(db, onError, onLoad),
-    boats: (db, onError, onLoad) =>
-        createBoatsCollection(db, onError, onLoad),
-    trips: (db, onError, onLoad) =>
-        createTripsCollection(db, onError, onLoad),
+    boats: (db, onError, onLoad) => createBoatsCollection(db, onError, onLoad),
+    trips: (db, onError, onLoad) => createTripsCollection(db, onError, onLoad),
     ticket_types: (db, onError, onLoad) =>
         createTicketTypesCollection(db, onError, onLoad),
     booking_tickets: (db, onError, onLoad) =>
@@ -263,8 +265,7 @@ const collectionFactories = {
         createTemplateDaySlotsCollection(db, onError, onLoad),
     template_day_dates: (db, onError, onLoad) =>
         createTemplateDayDatesCollection(db, onError, onLoad),
-    media: (db, onError, onLoad) =>
-        createMediaCollection(db, onError, onLoad),
+    media: (db, onError, onLoad) => createMediaCollection(db, onError, onLoad),
 };
 
 /**
