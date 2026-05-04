@@ -25,7 +25,7 @@ final class ApplyBookingTicketPowerSyncCrudAction
 {
     use AsAction;
 
-    public function handle(PowerSyncCrudEntryData $entry, int $userId): void
+    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
     {
         $id = $entry->id;
         $op = $entry->op;
@@ -67,7 +67,7 @@ final class ApplyBookingTicketPowerSyncCrudAction
         throw new \RuntimeException('Unsupported PowerSync CRUD op for booking_tickets: '.$op);
     }
 
-    private function applyPut(string $id, BookingTicketPutData $dto, int $userId): void
+    private function applyPut(string $id, BookingTicketPutData $dto, string $userId): void
     {
         $existing = BookingTicket::query()->whereKey($id)->first();
 
@@ -150,7 +150,7 @@ final class ApplyBookingTicketPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, BookingTicketPatchData $dto, int $userId): void
+    private function applyPatch(string $id, BookingTicketPatchData $dto, string $userId): void
     {
         $bookingTicket = BookingTicket::query()->whereKey($id)->first();
 
@@ -245,7 +245,7 @@ final class ApplyBookingTicketPowerSyncCrudAction
         $bookingTicket->save();
     }
 
-    private function assertProgramManaged(string $programId, int $userId): void
+    private function assertProgramManaged(string $programId, string $userId): void
     {
         $program = Program::query()->whereKey($programId)->first();
 

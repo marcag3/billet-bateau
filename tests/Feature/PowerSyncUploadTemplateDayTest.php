@@ -73,7 +73,7 @@ class PowerSyncUploadTemplateDayTest extends TestCase
         $user = User::factory()->create();
         $program = Program::factory()->withOwner($user)->create();
         $templateDay = TemplateDay::factory()->forProgram($program)->create();
-        $boatType = BoatType::factory()->for($user)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
         $slotId = (string) Str::ulid();
 
@@ -260,7 +260,7 @@ class PowerSyncUploadTemplateDayTest extends TestCase
         $program = Program::factory()->withOwner($user)->create();
         $templateDay = TemplateDay::factory()->forProgram($program)->create();
         $slot = TemplateDaySlot::factory()->forTemplateDay($templateDay)->create();
-        $boatType = BoatType::factory()->for($user)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
         $tripId = (string) Str::ulid();
 
@@ -296,7 +296,7 @@ class PowerSyncUploadTemplateDayTest extends TestCase
         $slotB = TemplateDaySlot::factory()
             ->forTemplateDay(TemplateDay::factory()->forProgram($programB)->create())
             ->create();
-        $boatType = BoatType::factory()->for($user)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $programA->getKey()]);
         $route = WaterRoute::factory()->create(['program_id' => $programA->getKey()]);
         $tripId = (string) Str::ulid();
 

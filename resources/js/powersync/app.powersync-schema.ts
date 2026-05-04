@@ -18,7 +18,6 @@ const programsTable = new Table({
 });
 
 const boatTypesTable = new Table({
-    user_id: column.integer,
     program_id: column.text,
     name: column.text,
     created_at: column.text,
@@ -26,7 +25,6 @@ const boatTypesTable = new Table({
 });
 
 const boatsTable = new Table({
-    user_id: column.integer,
     boat_type_id: column.text,
     program_id: column.text,
     name: column.text,

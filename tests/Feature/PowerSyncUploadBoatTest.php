@@ -36,7 +36,6 @@ class PowerSyncUploadBoatTest extends TestCase
 
         $this->assertDatabaseHas('boat_types', [
             'id' => $id,
-            'user_id' => $user->getAuthIdentifier(),
             'program_id' => $program->getKey(),
             'name' => 'RIB',
         ]);
@@ -45,8 +44,8 @@ class PowerSyncUploadBoatTest extends TestCase
     public function test_put_creates_boat_with_owned_boat_type(): void
     {
         $user = User::factory()->create();
-        $boatType = BoatType::factory()->for($user)->create();
         $program = Program::factory()->withOwner($user)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
         $boatId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -68,7 +67,6 @@ class PowerSyncUploadBoatTest extends TestCase
 
         $this->assertDatabaseHas('boats', [
             'id' => $boatId,
-            'user_id' => $user->getAuthIdentifier(),
             'boat_type_id' => $boatType->getKey(),
             'program_id' => $program->getKey(),
             'name' => 'Sea Star',
@@ -81,8 +79,8 @@ class PowerSyncUploadBoatTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $boatType = BoatType::factory()->for($owner)->create();
         $program = Program::factory()->withOwner($intruder)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
         $boatId = (string) Str::ulid();
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
@@ -103,7 +101,6 @@ class PowerSyncUploadBoatTest extends TestCase
 
         $this->assertDatabaseHas('boats', [
             'id' => $boatId,
-            'user_id' => $intruder->getAuthIdentifier(),
             'boat_type_id' => $boatType->getKey(),
             'program_id' => $program->getKey(),
             'name' => 'Stolen link',
@@ -142,7 +139,8 @@ class PowerSyncUploadBoatTest extends TestCase
     public function test_patch_updates_owned_boat_type(): void
     {
         $user = User::factory()->create();
-        $boatType = BoatType::factory()->for($user)->create(['name' => 'Old']);
+        $program = Program::factory()->withOwner($user)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey(), 'name' => 'Old']);
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -162,7 +160,10 @@ class PowerSyncUploadBoatTest extends TestCase
     public function test_delete_removes_owned_boat(): void
     {
         $user = User::factory()->create();
-        $boat = Boat::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $boat = Boat::factory()->create([
+            'program_id' => $program->getKey(),
+        ]);
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -181,7 +182,8 @@ class PowerSyncUploadBoatTest extends TestCase
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $boatType = BoatType::factory()->for($owner)->create(['name' => 'Owners']);
+        $program = Program::factory()->withOwner($owner)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey(), 'name' => 'Owners']);
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -199,14 +201,16 @@ class PowerSyncUploadBoatTest extends TestCase
 
         $boatType->refresh();
         $this->assertSame('Owners', $boatType->name);
-        $this->assertSame((int) $owner->getAuthIdentifier(), (int) $boatType->user_id);
     }
 
     public function test_delete_forbids_non_member_from_removing_another_users_boat(): void
     {
         $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $boat = Boat::factory()->for($owner)->create();
+        $program = Program::factory()->withOwner($owner)->create();
+        $boat = Boat::factory()->create([
+            'program_id' => $program->getKey(),
+        ]);
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -224,7 +228,8 @@ class PowerSyncUploadBoatTest extends TestCase
     public function test_patch_boat_type_rejects_invalid_name_type_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $boatType = BoatType::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -243,7 +248,10 @@ class PowerSyncUploadBoatTest extends TestCase
     public function test_patch_boat_rejects_negative_capacity_returns_unprocessable(): void
     {
         $user = User::factory()->create();
-        $boat = Boat::factory()->for($user)->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $boat = Boat::factory()->create([
+            'program_id' => $program->getKey(),
+        ]);
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [

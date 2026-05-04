@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('voyages', function (Blueprint $table): void {
             $table->ulid('id')->primary();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignUlid('trip_id')->nullable()->constrained('trips')->nullOnDelete();
             $table->foreignUlid('water_route_id')->constrained('water_routes')->restrictOnDelete();
             $table->dateTimeTz('scheduled_departure_at')->nullable();

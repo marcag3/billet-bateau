@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Guide;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -21,7 +20,6 @@ class GuideFactory extends Factory
     {
         return [
             'id' => (string) Str::ulid(),
-            'user_id' => User::factory(),
             'name' => fake()->name(),
             'staff_user_id' => null,
         ];

@@ -18,7 +18,7 @@ final class ApplyBoatTypePowerSyncCrudAction
 {
     use AsAction;
 
-    public function handle(PowerSyncCrudEntryData $entry, int $userId): void
+    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
     {
         $id = $entry->id;
         $op = $entry->op;
@@ -56,7 +56,6 @@ final class ApplyBoatTypePowerSyncCrudAction
             BoatType::query()->updateOrCreate(
                 ['id' => $id],
                 [
-                    'user_id' => $userId,
                     'program_id' => $data->program_id,
                     'name' => ($name !== null && $name !== '') ? $name : 'Untitled',
                 ],

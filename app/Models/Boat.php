@@ -18,7 +18,6 @@ class Boat extends Model
 
     protected $fillable = [
         'id',
-        'user_id',
         'boat_type_id',
         'program_id',
         'name',
@@ -35,11 +34,6 @@ class Boat extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     public function boatType(): BelongsTo

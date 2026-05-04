@@ -29,7 +29,7 @@ class PowerSyncUploadController extends Controller
 
         $batch = PowerSyncUploadBatchData::from($request);
 
-        $userId = (int) $user->getAuthIdentifier();
+        $userId = (string) $user->getAuthIdentifier();
 
         DB::transaction(function () use ($batch, $userId): void {
             foreach ($batch->crud as $entryPayload) {

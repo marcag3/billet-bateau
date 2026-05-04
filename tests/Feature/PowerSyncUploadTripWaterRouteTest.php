@@ -20,7 +20,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
     {
         $user = User::factory()->create();
         $program = Program::factory()->withOwner($user)->create();
-        $boatType = BoatType::factory()->for($user)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
         $tripId = (string) Str::ulid();
 

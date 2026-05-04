@@ -16,7 +16,7 @@ use App\Data\PowerSync\PowerSyncCrudEntryData;
 
 final class PowerSyncUploadRouter
 {
-    public function apply(PowerSyncCrudEntryData $entry, int $userId): void
+    public function apply(PowerSyncCrudEntryData $entry, string $userId): void
     {
         match ($entry->type) {
             PowerSyncCrudType::Programs => ApplyProgramPowerSyncCrudAction::run($entry, $userId),

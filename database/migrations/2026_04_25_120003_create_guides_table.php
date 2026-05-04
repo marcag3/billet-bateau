@@ -10,12 +10,10 @@ return new class extends Migration
     {
         Schema::create('guides', function (Blueprint $table): void {
             $table->ulid('id')->primary();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->foreignId('staff_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUlid('staff_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
-            $table->index(['user_id', 'updated_at']);
         });
     }
 };

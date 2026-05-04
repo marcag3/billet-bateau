@@ -18,7 +18,6 @@ class Guide extends Model
 
     protected $fillable = [
         'id',
-        'user_id',
         'name',
         'staff_user_id',
         'created_at',
@@ -31,11 +30,6 @@ class Guide extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     public function staffUser(): BelongsTo

@@ -111,8 +111,8 @@ class OnWaterDataModelTest extends TestCase
     public function voyage_boat_and_voyage_guide_pivots_attach(): void
     {
         $voyage = Voyage::factory()->create();
-        $boat = Boat::factory()->create(['user_id' => $voyage->user_id]);
-        $guide = Guide::factory()->create(['user_id' => $voyage->user_id]);
+        $boat = Boat::factory()->create();
+        $guide = Guide::factory()->create();
 
         $voyage->boats()->attach($boat->getKey());
         $voyage->guides()->attach($guide->getKey());

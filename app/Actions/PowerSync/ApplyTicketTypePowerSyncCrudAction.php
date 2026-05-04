@@ -22,7 +22,7 @@ final class ApplyTicketTypePowerSyncCrudAction
 {
     use AsAction;
 
-    public function handle(PowerSyncCrudEntryData $entry, int $userId): void
+    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
     {
         $id = $entry->id;
         $op = $entry->op;
@@ -66,7 +66,7 @@ final class ApplyTicketTypePowerSyncCrudAction
         throw new \RuntimeException('Unsupported PowerSync CRUD op for ticket_types: '.$op);
     }
 
-    private function applyPut(string $id, TicketTypePutData $dto, int $userId): void
+    private function applyPut(string $id, TicketTypePutData $dto, string $userId): void
     {
         $existing = TicketType::query()->whereKey($id)->first();
 
@@ -128,7 +128,7 @@ final class ApplyTicketTypePowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, TicketTypePatchData $dto, int $userId): void
+    private function applyPatch(string $id, TicketTypePatchData $dto, string $userId): void
     {
         $ticketType = TicketType::query()->whereKey($id)->first();
 
@@ -182,7 +182,7 @@ final class ApplyTicketTypePowerSyncCrudAction
         $ticketType->save();
     }
 
-    private function assertProgramManaged(string $programId, int $userId): void
+    private function assertProgramManaged(string $programId, string $userId): void
     {
         $program = Program::query()->whereKey($programId)->first();
 

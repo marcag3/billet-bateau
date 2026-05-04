@@ -20,7 +20,7 @@ final class ApplyWaterRoutePowerSyncCrudAction
 {
     use AsAction;
 
-    public function handle(PowerSyncCrudEntryData $entry, int $userId): void
+    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
     {
         $id = $entry->id;
         $op = $entry->op;
@@ -50,7 +50,7 @@ final class ApplyWaterRoutePowerSyncCrudAction
         throw new \RuntimeException('Unsupported PowerSync CRUD op for water_routes: '.$op);
     }
 
-    private function applyDelete(string $id, int $userId): void
+    private function applyDelete(string $id, string $userId): void
     {
         $route = WaterRoute::query()->whereKey($id)->first();
 
@@ -73,7 +73,7 @@ final class ApplyWaterRoutePowerSyncCrudAction
         $route->delete();
     }
 
-    private function applyPut(string $id, WaterRoutePutData $dto, int $userId): void
+    private function applyPut(string $id, WaterRoutePutData $dto, string $userId): void
     {
         $existing = WaterRoute::query()->whereKey($id)->first();
 
@@ -114,7 +114,7 @@ final class ApplyWaterRoutePowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, WaterRoutePatchData $patch, int $userId): void
+    private function applyPatch(string $id, WaterRoutePatchData $patch, string $userId): void
     {
         $route = WaterRoute::query()->whereKey($id)->first();
 

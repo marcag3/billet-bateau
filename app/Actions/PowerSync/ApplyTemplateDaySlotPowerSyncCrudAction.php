@@ -19,7 +19,7 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction
 {
     use AsAction;
 
-    public function handle(PowerSyncCrudEntryData $entry, int $userId): void
+    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
     {
         $id = $entry->id;
         $op = $entry->op;
@@ -58,7 +58,7 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction
         throw new \RuntimeException('Unsupported PowerSync CRUD op for template_day_slots: '.$op);
     }
 
-    private function applyPut(string $id, TemplateDaySlotPutData $dto, int $userId): void
+    private function applyPut(string $id, TemplateDaySlotPutData $dto, string $userId): void
     {
         $existing = TemplateDaySlot::query()->whereKey($id)->first();
 
@@ -109,7 +109,7 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, TemplateDaySlotPatchData $patch, int $userId): void
+    private function applyPatch(string $id, TemplateDaySlotPatchData $patch, string $userId): void
     {
         $slot = TemplateDaySlot::query()->whereKey($id)->first();
 
@@ -174,7 +174,7 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction
         return $programId !== null ? (string) $programId : null;
     }
 
-    private function assertCanManageProgram(string $programId, int $userId): void
+    private function assertCanManageProgram(string $programId, string $userId): void
     {
         $program = Program::query()->whereKey($programId)->first();
 

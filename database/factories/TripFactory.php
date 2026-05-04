@@ -65,14 +65,7 @@ class TripFactory extends Factory
     public function withBoatType(?BoatType $boatType = null): static
     {
         return $this->afterCreating(function (Trip $trip) use ($boatType): void {
-            $ownerId = ProgramUser::where('program_id', $trip->program_id)->value('user_id');
-
-            if ($ownerId === null) {
-                $ownerId = User::factory()->create()->getKey();
-                Program::query()->whereKey($trip->program_id)->first()?->users()->syncWithoutDetaching([$ownerId]);
-            }
-
-            $type = $boatType ?? BoatType::factory()->create(['user_id' => $ownerId]);
+            $type = $boatType ?? BoatType::factory()->create(['program_id' => $trip->program_id]);
             $trip->update(['boat_type_id' => $type->getKey()]);
         });
     }

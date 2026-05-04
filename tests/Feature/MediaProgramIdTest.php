@@ -33,9 +33,7 @@ class MediaProgramIdTest extends TestCase
             'model_type' => Program::class,
         ]);
 
-        $boatType = BoatType::factory()->for($user)->create([
-            'program_id' => $program->getKey(),
-        ]);
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
 
         $this->actingAs($user)
             ->post('/api/media/boat_type/'.$boatType->getKey(), [

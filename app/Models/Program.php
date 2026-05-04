@@ -73,12 +73,12 @@ class Program extends Model implements HasMedia
             ->withTimestamps();
     }
 
-    public function userCanManage(int $userId): bool
+    public function userCanManage(string $userId): bool
     {
         return $this->users()->whereKey($userId)->exists();
     }
 
-    public function userRole(int $userId): ?ProgramRole
+    public function userRole(string $userId): ?ProgramRole
     {
         $pivot = $this->users()->whereKey($userId)->first();
 
@@ -89,7 +89,7 @@ class Program extends Model implements HasMedia
         return ProgramRole::tryFrom((string) $pivot->pivot->role);
     }
 
-    public function userIsOwner(int $userId): bool
+    public function userIsOwner(string $userId): bool
     {
         return $this->userRole($userId) === ProgramRole::Owner;
     }

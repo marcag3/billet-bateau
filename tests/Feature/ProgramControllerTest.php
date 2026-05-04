@@ -80,7 +80,7 @@ class ProgramControllerTest extends TestCase
             'role' => 'owner',
         ]);
 
-        $response->assertJsonPath('data.user_ids.0', (int) $user->getAuthIdentifier());
+        $response->assertJsonPath('data.user_ids.0', (string) $user->getAuthIdentifier());
 
         $response->assertJsonMissingPath('data.images');
 
@@ -95,7 +95,7 @@ class ProgramControllerTest extends TestCase
 
         $program = Program::factory()->withOwner($owner)->create();
 
-        $program->users()->syncWithoutDetaching([(int) $collaborator->getAuthIdentifier()]);
+        $program->users()->syncWithoutDetaching([(string) $collaborator->getAuthIdentifier()]);
 
         $program->load('users');
         $this->assertCount(2, $program->users);
@@ -132,7 +132,7 @@ class ProgramControllerTest extends TestCase
         $collaborator = User::factory()->create();
 
         $program = Program::factory()->withOwner($owner)->create();
-        $program->users()->syncWithoutDetaching([(int) $collaborator->getAuthIdentifier()]);
+        $program->users()->syncWithoutDetaching([(string) $collaborator->getAuthIdentifier()]);
 
         $image = $this->fakePngUpload('x.png');
 

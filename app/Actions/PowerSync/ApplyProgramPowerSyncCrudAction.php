@@ -20,7 +20,7 @@ final class ApplyProgramPowerSyncCrudAction
 {
     use AsAction;
 
-    public function handle(PowerSyncCrudEntryData $entry, int $userId): void
+    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
     {
         $id = $entry->id;
         $op = $entry->op;
@@ -57,7 +57,7 @@ final class ApplyProgramPowerSyncCrudAction
         throw new \RuntimeException('Unsupported PowerSync CRUD op for programs: '.$op);
     }
 
-    private function applyPut(string $id, ProgramPutData $dto, int $userId): void
+    private function applyPut(string $id, ProgramPutData $dto, string $userId): void
     {
         $existing = Program::query()->whereKey($id)->first();
 
@@ -91,7 +91,7 @@ final class ApplyProgramPowerSyncCrudAction
         }
     }
 
-    private function applyPatch(string $id, ProgramPatchData $patch, int $userId): void
+    private function applyPatch(string $id, ProgramPatchData $patch, string $userId): void
     {
         $program = Program::query()->whereKey($id)->first();
 
@@ -150,7 +150,7 @@ final class ApplyProgramPowerSyncCrudAction
         $program->save();
     }
 
-    private function ensureUserManagesProgram(Program $program, int $userId): void
+    private function ensureUserManagesProgram(Program $program, string $userId): void
     {
         if (! $program->userCanManage($userId)) {
             throw new AuthorizationException;

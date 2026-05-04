@@ -17,7 +17,7 @@ final class ApplyTemplateDayPowerSyncCrudAction
 {
     use AsAction;
 
-    public function handle(PowerSyncCrudEntryData $entry, int $userId): void
+    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
     {
         $id = $entry->id;
         $op = $entry->op;
@@ -59,7 +59,7 @@ final class ApplyTemplateDayPowerSyncCrudAction
         throw new \RuntimeException('Unsupported PowerSync CRUD op for template_days: '.$op);
     }
 
-    private function applyPut(string $id, TemplateDayPutData $dto, int $userId): void
+    private function applyPut(string $id, TemplateDayPutData $dto, string $userId): void
     {
         $existing = TemplateDay::query()->whereKey($id)->first();
 
@@ -98,7 +98,7 @@ final class ApplyTemplateDayPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, TemplateDayPatchData $patch, int $userId): void
+    private function applyPatch(string $id, TemplateDayPatchData $patch, string $userId): void
     {
         $templateDay = TemplateDay::query()->whereKey($id)->first();
 

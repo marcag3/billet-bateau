@@ -8,7 +8,7 @@ use Spatie\LaravelData\Data;
 final class ProgramData extends Data
 {
     /**
-     * @param  list<int>  $user_ids
+     * @param  list<string>  $user_ids
      */
     public function __construct(
         public string $id,
@@ -34,7 +34,7 @@ final class ProgramData extends Data
     {
         $userIds = $program->users
             ->pluck('id')
-            ->map(static fn ($id): int => (int) $id)
+            ->map(static fn ($id): string => (string) $id)
             ->sort()
             ->values()
             ->all();

@@ -24,7 +24,6 @@ class BoatType extends Model implements HasMedia
 
     protected $fillable = [
         'id',
-        'user_id',
         'program_id',
         'name',
         'created_at',
@@ -43,11 +42,6 @@ class BoatType extends Model implements HasMedia
     {
         $this->addMediaCollection('images')
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     /**

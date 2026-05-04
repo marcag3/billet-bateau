@@ -10,13 +10,11 @@ return new class extends Migration
     {
         Schema::create('boat_types', function (Blueprint $table): void {
             $table->ulid('id')->primary();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignUlid('program_id')->constrained('programs')->cascadeOnDelete();
             $table->string('name');
             $table->timestamps();
 
             $table->index(['program_id', 'updated_at']);
-            $table->index(['user_id', 'updated_at']);
         });
     }
 };

@@ -24,7 +24,8 @@ class BoatTypeMediaControllerTest extends TestCase
     public function test_validation_requires_images_array(): void
     {
         $user = User::factory()->create();
-        $boatType = BoatType::factory()->for($user)->create();
+        $program = \App\Models\Program::factory()->withOwner($user)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
 
         $this->actingAs($user)->postJson('/api/media/boat_type/'.$boatType->getKey(), [])
             ->assertUnprocessable();
@@ -34,7 +35,8 @@ class BoatTypeMediaControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
-        $boatType = BoatType::factory()->for($owner)->create();
+        $program = \App\Models\Program::factory()->withOwner($owner)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
 
         $this->actingAs($other)->post('/api/media/boat_type/'.$boatType->getKey(), [
             'images' => [UploadedFile::fake()->image('a.jpg', 10, 10)],
@@ -47,8 +49,9 @@ class BoatTypeMediaControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         $collaborator = User::factory()->create();
-        $boatType = BoatType::factory()->for($owner)->create();
-        $boatType->program->users()->syncWithoutDetaching([(int) $collaborator->getAuthIdentifier()]);
+        $program = \App\Models\Program::factory()->withOwner($owner)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
+        $boatType->program->users()->syncWithoutDetaching([(string) $collaborator->getAuthIdentifier()]);
 
         $this->actingAs($collaborator)->post('/api/media/boat_type/'.$boatType->getKey(), [
             'images' => [UploadedFile::fake()->image('collab.jpg', 10, 10)],
@@ -61,7 +64,8 @@ class BoatTypeMediaControllerTest extends TestCase
     public function test_owner_can_attach_images(): void
     {
         $user = User::factory()->create();
-        $boatType = BoatType::factory()->for($user)->create();
+        $program = \App\Models\Program::factory()->withOwner($user)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
 
         $this->actingAs($user)->post('/api/media/boat_type/'.$boatType->getKey(), [
             'images' => [UploadedFile::fake()->image('deck.jpg', 30, 30)],
@@ -88,7 +92,8 @@ class BoatTypeMediaControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
-        $boatType = BoatType::factory()->for($owner)->create();
+        $program = \App\Models\Program::factory()->withOwner($owner)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
 
         $this->actingAs($owner)->post('/api/media/boat_type/'.$boatType->getKey(), [
             'images' => [UploadedFile::fake()->image('list.jpg', 20, 20)],
@@ -102,8 +107,9 @@ class BoatTypeMediaControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         $collaborator = User::factory()->create();
-        $boatType = BoatType::factory()->for($owner)->create();
-        $boatType->program->users()->syncWithoutDetaching([(int) $collaborator->getAuthIdentifier()]);
+        $program = \App\Models\Program::factory()->withOwner($owner)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
+        $boatType->program->users()->syncWithoutDetaching([(string) $collaborator->getAuthIdentifier()]);
 
         $this->actingAs($owner)->post('/api/media/boat_type/'.$boatType->getKey(), [
             'images' => [UploadedFile::fake()->image('list.jpg', 20, 20)],
@@ -117,7 +123,8 @@ class BoatTypeMediaControllerTest extends TestCase
     public function test_owner_can_list_attached_images(): void
     {
         $user = User::factory()->create();
-        $boatType = BoatType::factory()->for($user)->create();
+        $program = \App\Models\Program::factory()->withOwner($user)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
 
         $this->actingAs($user)->post('/api/media/boat_type/'.$boatType->getKey(), [
             'images' => [UploadedFile::fake()->image('deck.jpg', 30, 30)],

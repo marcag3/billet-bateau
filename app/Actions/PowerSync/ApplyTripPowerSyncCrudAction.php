@@ -22,7 +22,7 @@ final class ApplyTripPowerSyncCrudAction
 {
     use AsAction;
 
-    public function handle(PowerSyncCrudEntryData $entry, int $userId): void
+    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
     {
         $id = $entry->id;
         $op = $entry->op;
@@ -64,7 +64,7 @@ final class ApplyTripPowerSyncCrudAction
         throw new \RuntimeException('Unsupported PowerSync CRUD op for trips: '.$op);
     }
 
-    private function applyPut(string $id, TripPutData $dto, int $userId): void
+    private function applyPut(string $id, TripPutData $dto, string $userId): void
     {
         $existing = Trip::query()->whereKey($id)->first();
 
@@ -110,7 +110,7 @@ final class ApplyTripPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, TripPatchData $patch, int $userId): void
+    private function applyPatch(string $id, TripPatchData $patch, string $userId): void
     {
         $trip = Trip::query()->whereKey($id)->first();
 

@@ -18,7 +18,6 @@ import { eq, type Collection, type InitialQueryBuilder } from "@tanstack/db";
 
 export interface BoatWithBoatTypeRow {
     id: string;
-    user_id: number | null;
     boat_type_id: string | null;
     program_id: string | null;
     name: string | null;
@@ -57,7 +56,6 @@ export function joinBoatsWithBoatTypes<
         )
         .select(({ b, bt }) => ({
             id: b.id,
-            user_id: b.user_id,
             boat_type_id: b.boat_type_id,
             program_id: b.program_id,
             name: b.name,

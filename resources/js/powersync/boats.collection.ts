@@ -5,7 +5,6 @@ import { appBoatsPowerSyncTable } from './app.powersync-schema';
 
 export const boatsSchema = z.object({
     id: z.string(),
-    user_id: z.number().int().nullable().default(null),
     boat_type_id: z.string().nullable().default(null),
     program_id: z.string().nullable().default(null),
     name: z.string().min(1, "Boat name is required").nullable().default(null),

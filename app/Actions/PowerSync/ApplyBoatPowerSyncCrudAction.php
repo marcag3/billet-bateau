@@ -19,7 +19,7 @@ final class ApplyBoatPowerSyncCrudAction
 {
     use AsAction;
 
-    public function handle(PowerSyncCrudEntryData $entry, int $userId): void
+    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
     {
         $id = $entry->id;
         $op = $entry->op;
@@ -57,7 +57,7 @@ final class ApplyBoatPowerSyncCrudAction
         throw new \RuntimeException('Unsupported PowerSync CRUD op for boats: '.$op);
     }
 
-    private function applyPut(string $id, BoatPutData $data, int $userId): void
+    private function applyPut(string $id, BoatPutData $data, string $userId): void
     {
         $existing = Boat::query()->whereKey($id)->first();
 
@@ -70,7 +70,6 @@ final class ApplyBoatPowerSyncCrudAction
         Boat::query()->updateOrCreate(
             ['id' => $id],
             [
-                'user_id' => $userId,
                 'name' => $resolved['name'],
                 'capacity' => $resolved['capacity'],
                 'notes' => $resolved['notes'],
@@ -80,7 +79,7 @@ final class ApplyBoatPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, BoatPatchData $data, int $userId): void
+    private function applyPatch(string $id, BoatPatchData $data, string $userId): void
     {
         $boat = Boat::query()->whereKey($id)->first();
 
@@ -115,12 +114,8 @@ final class ApplyBoatPowerSyncCrudAction
         $boat->save();
     }
 
-    private function ensureUserMayMutateBoat(Boat $boat, int $userId): void
+    private function ensureUserMayMutateBoat(Boat $boat, string $userId): void
     {
-        if ($boat->user_id !== null && (int) $boat->user_id === $userId) {
-            return;
-        }
-
         $program = $boat->program()->first();
 
         if ($program !== null && $program->userCanManage($userId)) {
