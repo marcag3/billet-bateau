@@ -1,8 +1,7 @@
 export default {
     common: {
         publicExperience: "Experience publique",
-        reports: "Rapports",
-        settings: "Parametres",
+
         newProgram: "Nouveau programme",
         programs: "Programmes",
         boats: "Bateaux",
@@ -55,16 +54,7 @@ export default {
         passwordMismatch: "La confirmation du mot de passe ne correspond pas.",
         validationRequired: "Ce champ est requis.",
     },
-    reports: {
-        title: "Rapports",
-        lazyDescription:
-            "Cette route est chargee a la demande pour reduire le chargement initial.",
-    },
-    settings: {
-        title: "Parametres",
-        isolatedDescription:
-            "Les parametres specifiques restent isoles dans le bundle de l'application.",
-    },
+
     programsEdit: {
         title: "Modifier le programme",
         subtitle:
@@ -120,17 +110,6 @@ export default {
         analyticsTitle: "Analytique",
         analyticsSubtitle:
             "Suivez les reservations et les tendances de conversion.",
-        openReports: "Ouvrir les rapports",
-    },
-    legacyReports: {
-        startupDescription:
-            "Cette page est chargee a la demande pour conserver un demarrage initial reactif.",
-        line: "Ligne",
-        bookings: "Reservations",
-        fillRate: "Taux de remplissage",
-        morningFerry: "Ferry du matin",
-        afternoonFerry: "Ferry de l'apres-midi",
-        eveningFerry: "Ferry du soir",
     },
     public: {
         minimalDescription:

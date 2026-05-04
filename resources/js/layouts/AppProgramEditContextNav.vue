@@ -94,32 +94,7 @@
                 </q-item-section>
                 <q-item-section>{{ t("common.ticketTypes") }}</q-item-section>
             </q-item>
-            <q-item
-                key="reports"
-                v-ripple
-                clickable
-                :to="{ name: 'reports', params: { programId } }"
-                exact
-                active-class="app-nav-item--active"
-            >
-                <q-item-section avatar>
-                    <q-icon name="assessment" />
-                </q-item-section>
-                <q-item-section>{{ t("common.reports") }}</q-item-section>
-            </q-item>
-            <q-item
-                key="settings"
-                v-ripple
-                clickable
-                :to="{ name: 'settings', params: { programId } }"
-                exact
-                active-class="app-nav-item--active"
-            >
-                <q-item-section avatar>
-                    <q-icon name="settings" />
-                </q-item-section>
-                <q-item-section>{{ t("common.settings") }}</q-item-section>
-            </q-item>
+
         </template>
     </Teleport>
 </template>

@@ -1,8 +1,7 @@
 export default {
     common: {
         publicExperience: "Public Experience",
-        reports: "Reports",
-        settings: "Settings",
+
         newProgram: "New program",
         programs: "Programs",
         boats: "Boats",
@@ -52,16 +51,7 @@ export default {
         passwordMismatch: "Password confirmation does not match.",
         validationRequired: "This field is required.",
     },
-    reports: {
-        title: "Reports",
-        lazyDescription:
-            "This route is lazy-loaded to keep startup payload lower.",
-    },
-    settings: {
-        title: "Settings",
-        isolatedDescription:
-            "Feature-specific settings remain isolated to the app bundle.",
-    },
+
     programsEdit: {
         title: "Edit program",
         subtitle:
@@ -116,17 +106,6 @@ export default {
         operationsSubtitle: "Manage crossings, boats, and capacity.",
         analyticsTitle: "Analytics",
         analyticsSubtitle: "Track bookings and conversion trends.",
-        openReports: "Open reports",
-    },
-    legacyReports: {
-        startupDescription:
-            "This page is lazy-loaded to keep initial app startup responsive.",
-        line: "Line",
-        bookings: "Bookings",
-        fillRate: "Fill rate",
-        morningFerry: "Morning ferry",
-        afternoonFerry: "Afternoon ferry",
-        eveningFerry: "Evening ferry",
     },
     public: {
         minimalDescription:

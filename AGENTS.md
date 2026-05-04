@@ -40,33 +40,14 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 ## PowerSync Data Flow
 
-This application uses PowerSync for local-first offline sync. Understanding the data flow is critical when debugging why data doesn't appear on screen.
+Two sync streams in `docker/powersync/sync-config.yaml`:
 
-### Sync Streams
+- **`user_scope`** (auto_subscribe: true) — user's programs. Always subscribed.
+- **`program_scope`** — program-scoped data (template days, boats, trips, etc.). Requires a `program_id`.
 
-There are two sync streams defined in `docker/powersync/sync-config.yaml`:
+`activeProgramIdRef` in `resources/js/powersync/app-powersync.runtime.ts` drives `program_scope` subscription. Set by the router guard (`resources/js/router/index.ts`) on routes with `meta.requiresSelectedProgram`.
 
-- **`user_scope`** (auto_subscribe: true) — syncs programs the user has access to. Always subscribed.
-- **`program_scope`** — syncs program-scoped data (template days, boats, trips, water routes, ticket types, media). Requires a `program_id` parameter.
-
-### Subscription Lifecycle
-
-The `program_scope` subscription is managed in `resources/js/powersync/app-powersync.runtime.ts`:
-
-1. `activeProgramIdRef` holds the currently selected program ID (empty string when no program is selected).
-2. A `watch` on `activeProgramIdRef` subscribes/unsubscribes from `program_scope` whenever the active program changes.
-3. The router guard (`resources/js/router/index.ts`) calls `setActiveProgramId()` when entering/leaving routes with `meta.requiresSelectedProgram`.
-4. During bootstrap, each collection's `onLoad` also attempts to subscribe — this is a fallback for when the program ID is already set before bootstrap completes.
-
-### Common Pitfall
-
-**If `program_scope` is never subscribed, zero program-scoped data will appear on screen** — even if the data exists in the PostgreSQL database and even if local inserts succeed. The local PowerSync SQLite database will be empty for those tables.
-
-Always verify:
-
-1. `activeProgramIdRef` is set to a non-empty value before or during bootstrap.
-2. The `watch` on `activeProgramIdRef` eagerly handles program switching after bootstrap.
-3. The `accessible_program_ids` CTE in sync rules includes the user's programs (via `program_user` pivot).
+**Common pitfall:** If `program_scope` is never subscribed, zero program-scoped data appears — even if PostgreSQL has it. Verify `activeProgramIdRef` is set and the `accessible_program_ids` CTE includes the user's programs.
 
 ### Where to Look
 
