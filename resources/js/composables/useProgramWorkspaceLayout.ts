@@ -96,8 +96,10 @@ export function useProgramWorkspaceLayout({
             if (pid.length === 0) {
                 return;
             }
+            // Important: on a hard refresh, the query can be "ready" before the
+            // user_scope stream has delivered any program rows. Treat an empty
+            // program list as "not enough evidence yet" rather than "user has no programs".
             if (ids.length === 0) {
-                void router.replace({ name: "programs.list" });
                 return;
             }
             if (!ids.includes(pid)) {
