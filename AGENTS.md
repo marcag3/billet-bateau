@@ -38,6 +38,48 @@ This project has domain-specific skills available. You MUST activate the relevan
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
 
+## PowerSync Data Flow
+
+This application uses PowerSync for local-first offline sync. Understanding the data flow is critical when debugging why data doesn't appear on screen.
+
+### Sync Streams
+
+There are two sync streams defined in `docker/powersync/sync-config.yaml`:
+
+- **`user_scope`** (auto_subscribe: true) — syncs programs the user has access to. Always subscribed.
+- **`program_scope`** — syncs program-scoped data (template days, boats, trips, water routes, ticket types, media). Requires a `program_id` parameter.
+
+### Subscription Lifecycle
+
+The `program_scope` subscription is managed in `resources/js/powersync/app-powersync.runtime.ts`:
+
+1. `activeProgramIdRef` holds the currently selected program ID (empty string when no program is selected).
+2. A `watch` on `activeProgramIdRef` subscribes/unsubscribes from `program_scope` whenever the active program changes.
+3. The router guard (`resources/js/router/index.ts`) calls `setActiveProgramId()` when entering/leaving routes with `meta.requiresSelectedProgram`.
+4. During bootstrap, each collection's `onLoad` also attempts to subscribe — this is a fallback for when the program ID is already set before bootstrap completes.
+
+### Common Pitfall
+
+**If `program_scope` is never subscribed, zero program-scoped data will appear on screen** — even if the data exists in the PostgreSQL database and even if local inserts succeed. The local PowerSync SQLite database will be empty for those tables.
+
+Always verify:
+1. `activeProgramIdRef` is set to a non-empty value before or during bootstrap.
+2. The `watch` on `activeProgramIdRef` eagerly handles program switching after bootstrap.
+3. The `accessible_program_ids` CTE in sync rules includes the user's programs (via `program_user` pivot).
+
+### Where to Look
+
+| Concern | File |
+|---------|------|
+| Sync stream queries | `docker/powersync/sync-config.yaml` |
+| Subscription management | `resources/js/powersync/app-powersync.runtime.ts` |
+| Router guard (sets program) | `resources/js/router/index.ts` |
+| PowerSync connector (upload) | `resources/js/services/powersync.connector.ts` |
+| Upload handler (server) | `app/Http/Controllers/Api/PowerSyncUploadController.php` |
+| CRUD action (server) | `app/Actions/PowerSync/Apply*PowerSyncCrudAction.php` |
+| Collection definitions | `resources/js/powersync/*.collection.ts` |
+| PowerSync schema | `resources/js/powersync/app.powersync-schema.ts` |
+
 ## Verification Scripts
 
 - Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.

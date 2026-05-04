@@ -1,5 +1,5 @@
 import { PowerSyncDatabase } from "@powersync/web";
-import { computed, ref, shallowRef } from "vue";
+import { computed, ref, shallowRef, watch } from "vue";
 import { fetchCurrentSession } from "../models/auth.api";
 import { useAuthStore } from "../store/auth.store";
 import { createAppPowerSyncConnector } from "../services/powersync.connector";
@@ -143,6 +143,42 @@ const collectionRefs = {
 
 /** @type {import('vue').Ref<string>} */
 const activeProgramIdRef = ref("");
+
+/** @type {null | (() => void)} */
+let programScopeUnsubscribe = null;
+
+// When the active program changes, subscribe/unsubscribe from program_scope
+// so that program-scoped data (template days, boats, trips, etc.) syncs.
+if (typeof window !== "undefined") {
+    watch(activeProgramIdRef, (newVal, oldVal) => {
+        if (programScopeUnsubscribe) {
+            try {
+                programScopeUnsubscribe();
+            } catch (e) {
+                // Ignore unsubscribe errors during teardown
+            }
+            programScopeUnsubscribe = null;
+        }
+
+        const newPid = newVal.trim();
+        if (newPid.length > 0) {
+            const db = powerSyncDbRef.value;
+            if (!db) {
+                return;
+            }
+            db.syncStream("program_scope", { program_id: newPid })
+                .subscribe()
+                .then((sub) => {
+                    programScopeUnsubscribe = () => {
+                        sub.unsubscribe();
+                    };
+                })
+                .catch((err) => {
+                    console.error("program_scope subscribe failed:", err);
+                });
+        }
+    });
+}
 
 /**
  * Active program id for `program_scope` PowerSync stream (boat types, media, roster, trips, water routes, template days).
