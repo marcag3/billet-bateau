@@ -82,6 +82,8 @@ function onFilter(
     update: (arg: () => void, ref?: () => void) => void,
 ) {
     if (!props.filterable) {
+        // Quasar can treat `@filter` as the `onFilter` prop; `update()` must run or the menu never opens.
+        update(() => {});
         return;
     }
     update(() => {
