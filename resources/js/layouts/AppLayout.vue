@@ -50,15 +50,7 @@
 
                 <AppOutboxToolbarMenu />
 
-                <q-btn-toggle
-                    v-model="selectedLocale"
-                    class="q-ml-md app-locale-toggle"
-                    dense
-                    flat
-                    toggle-color="accent"
-                    :options="localeOptions"
-                    :aria-label="t('common.language')"
-                />
+                <AppLanguageSwitcher />
 
                 <q-btn
                     v-if="authStore.isAuthenticated"
@@ -160,7 +152,7 @@ import { useAppLayoutStore } from "../store/app-layout.store";
 import { useProgramWorkspaceLayout } from "../composables/useProgramWorkspaceLayout";
 import { APP_PROGRAM_MAIN_NAV_TELEPORT_ID } from "../utilities/app-layout-nav";
 import AppOutboxToolbarMenu from "../components/AppOutboxToolbarMenu.vue";
-import { setLocale } from "../utilities/i18n";
+import AppLanguageSwitcher from "../components/AppLanguageSwitcher.vue";
 
 const router = useRouter();
 const $q = useQuasar();
@@ -206,18 +198,6 @@ const showAppNav = computed(
 const showSideNav = computed(
     () => showAppNav.value && hasSelectedProgram.value,
 );
-
-const localeOptions = computed(() => [
-    { label: "EN", value: "en" },
-    { label: "FR", value: "fr" },
-]);
-
-const selectedLocale = computed({
-    get: () => locale.value,
-    set: (value: string) => {
-        setLocale(value);
-    },
-});
 
 async function backToPrograms() {
     await router.push({ name: "programs.list" });
@@ -289,11 +269,6 @@ async function logout() {
 .app-nav-list :deep(.app-nav-item--back) {
     font-weight: 600;
     color: var(--q-secondary);
-}
-
-.app-locale-toggle {
-    border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.14);
 }
 
 .app-page-container :deep(.q-page) {

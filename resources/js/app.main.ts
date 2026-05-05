@@ -10,7 +10,7 @@ import AppLayout from "./layouts/AppLayout.vue";
 import router from "./router";
 import { useAuthStore } from "./store/auth.store";
 import { bootstrapDomainModels } from "./models/model.registry";
-import { i18n } from "./utilities/i18n";
+import { i18n, syncQuasarLanguageWithI18n } from "./utilities/i18n";
 import { APP_AUTH_EXPIRED_EVENT } from "./utilities/events";
 
 const APP_SW_URL = "/app-sw.js";
@@ -36,6 +36,8 @@ app.use(Quasar, {
     },
 });
 app.use(i18n);
+
+await syncQuasarLanguageWithI18n();
 
 const authStore = useAuthStore(pinia);
 
