@@ -31,4 +31,9 @@ Route::middleware(['web', 'auth:sanctum', 'throttle:60,1'])->group(function (): 
         ->whereIn('type', ['program', 'boat_type'])
         ->whereUlid('id')
         ->name('api.media.store');
+    Route::delete('/media/{type}/{id}/{media}', [MediaController::class, 'destroy'])
+        ->whereIn('type', ['program', 'boat_type'])
+        ->whereUlid('id')
+        ->whereUuid('media')
+        ->name('api.media.destroy');
 });

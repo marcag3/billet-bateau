@@ -39,36 +39,27 @@
                 round
                 dense
                 icon="add"
-                @click="showCreateDialog = true"
+                @click="openBoatTypeFormCreate"
             />
         </template>
     </AppMapSelect>
 
-    <AppSimpleNameDialog
-        v-model:open="showCreateDialog"
-        v-model:name="createName"
-        :title="t('boatTypesList.addNew')"
-        :input-label="t('boatTypesList.name')"
-        :confirm-label="t('boatTypesList.create')"
-        :dismiss-label="t('common.dismiss')"
-        :loading="isCreating"
-        :error-message="createError"
-        @confirm="onCreateConfirm"
-        @dismiss="onCreateDismiss"
-    />
-
-    <AppSimpleNameDialog
-        v-model:open="showRenameDialog"
-        v-model:name="renameName"
-        :title="t('boatTypesList.rename')"
-        :input-label="t('boatTypesList.name')"
-        :confirm-label="t('boatsList.saveChanges')"
-        :dismiss-label="t('common.dismiss')"
-        :loading="isRenaming"
-        :error-message="renameError"
-        @confirm="onRenameConfirm"
-        @dismiss="onRenameCancel"
-    />
+    <q-dialog v-model="boatTypeFormDialogOpen" persistent>
+        <q-card v-if="boatTypeFormDialogOpen" style="min-width: 320px">
+            <q-card-section>
+                <div class="text-h6">{{ boatTypeFormDialogTitle }}</div>
+            </q-card-section>
+            <q-card-section>
+                <AppBoatTypeForm
+                    :program-id="programId"
+                    :boat-type-id="boatTypeFormBoatTypeId"
+                    :initial-name="boatTypeFormInitialName"
+                    @cancel="closeBoatTypeFormDialog"
+                    @success="onBoatTypeFormSuccess"
+                />
+            </q-card-section>
+        </q-card>
+    </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -77,17 +68,15 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { eq } from '@tanstack/db';
 import { useLiveQuery } from '@tanstack/vue-db';
-import { ulid } from 'ulid';
 import {
     getBoatTypesCollection,
     getBoatsCollection,
     refreshOutboxSnapshot,
 } from '../../powersync/app-powersync.runtime';
-import { safeParseBoatEntityName } from '../../models/boats/boats.validation';
 import { useNotifyErrorFromCatch } from '../../composables/useNotifyErrorFromCatch';
 import { useProgramBoatTypes } from '../../composables/useProgramBoatTypes';
 import AppMapSelect from '../molecules/AppMapSelect.vue';
-import AppSimpleNameDialog from '../molecules/AppSimpleNameDialog.vue';
+import AppBoatTypeForm from '../molecules/AppBoatTypeForm.vue';
 
 const props = defineProps<{
     modelValue: string | null;
@@ -154,107 +143,44 @@ const optionItems = computed(() =>
     })),
 );
 
-// --- Create ---
-const showCreateDialog = ref(false);
-const createName = ref('');
-const createError = ref('');
-const isCreating = ref(false);
+const boatTypeFormDialogOpen = ref(false);
+const boatTypeFormBoatTypeId = ref<string | null>(null);
+const boatTypeFormInitialName = ref('');
 
-function onCreateDismiss(): void {
-    createError.value = '';
+const boatTypeFormDialogTitle = computed(() =>
+    boatTypeFormBoatTypeId.value != null && boatTypeFormBoatTypeId.value.length > 0
+        ? t('boatTypesList.editBoatType')
+        : t('boatTypesList.addNew'),
+);
+
+function openBoatTypeFormCreate(): void {
+    boatTypeFormBoatTypeId.value = null;
+    boatTypeFormInitialName.value = '';
+    boatTypeFormDialogOpen.value = true;
 }
 
-function onCreateConfirm() {
-    const parsed = safeParseBoatEntityName(t, createName.value);
-    if (!parsed.success) {
-        createError.value =
-            parsed.error.issues[0]?.message ?? t('boatsList.nameRequired');
-        return;
+function closeBoatTypeFormDialog(): void {
+    boatTypeFormDialogOpen.value = false;
+}
+
+function onBoatTypeFormSuccess(payload: { id: string; mode: 'create' | 'edit' }): void {
+    closeBoatTypeFormDialog();
+    $q.notify({
+        type: 'positive',
+        message:
+            payload.mode === 'create'
+                ? t('boatTypesList.created')
+                : t('boatTypesList.updated'),
+    });
+    if (payload.mode === 'create') {
+        emit('update:modelValue', payload.id);
     }
-    createError.value = '';
-    isCreating.value = true;
-    void (async () => {
-        try {
-            const col = boatTypesCollection.value;
-            if (!col) throw new Error('Boat types collection not ready.');
-            const id = ulid();
-            const trimmed = String(parsed.data ?? '').trim();
-            await col
-                .insert({
-                    id,
-                    program_id: props.programId,
-                    name: trimmed.length > 0 ? trimmed : 'Untitled',
-                })
-                .isPersisted.promise;
-            void refreshOutboxSnapshot();
-            // Auto-select the newly created type
-            emit('update:modelValue', id);
-            showCreateDialog.value = false;
-            createName.value = '';
-            createError.value = '';
-            $q.notify({ type: 'positive', message: t('boatTypesList.created') });
-        } catch (e) {
-            notifyError(e, t('boatTypesList.errorGeneric'));
-        } finally {
-            isCreating.value = false;
-        }
-    })();
 }
-
-// --- Rename ---
-const showRenameDialog = ref(false);
-const renameTarget = ref<{ id: string; name: string } | null>(null);
-const renameName = ref('');
-const renameError = ref('');
-const isRenaming = ref(false);
 
 function onRename(opt: { id: string; name: string }) {
-    renameTarget.value = { id: opt.id, name: opt.name };
-    renameName.value = opt.name;
-    renameError.value = '';
-    showRenameDialog.value = true;
-}
-
-function onRenameCancel() {
-    renameTarget.value = null;
-    renameName.value = '';
-    renameError.value = '';
-}
-
-function onRenameConfirm() {
-    const target = renameTarget.value;
-    if (!target) return;
-    const parsed = safeParseBoatEntityName(t, renameName.value);
-    if (!parsed.success) {
-        renameError.value =
-            parsed.error.issues[0]?.message ?? t('boatsList.nameRequired');
-        return;
-    }
-    renameError.value = '';
-    isRenaming.value = true;
-    void (async () => {
-        try {
-            const col = boatTypesCollection.value;
-            if (!col) throw new Error('Boat types collection not ready.');
-            col.update(target.id, (draft) => {
-                draft.name = String(parsed.data).trim();
-                draft.updated_at = new Date().toISOString();
-            });
-            void refreshOutboxSnapshot();
-            showRenameDialog.value = false;
-            renameTarget.value = null;
-            renameName.value = '';
-            renameError.value = '';
-            $q.notify({
-                type: 'positive',
-                message: t('boatTypesList.created'),
-            });
-        } catch (e) {
-            notifyError(e, t('boatTypesList.errorGeneric'));
-        } finally {
-            isRenaming.value = false;
-        }
-    })();
+    boatTypeFormBoatTypeId.value = opt.id;
+    boatTypeFormInitialName.value = opt.name;
+    boatTypeFormDialogOpen.value = true;
 }
 
 // --- Delete ---

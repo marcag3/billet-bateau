@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Media;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class MediaController extends Controller
@@ -62,5 +63,30 @@ class MediaController extends Controller
         return response()->json([
             'data' => $data,
         ]);
+    }
+
+    public function destroy(string $type, string $id, string $mediaUuid): Response
+    {
+        $resolved = $this->resolveMediaAttachable->run($type, $id);
+
+        $this->authorize('update', $resolved->program);
+
+        $attachable = $resolved->attachable;
+
+        /** @var Media|null $media */
+        $media = Media::query()
+            ->where('uuid', $mediaUuid)
+            ->where('model_type', $attachable->getMorphClass())
+            ->where('model_id', (string) $attachable->getKey())
+            ->where('collection_name', 'images')
+            ->first();
+
+        if ($media === null) {
+            abort(404);
+        }
+
+        $media->delete();
+
+        return response()->noContent();
     }
 }
