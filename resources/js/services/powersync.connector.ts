@@ -1,10 +1,11 @@
+import type {
+    AbstractPowerSyncDatabase,
+    PowerSyncBackendConnector,
+} from "@powersync/common";
 import { credentials, upload } from "../routes/api/powersync";
 import { requestJson } from "./http.client";
 
-/**
- * @returns {import('@powersync/common').PowerSyncBackendConnector}
- */
-export function createAppPowerSyncConnector() {
+export function createAppPowerSyncConnector(): PowerSyncBackendConnector {
     return {
         async fetchCredentials() {
             const res = await requestJson(credentials.url(), {
@@ -23,10 +24,7 @@ export function createAppPowerSyncConnector() {
             return { endpoint, token };
         },
 
-        /**
-         * @param {import('@powersync/common').AbstractPowerSyncDatabase} database
-         */
-        async uploadData(database) {
+        async uploadData(database: AbstractPowerSyncDatabase) {
             let batch = await database.getCrudBatch(100);
 
             while (batch !== null) {

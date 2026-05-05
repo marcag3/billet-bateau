@@ -32,6 +32,7 @@
     },
     "dependencies": {
         "@journeyapps/wa-sqlite": "^1.6.0",
+        "@powersync/common": "^1.52.0",
         "@powersync/web": "^1.37.2",
         "@quasar/extras": "^1.18.0",
         "@rolldown/binding-linux-x64-gnu": "^1.0.0-rc.17",

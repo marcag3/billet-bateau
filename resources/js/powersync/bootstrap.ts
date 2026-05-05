@@ -14,7 +14,9 @@ import {
     attachUserScopeStream,
     detachAllPowerSyncStreams,
 } from "./streams";
+import type { SyncStatus } from "@powersync/common";
 import * as runtimeState from "./powersync-runtime-state";
+import { isUserScopePrioritySynced } from "./user-scope-sync-status";
 
 async function resolveAuthenticatedUserId(): Promise<string> {
     const authStore = useAuthStore();
@@ -43,6 +45,7 @@ export async function bootstrapAppPowerSync(): Promise<void> {
         runtimeState.powerSyncDbRef.value
     ) {
         runtimeState.errorMessage.value = "";
+        runtimeState.initialUserScopeSyncComplete.value = true;
         return;
     }
 
@@ -54,6 +57,7 @@ export async function bootstrapAppPowerSync(): Promise<void> {
     const promise = (async () => {
         try {
             runtimeState.setPowerSyncConnectorConnected(false);
+            runtimeState.initialUserScopeSyncComplete.value = false;
             runtimeState.currentUserIdRef.value =
                 await resolveAuthenticatedUserId();
 
@@ -71,7 +75,10 @@ export async function bootstrapAppPowerSync(): Promise<void> {
 
             runtimeState.setPowerSyncStatusUnsubscribe(
                 db.registerListener({
-                    statusChanged: (status) => {
+                    statusChanged: (status: SyncStatus) => {
+                        if (isUserScopePrioritySynced(status)) {
+                            runtimeState.initialUserScopeSyncComplete.value = true;
+                        }
                         const uploadError = status.dataFlowStatus?.uploadError;
                         const formatted = formatPowerSyncUploadError(uploadError);
                         runtimeState.outboxCommitError.value =
@@ -94,6 +101,10 @@ export async function bootstrapAppPowerSync(): Promise<void> {
 
             await attachUserScopeStream(db);
 
+            if (isUserScopePrioritySynced(db.currentStatus)) {
+                runtimeState.initialUserScopeSyncComplete.value = true;
+            }
+
             runtimeState.setPowerSyncConnectorConnected(true);
 
             attachProgramScopeStreamSubscription();
@@ -105,6 +116,7 @@ export async function bootstrapAppPowerSync(): Promise<void> {
         } catch (error) {
             runtimeState.setBootstrapPromise(null);
             runtimeState.hasBootstrappedCollection.value = false;
+            runtimeState.initialUserScopeSyncComplete.value = false;
             runtimeState.setPowerSyncConnectorConnected(false);
 
             detachAllPowerSyncStreams();

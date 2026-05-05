@@ -324,6 +324,12 @@ export default {
     },
     programsList: {
         title: "Programs",
+        loadingLocal: "Preparing local data…",
+        loadingLocalHint:
+            "Setting up offline storage and sync. This only takes a moment on first launch.",
+        loadingPrograms: "Syncing your programs…",
+        loadingProgramsHint:
+            "Fetching your workspace from the server.",
         empty: "No programs yet. Create one with the button above.",
         emptyActive: "No programs in the Active tab.",
         emptyArchived: "No archived programs.",

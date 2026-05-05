@@ -336,6 +336,12 @@ export default {
     },
     programsList: {
         title: "Programmes",
+        loadingLocal: "Preparation des donnees locales…",
+        loadingLocalHint:
+            "Configuration du stockage hors ligne et de la synchronisation. Un court instant seulement au premier lancement.",
+        loadingPrograms: "Synchronisation de vos programmes…",
+        loadingProgramsHint:
+            "Recuperation de votre espace depuis le serveur.",
         empty: "Aucun programme pour l'instant. Utilisez le bouton ci-dessus pour en creer un.",
         emptyActive: "Aucun programme dans l’onglet Actifs.",
         emptyArchived: "Aucun programme archive.",

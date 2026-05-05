@@ -11,7 +11,11 @@
             </template>
         </AppPageHeader>
 
-        <AppBootstrapGate :ready="hasBootstrapped">
+        <AppBootstrapGate
+            :ready="hasBootstrapped"
+            :loading-title="t('programsList.loadingLocal')"
+            :loading-subcopy="t('programsList.loadingLocalHint')"
+        >
             <q-tabs
                 v-model="programTab"
                 class="q-mb-md"
@@ -25,96 +29,126 @@
             </q-tabs>
 
             <div class="row q-col-gutter-md">
-                <AppEmptyListRow
-                    class="col-12"
-                    :show="filteredPrograms.length === 0"
-                    :message="emptyListMessage"
-                />
-                <div
-                    v-for="p in filteredPrograms"
-                    :key="String(p.id)"
-                    class="col-12 col-sm-6 col-md-4"
-                >
-                    <q-card>
-                        <q-img
-                            :src="primaryImageFor(String(p.id))"
-                            :style="placeholderStyle(p)"
-                            :ratio="16 / 9"
-                        >
-                            <div class="absolute-bottom">
-                                <div class="text-h6">{{ p.name }}</div>
-                                <div
-                                    class="text-subtitle2"
-                                    v-if="programDescription(p)"
-                                >
-                                    {{ programDescription(p) }}
-                                </div>
+                <template v-if="isProgramsInitialLoadPending">
+                    <div class="col-12">
+                        <q-banner rounded class="bg-grey-2 text-body2">
+                            <template #avatar>
+                                <q-spinner color="primary" size="sm" />
+                            </template>
+                            <div class="text-weight-medium">
+                                {{ t("programsList.loadingPrograms") }}
                             </div>
-                        </q-img>
-
-                        <q-card-section class="col-grow">
-                            <div
-                                v-if="addressDisplayLines(p).length"
-                                class="row no-wrap items-start text-body2 text-grey-7 q-gutter-sm"
+                            <div class="text-caption text-grey-8">
+                                {{ t("programsList.loadingProgramsHint") }}
+                            </div>
+                        </q-banner>
+                    </div>
+                    <div
+                        v-for="i in 3"
+                        :key="`prog-skel-${i}`"
+                        class="col-12 col-sm-6 col-md-4"
+                    >
+                        <q-card flat bordered>
+                            <q-skeleton height="160px" square />
+                            <q-card-section>
+                                <q-skeleton type="text" class="text-subtitle1" />
+                                <q-skeleton type="text" width="60%" />
+                            </q-card-section>
+                        </q-card>
+                    </div>
+                </template>
+                <template v-else>
+                    <AppEmptyListRow
+                        class="col-12"
+                        :show="showProgramsEmptyState"
+                        :message="emptyListMessage"
+                    />
+                    <div
+                        v-for="p in filteredPrograms"
+                        :key="String(p.id)"
+                        class="col-12 col-sm-6 col-md-4"
+                    >
+                        <q-card>
+                            <q-img
+                                :src="primaryImageFor(String(p.id))"
+                                :style="placeholderStyle(p)"
+                                :ratio="16 / 9"
                             >
-                                <q-icon
-                                    name="place"
-                                    size="sm"
-                                    class="q-pt-xs"
-                                />
-                                <div>
+                                <div class="absolute-bottom">
+                                    <div class="text-h6">{{ p.name }}</div>
                                     <div
-                                        v-for="(line, i) in addressDisplayLines(
-                                            p,
-                                        )"
-                                        :key="`addr-${String(p.id)}-${i}`"
+                                        class="text-subtitle2"
+                                        v-if="programDescription(p)"
                                     >
-                                        {{ line }}
+                                        {{ programDescription(p) }}
                                     </div>
                                 </div>
-                            </div>
-                            <div v-else class="text-caption text-grey-6">
-                                {{ t("programsList.noAddress") }}
-                            </div>
-                        </q-card-section>
-                        <q-separator />
-                        <q-card-actions align="evenly">
-                            <q-btn
-                                icon="edit"
-                                color="secondary"
-                                flat
-                                no-caps
-                                :label="t('programsList.editProgram')"
-                                :to="{
-                                    name: 'programs.edit',
-                                    params: { programId: String(p.id) },
-                                }"
-                            />
-                            <q-btn
-                                icon="dashboard"
-                                color="secondary"
-                                flat
-                                no-caps
-                                :label="t('programsList.controlPanel')"
-                                :to="{
-                                    name: 'programs.control',
-                                    params: { programId: String(p.id) },
-                                }"
-                            />
-                            <q-btn
-                                icon="confirmation_number"
-                                color="secondary"
-                                flat
-                                no-caps
-                                :label="t('programsList.checkinManager')"
-                                :to="{
-                                    name: 'programs.checkin',
-                                    params: { programId: String(p.id) },
-                                }"
-                            />
-                        </q-card-actions>
-                    </q-card>
-                </div>
+                            </q-img>
+
+                            <q-card-section class="col-grow">
+                                <div
+                                    v-if="addressDisplayLines(p).length"
+                                    class="row no-wrap items-start text-body2 text-grey-7 q-gutter-sm"
+                                >
+                                    <q-icon
+                                        name="place"
+                                        size="sm"
+                                        class="q-pt-xs"
+                                    />
+                                    <div>
+                                        <div
+                                            v-for="(line, i) in addressDisplayLines(
+                                                p,
+                                            )"
+                                            :key="`addr-${String(p.id)}-${i}`"
+                                        >
+                                            {{ line }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-else class="text-caption text-grey-6">
+                                    {{ t("programsList.noAddress") }}
+                                </div>
+                            </q-card-section>
+                            <q-separator />
+                            <q-card-actions align="evenly">
+                                <q-btn
+                                    icon="edit"
+                                    color="secondary"
+                                    flat
+                                    no-caps
+                                    :label="t('programsList.editProgram')"
+                                    :to="{
+                                        name: 'programs.edit',
+                                        params: { programId: String(p.id) },
+                                    }"
+                                />
+                                <q-btn
+                                    icon="dashboard"
+                                    color="secondary"
+                                    flat
+                                    no-caps
+                                    :label="t('programsList.controlPanel')"
+                                    :to="{
+                                        name: 'programs.control',
+                                        params: { programId: String(p.id) },
+                                    }"
+                                />
+                                <q-btn
+                                    icon="confirmation_number"
+                                    color="secondary"
+                                    flat
+                                    no-caps
+                                    :label="t('programsList.checkinManager')"
+                                    :to="{
+                                        name: 'programs.checkin',
+                                        params: { programId: String(p.id) },
+                                    }"
+                                />
+                            </q-card-actions>
+                        </q-card>
+                    </div>
+                </template>
             </div>
         </AppBootstrapGate>
     </q-page>
@@ -134,6 +168,10 @@ import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 import { usePageLayout } from "../composables/usePageLayout";
+import {
+    isProgramsInitialLoadPending as computeProgramsInitialLoadPending,
+    shouldShowProgramsEmptyState as computeShowProgramsEmptyState,
+} from "../utilities/programs-first-run-loading";
 
 const PROGRAM_MODEL = "App\\Models\\Program";
 
@@ -143,8 +181,9 @@ usePageLayout({ documentTitleKey: "programsList.title" });
 
 const programsCollection = powersync.collections.programs;
 const hasBootstrapped = powersync.hasBootstrappedCollection;
+const initialUserScopeSyncComplete = powersync.initialUserScopeSyncComplete;
 
-const { data: programs } = useLiveQuery(
+const { data: programs, isLoading: programsQueryLoading } = useLiveQuery(
     (queryBuilder) => {
         const col = programsCollection.value;
         if (!col) return undefined;
@@ -184,6 +223,23 @@ const filteredPrograms = computed((): ProgramOutput[] => {
         (p) => p != null && p.is_archived,
     ) as unknown as ProgramOutput[];
 });
+
+const isProgramsInitialLoadPending = computed(() =>
+    computeProgramsInitialLoadPending(
+        hasBootstrapped.value,
+        initialUserScopeSyncComplete.value,
+        programsQueryLoading.value,
+    ),
+);
+
+const showProgramsEmptyState = computed(() =>
+    computeShowProgramsEmptyState(
+        hasBootstrapped.value,
+        filteredPrograms.value.length,
+        initialUserScopeSyncComplete.value,
+        programsQueryLoading.value,
+    ),
+);
 
 const emptyListMessage = computed(() => {
     if (totalProgramCount.value === 0) {

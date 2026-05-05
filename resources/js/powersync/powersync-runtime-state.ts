@@ -82,6 +82,11 @@ export const isLoading = ref(true);
 export const errorMessage = ref("");
 export const programsDeserializationError = ref<unknown>(null);
 export const hasBootstrappedCollection = ref(false);
+/**
+ * True after PowerSync reports initial sync completion for `user_scope` (priority 1).
+ * Used to avoid flashing an empty programs list while the first replication is still in flight.
+ */
+export const initialUserScopeSyncComplete = ref(false);
 export const persistenceUnavailable = ref(false);
 export const outboxPendingCount = ref(0);
 export const outboxCommitError = ref("");
