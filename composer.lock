@@ -4728,16 +4728,16 @@
         },
         {
             "name": "spatie/laravel-medialibrary",
-            "version": "11.22.0",
+            "version": "11.22.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/spatie/laravel-medialibrary.git",
-                "reference": "a80f584d93bad370ca7a0efa52c16a1a81e6e9fe"
+                "reference": "808424a4b7dc9811b5633c28a97c530919aea7b8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/spatie/laravel-medialibrary/zipball/a80f584d93bad370ca7a0efa52c16a1a81e6e9fe",
-                "reference": "a80f584d93bad370ca7a0efa52c16a1a81e6e9fe",
+                "url": "https://api.github.com/repos/spatie/laravel-medialibrary/zipball/808424a4b7dc9811b5633c28a97c530919aea7b8",
+                "reference": "808424a4b7dc9811b5633c28a97c530919aea7b8",
                 "shasum": ""
             },
             "require": {
@@ -4822,7 +4822,7 @@
             ],
             "support": {
                 "issues": "https://github.com/spatie/laravel-medialibrary/issues",
-                "source": "https://github.com/spatie/laravel-medialibrary/tree/11.22.0"
+                "source": "https://github.com/spatie/laravel-medialibrary/tree/11.22.1"
             },
             "funding": [
                 {
@@ -4834,7 +4834,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-04-28T09:18:56+00:00"
+            "time": "2026-05-04T11:42:39+00:00"
         },
         {
             "name": "spatie/laravel-package-tools",
@@ -9146,16 +9146,16 @@
         },
         {
             "name": "phpunit/php-code-coverage",
-            "version": "14.1.6",
+            "version": "14.1.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "4991e47adce8e31e554aee8fdaabfc3b1d60707d"
+                "reference": "da6e6b64940901650abcea62430c8c24926b7a71"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/4991e47adce8e31e554aee8fdaabfc3b1d60707d",
-                "reference": "4991e47adce8e31e554aee8fdaabfc3b1d60707d",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/da6e6b64940901650abcea62430c8c24926b7a71",
+                "reference": "da6e6b64940901650abcea62430c8c24926b7a71",
                 "shasum": ""
             },
             "require": {
@@ -9212,7 +9212,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/php-code-coverage/issues",
                 "security": "https://github.com/sebastianbergmann/php-code-coverage/security/policy",
-                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/14.1.6"
+                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/14.1.7"
             },
             "funding": [
                 {
@@ -9232,7 +9232,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-04-24T13:10:08+00:00"
+            "time": "2026-05-04T15:51:53+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
