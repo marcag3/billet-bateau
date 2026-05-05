@@ -98,11 +98,6 @@ const { data: trips } = useLiveQuery(
                 "desc",
             )
             .orderBy(
-                ({ t }: Record<string, Record<string, unknown>>) =>
-                    t.updated_at,
-                "desc",
-            )
-            .orderBy(
                 ({ t }: Record<string, Record<string, unknown>>) => t.id,
                 "desc",
             );

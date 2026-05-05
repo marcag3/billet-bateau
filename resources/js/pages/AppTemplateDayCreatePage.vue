@@ -34,9 +34,6 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import {
-    getAppPowerSyncBootstrappedRef,
-} from "../powersync/app-powersync.runtime";
 import { createTemplateDayRow } from "../models/template-days/template-days.model";
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import AppEntityCreatePageLayout from "../layouts/AppEntityCreatePageLayout.vue";
@@ -48,7 +45,6 @@ const route = useRoute();
 const router = useRouter();
 const { runWithNotify } = useNotifyAsyncAction();
 
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const backTo = computed(() => ({

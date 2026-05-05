@@ -17,7 +17,7 @@ import { createTemplateDayDatesCollection } from "./template-day-dates.collectio
 import { createMediaCollection } from "./media.collection";
 import { translate } from "../utilities/i18n";
 
-const DB_FILENAME = "billbateau-app-v16.db";
+const DB_FILENAME = "billbateau-app-v17.db";
 
 const loadFailedMessage = translate("sync.unableLoadSync");
 const persistenceLimitedMessage = translate("sync.persistenceLimited");
@@ -165,7 +165,7 @@ function attachProgramScopeStreamSubscription() {
     if (programScopeUnsubscribe) {
         try {
             programScopeUnsubscribe();
-        } catch (e) {
+        } catch {
             // Ignore unsubscribe errors during teardown
         }
         programScopeUnsubscribe = null;

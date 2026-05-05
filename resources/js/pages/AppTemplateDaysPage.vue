@@ -99,7 +99,6 @@ const { data: templateDays } = useLiveQuery(
         return queryBuilder
             .from({ td: col })
             .where(({ td }) => eq(td.program_id, pid))
-            .orderBy(({ td }) => td.updated_at, "desc")
             .orderBy(({ td }) => td.id, "desc");
     },
     [templateDaysCollection, getActiveProgramIdRef()],

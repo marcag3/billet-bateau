@@ -476,7 +476,6 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
                     draft.min_per_purchase = values.minPerPurchase;
                     draft.max_per_purchase = values.maxPerPurchase;
                     draft.trip_inventory_caps = JSON.stringify(caps);
-                    draft.updated_at = new Date().toISOString();
                 });
                 void refreshOutboxSnapshot();
             } else {

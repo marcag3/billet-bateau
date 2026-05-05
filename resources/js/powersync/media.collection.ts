@@ -21,8 +21,6 @@ export const mediaSchema = z.object({
     generated_conversions: z.string().nullable().default(null),
     responsive_images: z.string().nullable().default(null),
     order_column: z.number().int().min(0, 'Order cannot be negative').nullable().default(null),
-    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
-    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type MediaInput = z.input<typeof mediaSchema>;

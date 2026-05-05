@@ -16,16 +16,6 @@ export const bookingTicketsSchema = z.object({
     country: z.string().nullable().default(null),
     custom_fields: z.string().nullable().default(null),
     waiver_confirmation_id: z.string().nullable().default(null),
-    created_at: z
-        .string()
-        .transform((v) => new Date(v))
-        .nullable()
-        .default(() => new Date()),
-    updated_at: z
-        .string()
-        .transform((v) => new Date(v))
-        .nullable()
-        .default(() => new Date()),
 });
 
 export type BookingTicketInput = z.input<typeof bookingTicketsSchema>;

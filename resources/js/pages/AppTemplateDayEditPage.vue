@@ -444,7 +444,6 @@ async function onSaveNameSubmit() {
             await col
                 .update(String(td.id), (draft) => {
                     draft.name = name;
-                    draft.updated_at = new Date().toISOString();
                 })
                 .isPersisted.promise;
             void refreshOutboxSnapshot();

@@ -28,8 +28,6 @@ export const programSchema = z.object({
     city: z.string().nullable().default(null),
     postal_code: z.string().nullable().default(null),
     country: z.string().nullable().default(null),
-    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
-    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type ProgramInput = z.input<typeof programSchema>;

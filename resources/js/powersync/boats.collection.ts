@@ -10,8 +10,6 @@ export const boatsSchema = z.object({
     name: z.string().min(1, "Boat name is required").nullable().default(null),
     capacity: z.number().int().min(0, "Capacity cannot be negative").nullable().default(null),
     notes: z.string().nullable().default(null),
-    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
-    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type BoatInput = z.input<typeof boatsSchema>;

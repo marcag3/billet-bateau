@@ -5,6 +5,8 @@
 # user_scope auto-subscribes the program list; program_scope adds detail rows for subscription.parameter('program_id').
 #
 # Note: Sync Streams SQL does not support UNION. Use OR + subquery for combined sets (see supported-sql).
+#
+# Client replicas omit created_at / updated_at; Laravel manages those server-side only.
 
 config:
   edition: 3
@@ -24,54 +26,123 @@ streams:
     priority: 1
     queries:
       - |
-        SELECT * FROM programs
+        SELECT
+          id,
+          name,
+          description,
+          theme_color,
+          is_active,
+          is_archived,
+          slug,
+          line_1,
+          line_2,
+          city,
+          postal_code,
+          country
+        FROM programs
         WHERE id IN accessible_program_ids
 
   program_scope:
     priority: 2
     queries:
       - |
-        SELECT * FROM boat_types
+        SELECT id, program_id, name
+        FROM boat_types
         WHERE boat_types.program_id = subscription.parameter('program_id')
           AND boat_types.program_id IN accessible_program_ids
       - |
-        SELECT uuid, program_id, model_type, model_id, collection_name, name, file_name
+        SELECT
+          id,
+          program_id,
+          model_type,
+          model_id,
+          uuid,
+          collection_name,
+          name,
+          file_name,
+          mime_type,
+          disk,
+          conversions_disk,
+          size,
+          manipulations,
+          custom_properties,
+          generated_conversions,
+          responsive_images,
+          order_column
         FROM media
         WHERE media.program_id = subscription.parameter('program_id')
           AND media.program_id IN accessible_program_ids
       - |
-        SELECT * FROM boats
+        SELECT id, boat_type_id, program_id, name, capacity, notes
+        FROM boats
         WHERE boats.program_id = subscription.parameter('program_id')
           AND boats.program_id IN accessible_program_ids
       - |
-        SELECT * FROM trips
+        SELECT
+          id,
+          program_id,
+          boat_type_id,
+          water_route_id,
+          template_day_slot_id,
+          scheduled_departure_at,
+          capacity
+        FROM trips
         WHERE trips.program_id = subscription.parameter('program_id')
           AND trips.program_id IN accessible_program_ids
       - |
-        SELECT * FROM ticket_types
+        SELECT
+          id,
+          program_id,
+          title,
+          price_cents,
+          is_pay_what_you_can,
+          min_per_purchase,
+          max_per_purchase,
+          trip_inventory_caps
+        FROM ticket_types
         WHERE ticket_types.program_id = subscription.parameter('program_id')
           AND ticket_types.program_id IN accessible_program_ids
       - |
-        SELECT booking_tickets.*
+        SELECT
+          booking_tickets.id,
+          booking_tickets.booking_id,
+          booking_tickets.ticket_type_id,
+          booking_tickets.name,
+          booking_tickets.email,
+          booking_tickets.country,
+          booking_tickets.custom_fields,
+          booking_tickets.waiver_confirmation_id
         FROM booking_tickets
         INNER JOIN bookings ON bookings.id = booking_tickets.booking_id
         WHERE bookings.program_id = subscription.parameter('program_id')
           AND bookings.program_id IN accessible_program_ids
       - |
-        SELECT * FROM water_routes
+        SELECT id, program_id, name, trace, duration_minutes
+        FROM water_routes
         WHERE water_routes.program_id = subscription.parameter('program_id')
           AND water_routes.program_id IN accessible_program_ids
       - |
-        SELECT * FROM template_days
+        SELECT id, program_id, name
+        FROM template_days
         WHERE template_days.program_id = subscription.parameter('program_id')
           AND template_days.program_id IN accessible_program_ids
       - |
-        SELECT template_day_slots.*
+        SELECT
+          template_day_slots.id,
+          template_day_slots.template_day_id,
+          template_day_slots.sort_order,
+          template_day_slots.departure_time,
+          template_day_slots.capacity,
+          template_day_slots.boat_type_id,
+          template_day_slots.water_route_id,
+          template_day_slots.internal_notes,
+          template_day_slots.ticket_setup
         FROM template_day_slots
         INNER JOIN template_days ON template_days.id = template_day_slots.template_day_id
         WHERE template_days.program_id = subscription.parameter('program_id')
           AND template_days.program_id IN accessible_program_ids
       - |
-        SELECT * FROM template_day_dates
+        SELECT id, program_id, template_day_id, service_date
+        FROM template_day_dates
         WHERE template_day_dates.program_id = subscription.parameter('program_id')
           AND template_day_dates.program_id IN accessible_program_ids

@@ -7,8 +7,6 @@ export const boatTypesSchema = z.object({
     id: z.string(),
     program_id: z.string().nullable().default(null),
     name: z.string().min(1, "Boat type name is required").nullable().default(null),
-    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
-    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type BoatTypeInput = z.input<typeof boatTypesSchema>;

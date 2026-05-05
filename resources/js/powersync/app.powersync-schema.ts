@@ -13,39 +13,35 @@ const programsTable = new Table({
     city: column.text,
     postal_code: column.text,
     country: column.text,
-    created_at: column.text,
-    updated_at: column.text,
 });
 
 const boatTypesTable = new Table({
+    id: column.text,
     program_id: column.text,
     name: column.text,
-    created_at: column.text,
-    updated_at: column.text,
 });
 
 const boatsTable = new Table({
+    id: column.text,
     boat_type_id: column.text,
     program_id: column.text,
     name: column.text,
     capacity: column.integer,
     notes: column.text,
-    created_at: column.text,
-    updated_at: column.text,
 });
 
 const tripsTable = new Table({
+    id: column.text,
     program_id: column.text,
     boat_type_id: column.text,
     water_route_id: column.text,
     template_day_slot_id: column.text,
     scheduled_departure_at: column.text,
     capacity: column.integer,
-    created_at: column.text,
-    updated_at: column.text,
 });
 
 const ticketTypesTable = new Table({
+    id: column.text,
     program_id: column.text,
     title: column.text,
     price_cents: column.integer,
@@ -53,11 +49,10 @@ const ticketTypesTable = new Table({
     min_per_purchase: column.integer,
     max_per_purchase: column.integer,
     trip_inventory_caps: column.text,
-    created_at: column.text,
-    updated_at: column.text,
 });
 
 const bookingTicketsTable = new Table({
+    id: column.text,
     booking_id: column.text,
     ticket_type_id: column.text,
     name: column.text,
@@ -65,8 +60,6 @@ const bookingTicketsTable = new Table({
     country: column.text,
     custom_fields: column.text,
     waiver_confirmation_id: column.text,
-    created_at: column.text,
-    updated_at: column.text,
 });
 
 const waterRoutesTable = new Table({
@@ -75,16 +68,12 @@ const waterRoutesTable = new Table({
     name: column.text,
     trace: column.text,
     duration_minutes: column.integer,
-    created_at: column.text,
-    updated_at: column.text,
 });
 
 const templateDaysTable = new Table({
     id: column.text,
     program_id: column.text,
     name: column.text,
-    created_at: column.text,
-    updated_at: column.text,
 });
 
 const templateDaySlotsTable = new Table({
@@ -97,8 +86,6 @@ const templateDaySlotsTable = new Table({
     water_route_id: column.text,
     internal_notes: column.text,
     ticket_setup: column.text,
-    created_at: column.text,
-    updated_at: column.text,
 });
 
 const templateDayDatesTable = new Table({
@@ -106,11 +93,10 @@ const templateDayDatesTable = new Table({
     program_id: column.text,
     template_day_id: column.text,
     service_date: column.text,
-    created_at: column.text,
-    updated_at: column.text,
 });
 
 const mediaTable = new Table({
+    id: column.text,
     program_id: column.text,
     model_type: column.text,
     model_id: column.text,
@@ -127,8 +113,6 @@ const mediaTable = new Table({
     generated_conversions: column.text,
     responsive_images: column.text,
     order_column: column.integer,
-    created_at: column.text,
-    updated_at: column.text,
 });
 
 export const appPowerSyncSchema = new Schema({

@@ -12,6 +12,8 @@
 
 import { eq, type Collection, type InitialQueryBuilder } from "@tanstack/db";
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- TanStack Collection generics */
+
 // ---------------------------------------------------------------------------
 // Boats + BoatType join
 // ---------------------------------------------------------------------------
@@ -23,8 +25,6 @@ export interface BoatWithBoatTypeRow {
     name: string | null;
     capacity: number | null;
     notes: string | null;
-    created_at: string | null;
-    updated_at: string | null;
     /** Resolved boat type name (null if no boat_type_id) */
     boatTypeName: string | null;
 }
@@ -41,7 +41,7 @@ export interface BoatWithBoatTypeRow {
  *   if (!col || !btCol || pid.length === 0) return undefined
  *   return joinBoatsWithBoatTypes(qb, col, btCol)
  *     .where(({ b }) => b.program_id, "=", pid)
- *     .orderBy(({ b }) => b.updated_at, "desc")
+ *     .orderBy(({ b }) => b.id, "desc")
  * })
  * ```
  */
@@ -61,8 +61,6 @@ export function joinBoatsWithBoatTypes<
             name: b.name,
             capacity: b.capacity,
             notes: b.notes,
-            created_at: b.created_at,
-            updated_at: b.updated_at,
             boatTypeName: bt.name,
         }));
 }
@@ -79,8 +77,6 @@ export interface TripWithRelationsRow {
     template_day_slot_id: string | null;
     scheduled_departure_at: string | null;
     capacity: number | null;
-    created_at: string | null;
-    updated_at: string | null;
     /** Resolved boat type name */
     boatTypeName: string | null;
     /** Resolved water route name */
@@ -129,8 +125,6 @@ export function joinTripsWithRelations<
             template_day_slot_id: t.template_day_slot_id,
             scheduled_departure_at: t.scheduled_departure_at,
             capacity: t.capacity,
-            created_at: t.created_at,
-            updated_at: t.updated_at,
             boatTypeName: bt.name,
             waterRouteName: wr.name,
         }));

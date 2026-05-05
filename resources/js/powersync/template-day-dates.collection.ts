@@ -8,8 +8,6 @@ export const templateDayDatesSchema = z.object({
     program_id: z.string().nullable().default(null),
     template_day_id: z.string().nullable().default(null),
     service_date: z.string().transform((v) => new Date(v)).nullable().default(null),
-    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
-    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type TemplateDayDateInput = z.input<typeof templateDayDatesSchema>;

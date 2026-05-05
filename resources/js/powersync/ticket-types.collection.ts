@@ -12,8 +12,6 @@ export const ticketTypesSchema = z.object({
     min_per_purchase: z.number().int().min(0, "Minimum per purchase cannot be negative").nullable().default(null),
     max_per_purchase: z.number().int().min(0, "Maximum per purchase cannot be negative").nullable().default(null),
     trip_inventory_caps: z.string().nullable().default(null),
-    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
-    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type TicketTypeInput = z.input<typeof ticketTypesSchema>;

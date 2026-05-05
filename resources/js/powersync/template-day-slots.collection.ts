@@ -13,8 +13,6 @@ export const templateDaySlotsSchema = z.object({
     water_route_id: z.string().nullable().default(null),
     internal_notes: z.string().nullable().default(null),
     ticket_setup: z.string().nullable().default(null),
-    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
-    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type TemplateDaySlotInput = z.input<typeof templateDaySlotsSchema>;

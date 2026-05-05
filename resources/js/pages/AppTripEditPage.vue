@@ -358,7 +358,6 @@ const onSaveSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
                 draft.capacity = cap;
                 draft.boat_type_id = nextBoatType;
                 draft.water_route_id = nextWaterRoute;
-                draft.updated_at = new Date().toISOString();
             });
             void refreshOutboxSnapshot();
         },

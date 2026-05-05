@@ -152,8 +152,6 @@ const { data: programs } = useLiveQuery(
         if (!col) return undefined;
         return queryBuilder
             .from({ p: col })
-            .orderBy(({ p }) => p.updated_at, "desc")
-            .orderBy(({ p }) => p.created_at, "desc")
             .orderBy(({ p }) => p.id, "desc");
     },
     [programsCollection],
@@ -168,7 +166,7 @@ const { data: mediaRows } = useLiveQuery(
             .from({ m: col })
             .where(({ m }) => eq(m.collection_name, "images"))
             .orderBy(({ m }) => m.order_column, "asc")
-            .orderBy(({ m }) => m.created_at, "asc");
+            .orderBy(({ m }) => m.id, "asc");
     },
     [mediaCollection],
 );

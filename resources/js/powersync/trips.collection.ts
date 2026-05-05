@@ -11,8 +11,6 @@ export const tripsSchema = z.object({
     template_day_slot_id: z.string().nullable().default(null),
     scheduled_departure_at: z.string().transform((v) => new Date(v)).nullable().default(null),
     capacity: z.number().int().min(0, 'Capacity cannot be negative').nullable().default(null),
-    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
-    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type TripInput = z.input<typeof tripsSchema>;

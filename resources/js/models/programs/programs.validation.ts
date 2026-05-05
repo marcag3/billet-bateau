@@ -6,6 +6,7 @@ import {
     zLowercaseSlug,
     zRequiredTrimmedString,
 } from '../../validation/zod-fields';
+import { normalizeThemeColor } from '../../utilities/program-helpers';
 import { foldUnicodeForProgramSlug } from '../../utilities/program-slug';
 
 export type Translator = (key: string) => string;
@@ -22,11 +23,11 @@ export function safeParseProgramSlug(t: Translator, raw: unknown) {
 }
 
 const programAddressObjectSchema = z.object({
-    line_1: z.string(),
-    line_2: z.string(),
-    city: z.string(),
-    postal_code: z.string(),
-    country: z.string(),
+    line_1: z.preprocess(coerceStringInput, z.string().trim()),
+    line_2: z.preprocess(coerceStringInput, z.string().trim()),
+    city: z.preprocess(coerceStringInput, z.string().trim()),
+    postal_code: z.preprocess(coerceStringInput, z.string().trim()),
+    country: z.preprocess(coerceStringInput, z.string().trim()),
 });
 
 const imagesFieldSchema = z.union([z.array(z.instanceof(File)), z.null()]);
@@ -51,11 +52,16 @@ export function createProgramCreateFormSchema(t: Translator) {
     return toTypedSchema(createProgramCreateZodSchema(t));
 }
 
-function createProgramEditZodSchema(t: Translator) {
+export function createProgramEditZodSchema(t: Translator) {
     return z.object({
         name: zRequiredTrimmedString(t('programsCreate.validationRequired')),
-        description: z.string(),
-        themeColor: zHexColorSix(t('programsCreate.validationHex')),
+        description: z.preprocess(coerceStringInput, z.string().trim()),
+        themeColor: z.preprocess(
+            coerceStringInput,
+            zHexColorSix(t('programsCreate.validationHex')).transform((hex) =>
+                normalizeThemeColor(hex),
+            ),
+        ),
         slug: z.preprocess((raw) => {
             const s = coerceStringInput(raw);
             const folded = foldUnicodeForProgramSlug(s).toLowerCase();

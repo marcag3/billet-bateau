@@ -335,7 +335,6 @@ const onSaveSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
                 draft.capacity = cap;
                 draft.notes = notes.length > 0 ? notes : null;
                 draft.boat_type_id = nextTypeId;
-                draft.updated_at = new Date().toISOString();
             });
             void refreshOutboxSnapshot();
         },

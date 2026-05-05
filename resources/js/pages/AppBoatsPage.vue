@@ -169,16 +169,6 @@ const { data: allBoats } = useLiveQuery(
                 eq(b.program_id, pid),
             )
             .orderBy(
-                ({ b }: Record<string, Record<string, unknown>>) =>
-                    b.updated_at,
-                "desc",
-            )
-            .orderBy(
-                ({ b }: Record<string, Record<string, unknown>>) =>
-                    b.created_at,
-                "desc",
-            )
-            .orderBy(
                 ({ b }: Record<string, Record<string, unknown>>) => b.id,
                 "desc",
             );

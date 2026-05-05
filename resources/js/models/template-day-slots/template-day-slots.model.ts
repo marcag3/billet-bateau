@@ -87,7 +87,6 @@ export async function patchTemplateDaySlotRow(
             if (params.sortOrder !== undefined) {
                 draft.sort_order = params.sortOrder;
             }
-            draft.updated_at = new Date().toISOString();
         })
         .isPersisted.promise;
     void refreshOutboxSnapshot();

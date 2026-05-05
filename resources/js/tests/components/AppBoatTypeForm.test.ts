@@ -34,7 +34,12 @@ vi.mock('vue-i18n', () => ({
     }),
 }));
 
-const normalizeImageFilesMock = vi.hoisted(() => vi.fn(() => [] as File[]));
+const normalizeImageFilesMock = vi.hoisted(() =>
+    vi.fn((value: File | File[] | null | undefined) => {
+        void value;
+        return [] as File[];
+    }),
+);
 
 const mockCollectionRef = ref<{
     insert: ReturnType<typeof vi.fn>;

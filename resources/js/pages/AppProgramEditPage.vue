@@ -203,7 +203,6 @@ import {
 } from "../powersync/app-powersync.runtime";
 import type { ProgramOutput } from "../powersync/programs.collection";
 import {
-    normalizeThemeColor,
     normalizeAddressRowFields,
 } from "../utilities/program-helpers";
 import mediaRoutes from "../routes/api/media";
@@ -232,7 +231,20 @@ const { data: programs } = useLiveQuery(
 
 const errorMessage = ref("");
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
-const lastHydratedSignature = ref("");
+const currentProgram = computed<ProgramOutput | null>(() => {
+    const id = programId.value;
+    if (id.length === 0) {
+        return null;
+    }
+    const row = (programs.value ?? []).find((candidateRow) => {
+        if (candidateRow == null) {
+            return false;
+        }
+        const candidate = candidateRow as unknown as ProgramOutput;
+        return String(candidate.id) === id;
+    });
+    return row ? (row as unknown as ProgramOutput) : null;
+});
 
 const showNotFound = computed(() => {
     if (!hasBootstrapped.value) {
@@ -242,18 +254,11 @@ const showNotFound = computed(() => {
     if (id.length === 0) {
         return true;
     }
-    const list = programs.value ?? [];
-    return !list.some((row) => {
-        if (row == null) {
-            return false;
-        }
-        const p = row as unknown as ProgramOutput;
-        return String(p.id) === id;
-    });
+    return currentProgram.value == null;
 });
 
 const programEditSchema = createProgramEditFormSchema(t);
-const { handleSubmit, defineField, isSubmitting, resetForm } =
+const { handleSubmit, defineField, isSubmitting, meta, resetForm } =
     useForm<ProgramEditFormValues>({
         validationSchema: programEditSchema,
         initialValues: {
@@ -289,68 +294,80 @@ const [postalCode, postalCodeProps] = quasarField("address.postal_code");
 const [country, countryProps] = quasarField("address.country");
 const [imagesModel, imagesModelProps] = quasarField("imagesModel");
 
-watch(
-    () => route.params.programId,
-    (next, prev) => {
-        if (String(next ?? "") !== String(prev ?? "")) {
-            lastHydratedSignature.value = "";
-        }
-    },
-);
+function programToFormValues(p: ProgramOutput): ProgramEditFormValues {
+    return {
+        name: String(p.name ?? "").trim(),
+        description: typeof p.description === "string" ? p.description : "",
+        themeColor:
+            typeof p.theme_color === "string" && p.theme_color.length > 0
+                ? String(p.theme_color).trim()
+                : "#08758A",
+        slug: String(p.slug ?? "")
+            .trim()
+            .toLowerCase(),
+        isActive: p.is_active ?? true,
+        isArchived: p.is_archived ?? false,
+        address: {
+            line_1: typeof p.line_1 === "string" ? String(p.line_1) : "",
+            line_2: typeof p.line_2 === "string" ? String(p.line_2) : "",
+            city: typeof p.city === "string" ? String(p.city) : "",
+            postal_code:
+                typeof p.postal_code === "string" ? String(p.postal_code) : "",
+            country: typeof p.country === "string" ? String(p.country) : "",
+        },
+        imagesModel: null,
+    } satisfies ProgramEditFormValues;
+}
+
+type ProgramDraftPatch = {
+    name: string;
+    description: string | null;
+    theme_color: string;
+    slug: string;
+    is_active: number;
+    is_archived: number;
+    line_1: string | null;
+    line_2: string | null;
+    city: string | null;
+    postal_code: string | null;
+    country: string | null;
+};
+
+function toProgramDraftPatch(values: ProgramEditFormValues): ProgramDraftPatch {
+    const addressFields = normalizeAddressRowFields({ ...values.address });
+    return {
+        name: values.name,
+        description: values.description.length > 0 ? values.description : null,
+        theme_color: values.themeColor,
+        slug: values.slug,
+        is_active: values.isActive ? 1 : 0,
+        is_archived: values.isArchived ? 1 : 0,
+        line_1: addressFields.line_1,
+        line_2: addressFields.line_2,
+        city: addressFields.city,
+        postal_code: addressFields.postal_code,
+        country: addressFields.country,
+    };
+}
 
 watch(
-    [programId, programs],
-    () => {
-        const id = programId.value;
+    [programId, currentProgram],
+    ([id, p], previousTuple) => {
         if (id.length === 0) {
             return;
         }
-        const row = (programs.value ?? []).find((r) => {
-            if (r == null) {
-                return false;
-            }
-            const candidate = r as unknown as ProgramOutput;
-            return String(candidate.id) === id;
-        });
-        if (!row) {
+        if (!p) {
             return;
         }
-        const p = row as unknown as ProgramOutput;
-        const signature = `${id}:${String(p.updated_at ?? "")}`;
-        if (lastHydratedSignature.value === signature) {
+        const previousId = Array.isArray(previousTuple)
+            ? String(previousTuple[0] ?? "")
+            : "";
+        const routeChanged = id !== previousId;
+        if (meta.value.dirty && !routeChanged) {
             return;
         }
-        lastHydratedSignature.value = signature;
         resetForm({
-            values: {
-                name: String(p.name ?? "").trim(),
-                description:
-                    typeof p.description === "string" ? p.description : "",
-                themeColor:
-                    typeof p.theme_color === "string" &&
-                    p.theme_color.length > 0
-                        ? String(p.theme_color).trim()
-                        : "#08758A",
-                slug: String(p.slug ?? "")
-                    .trim()
-                    .toLowerCase(),
-                isActive: p.is_active ?? true,
-                isArchived: p.is_archived ?? false,
-                address: {
-                    line_1:
-                        typeof p.line_1 === "string" ? String(p.line_1) : "",
-                    line_2:
-                        typeof p.line_2 === "string" ? String(p.line_2) : "",
-                    city: typeof p.city === "string" ? String(p.city) : "",
-                    postal_code:
-                        typeof p.postal_code === "string"
-                            ? String(p.postal_code)
-                            : "",
-                    country:
-                        typeof p.country === "string" ? String(p.country) : "",
-                },
-                imagesModel: null,
-            } satisfies ProgramEditFormValues,
+            values: programToFormValues(p),
         });
     },
     { immediate: true },
@@ -372,26 +389,10 @@ const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
         if (!col) {
             throw new Error("Programs collection is not ready.");
         }
-
-        const themeColor = normalizeThemeColor(values.themeColor);
-        const addressFields = normalizeAddressRowFields({ ...values.address });
+        const patch = toProgramDraftPatch(values);
 
         col.update(id, (draft) => {
-            draft.name = values.name.trim();
-            draft.description =
-                values.description.trim().length > 0
-                    ? values.description.trim()
-                    : null;
-            draft.theme_color = themeColor;
-            draft.slug = values.slug;
-            draft.is_active = values.isActive ? 1 : 0;
-            draft.is_archived = values.isArchived ? 1 : 0;
-            draft.line_1 = addressFields.line_1;
-            draft.line_2 = addressFields.line_2;
-            draft.city = addressFields.city;
-            draft.postal_code = addressFields.postal_code;
-            draft.country = addressFields.country;
-            draft.updated_at = new Date().toISOString();
+            Object.assign(draft, patch);
         });
 
         void refreshOutboxSnapshot();

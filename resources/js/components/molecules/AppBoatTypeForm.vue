@@ -243,7 +243,6 @@ const onSubmit = handleSubmit(async (values: BoatTypeFormValues) => {
             const id = String(props.boatTypeId);
             col.update(id, (draft) => {
                 draft.name = displayName;
-                draft.updated_at = new Date().toISOString();
             });
             void refreshOutboxSnapshot();
             emit('success', { id, mode: 'edit' });

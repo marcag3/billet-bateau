@@ -9,8 +9,6 @@ export const waterRoutesSchema = z.object({
     name: z.string().min(1, 'Water route name is required').nullable().default(null),
     trace: z.string().nullable().default(null),
     duration_minutes: z.number().int().min(0, 'Duration cannot be negative').nullable().default(null),
-    created_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
-    updated_at: z.string().transform((v) => new Date(v)).nullable().default(() => new Date()),
 });
 
 export type WaterRouteInput = z.input<typeof waterRoutesSchema>;

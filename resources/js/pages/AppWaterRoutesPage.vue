@@ -140,7 +140,6 @@ import {
 import { safeParseBoatEntityName } from "../models/boats/boats.validation";
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
 import {
-    getAppPowerSyncBootstrappedRef,
     getActiveProgramIdRef,
     getWaterRoutesCollection,
     refreshOutboxSnapshot,
@@ -179,7 +178,6 @@ const { data: waterRoutes } = useLiveQuery(
     [waterRoutesCollection, activeProgramIdRef],
 );
 
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const createSchema = createWaterRouteCreateFormSchema(t);
 const { handleSubmit, defineField, meta, isSubmitting, resetForm } =
     useForm<WaterRouteCreateFormValues>({
@@ -255,7 +253,6 @@ function commitName(wr: Record<string, unknown>) {
             if (!col) return;
             col.update(id, (draft) => {
                 draft.name = parsed.data;
-                draft.updated_at = new Date().toISOString();
             });
             void refreshOutboxSnapshot();
         } finally {
@@ -282,7 +279,6 @@ function commitDuration(wr: Record<string, unknown>) {
             if (!col) return;
             col.update(id, (draft) => {
                 draft.duration_minutes = n;
-                draft.updated_at = new Date().toISOString();
             });
             void refreshOutboxSnapshot();
         } finally {
@@ -312,7 +308,6 @@ function commitTrace(wr: Record<string, unknown>) {
             if (!col) return;
             col.update(id, (draft) => {
                 draft.trace = next;
-                draft.updated_at = new Date().toISOString();
             });
             void refreshOutboxSnapshot();
         } finally {
