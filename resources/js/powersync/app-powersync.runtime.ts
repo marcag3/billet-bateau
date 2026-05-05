@@ -148,6 +148,12 @@ const activeProgramIdRef = ref("");
 let programScopeUnsubscribe = null;
 
 /**
+ * True only after `PowerSyncDatabase.connect()` resolves. Subscribing to streams before
+ * then can leave replication in a bad state (e.g. partial buckets / flaky program list).
+ */
+let powerSyncConnectorConnected = false;
+
+/**
  * Subscribe to `program_scope` for the current active program (or tear down when none).
  * Safe to call repeatedly (e.g. after `db.connect()` when the router already set the program).
  */
@@ -167,7 +173,7 @@ function attachProgramScopeStreamSubscription() {
 
     const db = powerSyncDbRef.value;
     const newPid = activeProgramIdRef.value.trim();
-    if (newPid.length === 0 || !db) {
+    if (newPid.length === 0 || !db || !powerSyncConnectorConnected) {
         return;
     }
 
@@ -296,6 +302,7 @@ export async function bootstrapAppPowerSync() {
 
     bootstrapPromise = (async () => {
         try {
+            powerSyncConnectorConnected = false;
             currentUserIdRef.value = await resolveAuthenticatedUserId();
 
             const db = new PowerSyncDatabase({
@@ -348,16 +355,10 @@ export async function bootstrapAppPowerSync() {
                               };
                           }
                         : async () => {
-                              const pid = activeProgramIdRef.value.trim();
-                              if (pid.length === 0) return;
-                              const sub = await db
-                                  .syncStream("program_scope", {
-                                      program_id: pid,
-                                  })
-                                  .subscribe();
-                              return () => {
-                                  sub.unsubscribe();
-                              };
+                              // `program_scope` is subscribed centrally after `connect()` (see
+                              // `attachProgramScopeStreamSubscription`). Per-table `onLoad` used to
+                              // call `syncStream` before `connect()`, which breaks replication.
+                              return;
                           };
 
                 const collection = factory(db, sharedOnError, onLoad);
@@ -367,6 +368,8 @@ export async function bootstrapAppPowerSync() {
             const connector = createAppPowerSyncConnector();
 
             await db.connect(connector);
+
+            powerSyncConnectorConnected = true;
 
             // Router may set `activeProgramIdRef` before the DB exists; per-table `onLoad` can
             // also run while `activeProgramIdRef` is still empty. Re-attach here so
@@ -380,6 +383,7 @@ export async function bootstrapAppPowerSync() {
         } catch (error) {
             bootstrapPromise = null;
             hasBootstrappedCollection.value = false;
+            powerSyncConnectorConnected = false;
 
             powerSyncStatusUnsubscribe?.();
             powerSyncStatusUnsubscribe = null;
