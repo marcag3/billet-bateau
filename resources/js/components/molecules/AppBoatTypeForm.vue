@@ -1,15 +1,13 @@
 <template>
-    <div class="q-gutter-md">
+    <q-form class="q-gutter-md" @submit="onSubmit">
         <q-input
             v-model="name"
             outlined
             dense
             autofocus
             :label="t('boatTypesList.name')"
-            :error="nameError.length > 0"
-            :error-message="nameError"
+            v-bind="nameProps"
             :disable="isSubmitting"
-            @keydown.enter.prevent="onSubmit"
         />
 
         <div v-if="isEditMode && existingImages.length > 0" class="text-caption text-grey-7">
@@ -61,19 +59,22 @@
                 flat
                 :label="t('common.dismiss')"
                 :disable="isSubmitting"
+                type="button"
                 @click="emit('cancel')"
             />
             <q-btn
                 color="primary"
+                type="submit"
                 :label="isEditMode ? t('boatTypesList.save') : t('boatTypesList.create')"
                 :loading="isSubmitting"
-                @click="onSubmit"
+                :disable="!meta.valid || isSubmitting"
             />
         </div>
-    </div>
+    </q-form>
 </template>
 
 <script setup lang="ts">
+import { useForm } from 'vee-validate';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ulid } from 'ulid';
@@ -81,10 +82,15 @@ import {
     getBoatTypesCollection,
     refreshOutboxSnapshot,
 } from '../../powersync/app-powersync.runtime';
-import { safeParseBoatEntityName } from '../../models/boats/boats.validation';
+import {
+    createBoatTypeFormSchema,
+    createEmptyBoatTypeFormValues,
+    type BoatTypeFormValues,
+} from '../../models/boat-types/boat-types.validation';
 import { useNotifyErrorFromCatch } from '../../composables/useNotifyErrorFromCatch';
 import { requestFormData, requestJson } from '../../services/http.client';
 import { normalizeImageFiles } from '../../utilities/image-files';
+import { createQuasarFieldBinder } from '../../validation/quasar-vee-fields';
 import mediaRoutes from '../../routes/api/media';
 
 const props = defineProps<{
@@ -103,10 +109,23 @@ const { notifyError } = useNotifyErrorFromCatch();
 
 const boatTypesCollection = getBoatTypesCollection();
 
-const name = ref('');
-const nameError = ref('');
+const boatTypeFormSchema = createBoatTypeFormSchema(t);
+const {
+    handleSubmit,
+    defineField,
+    meta,
+    isSubmitting,
+    resetForm,
+} = useForm<BoatTypeFormValues>({
+    validationSchema: boatTypeFormSchema,
+    initialValues: createEmptyBoatTypeFormValues(),
+    validateOnMount: true,
+});
+
+const quasarField = createQuasarFieldBinder(defineField);
+const [name, nameProps] = quasarField('name');
+
 const newImagesModel = ref<File | File[] | null>(null);
-const isSubmitting = ref(false);
 
 type MediaListItem = {
     uuid: string;
@@ -161,15 +180,10 @@ async function loadExistingImages(): Promise<void> {
     }
 }
 
-function syncNameFromProps(): void {
-    name.value = props.initialName ?? '';
-    nameError.value = '';
-}
-
 watch(
     () => [props.boatTypeId, props.initialName] as const,
     () => {
-        syncNameFromProps();
+        resetForm({ values: { name: props.initialName ?? '' } });
         newImagesModel.value = null;
         void loadExistingImages();
     },
@@ -194,6 +208,9 @@ async function uploadNewImages(boatTypeUlid: string): Promise<void> {
 }
 
 async function onRemoveExistingImage(mediaUuid: string): Promise<void> {
+    if (isSubmitting.value) {
+        return;
+    }
     const id = props.boatTypeId;
     if (id == null || id.length === 0) {
         return;
@@ -213,54 +230,50 @@ async function onRemoveExistingImage(mediaUuid: string): Promise<void> {
     }
 }
 
-function onSubmit(): void {
-    const parsed = safeParseBoatEntityName(t, name.value);
-    if (!parsed.success) {
-        nameError.value =
-            parsed.error.issues[0]?.message ?? t('boatsList.nameRequired');
-        return;
-    }
-    nameError.value = '';
-    isSubmitting.value = true;
-    void (async () => {
-        try {
-            const col = boatTypesCollection.value;
-            if (!col) {
-                throw new Error('Boat types collection not ready.');
-            }
-            const trimmed = String(parsed.data ?? '').trim();
-            const displayName = trimmed.length > 0 ? trimmed : 'Untitled';
-
-            if (isEditMode.value) {
-                const id = String(props.boatTypeId);
-                col.update(id, (draft) => {
-                    draft.name = displayName;
-                    draft.updated_at = new Date().toISOString();
-                });
-                void refreshOutboxSnapshot();
-                await uploadNewImages(id);
-                emit('success', { id, mode: 'edit' });
-                return;
-            }
-
-            const id = ulid();
-            await col
-                .insert({
-                    id,
-                    program_id: props.programId,
-                    name: displayName,
-                })
-                .isPersisted.promise;
-            void refreshOutboxSnapshot();
-            await uploadNewImages(id);
-            emit('success', { id, mode: 'create' });
-        } catch (e) {
-            notifyError(e, t('boatTypesList.errorGeneric'));
-        } finally {
-            isSubmitting.value = false;
+const onSubmit = handleSubmit(async (values: BoatTypeFormValues) => {
+    try {
+        const col = boatTypesCollection.value;
+        if (!col) {
+            throw new Error('Boat types collection not ready.');
         }
-    })();
-}
+        const trimmed = String(values.name ?? '').trim();
+        const displayName = trimmed.length > 0 ? trimmed : 'Untitled';
+
+        if (isEditMode.value) {
+            const id = String(props.boatTypeId);
+            col.update(id, (draft) => {
+                draft.name = displayName;
+                draft.updated_at = new Date().toISOString();
+            });
+            void refreshOutboxSnapshot();
+            emit('success', { id, mode: 'edit' });
+            try {
+                await uploadNewImages(id);
+            } catch (e) {
+                notifyError(e, t('boatTypesList.imagesUploadFailed'));
+            }
+            return;
+        }
+
+        const id = ulid();
+        await col
+            .insert({
+                id,
+                program_id: props.programId,
+                name: displayName,
+            })
+            .isPersisted.promise;
+        void refreshOutboxSnapshot();
+        emit('success', { id, mode: 'create' });
+        try {
+            await uploadNewImages(id);
+        } catch (e) {
+            notifyError(e, t('boatTypesList.imagesUploadFailed'));
+        }
+    } catch (e) {
+        notifyError(e, t('boatTypesList.errorGeneric'));
+    }
+});
 </script>
 
 <style scoped>

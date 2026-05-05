@@ -309,6 +309,8 @@ export default {
         deleteConfirmMessage:
             'Remove "{name}"? Boats using this type will keep their link cleared.',
         errorGeneric: "Something went wrong. Please try again.",
+        imagesUploadFailed:
+            "Boat type was saved, but images could not be uploaded. Try again.",
     },
     programsControl: {
         title: "Control panel",

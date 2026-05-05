@@ -321,6 +321,8 @@ export default {
         deleteConfirmMessage:
             "Supprimer « {name} » ? Les bateaux lies verront ce type efface.",
         errorGeneric: "Une erreur est survenue. Veuillez reessayer.",
+        imagesUploadFailed:
+            "Le type a ete enregistre, mais les images n'ont pas pu etre envoyees. Reessayez.",
     },
     programsControl: {
         title: "Panneau de contrôle",

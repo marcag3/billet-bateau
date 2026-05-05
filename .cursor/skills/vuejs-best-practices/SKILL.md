@@ -47,6 +47,15 @@ Apply this skill for Vue frontend work, especially when:
 - Use component-scoped styles for component-specific styling.
 - Keep global styles for truly global concerns only (reset, theme tokens, typography system).
 
+## Forms (vee-validate v4 + Quasar)
+
+- Use **`useForm`**, **`defineField`**, and **`handleSubmit`** from `vee-validate` (v4 composables). Do not add new `ValidationObserver` / `ValidationProvider` usage.
+- Co-locate Zod schemas and value types in `resources/js/models/<feature>/*.validation.ts` and expose typed schemas with `@vee-validate/zod` (`toTypedSchema`).
+- Bind Quasar field props with **`createQuasarFieldBinder(defineField)`** from `resources/js/validation/quasar-vee-fields.ts` so `error` / `errorMessage` stay consistent with vee-validate state.
+- Prefer **`<q-form @submit="onSubmit">`** where `onSubmit` is the `handleSubmit` callback. Avoid **`@submit.prevent`** on the same handler if you also call **`QForm`’s programmatic `submit(evt)`** (e.g. in tests): Quasar may emit `submit` with `undefined`, and Vue’s `.prevent` wrapper expects an event object.
+- Use a **primary `type="submit"`** button inside the form; avoid ad-hoc `@keydown.enter` submit wiring on individual inputs.
+- When `validateOnMount` is used, re-sync validation after prop-driven `resetForm` / `setValues` if field `meta` must match server-provided values (e.g. watch props then `await nextTick()` + `await validate()` when needed).
+
 ## Implementation checklist
 
 Use this checklist before finalizing Vue changes:
@@ -58,3 +67,4 @@ Use this checklist before finalizing Vue changes:
 - [ ] No `v-if` on the same element as `v-for`
 - [ ] Props include clear type/required/default definitions
 - [ ] Component-specific styles are scoped
+- [ ] New or refactored forms follow **Forms (vee-validate v4 + Quasar)** above; keep `.cursor` and `.github` copies of this skill in sync when editing either

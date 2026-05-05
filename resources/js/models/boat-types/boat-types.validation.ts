@@ -10,6 +10,10 @@ function createBoatTypeZodSchema(t: Translator) {
 
 export type BoatTypeFormValues = z.infer<ReturnType<typeof createBoatTypeZodSchema>>;
 
+export function createEmptyBoatTypeFormValues(): BoatTypeFormValues {
+    return { name: '' };
+}
+
 /**
  * Boat type create form (single field today; name matches row shape).
  */
