@@ -48,8 +48,10 @@
                     color="grey-2"
                     :label="t('common.logout')"
                     class="q-ml-md"
+                    style="min-width: 10rem"
                     @click="logout"
                 />
+          
             </q-toolbar>
         </q-header>
 

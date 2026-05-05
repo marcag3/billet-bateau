@@ -3,6 +3,7 @@ import {
     createWebHistory,
     type RouteRecordRaw,
 } from "vue-router";
+import { bootstrapDomainModels } from "../models/model.registry";
 import { setActiveProgramId } from "../powersync/app-powersync.runtime";
 import { useAuthStore } from "../store/auth.store";
 
@@ -267,6 +268,8 @@ router.beforeEach(async (to) => {
         } else {
             setActiveProgramId("");
         }
+
+        void bootstrapDomainModels();
 
         return true;
     }

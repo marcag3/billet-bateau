@@ -17,6 +17,7 @@
         "laravel/telescope": "*",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.16",
+        "league/flysystem-aws-s3-v3": "^3.0",
         "lorisleiva/laravel-actions": "^2.10",
         "spatie/laravel-data": "^4.22",
         "spatie/laravel-medialibrary": "^11.17",
