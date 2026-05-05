@@ -14,7 +14,8 @@ return new class extends Migration
             $table->string('role')->default('admin');
             $table->timestamps();
 
-            $table->primary(['program_id', 'user_id']);
+            // PK column order matches membership lookups (user → programs); uniqueness is unchanged vs (program_id, user_id).
+            $table->primary(['user_id', 'program_id']);
         });
     }
 };
