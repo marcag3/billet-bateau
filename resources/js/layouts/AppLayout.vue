@@ -14,36 +14,26 @@
                 />
                 <q-toolbar-title class="app-toolbar-title">
                     <q-btn-dropdown
-                        v-if="
-                            showAppNav &&
-                            hasSelectedProgram &&
-                            allowsInPlaceProgramIdSwitch
-                        "
+                        v-if="showAppNav && hasSelectedProgram"
                         flat
                         dense
                         color="white"
-                        :label="currentProgramLabel"
-                        :aria-label="t('common.switchProgram')"
+                        :label="currentContextLabel"
+                        :aria-label="t('common.switchWorkspaceContext')"
                     >
                         <q-list>
                             <q-item
-                                v-for="opt in programSwitcherOptions"
+                                v-for="opt in contextSwitcherOptions"
                                 :key="opt.value"
                                 v-close-popup
                                 clickable
-                                :active="opt.value === workspaceProgramId"
-                                @click="() => onSwitchProgram(opt.value)"
+                                :active="opt.value === currentContext"
+                                @click="() => onSwitchContext(opt.value)"
                             >
                                 <q-item-section>{{ opt.label }}</q-item-section>
                             </q-item>
                         </q-list>
                     </q-btn-dropdown>
-                    <div
-                        v-else-if="showAppNav && hasSelectedProgram"
-                        class="text-body1 text-white text-weight-medium ellipsis"
-                    >
-                        {{ currentProgramLabel }}
-                    </div>
                 </q-toolbar-title>
 
                 <q-space />
@@ -180,14 +170,12 @@ watch(
 
 const {
     isProgramWorkspace: hasSelectedProgram,
-    workspaceProgramId,
-    programSwitcherOptions,
-    currentProgramLabel,
-    allowsInPlaceProgramIdSwitch,
-    onSwitchProgram,
+    contextSwitcherOptions,
+    currentContext,
+    currentContextLabel,
+    onSwitchContext,
 } = useProgramWorkspaceLayout({
     t,
-    layoutStore,
     leftDrawerOpen,
 });
 

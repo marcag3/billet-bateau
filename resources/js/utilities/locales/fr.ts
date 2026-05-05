@@ -19,6 +19,12 @@ export default {
         backToPrograms: "Retour aux programmes",
         back: "Retour",
         switchProgram: "Changer de programme",
+        switchWorkspaceContext: "Changer de contexte",
+        workspaceContext: {
+            edit: "Édition",
+            control: "Contrôle",
+            checkin: "Billets",
+        },
     },
     auth: {
         signIn: "Se connecter",

@@ -9,6 +9,8 @@ declare module 'vue-router' {
         guestOnly?: boolean;
         /** Program-scoped sync + workspace shell. */
         requiresSelectedProgram?: boolean;
+        /** Edit / Control / Check-in shell under a program. */
+        programContext?: "edit" | "control" | "checkin";
     }
 }
 

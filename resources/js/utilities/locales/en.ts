@@ -19,6 +19,12 @@ export default {
         backToPrograms: "Back to programs",
         back: "Back",
         switchProgram: "Switch program",
+        switchWorkspaceContext: "Switch workspace context",
+        workspaceContext: {
+            edit: "Edit",
+            control: "Control",
+            checkin: "Check-in",
+        },
     },
     auth: {
         signIn: "Sign in",

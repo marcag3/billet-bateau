@@ -1,41 +1,53 @@
-import { computed, onMounted, watch, type ComputedRef, type Ref } from "vue";
-import { useRoute, useRouter, type LocationQueryRaw } from "vue-router";
+import { computed, watch, type Ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useLiveQuery } from "@tanstack/vue-db";
-import { useAuthStore } from "../store/auth.store";
+import { getProgramsCollection } from "../powersync/app-powersync.runtime";
 import {
-    getProgramsCollection,
-} from "../powersync/app-powersync.runtime";
-import { useAppLayoutStore } from "../store/app-layout.store";
+    isProgramWorkspaceContext,
+    PROGRAM_CONTEXT_HOME_ROUTE_NAMES,
+    PROGRAM_WORKSPACE_CONTEXTS,
+    resolveProgramWorkspaceContextFromMatched,
+    type ProgramWorkspaceContext,
+} from "../utilities/program-workspace-context";
+
+const WORKSPACE_CONTEXT_LABEL_KEYS: Record<ProgramWorkspaceContext, string> = {
+    edit: "common.workspaceContext.edit",
+    control: "common.workspaceContext.control",
+    checkin: "common.workspaceContext.checkin",
+};
 
 type UseProgramWorkspaceLayoutOptions = {
     t: (key: string) => string;
-    layoutStore: ReturnType<typeof useAppLayoutStore>;
     leftDrawerOpen: Ref<boolean>;
 };
 
 /**
- * Program-scoped layout: visible programs, program switch, invalid program redirect.
+ * Program-scoped layout: invalid program redirect, context switcher targets.
  * Context layouts teleport main nav items into the app drawer.
  */
 export function useProgramWorkspaceLayout({
     t,
-    layoutStore,
     leftDrawerOpen,
 }: UseProgramWorkspaceLayoutOptions) {
     const router = useRouter();
     const route = useRoute();
     const $q = useQuasar();
-    const authStore = useAuthStore();
     const programsCollection = getProgramsCollection();
 
-    const { data: programs } = useLiveQuery(
+    const { data: programs, isLoading: programsQueryLoading } = useLiveQuery(
         (queryBuilder) => {
             const col = programsCollection.value;
-            if (!col) return undefined;
+            if (!col) {
+                return undefined;
+            }
             return queryBuilder.from({ p: col });
         },
         [programsCollection],
+    );
+
+    const programsList = computed(() =>
+        (programs.value ?? []).filter((p) => p != null),
     );
 
     const isProgramWorkspace = computed(() =>
@@ -48,33 +60,41 @@ export function useProgramWorkspaceLayout({
             : "",
     );
 
-    const visibleProgramIds = computed(() =>
-        (programs.value ?? [])
-            .filter((p) => p != null && !p.is_archived)
-            .map((p) => String(p.id)),
-    );
+    /** Normalized ids (including archived) for route access checks. */
+    const accessibleProgramIdsUpperSet = computed(() => {
+        const set = new Set<string>();
+        for (const p of programsList.value) {
+            set.add(String(p.id).trim().toUpperCase());
+        }
+        return set;
+    });
 
-    const programSwitcherOptions = computed(() =>
-        (programs.value ?? [])
-            .filter((p) => p != null && !p.is_archived)
-            .map((p) => ({
-                label: String(p.name ?? ""),
-                value: String(p.id),
-            })),
-    );
-
-    // O(1) program name lookup via Map instead of O(n) .find()
     const programLabelById = computed(() => {
         const map = new Map<string, string>();
-        for (const p of programs.value ?? []) {
-            if (p != null && p.id) {
+        for (const p of programsList.value) {
+            if (p.id != null && String(p.id).length > 0) {
                 map.set(String(p.id), String(p.name ?? p.id));
             }
         }
         return map;
     });
 
-    const currentProgramLabel = computed(() => {
+    const currentContext = computed(() =>
+        resolveProgramWorkspaceContextFromMatched(route.matched),
+    );
+
+    const contextSwitcherOptions = computed(() =>
+        PROGRAM_WORKSPACE_CONTEXTS.map((value) => ({
+            value,
+            label: t(WORKSPACE_CONTEXT_LABEL_KEYS[value]),
+        })),
+    );
+
+    const currentContextLabel = computed(() => {
+        const ctx = currentContext.value;
+        if (ctx != null) {
+            return t(WORKSPACE_CONTEXT_LABEL_KEYS[ctx]);
+        }
         const id = workspaceProgramId.value;
         if (id.length === 0) {
             return t("common.programs");
@@ -82,27 +102,34 @@ export function useProgramWorkspaceLayout({
         return programLabelById.value.get(id) ?? id;
     });
 
-    const allowsInPlaceProgramIdSwitch: ComputedRef<boolean> = computed(
-        () => layoutStore.allowsInPlaceProgramIdSwitch,
-    );
-
     watch(
-        [visibleProgramIds, () => route.params.programId, isProgramWorkspace],
-        ([ids]) => {
+        [
+            accessibleProgramIdsUpperSet,
+            () => route.params.programId,
+            isProgramWorkspace,
+            programsQueryLoading,
+        ],
+        () => {
             if (!isProgramWorkspace.value) {
                 return;
             }
-            const pid = String(route.params.programId ?? "").trim();
-            if (pid.length === 0) {
+            const pidRaw = String(route.params.programId ?? "").trim();
+            if (pidRaw.length === 0) {
+                return;
+            }
+            // While the programs live query is still syncing, row data can be incomplete;
+            // never treat that as "user has no access to this program".
+            if (programsQueryLoading.value) {
                 return;
             }
             // Important: on a hard refresh, the query can be "ready" before the
             // user_scope stream has delivered any program rows. Treat an empty
             // program list as "not enough evidence yet" rather than "user has no programs".
-            if (ids.length === 0) {
+            if (accessibleProgramIdsUpperSet.value.size === 0) {
                 return;
             }
-            if (!ids.includes(pid)) {
+            const pid = pidRaw.toUpperCase();
+            if (!accessibleProgramIdsUpperSet.value.has(pid)) {
                 void router.replace({ name: "programs.list" });
             }
         },
@@ -118,44 +145,35 @@ export function useProgramWorkspaceLayout({
         },
     );
 
-    onMounted(() => {
-        if (authStore.canAccessProtectedRoute()) {
-            // programs bootstrap is gated by AppBootstrapGate
-        }
-    });
-
     /**
-     * @param programId
+     * Navigate to the selected context’s home route for the current program.
+     *
+     * @param context
      */
-    function onSwitchProgram(programId: string) {
-        const next = String(programId ?? "").trim();
-        if (next.length === 0) {
+    function onSwitchContext(context: string) {
+        if (!isProgramWorkspaceContext(context)) {
             return;
         }
-        if (next === workspaceProgramId.value) {
+        const programId = workspaceProgramId.value;
+        if (programId.length === 0) {
             return;
         }
-        if (!allowsInPlaceProgramIdSwitch.value) {
+        if (context === currentContext.value) {
             return;
         }
-        const name = route.name;
-        if (name == null || typeof name !== "string") {
-            return;
-        }
-        const query: LocationQueryRaw = { ...route.query };
+        const name = PROGRAM_CONTEXT_HOME_ROUTE_NAMES[context];
         void router.push({
-            name: name as never,
-            params: { ...route.params, programId: next },
-            query,
+            name,
+            params: { programId },
         });
     }
 
     return {
         isProgramWorkspace,
         workspaceProgramId,
-        programSwitcherOptions,
-        currentProgramLabel,
-        allowsInPlaceProgramIdSwitch,
-        onSwitchProgram,
+        contextSwitcherOptions,
+        currentContext,
+        currentContextLabel,
+        onSwitchContext,
     };
 }

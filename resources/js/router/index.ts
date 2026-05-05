@@ -27,6 +27,7 @@ const programScopeChildren: RouteRecordRaw[] = [
         component: () => import("../layouts/AppProgramEditContextLayout.vue"),
         meta: {
             ...scopedProgramMeta,
+            programContext: "edit",
         },
         children: [
             {
@@ -119,6 +120,7 @@ const programScopeChildren: RouteRecordRaw[] = [
             import("../layouts/AppProgramControlContextLayout.vue"),
         meta: {
             ...scopedProgramMeta,
+            programContext: "control",
         },
         children: [
             {
@@ -144,6 +146,7 @@ const programScopeChildren: RouteRecordRaw[] = [
             import("../layouts/AppProgramCheckinContextLayout.vue"),
         meta: {
             ...scopedProgramMeta,
+            programContext: "checkin",
         },
         children: [
             {
