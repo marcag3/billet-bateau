@@ -139,7 +139,6 @@ export default {
         editPageTitle: "Modifier le bateau",
         editPageDescription:
             "Modifiez le bateau. Utilisez le selecteur pour ouvrir un autre bateau ou le menu pour les autres ecrans.",
-        listProgramRoster: "Programme (liste)",
         filters: "Filtres",
         filterName: "Le nom contient",
         filterCapacity: "Capacite",
@@ -178,7 +177,6 @@ export default {
         programRoster: "Programme (liste)",
         programRosterHint:
             "Choisissez le programme auquel rattacher cette liste. Les bateaux se synchronisent pour ce programme seulement.",
-        rosterForProgram: "Liste : {name}",
         noProgramsForBoats:
             "Creez d'abord un programme, puis selectionnez-le pour gerer ses bateaux.",
     },
@@ -195,8 +193,6 @@ export default {
         editPageTitle: "Modifier la sortie",
         editPageDescription:
             "Modifiez le depart, la capacite et les liens. Utilisez le selecteur ou le menu pour passer d’une sortie a l’autre.",
-        listForProgram: "Sorties du programme",
-        rosterForProgram: "Sorties : {name}",
         scheduledDeparture: "Depart planifie",
         scheduledDepartureRequired: "Le depart planifie est obligatoire.",
         scheduledDepartureInvalid: "Entrez une date et une heure valides.",
@@ -257,8 +253,6 @@ export default {
         title: "Types de billet",
         description:
             "Definissez les produits billets pour ce programme (prix, libre prix, limites, plafonds optionnels par sortie). Les changements se synchronisent via PowerSync.",
-        listForProgram: "Types de billet du programme",
-        rosterForProgram: "Types de billet : {name}",
         addType: "Ajouter un type de billet",
         edit: "Modifier",
         createTitle: "Nouveau type de billet",
@@ -357,8 +351,6 @@ export default {
         createPageTitle: "Nouveau modele de journee",
         createPageDescription:
             "Creez un modele de journee reutilisable pour ce programme. Les changements se synchronisent via PowerSync.",
-        listForProgram: "Journees types du programme",
-        rosterForProgram: "Journees types : {name}",
         editPageTitle: "Modifier le modele de journee",
         editPageDescription:
             "Modifiez les departs, la capacite et les contraintes. Les changements sont enregistres localement et synchronises en arriere-plan.",

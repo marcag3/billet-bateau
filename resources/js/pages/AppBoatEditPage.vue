@@ -103,14 +103,10 @@
                         :label="t('boatsList.notes')"
                         :disable="isSubmitting || isDeleting"
                     />
-                    <q-select
+                    <AppBoatTypeSelectField
                         v-model="editBoatTypeId"
                         v-bind="editBoatTypeIdProps"
-                        outlined
-                        emit-value
-                        map-options
-                        clearable
-                        :options="boatTypeOptions"
+                        :program-id="programId"
                         :label="t('boatsList.boatType')"
                         :disable="isSubmitting || isDeleting"
                     />
@@ -152,9 +148,7 @@ import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import {
     getAppPowerSyncBootstrappedRef,
-    getBoatTypesCollection,
     getBoatsCollection,
-    getActiveProgramIdRef,
     refreshOutboxSnapshot,
 } from "../powersync/app-powersync.runtime";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
@@ -164,6 +158,7 @@ import { parseOptionalNonNegativeInt } from "../validation/zod-fields";
 import AppEntityEditPageLayout from "../layouts/AppEntityEditPageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
+import AppBoatTypeSelectField from "../components/ui/AppBoatTypeSelectField.vue";
 
 const { t } = useI18n();
 const $q = useQuasar();
@@ -210,20 +205,6 @@ const neighbors = computed(() => {
     };
 });
 
-const boatTypesCollection = getBoatTypesCollection();
-
-const { data: boatTypes } = useLiveQuery(
-    (queryBuilder) => {
-        const col = boatTypesCollection.value;
-        const pid = getActiveProgramIdRef().value.trim();
-        if (!col || pid.length === 0) return undefined;
-        return queryBuilder
-            .from({ bt: col })
-            .where(({ bt }) => eq(bt.program_id, pid));
-    },
-    [boatTypesCollection, getActiveProgramIdRef()],
-);
-
 const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const isDeleting = ref(false);
 
@@ -253,13 +234,6 @@ const boatSwitcherOptions = computed(() =>
     boats.value.map((b) => ({
         label: String(b.name ?? ""),
         value: String(b.id),
-    })),
-);
-
-const boatTypeOptions = computed(() =>
-    boatTypes.value.map((bt) => ({
-        label: String(bt.name ?? ""),
-        value: String(bt.id),
     })),
 );
 

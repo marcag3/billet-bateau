@@ -25,25 +25,17 @@
                         :hint="t('tripsList.capacityHint')"
                         :disable="isSubmitting"
                     />
-                    <q-select
+                    <AppBoatTypeSelectField
                         v-model="createBoatTypeId"
                         v-bind="createBoatTypeIdProps"
-                        outlined
-                        emit-value
-                        map-options
-                        clearable
-                        :options="boatTypeOptions"
+                        :program-id="programId"
                         :label="t('tripsList.boatType')"
                         :disable="isSubmitting"
                     />
-                    <q-select
+                    <AppWaterRouteSelectField
                         v-model="createWaterRouteId"
                         v-bind="createWaterRouteIdProps"
-                        outlined
-                        emit-value
-                        map-options
-                        clearable
-                        :options="waterRouteOptions"
+                        :program-id="programId"
                         :label="t('tripsList.waterRoute')"
                         :disable="isSubmitting"
                     />
@@ -77,12 +69,7 @@ import {
 import { ulid } from "ulid";
 import { localDatetimeInputValueToIso } from "../utilities/datetime-input";
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
-import { useLiveQuery } from "@tanstack/vue-db";
-import { eq } from "@tanstack/db";
 import {
-    getAppPowerSyncBootstrappedRef,
-    getBoatTypesCollection,
-    getWaterRoutesCollection,
     getTripsCollection,
     getActiveProgramIdRef,
     refreshOutboxSnapshot,
@@ -91,60 +78,21 @@ import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import AppEntityCreatePageLayout from "../layouts/AppEntityCreatePageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
+import AppBoatTypeSelectField from "../components/ui/AppBoatTypeSelectField.vue";
+import AppWaterRouteSelectField from "../components/organisms/AppWaterRouteSelectField.vue";
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const tripsCollection = getTripsCollection();
-const boatTypesCollection = getBoatTypesCollection();
-
-const { data: boatTypes } = useLiveQuery(
-    (queryBuilder) => {
-        const col = boatTypesCollection.value;
-        const pid = getActiveProgramIdRef().value.trim();
-        if (!col || pid.length === 0) return undefined;
-        return queryBuilder
-            .from({ bt: col })
-            .where(({ bt }) => eq(bt.program_id, pid));
-    },
-    [boatTypesCollection, getActiveProgramIdRef()],
-);
-
-const waterRoutesCollection = getWaterRoutesCollection();
-const { data: waterRoutes } = useLiveQuery(
-    (queryBuilder) => {
-        const col = waterRoutesCollection.value;
-        const pid = getActiveProgramIdRef().value.trim();
-        if (!col || pid.length === 0) return undefined;
-        return queryBuilder
-            .from({ wr: col })
-            .where(({ wr }) => eq(wr.program_id, pid));
-    },
-    [waterRoutesCollection, getActiveProgramIdRef()],
-);
 const { runWithNotify } = useNotifyAsyncAction();
 
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const backTo = computed(() => ({
     name: "trips.list" as const,
     params: { programId: programId.value },
 }));
-
-const boatTypeOptions = computed(() =>
-    boatTypes.value.map((bt) => ({
-        label: String(bt.name ?? ""),
-        value: String(bt.id),
-    })),
-);
-
-const waterRouteOptions = computed(() =>
-    waterRoutes.value.map((wr) => ({
-        label: String(wr.name ?? ""),
-        value: String(wr.id),
-    })),
-);
 
 const tripSchema = createTripUpsertFormSchema(t);
 const { handleSubmit, defineField, meta, isSubmitting, resetForm } =

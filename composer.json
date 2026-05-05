@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "laravel/laravel",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "A fullstack Laravel API and Vue local-first, fully offline PWA for program, boat, trip, and booking management.",
     "keywords": [
         "laravel",
         "framework"

@@ -208,24 +208,16 @@
                             ]"
                         />
 
-                        <q-select
+                        <AppBoatTypeSelectField
                             v-model="slotForm.boatTypeId"
-                            outlined
-                            emit-value
-                            map-options
-                            clearable
-                            :options="boatTypeOptions"
+                            :program-id="programId"
                             :label="t('templateDaysList.boatType')"
                             :hint="t('templateDaysList.boatTypeHint')"
                         />
 
-                        <q-select
+                        <AppWaterRouteSelectField
                             v-model="slotForm.waterRouteId"
-                            outlined
-                            emit-value
-                            map-options
-                            clearable
-                            :options="waterRouteOptions"
+                            :program-id="programId"
                             :label="t('templateDaysList.waterRoute')"
                             :hint="t('templateDaysList.waterRouteHint')"
                         />
@@ -340,11 +332,9 @@ import { eq } from "@tanstack/db";
 import {
     getActiveProgramIdRef,
     getAppPowerSyncBootstrappedRef,
-    getBoatTypesCollection,
     getTemplateDaySlotsCollection,
     getTemplateDaysCollection,
     getTicketTypesCollection,
-    getWaterRoutesCollection,
     refreshOutboxSnapshot,
 } from "../powersync/app-powersync.runtime";
 import type { TemplateDaySlotOutput } from "../powersync/template-day-slots.collection";
@@ -357,10 +347,14 @@ import { normalizeTime } from "../utilities/datetime-input";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
+import { useProgramBoatTypes } from "../composables/useProgramBoatTypes";
+import { useProgramWaterRoutes } from "../composables/useProgramWaterRoutes";
 import AppEntityEditPageLayout from "../layouts/AppEntityEditPageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
+import AppBoatTypeSelectField from "../components/ui/AppBoatTypeSelectField.vue";
+import AppWaterRouteSelectField from "../components/organisms/AppWaterRouteSelectField.vue";
 
 const { t } = useI18n();
 const $q = useQuasar();
@@ -373,8 +367,6 @@ const { notifyError } = useNotifyErrorFromCatch();
 
 const templateDaysCollection = getTemplateDaysCollection();
 const templateDaySlotsCollection = getTemplateDaySlotsCollection();
-const boatTypesCollection = getBoatTypesCollection();
-const waterRoutesCollection = getWaterRoutesCollection();
 const ticketTypesCollection = getTicketTypesCollection();
 
 // --- Route params ---
@@ -467,24 +459,7 @@ async function onSaveNameSubmit() {
 
 // --- Boat types ---
 
-const { data: boatTypes } = useLiveQuery(
-    (queryBuilder) => {
-        const col = boatTypesCollection.value;
-        const pid = getActiveProgramIdRef().value.trim();
-        if (!col || pid.length === 0) return undefined;
-        return queryBuilder
-            .from({ bt: col })
-            .where(({ bt }) => eq(bt.program_id, pid));
-    },
-    [boatTypesCollection, getActiveProgramIdRef()],
-);
-
-const boatTypeOptions = computed(() =>
-    (boatTypes.value ?? []).map((bt) => ({
-        label: String(bt.name ?? ""),
-        value: String(bt.id),
-    })),
-);
+const { data: boatTypes } = useProgramBoatTypes(programId);
 
 function getBoatTypeLabel(id: string | null | undefined): string {
     if (id == null) return "";
@@ -496,24 +471,7 @@ function getBoatTypeLabel(id: string | null | undefined): string {
 
 // --- Water routes ---
 
-const { data: waterRoutes } = useLiveQuery(
-    (queryBuilder) => {
-        const col = waterRoutesCollection.value;
-        const pid = getActiveProgramIdRef().value.trim();
-        if (!col || pid.length === 0) return undefined;
-        return queryBuilder
-            .from({ wr: col })
-            .where(({ wr }) => eq(wr.program_id, pid));
-    },
-    [waterRoutesCollection, getActiveProgramIdRef()],
-);
-
-const waterRouteOptions = computed(() =>
-    (waterRoutes.value ?? []).map((wr) => ({
-        label: String(wr.name ?? ""),
-        value: String(wr.id),
-    })),
-);
+const { data: waterRoutes } = useProgramWaterRoutes(programId);
 
 function getWaterRouteLabel(id: string | null | undefined): string {
     if (id == null) return "";

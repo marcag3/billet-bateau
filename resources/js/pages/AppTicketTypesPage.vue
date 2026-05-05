@@ -16,56 +16,45 @@
             </AppPageHeader>
         </template>
 
-        <AppCardSection :label="t('ticketTypesList.listForProgram')">
-                <p class="text-body2 text-grey-8 q-mb-none">
-                    {{
-                        t("ticketTypesList.rosterForProgram", {
-                            name: selectedProgramName,
-                        })
-                    }}
-                </p>
-            </AppCardSection>
-
-            <AppEntityList>
-                <AppEmptyListRow
-                    :show="ticketTypes.length === 0"
-                    :message="t('ticketTypesList.empty')"
-                />
-                <q-item
-                    v-for="row in ticketTypes"
-                    :key="String(row.id)"
-                    class="q-pa-md"
-                >
-                    <q-item-section>
-                        <q-item-label class="text-h6">{{
-                            row.title
-                        }}</q-item-label>
-                        <q-item-label caption>
-                            {{ summaryLine(row) }}
-                        </q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                        <div class="column q-gutter-xs items-end">
-                            <q-btn
-                                color="primary"
-                                outline
-                                dense
-                                :label="t('ticketTypesList.edit')"
-                                @click="() => openEditDialog(row)"
-                            />
-                            <q-btn
-                                flat
-                                dense
-                                color="negative"
-                                icon="delete"
-                                :label="t('ticketTypesList.delete')"
-                                @click="() => confirmDelete(row)"
-                            />
-                        </div>
-                    </q-item-section>
-                </q-item>
-            </AppEntityList>
-        </AppCardSection>
+        <AppEntityList>
+            <AppEmptyListRow
+                :show="ticketTypes.length === 0"
+                :message="t('ticketTypesList.empty')"
+            />
+            <q-item
+                v-for="row in ticketTypes"
+                :key="String(row.id)"
+                class="q-pa-md"
+            >
+                <q-item-section>
+                    <q-item-label class="text-h6">{{
+                        row.title
+                    }}</q-item-label>
+                    <q-item-label caption>
+                        {{ summaryLine(row) }}
+                    </q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                    <div class="column q-gutter-xs items-end">
+                        <q-btn
+                            color="primary"
+                            outline
+                            dense
+                            :label="t('ticketTypesList.edit')"
+                            @click="() => openEditDialog(row)"
+                        />
+                        <q-btn
+                            flat
+                            dense
+                            color="negative"
+                            icon="delete"
+                            :label="t('ticketTypesList.delete')"
+                            @click="() => confirmDelete(row)"
+                        />
+                    </div>
+                </q-item-section>
+            </q-item>
+        </AppEntityList>
 
         <q-dialog v-model="showFormDialog" persistent>
             <q-card
@@ -194,7 +183,6 @@
 import { useForm } from "vee-validate";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
 import { useQuasar } from "quasar";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
@@ -207,10 +195,8 @@ import {
 } from "../models/ticket-types/ticket-types.validation";
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
 import {
-    getAppPowerSyncBootstrappedRef,
     getTicketTypesCollection,
     getActiveProgramIdRef,
-    getProgramsCollection,
     refreshOutboxSnapshot,
 } from "../powersync/app-powersync.runtime";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
@@ -218,14 +204,12 @@ import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
-import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppEntityList from "../components/ui/AppEntityList.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
 import AppFormRow from "../components/ui/AppFormRow.vue";
 
 const { t, locale } = useI18n();
-const route = useRoute();
 const $q = useQuasar();
 const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
@@ -244,37 +228,6 @@ const { data: ticketTypes } = useLiveQuery(
     },
     [ticketTypesCollection, getActiveProgramIdRef()],
 );
-
-const programsCollection = getProgramsCollection();
-
-const { data: programs } = useLiveQuery(
-    (queryBuilder) => {
-        const col = programsCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ p: col });
-    },
-    [programsCollection],
-);
-
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
-const programId = computed(() => String(route.params.programId ?? "").trim());
-
-// O(1) program name lookup via Map instead of O(n) .find()
-const programNameById = computed(() => {
-    const map = new Map<string, string>();
-    for (const p of programs.value) {
-        if (p != null && p.id) {
-            map.set(String(p.id), String(p.name ?? p.id));
-        }
-    }
-    return map;
-});
-
-const selectedProgramName = computed(() => {
-    const id = programId.value;
-    if (id.length === 0) return "";
-    return programNameById.value.get(id) ?? id;
-});
 
 const showFormDialog = ref(false);
 const editingId = ref("");

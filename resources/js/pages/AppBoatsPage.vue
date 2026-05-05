@@ -67,16 +67,6 @@
             </AppCardSection>
         </template>
 
-        <AppCardSection :label="t('boatsList.listProgramRoster')">
-            <p class="text-body2 text-grey-8 q-mb-none">
-                {{
-                    t("boatsList.rosterForProgram", {
-                        name: selectedProgramName,
-                    })
-                }}
-            </p>
-        </AppCardSection>
-
         <q-infinite-scroll
             :offset="400"
             :disable="infiniteScrollDisabled"
@@ -148,8 +138,6 @@ import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import {
-    getAppPowerSyncBootstrappedRef,
-    getProgramsCollection,
     getBoatTypesCollection,
     getBoatsCollection,
     getActiveProgramIdRef,
@@ -200,36 +188,8 @@ const { data: allBoats } = useLiveQuery(
 const boats = computed(() => {
     return allBoats.value ?? [];
 });
-const programsCollection = getProgramsCollection();
 
-const { data: programs } = useLiveQuery(
-    (queryBuilder) => {
-        const col = programsCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ p: col });
-    },
-    [programsCollection],
-);
-
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const programId = computed(() => String(route.params.programId ?? "").trim());
-
-// O(1) program name lookup via Map instead of O(n) .find()
-const programNameById = computed(() => {
-    const map = new Map<string, string>();
-    for (const p of programs.value) {
-        if (p != null && p.id) {
-            map.set(String(p.id), String(p.name ?? p.id));
-        }
-    }
-    return map;
-});
-
-const selectedProgramName = computed(() => {
-    const id = programId.value;
-    if (id.length === 0) return "";
-    return programNameById.value.get(id) ?? id;
-});
 
 const filterName = ref("");
 const filterCapacity = ref("");

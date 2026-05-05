@@ -33,14 +33,10 @@
                         :label="t('boatsList.notes')"
                         :disable="isSubmitting"
                     />
-                    <q-select
+                    <AppBoatTypeSelectField
                         v-model="createBoatTypeId"
                         v-bind="createBoatTypeIdProps"
-                        outlined
-                        emit-value
-                        map-options
-                        clearable
-                        :options="boatTypeOptions"
+                        :program-id="programId"
                         :label="t('boatsList.boatType')"
                         :disable="isSubmitting"
                     />
@@ -73,14 +69,9 @@ import {
 } from "../models/boats/boats.validation";
 import { parseOptionalNonNegativeInt } from "../validation/zod-fields";
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
-import { useLiveQuery } from "@tanstack/vue-db";
 import { ulid } from "ulid";
-import { eq } from "@tanstack/db";
 import {
-    getAppPowerSyncBootstrappedRef,
-    getBoatTypesCollection,
     getBoatsCollection,
-    getCurrentUserIdRef,
     getActiveProgramIdRef,
     refreshOutboxSnapshot,
 } from "../powersync/app-powersync.runtime";
@@ -88,42 +79,21 @@ import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import AppEntityCreatePageLayout from "../layouts/AppEntityCreatePageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
+import AppBoatTypeSelectField from "../components/ui/AppBoatTypeSelectField.vue";
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const boatsCollection = getBoatsCollection();
-const currentUserIdRef = getCurrentUserIdRef();
 const activeProgramIdRef = getActiveProgramIdRef();
-const boatTypesCollection = getBoatTypesCollection();
-
-const { data: boatTypes } = useLiveQuery(
-    (queryBuilder) => {
-        const col = boatTypesCollection.value;
-        const pid = activeProgramIdRef.value.trim();
-        if (!col || pid.length === 0) return undefined;
-        return queryBuilder
-            .from({ bt: col })
-            .where(({ bt }) => eq(bt.program_id, pid));
-    },
-    [boatTypesCollection, activeProgramIdRef],
-);
 const { runWithNotify } = useNotifyAsyncAction();
 
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const backTo = computed(() => ({
     name: "boats.list" as const,
     params: { programId: programId.value },
 }));
-
-const boatTypeOptions = computed(() =>
-    boatTypes.value.map((bt) => ({
-        label: String(bt.name ?? ""),
-        value: String(bt.id),
-    })),
-);
 
 const boatCreateSchema = createBoatCreateFormSchema(t);
 const { handleSubmit, defineField, meta, isSubmitting, resetForm } =
@@ -155,8 +125,6 @@ const onCreateSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
             if (!col) {
                 throw new Error("Boats collection is not ready.");
             }
-            const parsedUserId = Number.parseInt(currentUserIdRef.value, 10);
-            const userId = Number.isFinite(parsedUserId) ? parsedUserId : null;
             const id = ulid();
             const name = String(values.name).trim();
             const notes = String(values.notes ?? "").trim();
@@ -171,7 +139,6 @@ const onCreateSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
                     : null;
             await col.insert({
                 id,
-                user_id: userId,
                 boat_type_id: boatTypeId,
                 program_id: pid,
                 name: name.length > 0 ? name : "Untitled",

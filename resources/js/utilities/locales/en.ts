@@ -135,7 +135,6 @@ export default {
         editPageTitle: "Edit boat",
         editPageDescription:
             "Update boat details. Use the switcher to open another boat or the side menu for other models.",
-        listProgramRoster: "Program roster",
         filters: "Filters",
         filterName: "Name contains",
         filterCapacity: "Capacity",
@@ -171,7 +170,6 @@ export default {
         programRoster: "Program roster",
         programRosterHint:
             "Pick which program this boat list belongs to. Boats sync for that program only.",
-        rosterForProgram: "Roster: {name}",
         noProgramsForBoats:
             "Create a program first, then choose it here to manage boats for that roster.",
     },
@@ -188,8 +186,6 @@ export default {
         editPageTitle: "Edit trip",
         editPageDescription:
             "Update departure, capacity, and links. Use the switcher or side menu to move between trips.",
-        listForProgram: "Program trips",
-        rosterForProgram: "Trips: {name}",
         scheduledDeparture: "Scheduled departure",
         scheduledDepartureRequired: "Scheduled departure is required.",
         scheduledDepartureInvalid: "Enter a valid date and time.",
@@ -245,8 +241,6 @@ export default {
         title: "Ticket types",
         description:
             "Define ticket products for this program (price, pay-what-you-can, limits, optional per-sortie caps). Changes sync through PowerSync.",
-        listForProgram: "Program ticket types",
-        rosterForProgram: "Ticket types: {name}",
         addType: "Add ticket type",
         edit: "Edit",
         createTitle: "New ticket type",
@@ -344,8 +338,6 @@ export default {
         createPageTitle: "New template day",
         createPageDescription:
             "Create a reusable day pattern for this program. Changes sync through PowerSync.",
-        listForProgram: "Program template days",
-        rosterForProgram: "Template days: {name}",
         editPageTitle: "Edit template day",
         editPageDescription:
             "Update departures, capacity, and constraints. Changes are saved locally and sync in the background.",

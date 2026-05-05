@@ -30,19 +30,6 @@
                 <q-item-section>{{ t("common.boats") }}</q-item-section>
             </q-item>
             <q-item
-                key="boat-types"
-                v-ripple
-                clickable
-                :to="{ name: 'boat-types.list', params: { programId } }"
-                exact
-                active-class="app-nav-item--active"
-            >
-                <q-item-section avatar>
-                    <q-icon name="category" />
-                </q-item-section>
-                <q-item-section>{{ t("common.boatTypes") }}</q-item-section>
-            </q-item>
-            <q-item
                 key="water-routes"
                 v-ripple
                 clickable

@@ -16,16 +16,6 @@
             </AppPageHeader>
         </template>
 
-        <AppCardSection :label="t('tripsList.listForProgram')">
-            <p class="text-body2 text-grey-8 q-mb-none">
-                {{
-                    t("tripsList.rosterForProgram", {
-                        name: selectedProgramName,
-                    })
-                }}
-            </p>
-        </AppCardSection>
-
         <AppEntityList>
             <AppEmptyListRow
                 :show="trips.length === 0"
@@ -72,8 +62,6 @@ import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import {
-    getAppPowerSyncBootstrappedRef,
-    getProgramsCollection,
     getBoatTypesCollection,
     getWaterRoutesCollection,
     getTripsCollection,
@@ -82,7 +70,6 @@ import {
 import { joinTripsWithRelations } from "../powersync/joined-queries";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
-import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppEntityList from "../components/ui/AppEntityList.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 
@@ -129,37 +116,7 @@ const { data: trips } = useLiveQuery(
     ],
 );
 
-// Programs loaded for the header name display (small table, efficient)
-const programsCollection = getProgramsCollection();
-
-const { data: programs } = useLiveQuery(
-    (queryBuilder) => {
-        const col = programsCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ p: col });
-    },
-    [programsCollection],
-);
-
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const programId = computed(() => String(route.params.programId ?? "").trim());
-
-// O(1) program name lookup via Map instead of O(n) .find()
-const programNameById = computed(() => {
-    const map = new Map<string, string>();
-    for (const p of programs.value) {
-        if (p != null && p.id) {
-            map.set(String(p.id), String(p.name ?? p.id));
-        }
-    }
-    return map;
-});
-
-const selectedProgramName = computed(() => {
-    const id = programId.value;
-    if (id.length === 0) return "";
-    return programNameById.value.get(id) ?? id;
-});
 
 function formatDeparture(tr: { scheduled_departure_at?: unknown }) {
     const raw = tr.scheduled_departure_at;

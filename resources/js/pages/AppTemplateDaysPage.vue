@@ -19,16 +19,6 @@
             </AppPageHeader>
         </template>
 
-        <AppCardSection :label="t('templateDaysList.listForProgram')">
-            <p class="text-body2 text-grey-8 q-mb-none">
-                {{
-                    t("templateDaysList.rosterForProgram", {
-                        name: selectedProgramName,
-                    })
-                }}
-            </p>
-        </AppCardSection>
-
         <AppEntityList>
             <AppEmptyListRow
                 :show="templateDays.length === 0"
@@ -84,8 +74,6 @@ import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import {
     getActiveProgramIdRef,
-    getAppPowerSyncBootstrappedRef,
-    getProgramsCollection,
     getTemplateDaysCollection,
     refreshOutboxSnapshot,
 } from "../powersync/app-powersync.runtime";
@@ -94,7 +82,6 @@ import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch"
 import type { TemplateDayOutput } from "../powersync/template-days.collection";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
-import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppEntityList from "../components/ui/AppEntityList.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 
@@ -118,34 +105,7 @@ const { data: templateDays } = useLiveQuery(
     [templateDaysCollection, getActiveProgramIdRef()],
 );
 
-const programsCollection = getProgramsCollection();
-const { data: programs } = useLiveQuery(
-    (queryBuilder) => {
-        const col = programsCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ p: col });
-    },
-    [programsCollection],
-);
-
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
 const programId = computed(() => String(route.params.programId ?? "").trim());
-
-const programNameById = computed(() => {
-    const map = new Map<string, string>();
-    for (const p of programs.value) {
-        if (p != null && p.id) {
-            map.set(String(p.id), String(p.name ?? p.id));
-        }
-    }
-    return map;
-});
-
-const selectedProgramName = computed(() => {
-    const id = programId.value;
-    if (id.length === 0) return "";
-    return programNameById.value.get(id) ?? id;
-});
 
 function confirmDeleteTemplateDay(td: TemplateDayOutput) {
     const name = String(td.name ?? "Untitled");

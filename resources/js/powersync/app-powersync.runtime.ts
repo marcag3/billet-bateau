@@ -147,36 +147,48 @@ const activeProgramIdRef = ref("");
 /** @type {null | (() => void)} */
 let programScopeUnsubscribe = null;
 
+/**
+ * Subscribe to `program_scope` for the current active program (or tear down when none).
+ * Safe to call repeatedly (e.g. after `db.connect()` when the router already set the program).
+ */
+function attachProgramScopeStreamSubscription() {
+    if (typeof window === "undefined") {
+        return;
+    }
+
+    if (programScopeUnsubscribe) {
+        try {
+            programScopeUnsubscribe();
+        } catch (e) {
+            // Ignore unsubscribe errors during teardown
+        }
+        programScopeUnsubscribe = null;
+    }
+
+    const db = powerSyncDbRef.value;
+    const newPid = activeProgramIdRef.value.trim();
+    if (newPid.length === 0 || !db) {
+        return;
+    }
+
+    void db
+        .syncStream("program_scope", { program_id: newPid })
+        .subscribe()
+        .then((sub) => {
+            programScopeUnsubscribe = () => {
+                sub.unsubscribe();
+            };
+        })
+        .catch((err) => {
+            console.error("program_scope subscribe failed:", err);
+        });
+}
+
 // When the active program changes, subscribe/unsubscribe from program_scope
 // so that program-scoped data (template days, boats, trips, etc.) syncs.
 if (typeof window !== "undefined") {
-    watch(activeProgramIdRef, (newVal, oldVal) => {
-        if (programScopeUnsubscribe) {
-            try {
-                programScopeUnsubscribe();
-            } catch (e) {
-                // Ignore unsubscribe errors during teardown
-            }
-            programScopeUnsubscribe = null;
-        }
-
-        const newPid = newVal.trim();
-        if (newPid.length > 0) {
-            const db = powerSyncDbRef.value;
-            if (!db) {
-                return;
-            }
-            db.syncStream("program_scope", { program_id: newPid })
-                .subscribe()
-                .then((sub) => {
-                    programScopeUnsubscribe = () => {
-                        sub.unsubscribe();
-                    };
-                })
-                .catch((err) => {
-                    console.error("program_scope subscribe failed:", err);
-                });
-        }
+    watch(activeProgramIdRef, () => {
+        attachProgramScopeStreamSubscription();
     });
 }
 
@@ -355,6 +367,11 @@ export async function bootstrapAppPowerSync() {
             const connector = createAppPowerSyncConnector();
 
             await db.connect(connector);
+
+            // Router may set `activeProgramIdRef` before the DB exists; per-table `onLoad` can
+            // also run while `activeProgramIdRef` is still empty. Re-attach here so
+            // `program_scope` always syncs once the connector is live.
+            attachProgramScopeStreamSubscription();
 
             hasBootstrappedCollection.value = true;
             errorMessage.value = "";
