@@ -139,11 +139,9 @@ import {
 } from "../models/water-routes/water-routes.validation";
 import { safeParseBoatEntityName } from "../models/boats/boats.validation";
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
-import {
-    getActiveProgramIdRef,
-    getWaterRoutesCollection,
-    refreshOutboxSnapshot,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
@@ -163,8 +161,8 @@ const { notifyError } = useNotifyErrorFromCatch();
 const DEFAULT_WATER_ROUTE_TRACE_GEOJSON =
     '{"type":"LineString","coordinates":[[-73.5673,45.5017],[-73.5540,45.5080]]}';
 
-const waterRoutesCollection = getWaterRoutesCollection();
-const activeProgramIdRef = getActiveProgramIdRef();
+const waterRoutesCollection = powersync.collections.water_routes;
+const activeProgramIdRef = powersync.activeProgramIdRef;
 
 const { data: waterRoutes } = useLiveQuery(
     (queryBuilder) => {
@@ -254,7 +252,7 @@ function commitName(wr: Record<string, unknown>) {
             col.update(id, (draft) => {
                 draft.name = parsed.data;
             });
-            void refreshOutboxSnapshot();
+            void powersync.refreshOutboxSnapshot();
         } finally {
             patchingId.value = "";
         }
@@ -280,7 +278,7 @@ function commitDuration(wr: Record<string, unknown>) {
             col.update(id, (draft) => {
                 draft.duration_minutes = n;
             });
-            void refreshOutboxSnapshot();
+            void powersync.refreshOutboxSnapshot();
         } finally {
             patchingId.value = "";
         }
@@ -309,7 +307,7 @@ function commitTrace(wr: Record<string, unknown>) {
             col.update(id, (draft) => {
                 draft.trace = next;
             });
-            void refreshOutboxSnapshot();
+            void powersync.refreshOutboxSnapshot();
         } finally {
             patchingId.value = "";
         }
@@ -358,7 +356,7 @@ const onCreateSubmit = handleSubmit(
                     duration_minutes: duration,
                 }).isPersisted.promise;
 
-                void refreshOutboxSnapshot();
+                void powersync.refreshOutboxSnapshot();
                 resetForm();
             },
             {
@@ -380,7 +378,7 @@ function confirmDelete(wr: Record<string, unknown>) {
                 const col = waterRoutesCollection.value;
                 if (!col) return;
                 col.delete(String(wr.id));
-                void refreshOutboxSnapshot();
+                void powersync.refreshOutboxSnapshot();
                 $q.notify({
                     type: "positive",
                     message: t("waterRoutesList.deleted"),

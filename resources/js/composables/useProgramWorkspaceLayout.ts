@@ -2,7 +2,7 @@ import { computed, watch, type Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useLiveQuery } from "@tanstack/vue-db";
-import { getProgramsCollection } from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import {
     isProgramWorkspaceContext,
     PROGRAM_CONTEXT_HOME_ROUTE_NAMES,
@@ -33,7 +33,7 @@ export function useProgramWorkspaceLayout({
     const router = useRouter();
     const route = useRoute();
     const $q = useQuasar();
-    const programsCollection = getProgramsCollection();
+    const programsCollection = getAppPowerSyncContext().collections.programs;
 
     const { data: programs, isLoading: programsQueryLoading } = useLiveQuery(
         (queryBuilder) => {

@@ -58,9 +58,11 @@ vi.mock("quasar", () => ({
 }));
 
 vi.mock("../../powersync/app-powersync.runtime", () => ({
-    getProgramsCollection: () => ref(null),
-    getActiveProgramIdRef: () => ref(""),
-    setActiveProgramId: vi.fn(),
+    getAppPowerSyncContext: () => ({
+        collections: {
+            programs: ref(null),
+        },
+    }),
 }));
 
 import { useProgramWorkspaceLayout } from "../../composables/useProgramWorkspaceLayout";

@@ -47,8 +47,12 @@ const mockCollectionRef = ref<{
 } | null>(null);
 
 vi.mock('../../powersync/app-powersync.runtime', () => ({
-    getBoatTypesCollection: () => mockCollectionRef,
-    refreshOutboxSnapshot: vi.fn(),
+    getAppPowerSyncContext: () => ({
+        collections: {
+            boat_types: mockCollectionRef,
+        },
+        refreshOutboxSnapshot: vi.fn(),
+    }),
 }));
 
 vi.mock('../../composables/useNotifyErrorFromCatch', () => ({

@@ -72,11 +72,9 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
-import {
-    getActiveProgramIdRef,
-    getTemplateDaysCollection,
-    refreshOutboxSnapshot,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
 import type { TemplateDayOutput } from "../powersync/template-days.collection";
@@ -89,19 +87,19 @@ const { t } = useI18n();
 const route = useRoute();
 const { confirm } = useConfirmDialog();
 const { notifyError } = useNotifyErrorFromCatch();
-const templateDaysCollection = getTemplateDaysCollection();
+const templateDaysCollection = powersync.collections.template_days;
 
 const { data: templateDays } = useLiveQuery(
     (queryBuilder) => {
         const col = templateDaysCollection.value;
-        const pid = getActiveProgramIdRef().value.trim();
+        const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || pid.length === 0) return undefined;
         return queryBuilder
             .from({ td: col })
             .where(({ td }) => eq(td.program_id, pid))
             .orderBy(({ td }) => td.id, "desc");
     },
-    [templateDaysCollection, getActiveProgramIdRef()],
+    [templateDaysCollection, powersync.activeProgramIdRef],
 );
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
@@ -116,7 +114,7 @@ function confirmDeleteTemplateDay(td: TemplateDayOutput) {
             if (!col) return;
             try {
                 await col.delete(String(td.id)).isPersisted.promise;
-                void refreshOutboxSnapshot();
+                void powersync.refreshOutboxSnapshot();
             } catch (e) {
                 notifyError(e, t("templateDaysList.errorGeneric"));
             }

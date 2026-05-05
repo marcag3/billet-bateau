@@ -194,11 +194,9 @@ import {
     type TicketTypeFormValues,
 } from "../models/ticket-types/ticket-types.validation";
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
-import {
-    getTicketTypesCollection,
-    getActiveProgramIdRef,
-    refreshOutboxSnapshot,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
@@ -215,18 +213,18 @@ const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
 
-const ticketTypesCollection = getTicketTypesCollection();
+const ticketTypesCollection = powersync.collections.ticket_types;
 
 const { data: ticketTypes } = useLiveQuery(
     (queryBuilder) => {
         const col = ticketTypesCollection.value;
-        const pid = getActiveProgramIdRef().value.trim();
+        const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || pid.length === 0) return undefined;
         return queryBuilder
             .from({ tt: col })
             .where(({ tt }) => eq(tt.program_id, pid));
     },
-    [ticketTypesCollection, getActiveProgramIdRef()],
+    [ticketTypesCollection, powersync.activeProgramIdRef],
 );
 
 const showFormDialog = ref(false);
@@ -477,9 +475,9 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
                     draft.max_per_purchase = values.maxPerPurchase;
                     draft.trip_inventory_caps = JSON.stringify(caps);
                 });
-                void refreshOutboxSnapshot();
+                void powersync.refreshOutboxSnapshot();
             } else {
-                const programId = getActiveProgramIdRef().value.trim();
+                const programId = powersync.activeProgramIdRef.value.trim();
                 if (programId.length === 0) {
                     throw new Error(
                         "Select a program before adding ticket types.",
@@ -500,7 +498,7 @@ const onFormSubmit = handleSubmit(async (values: TicketTypeFormValues) => {
                     max_per_purchase: values.maxPerPurchase,
                     trip_inventory_caps: JSON.stringify(caps),
                 }).isPersisted.promise;
-                void refreshOutboxSnapshot();
+                void powersync.refreshOutboxSnapshot();
             }
             closeFormDialog();
         },
@@ -528,7 +526,7 @@ function confirmDelete(row) {
                 const col = ticketTypesCollection.value;
                 if (!col) return;
                 col.delete(String(row.id ?? ""));
-                void refreshOutboxSnapshot();
+                void powersync.refreshOutboxSnapshot();
                 $q.notify({
                     type: "positive",
                     message: t("ticketTypesList.deleted"),

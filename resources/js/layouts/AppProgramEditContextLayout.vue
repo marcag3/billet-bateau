@@ -6,9 +6,10 @@
 </template>
 
 <script setup lang="ts">
-import { getAppPowerSyncBootstrappedRef } from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
 import AppProgramEditContextNav from "./AppProgramEditContextNav.vue";
 
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
+const powersync = getAppPowerSyncContext();
+const hasBootstrapped = powersync.hasBootstrappedCollection;
 </script>

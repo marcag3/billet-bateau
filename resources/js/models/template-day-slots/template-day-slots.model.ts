@@ -1,8 +1,7 @@
 import { ulid } from "ulid";
-import {
-    getTemplateDaySlotsCollection,
-    refreshOutboxSnapshot,
-} from "../../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 
 export interface CreateTemplateDaySlotParams {
     templateDayId: string;
@@ -31,7 +30,7 @@ export interface PatchTemplateDaySlotParams {
 export async function createTemplateDaySlotRow(
     params: CreateTemplateDaySlotParams,
 ): Promise<string> {
-    const col = getTemplateDaySlotsCollection().value;
+    const col = powersync.collections.template_day_slots.value;
     if (!col) {
         throw new Error("Template day slots collection not ready.");
     }
@@ -49,7 +48,7 @@ export async function createTemplateDaySlotRow(
             internal_notes: params.internalNotes,
         })
         .isPersisted.promise;
-    void refreshOutboxSnapshot();
+    void powersync.refreshOutboxSnapshot();
     return id;
 }
 
@@ -60,7 +59,7 @@ export async function patchTemplateDaySlotRow(
     id: string,
     params: PatchTemplateDaySlotParams,
 ): Promise<void> {
-    const col = getTemplateDaySlotsCollection().value;
+    const col = powersync.collections.template_day_slots.value;
     if (!col) {
         throw new Error("Template day slots collection not ready.");
     }
@@ -89,17 +88,17 @@ export async function patchTemplateDaySlotRow(
             }
         })
         .isPersisted.promise;
-    void refreshOutboxSnapshot();
+    void powersync.refreshOutboxSnapshot();
 }
 
 /**
  * Delete a template day slot row.
  */
 export async function deleteTemplateDaySlotRow(id: string): Promise<void> {
-    const col = getTemplateDaySlotsCollection().value;
+    const col = powersync.collections.template_day_slots.value;
     if (!col) {
         throw new Error("Template day slots collection not ready.");
     }
     await col.delete(id).isPersisted.promise;
-    void refreshOutboxSnapshot();
+    void powersync.refreshOutboxSnapshot();
 }

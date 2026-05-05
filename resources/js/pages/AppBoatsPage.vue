@@ -137,11 +137,9 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
-import {
-    getBoatTypesCollection,
-    getBoatsCollection,
-    getActiveProgramIdRef,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import { joinBoatsWithBoatTypes } from "../powersync/joined-queries";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
@@ -154,9 +152,9 @@ const PAGE_SIZE = 20;
 
 const { t } = useI18n();
 const route = useRoute();
-const boatsCollection = getBoatsCollection();
-const boatTypesCollection = getBoatTypesCollection();
-const activeProgramIdRef = getActiveProgramIdRef();
+const boatsCollection = powersync.collections.boats;
+const boatTypesCollection = powersync.collections.boat_types;
+const activeProgramIdRef = powersync.activeProgramIdRef;
 
 const { data: allBoats } = useLiveQuery(
     (queryBuilder) => {
@@ -189,7 +187,7 @@ const filterBoatTypeId = ref<string | null>(null);
 const visibleCount = ref(PAGE_SIZE);
 
 // Scoped boat types query for the filter dropdown (all types in program, not just those with boats)
-const scopedBoatTypesCollection = getBoatTypesCollection();
+const scopedBoatTypesCollection = boatTypesCollection;
 const { data: scopedBoatTypes } = useLiveQuery(
     (queryBuilder) => {
         const col = scopedBoatTypesCollection.value;

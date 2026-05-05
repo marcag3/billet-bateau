@@ -196,11 +196,9 @@ import {
     type ProgramEditFormValues,
 } from "../models/programs/programs.validation";
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
-import {
-    getAppPowerSyncBootstrappedRef,
-    getProgramsCollection,
-    refreshOutboxSnapshot,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import type { ProgramOutput } from "../powersync/programs.collection";
 import {
     normalizeAddressRowFields,
@@ -216,7 +214,7 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const $q = useQuasar();
-const programsCollection = getProgramsCollection();
+const programsCollection = powersync.collections.programs;
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const { data: programs } = useLiveQuery(
@@ -230,7 +228,7 @@ const { data: programs } = useLiveQuery(
 );
 
 const errorMessage = ref("");
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
+const hasBootstrapped = powersync.hasBootstrappedCollection;
 const currentProgram = computed<ProgramOutput | null>(() => {
     const id = programId.value;
     if (id.length === 0) {
@@ -395,7 +393,7 @@ const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
             Object.assign(draft, patch);
         });
 
-        void refreshOutboxSnapshot();
+        void powersync.refreshOutboxSnapshot();
 
         const files = normalizeImageFiles(values.imagesModel);
         if (files.length > 0) {
@@ -414,7 +412,6 @@ const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
         }
 
         $q.notify({ type: "positive", message: t("programsEdit.success") });
-        await router.push({ name: "programs.list" });
     } catch (error) {
         errorMessage.value =
             error instanceof Error ? error.message : String(error);

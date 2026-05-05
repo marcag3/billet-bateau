@@ -61,12 +61,9 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
-import {
-    getBoatTypesCollection,
-    getWaterRoutesCollection,
-    getTripsCollection,
-    getActiveProgramIdRef,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import { joinTripsWithRelations } from "../powersync/joined-queries";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
@@ -75,9 +72,9 @@ import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 
 const { t, locale } = useI18n();
 const route = useRoute();
-const tripsCollection = getTripsCollection();
-const boatTypesCollection = getBoatTypesCollection();
-const waterRoutesCollection = getWaterRoutesCollection();
+const tripsCollection = powersync.collections.trips;
+const boatTypesCollection = powersync.collections.boat_types;
+const waterRoutesCollection = powersync.collections.water_routes;
 
 // Trips joined with boat_types and water_routes — eliminates per-row .find() lookups
 const { data: trips } = useLiveQuery(
@@ -86,7 +83,7 @@ const { data: trips } = useLiveQuery(
         const btCol = boatTypesCollection.value;
         const wrCol = waterRoutesCollection.value;
 
-        const pid = getActiveProgramIdRef().value.trim();
+        const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || !btCol || !wrCol || pid.length === 0) return undefined;
         return joinTripsWithRelations(queryBuilder, col, btCol, wrCol)
             .where(({ t }: Record<string, Record<string, unknown>>) =>
@@ -107,7 +104,7 @@ const { data: trips } = useLiveQuery(
         boatTypesCollection,
         waterRoutesCollection,
 
-        getActiveProgramIdRef(),
+        powersync.activeProgramIdRef,
     ],
 );
 

@@ -69,11 +69,9 @@ import {
 import { ulid } from "ulid";
 import { localDatetimeInputValueToIso } from "../utilities/datetime-input";
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
-import {
-    getTripsCollection,
-    getActiveProgramIdRef,
-    refreshOutboxSnapshot,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import AppEntityCreatePageLayout from "../layouts/AppEntityCreatePageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
@@ -84,7 +82,7 @@ import AppWaterRouteSelectField from "../components/organisms/AppWaterRouteSelec
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
-const tripsCollection = getTripsCollection();
+const tripsCollection = powersync.collections.trips;
 const { runWithNotify } = useNotifyAsyncAction();
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
@@ -121,7 +119,7 @@ const onCreateSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
         async () => {
             const col = tripsCollection.value;
             if (!col) throw new Error("Trips collection not ready.");
-            const pid = getActiveProgramIdRef().value.trim();
+            const pid = powersync.activeProgramIdRef.value.trim();
             if (pid.length === 0)
                 throw new Error("Select a program before adding trips.");
             const id = ulid();
@@ -141,7 +139,7 @@ const onCreateSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
                 scheduled_departure_at: iso,
                 capacity: cap,
             }).isPersisted.promise;
-            void refreshOutboxSnapshot();
+            void powersync.refreshOutboxSnapshot();
             resetForm();
             await router.push({
                 name: "trips.list",

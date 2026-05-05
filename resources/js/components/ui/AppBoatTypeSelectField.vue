@@ -68,11 +68,9 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { eq } from '@tanstack/db';
 import { useLiveQuery } from '@tanstack/vue-db';
-import {
-    getBoatTypesCollection,
-    getBoatsCollection,
-    refreshOutboxSnapshot,
-} from '../../powersync/app-powersync.runtime';
+import { getAppPowerSyncContext } from "../../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import { useNotifyErrorFromCatch } from '../../composables/useNotifyErrorFromCatch';
 import { useProgramBoatTypes } from '../../composables/useProgramBoatTypes';
 import AppMapSelect from '../molecules/AppMapSelect.vue';
@@ -103,8 +101,8 @@ const { t } = useI18n();
 const $q = useQuasar();
 const { notifyError } = useNotifyErrorFromCatch();
 
-const boatTypesCollection = getBoatTypesCollection();
-const boatsCollection = getBoatsCollection();
+const boatTypesCollection = powersync.collections.boat_types;
+const boatsCollection = powersync.collections.boats;
 
 const programIdRef = toRef(props, 'programId');
 const { data: boatTypes } = useProgramBoatTypes(programIdRef);
@@ -196,7 +194,7 @@ function onDelete(opt: { id: string; name: string }) {
                 const col = boatTypesCollection.value;
                 if (!col) return;
                 col.delete(String(opt.id));
-                void refreshOutboxSnapshot();
+                void powersync.refreshOutboxSnapshot();
                 if (props.modelValue === opt.id) {
                     emit('update:modelValue', null);
                 }

@@ -1,9 +1,7 @@
 import { ulid } from "ulid";
-import {
-    getActiveProgramIdRef,
-    getTemplateDaysCollection,
-    refreshOutboxSnapshot,
-} from "../../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 
 export interface CreateTemplateDayParams {
     name: string;
@@ -16,11 +14,11 @@ export interface CreateTemplateDayParams {
 export async function createTemplateDayRow(
     params: CreateTemplateDayParams,
 ): Promise<string> {
-    const col = getTemplateDaysCollection().value;
+    const col = powersync.collections.template_days.value;
     if (!col) {
         throw new Error("Template days collection not ready.");
     }
-    const pid = getActiveProgramIdRef().value.trim();
+    const pid = powersync.activeProgramIdRef.value.trim();
     if (pid.length === 0) {
         throw new Error("Select a program before adding template days.");
     }
@@ -30,6 +28,6 @@ export async function createTemplateDayRow(
         program_id: pid,
         name: params.name.trim().length > 0 ? params.name.trim() : "Untitled",
     }).isPersisted.promise;
-    void refreshOutboxSnapshot();
+    void powersync.refreshOutboxSnapshot();
     return id;
 }

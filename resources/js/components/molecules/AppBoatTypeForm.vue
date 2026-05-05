@@ -78,10 +78,9 @@ import { useForm } from 'vee-validate';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ulid } from 'ulid';
-import {
-    getBoatTypesCollection,
-    refreshOutboxSnapshot,
-} from '../../powersync/app-powersync.runtime';
+import { getAppPowerSyncContext } from "../../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import {
     createBoatTypeFormSchema,
     createEmptyBoatTypeFormValues,
@@ -107,7 +106,7 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const { notifyError } = useNotifyErrorFromCatch();
 
-const boatTypesCollection = getBoatTypesCollection();
+const boatTypesCollection = powersync.collections.boat_types;
 
 const boatTypeFormSchema = createBoatTypeFormSchema(t);
 const {
@@ -204,7 +203,7 @@ async function uploadNewImages(boatTypeUlid: string): Promise<void> {
         formData,
         { withCsrf: true },
     );
-    void refreshOutboxSnapshot();
+    void powersync.refreshOutboxSnapshot();
 }
 
 async function onRemoveExistingImage(mediaUuid: string): Promise<void> {
@@ -222,7 +221,7 @@ async function onRemoveExistingImage(mediaUuid: string): Promise<void> {
             { method: 'DELETE', withCsrf: true },
         );
         existingImages.value = existingImages.value.filter((m) => m.uuid !== mediaUuid);
-        void refreshOutboxSnapshot();
+        void powersync.refreshOutboxSnapshot();
     } catch (e) {
         notifyError(e, t('boatTypesList.errorGeneric'));
     } finally {
@@ -244,7 +243,7 @@ const onSubmit = handleSubmit(async (values: BoatTypeFormValues) => {
             col.update(id, (draft) => {
                 draft.name = displayName;
             });
-            void refreshOutboxSnapshot();
+            void powersync.refreshOutboxSnapshot();
             emit('success', { id, mode: 'edit' });
             try {
                 await uploadNewImages(id);
@@ -262,7 +261,7 @@ const onSubmit = handleSubmit(async (values: BoatTypeFormValues) => {
                 name: displayName,
             })
             .isPersisted.promise;
-        void refreshOutboxSnapshot();
+        void powersync.refreshOutboxSnapshot();
         emit('success', { id, mode: 'create' });
         try {
             await uploadNewImages(id);

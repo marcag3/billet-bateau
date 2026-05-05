@@ -166,12 +166,9 @@ import {
     type ProgramCreateFormValues,
 } from "../models/programs/programs.validation";
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
-import {
-    bootstrapAppPowerSync,
-    getAppPowerSyncBootstrappedRef,
-    getProgramsCollection,
-    refreshOutboxSnapshot,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import {
     normalizeThemeColor,
     buildInitialProgramSlug,
@@ -225,8 +222,8 @@ const [country, countryProps] = quasarField("address.country");
 const [imagesModel, imagesModelProps] = quasarField("imagesModel");
 
 async function ensureBootstrapped(): Promise<void> {
-    if (!getAppPowerSyncBootstrappedRef().value) {
-        await bootstrapAppPowerSync();
+    if (!powersync.hasBootstrappedCollection.value) {
+        await powersync.bootstrapAppPowerSync();
     }
 }
 
@@ -240,7 +237,7 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
     try {
         await ensureBootstrapped();
 
-        const col = getProgramsCollection().value;
+        const col = powersync.collections.programs.value;
         if (!col) {
             throw new Error("Programs collection is not ready.");
         }
@@ -267,7 +264,7 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
             country: addressFields.country,
         }).isPersisted.promise;
 
-        void refreshOutboxSnapshot();
+        void powersync.refreshOutboxSnapshot();
 
         const files = normalizeImageFiles(values.imagesModel);
         if (files.length > 0) {

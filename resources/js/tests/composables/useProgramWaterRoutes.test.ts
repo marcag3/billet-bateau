@@ -8,7 +8,11 @@ let lastQueryFn: (queryBuilder: {
 }) => unknown;
 
 vi.mock('../../powersync/app-powersync.runtime', () => ({
-    getWaterRoutesCollection: () => mockCollectionRef,
+    getAppPowerSyncContext: () => ({
+        collections: {
+            water_routes: mockCollectionRef,
+        },
+    }),
 }));
 
 vi.mock('@tanstack/vue-db', () => ({

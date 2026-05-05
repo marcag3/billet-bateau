@@ -146,11 +146,9 @@ import {
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
-import {
-    getAppPowerSyncBootstrappedRef,
-    getBoatsCollection,
-    refreshOutboxSnapshot,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
@@ -167,7 +165,7 @@ const router = useRouter();
 const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
-const boatsCollection = getBoatsCollection();
+const boatsCollection = powersync.collections.boats;
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
 const boatId = computed(() => String(route.params.boatId ?? "").trim());
@@ -205,7 +203,7 @@ const neighbors = computed(() => {
     };
 });
 
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
+const hasBootstrapped = powersync.hasBootstrappedCollection;
 const isDeleting = ref(false);
 
 const backTo = computed(() => ({
@@ -336,7 +334,7 @@ const onSaveSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
                 draft.notes = notes.length > 0 ? notes : null;
                 draft.boat_type_id = nextTypeId;
             });
-            void refreshOutboxSnapshot();
+            void powersync.refreshOutboxSnapshot();
         },
         {
             successMessage: t("boatsList.changesSaved"),
@@ -361,7 +359,7 @@ function confirmDelete() {
                 const col = boatsCollection.value;
                 if (!col) return;
                 col.delete(String(b.id));
-                void refreshOutboxSnapshot();
+                void powersync.refreshOutboxSnapshot();
                 $q.notify({
                     type: "positive",
                     message: t("boatsList.deleted"),

@@ -152,12 +152,9 @@ import {
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
-import {
-    getAppPowerSyncBootstrappedRef,
-    getTripsCollection,
-    getActiveProgramIdRef,
-    refreshOutboxSnapshot,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import type { TripOutput } from "../powersync/trips.collection";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
@@ -176,17 +173,17 @@ const router = useRouter();
 const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
-const tripsCollection = getTripsCollection();
+const tripsCollection = powersync.collections.trips;
 const { data: trips } = useLiveQuery(
     (queryBuilder) => {
         const col = tripsCollection.value;
-        const pid = getActiveProgramIdRef().value.trim();
+        const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || pid.length === 0) return undefined;
         return queryBuilder
             .from({ t: col })
             .where(({ t }) => eq(t.program_id, pid));
     },
-    [tripsCollection, getActiveProgramIdRef()],
+    [tripsCollection, powersync.activeProgramIdRef],
 );
 
 const currentTrip = computed(() => {
@@ -210,7 +207,7 @@ const neighbors = computed(() => {
     };
 });
 
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
+const hasBootstrapped = powersync.hasBootstrappedCollection;
 const isDeleting = ref(false);
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
@@ -359,7 +356,7 @@ const onSaveSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
                 draft.boat_type_id = nextBoatType;
                 draft.water_route_id = nextWaterRoute;
             });
-            void refreshOutboxSnapshot();
+            void powersync.refreshOutboxSnapshot();
         },
         {
             successMessage: t("tripsList.changesSaved"),
@@ -382,7 +379,7 @@ function confirmDelete() {
                 const col = tripsCollection.value;
                 if (!col) return;
                 col.delete(String(tr.id));
-                void refreshOutboxSnapshot();
+                void powersync.refreshOutboxSnapshot();
                 $q.notify({
                     type: "positive",
                     message: t("tripsList.deleted"),

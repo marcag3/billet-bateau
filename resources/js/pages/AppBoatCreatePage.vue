@@ -70,11 +70,9 @@ import {
 import { parseOptionalNonNegativeInt } from "../validation/zod-fields";
 import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
 import { ulid } from "ulid";
-import {
-    getBoatsCollection,
-    getActiveProgramIdRef,
-    refreshOutboxSnapshot,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import AppEntityCreatePageLayout from "../layouts/AppEntityCreatePageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
@@ -84,8 +82,8 @@ import AppBoatTypeSelectField from "../components/ui/AppBoatTypeSelectField.vue"
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
-const boatsCollection = getBoatsCollection();
-const activeProgramIdRef = getActiveProgramIdRef();
+const boatsCollection = powersync.collections.boats;
+const activeProgramIdRef = powersync.activeProgramIdRef;
 const { runWithNotify } = useNotifyAsyncAction();
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
@@ -145,7 +143,7 @@ const onCreateSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
                 capacity,
                 notes: notes.length > 0 ? notes : null,
             }).isPersisted.promise;
-            void refreshOutboxSnapshot();
+            void powersync.refreshOutboxSnapshot();
             resetForm();
             await router.push({
                 name: "boats.list",

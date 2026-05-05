@@ -2,13 +2,13 @@ import { useLiveQuery } from '@tanstack/vue-db';
 import { eq } from '@tanstack/db';
 import type { MaybeRefOrGetter } from 'vue';
 import { computed, toValue } from 'vue';
-import { getBoatTypesCollection } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 
 /**
  * Live boat types for a program (PowerSync / TanStack DB).
  */
 export function useProgramBoatTypes(programId: MaybeRefOrGetter<string>) {
-    const boatTypesCollection = getBoatTypesCollection();
+    const boatTypesCollection = getAppPowerSyncContext().collections.boat_types;
     const programIdTrimmed = computed(() =>
         String(toValue(programId) ?? '').trim(),
     );

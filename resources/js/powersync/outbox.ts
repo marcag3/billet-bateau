@@ -1,0 +1,110 @@
+import { computed } from "vue";
+import {
+    outboxCommitError,
+    outboxPendingCount,
+    powerSyncDbRef,
+} from "./powersync-runtime-state";
+
+/**
+ * @param uploadError
+ */
+export function formatPowerSyncUploadError(uploadError: unknown): string {
+    if (uploadError == null || uploadError === "") {
+        return "";
+    }
+
+    if (typeof uploadError === "string") {
+        return uploadError;
+    }
+
+    if (uploadError instanceof Error) {
+        return uploadError.message || uploadError.name || "";
+    }
+
+    if (typeof uploadError === "object") {
+        const errObj = uploadError as Record<string, unknown>;
+        const name = typeof errObj.name === "string" ? errObj.name : "";
+        const message =
+            typeof errObj.message === "string" ? errObj.message : "";
+        if (message.length > 0) {
+            return name.length > 0 && !message.includes(name)
+                ? `${name}: ${message}`
+                : message;
+        }
+        if (name.length > 0) {
+            return name;
+        }
+        try {
+            return JSON.stringify(uploadError);
+        } catch {
+            return "";
+        }
+    }
+
+    return String(uploadError);
+}
+
+/**
+ * @param uploadError
+ * @param formattedMessage
+ */
+export function isBenignPowerSyncUploadFailure(
+    uploadError: unknown,
+    formattedMessage: string,
+): boolean {
+    if (uploadError == null || uploadError === "") {
+        return true;
+    }
+
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        return true;
+    }
+
+    const text = formattedMessage.toLowerCase();
+
+    const benignFragments = [
+        "failed to fetch",
+        "networkerror",
+        "network request failed",
+        "load failed",
+        "net::err",
+        "the internet connection appears to be offline",
+        "aborted",
+        "abort",
+        "delaying due to previously encountered crud item",
+    ];
+
+    return benignFragments.some((fragment) => text.includes(fragment));
+}
+
+export async function refreshOutboxSnapshot(): Promise<void> {
+    const db = powerSyncDbRef.value;
+
+    if (!db) {
+        outboxPendingCount.value = 0;
+        return;
+    }
+
+    try {
+        const stats = await db.getUploadQueueStats(false);
+        outboxPendingCount.value =
+            typeof stats?.count === "number" ? stats.count : 0;
+    } catch {
+        outboxPendingCount.value = 0;
+    }
+}
+
+export function useAppPowerSyncOutbox() {
+    return {
+        outboxPendingCount,
+        outboxCommitError,
+        hasOutboxCommitError: computed(
+            () => outboxCommitError.value.length > 0,
+        ),
+        dismissOutboxCommitError: () => {
+            outboxCommitError.value = "";
+        },
+        refreshOutbox: refreshOutboxSnapshot,
+        hasPendingOutboxWrites: computed(() => outboxPendingCount.value > 0),
+    };
+}

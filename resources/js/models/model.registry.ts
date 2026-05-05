@@ -1,7 +1,7 @@
 /**
  * Central bootstrap for domain models (PowerSync-backed TanStack DB collections).
  */
-import { bootstrapAppPowerSync } from '../powersync/app-powersync.runtime';
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 
 /**
  * Ordered domain model bootstraps.
@@ -9,7 +9,7 @@ import { bootstrapAppPowerSync } from '../powersync/app-powersync.runtime';
  * @type {Record<string, () => Promise<unknown>>}
  */
 export const domainModelBootstraps = {
-    powersync: bootstrapAppPowerSync,
+    powersync: getAppPowerSyncContext().bootstrapAppPowerSync,
 };
 
 /**

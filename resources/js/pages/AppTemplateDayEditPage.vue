@@ -329,14 +329,9 @@ import { useQuasar } from "quasar";
 import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
-import {
-    getActiveProgramIdRef,
-    getAppPowerSyncBootstrappedRef,
-    getTemplateDaySlotsCollection,
-    getTemplateDaysCollection,
-    getTicketTypesCollection,
-    refreshOutboxSnapshot,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import type { TemplateDaySlotOutput } from "../powersync/template-day-slots.collection";
 import {
     createTemplateDaySlotRow,
@@ -365,9 +360,9 @@ const { notifyError } = useNotifyErrorFromCatch();
 
 // --- Collections ---
 
-const templateDaysCollection = getTemplateDaysCollection();
-const templateDaySlotsCollection = getTemplateDaySlotsCollection();
-const ticketTypesCollection = getTicketTypesCollection();
+const templateDaysCollection = powersync.collections.template_days;
+const templateDaySlotsCollection = powersync.collections.template_day_slots;
+const ticketTypesCollection = powersync.collections.ticket_types;
 
 // --- Route params ---
 
@@ -381,20 +376,20 @@ const backTo = computed(() => ({
     params: { programId: programId.value },
 }));
 
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
+const hasBootstrapped = powersync.hasBootstrappedCollection;
 
 // --- Template day query ---
 
 const { data: templateDays } = useLiveQuery(
     (queryBuilder) => {
         const col = templateDaysCollection.value;
-        const pid = getActiveProgramIdRef().value.trim();
+        const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || pid.length === 0) return undefined;
         return queryBuilder
             .from({ td: col })
             .where(({ td }) => eq(td.program_id, pid));
     },
-    [templateDaysCollection, getActiveProgramIdRef()],
+    [templateDaysCollection, powersync.activeProgramIdRef],
 );
 
 const currentTemplateDay = computed(() => {
@@ -446,7 +441,7 @@ async function onSaveNameSubmit() {
                     draft.name = name;
                 })
                 .isPersisted.promise;
-            void refreshOutboxSnapshot();
+            void powersync.refreshOutboxSnapshot();
         },
         {
             successMessage: t("templateDaysList.changesSaved"),
@@ -485,13 +480,13 @@ function getWaterRouteLabel(id: string | null | undefined): string {
 const { data: ticketTypes } = useLiveQuery(
     (queryBuilder) => {
         const col = ticketTypesCollection.value;
-        const pid = getActiveProgramIdRef().value.trim();
+        const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || pid.length === 0) return undefined;
         return queryBuilder
             .from({ tt: col })
             .where(({ tt }) => eq(tt.program_id, pid));
     },
-    [ticketTypesCollection, getActiveProgramIdRef()],
+    [ticketTypesCollection, powersync.activeProgramIdRef],
 );
 
 const ticketTypeOptions = computed(() =>
@@ -790,7 +785,7 @@ async function moveSlotUp(
         await patchTemplateDaySlotRow(String(above.id), {
             sortOrder: slotOrder,
         });
-        void refreshOutboxSnapshot();
+        void powersync.refreshOutboxSnapshot();
     } catch (e) {
         notifyError(e, t("templateDaysList.errorGeneric"));
     }
@@ -812,7 +807,7 @@ async function moveSlotDown(
         await patchTemplateDaySlotRow(String(below.id), {
             sortOrder: slotOrder,
         });
-        void refreshOutboxSnapshot();
+        void powersync.refreshOutboxSnapshot();
     } catch (e) {
         notifyError(e, t("templateDaysList.errorGeneric"));
     }

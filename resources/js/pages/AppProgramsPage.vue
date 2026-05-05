@@ -126,11 +126,9 @@ import { useI18n } from "vue-i18n";
 
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
-import {
-    getAppPowerSyncBootstrappedRef,
-    getMediaCollection,
-    getProgramsCollection,
-} from "../powersync/app-powersync.runtime";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+const powersync = getAppPowerSyncContext();
 import type { ProgramOutput } from "../powersync/programs.collection";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
@@ -143,8 +141,8 @@ const { t } = useI18n();
 
 usePageLayout({ documentTitleKey: "programsList.title" });
 
-const programsCollection = getProgramsCollection();
-const hasBootstrapped = getAppPowerSyncBootstrappedRef();
+const programsCollection = powersync.collections.programs;
+const hasBootstrapped = powersync.hasBootstrappedCollection;
 
 const { data: programs } = useLiveQuery(
     (queryBuilder) => {
@@ -157,7 +155,7 @@ const { data: programs } = useLiveQuery(
     [programsCollection],
 );
 
-const mediaCollection = getMediaCollection();
+const mediaCollection = powersync.collections.media;
 const { data: mediaRows } = useLiveQuery(
     (queryBuilder) => {
         const col = mediaCollection.value;
