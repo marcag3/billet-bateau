@@ -2,7 +2,6 @@
 
 namespace App\Data\PowerSync\TemplateDays;
 
-use App\Data\PowerSync\Support\PowerSyncCrudInnerDataValidator;
 use App\Data\PowerSync\Support\PowerSyncOptional;
 use App\Models\TemplateDay;
 
@@ -19,11 +18,6 @@ final class TemplateDayPutPayloadResolver
 
         $nameMerged = PowerSyncOptional::resolve($dto->name, $existingName, '');
         $nameMerged = is_string($nameMerged) ? $nameMerged : '';
-
-        PowerSyncCrudInnerDataValidator::validate(
-            ['name' => $nameMerged],
-            ['name' => ['required', 'string', 'max:255']],
-        );
 
         return [
             'name' => $nameMerged !== '' ? $nameMerged : (string) ($existingName ?? ''),

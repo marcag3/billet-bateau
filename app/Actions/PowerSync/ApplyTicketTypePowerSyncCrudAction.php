@@ -5,6 +5,8 @@ namespace App\Actions\PowerSync;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\TicketTypes\TicketTypePatchData;
 use App\Data\PowerSync\TicketTypes\TicketTypePutData;
+use App\Data\PowerSync\TicketTypes\TicketTypePutPayloadResolver;
+use App\Data\PowerSync\TicketTypes\TicketTypeResolvedPutData;
 use App\Models\Program;
 use App\Models\TicketType;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -70,60 +72,21 @@ final class ApplyTicketTypePowerSyncCrudAction
     {
         $existing = TicketType::query()->whereKey($id)->first();
 
-        if ($existing !== null) {
-            $programId = (string) $existing->program_id;
-            if (! ($dto->program_id instanceof Optional) && $dto->program_id !== null && $dto->program_id !== $programId) {
-                throw new AuthorizationException;
-            }
-        } else {
-            if ($dto->program_id instanceof Optional || $dto->program_id === null || $dto->program_id === '') {
-                throw ValidationException::withMessages([
-                    'data.program_id' => 'Program is required.',
-                ]);
-            }
+        $merged = TicketTypePutPayloadResolver::resolve($dto, $existing);
+        $resolved = TicketTypeResolvedPutData::validateAndCreate($merged);
 
-            $programId = $dto->program_id;
-        }
-
-        $this->assertProgramManaged($programId, $userId);
-
-        $title = $dto->title instanceof Optional ? ($existing?->title ?? null) : $dto->title;
-        if ($title === null || $title === '') {
-            throw ValidationException::withMessages([
-                'data.title' => 'Title is required.',
-            ]);
-        }
-
-        $priceCents = $dto->price_cents instanceof Optional ? $existing?->price_cents : $dto->price_cents;
-        $isPayWhatYouCan = $dto->is_pay_what_you_can instanceof Optional
-            ? (bool) ($existing?->is_pay_what_you_can ?? false)
-            : (bool) $dto->is_pay_what_you_can;
-        $minPerPurchase = $dto->min_per_purchase instanceof Optional ? ($existing?->min_per_purchase ?? 0) : $dto->min_per_purchase;
-        $maxPerPurchase = $dto->max_per_purchase instanceof Optional ? $existing?->max_per_purchase : $dto->max_per_purchase;
-        $tripInventoryCaps = $dto->trip_inventory_caps instanceof Optional
-            ? ($existing?->trip_inventory_caps ?? [])
-            : $this->normalizeTripInventoryCaps($dto->trip_inventory_caps);
-
-        if ($minPerPurchase === null) {
-            $minPerPurchase = 0;
-        }
-
-        if ($maxPerPurchase !== null && $maxPerPurchase < $minPerPurchase) {
-            throw ValidationException::withMessages([
-                'data.max_per_purchase' => 'Max per purchase must be greater than or equal to min per purchase.',
-            ]);
-        }
+        $this->assertProgramManaged($resolved->program_id, $userId);
 
         TicketType::query()->updateOrCreate(
             ['id' => $id],
             [
-                'program_id' => $programId,
-                'title' => $title,
-                'price_cents' => $priceCents,
-                'is_pay_what_you_can' => $isPayWhatYouCan,
-                'min_per_purchase' => $minPerPurchase,
-                'max_per_purchase' => $maxPerPurchase,
-                'trip_inventory_caps' => $tripInventoryCaps,
+                'program_id' => $resolved->program_id,
+                'title' => $resolved->title,
+                'price_cents' => $resolved->price_cents,
+                'is_pay_what_you_can' => $resolved->is_pay_what_you_can,
+                'min_per_purchase' => $resolved->min_per_purchase,
+                'max_per_purchase' => $resolved->max_per_purchase,
+                'trip_inventory_caps' => $resolved->trip_inventory_caps,
             ],
         );
     }

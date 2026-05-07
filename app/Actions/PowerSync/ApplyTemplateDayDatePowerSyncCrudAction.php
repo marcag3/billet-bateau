@@ -6,6 +6,7 @@ use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\TemplateDayDates\TemplateDayDatePatchData;
 use App\Data\PowerSync\TemplateDayDates\TemplateDayDatePutData;
 use App\Data\PowerSync\TemplateDayDates\TemplateDayDatePutPayloadResolver;
+use App\Data\PowerSync\TemplateDayDates\TemplateDayDateResolvedPutData;
 use App\Models\Program;
 use App\Models\TemplateDay;
 use App\Models\TemplateDayDate;
@@ -65,22 +66,23 @@ final class ApplyTemplateDayDatePowerSyncCrudAction
     {
         $existing = TemplateDayDate::query()->whereKey($id)->first();
 
-        $resolved = TemplateDayDatePutPayloadResolver::resolve($dto, $existing);
+        $merged = TemplateDayDatePutPayloadResolver::resolve($dto, $existing);
+        $resolved = TemplateDayDateResolvedPutData::validateAndCreate($merged);
 
-        $program = Program::query()->whereKey($resolved['program_id'])->first();
+        $program = Program::query()->whereKey($resolved->program_id)->first();
 
         if ($program === null || ! $program->userCanManage($userId)) {
             throw new AuthorizationException;
         }
 
-        $this->assertUniqueTemplateDayDate($id, $resolved['template_day_id'], $resolved['service_date']);
+        $this->assertUniqueTemplateDayDate($id, $resolved->template_day_id, $resolved->service_date);
 
         TemplateDayDate::query()->updateOrCreate(
             ['id' => $id],
             [
-                'program_id' => $resolved['program_id'],
-                'template_day_id' => $resolved['template_day_id'],
-                'service_date' => $resolved['service_date']->toDateString(),
+                'program_id' => $resolved->program_id,
+                'template_day_id' => $resolved->template_day_id,
+                'service_date' => $resolved->service_date->toDateString(),
             ],
         );
     }

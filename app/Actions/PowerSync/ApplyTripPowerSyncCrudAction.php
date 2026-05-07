@@ -6,6 +6,7 @@ use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\Trips\TripPatchData;
 use App\Data\PowerSync\Trips\TripPutData;
 use App\Data\PowerSync\Trips\TripPutPayloadResolver;
+use App\Data\PowerSync\Trips\TripResolvedPutData;
 use App\Models\Program;
 use App\Models\TemplateDaySlot;
 use App\Models\Trip;
@@ -92,20 +93,21 @@ final class ApplyTripPowerSyncCrudAction
             throw new AuthorizationException;
         }
 
-        $resolved = TripPutPayloadResolver::resolve($dto, $existing);
+        $merged = TripPutPayloadResolver::resolve($dto, $existing);
+        $resolved = TripResolvedPutData::validateAndCreate($merged);
 
-        $this->assertWaterRouteBelongsToProgram($resolved['water_route_id'], $programId);
-        $this->assertTemplateDaySlotBelongsToProgram($resolved['template_day_slot_id'], $programId);
+        $this->assertWaterRouteBelongsToProgram($resolved->water_route_id, $programId);
+        $this->assertTemplateDaySlotBelongsToProgram($resolved->template_day_slot_id, $programId);
 
         Trip::query()->updateOrCreate(
             ['id' => $id],
             [
                 'program_id' => $programId,
-                'boat_type_id' => $resolved['boat_type_id'],
-                'water_route_id' => $resolved['water_route_id'],
-                'template_day_slot_id' => $resolved['template_day_slot_id'],
-                'scheduled_departure_at' => $resolved['scheduled_departure_at'],
-                'capacity' => $resolved['capacity'],
+                'boat_type_id' => $resolved->boat_type_id,
+                'water_route_id' => $resolved->water_route_id,
+                'template_day_slot_id' => $resolved->template_day_slot_id,
+                'scheduled_departure_at' => $resolved->scheduled_departure_at,
+                'capacity' => $resolved->capacity,
             ],
         );
     }

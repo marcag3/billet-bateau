@@ -13,25 +13,11 @@ use App\Actions\PowerSync\ApplyTicketTypePowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyTripPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyWaterRoutePowerSyncCrudAction;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
-use App\Data\PowerSync\Support\PowerSyncClientTimestampGuard;
 
 final class PowerSyncUploadRouter
 {
     public function apply(PowerSyncCrudEntryData $entry, string $userId): void
     {
-        if (
-            ($entry->op === PowerSyncCrudEntryData::OP_PUT
-                || $entry->op === PowerSyncCrudEntryData::OP_PATCH)
-            && $entry->data !== null
-        ) {
-            $entry = new PowerSyncCrudEntryData(
-                $entry->op,
-                $entry->type,
-                $entry->id,
-                PowerSyncClientTimestampGuard::stripClientTimestamps($entry->data),
-            );
-        }
-
         match ($entry->type) {
             PowerSyncCrudType::Programs => ApplyProgramPowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::Boats => ApplyBoatPowerSyncCrudAction::run($entry, $userId),

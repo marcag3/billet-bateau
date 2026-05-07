@@ -6,6 +6,7 @@ use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\TemplateDaySlots\TemplateDaySlotPatchData;
 use App\Data\PowerSync\TemplateDaySlots\TemplateDaySlotPutData;
 use App\Data\PowerSync\TemplateDaySlots\TemplateDaySlotPutPayloadResolver;
+use App\Data\PowerSync\TemplateDaySlots\TemplateDaySlotResolvedPutData;
 use App\Models\Program;
 use App\Models\TemplateDay;
 use App\Models\TemplateDaySlot;
@@ -90,21 +91,22 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction
 
         $this->assertCanManageProgram($programId, $userId);
 
-        $resolved = TemplateDaySlotPutPayloadResolver::resolve($dto, $existing);
+        $merged = TemplateDaySlotPutPayloadResolver::resolve($dto, $existing);
+        $resolved = TemplateDaySlotResolvedPutData::validateAndCreate($merged);
 
-        $this->assertWaterRouteBelongsToProgram($resolved['water_route_id'], $programId);
+        $this->assertWaterRouteBelongsToProgram($resolved->water_route_id, $programId);
 
         TemplateDaySlot::query()->updateOrCreate(
             ['id' => $id],
             [
                 'template_day_id' => $templateDayId,
-                'sort_order' => $resolved['sort_order'],
-                'departure_time' => $resolved['departure_time'],
-                'capacity' => $resolved['capacity'],
-                'boat_type_id' => $resolved['boat_type_id'],
-                'water_route_id' => $resolved['water_route_id'],
-                'internal_notes' => $resolved['internal_notes'],
-                'ticket_setup' => $resolved['ticket_setup'],
+                'sort_order' => $resolved->sort_order,
+                'departure_time' => $resolved->departure_time,
+                'capacity' => $resolved->capacity,
+                'boat_type_id' => $resolved->boat_type_id,
+                'water_route_id' => $resolved->water_route_id,
+                'internal_notes' => $resolved->internal_notes,
+                'ticket_setup' => $resolved->ticket_setup,
             ],
         );
     }

@@ -4,6 +4,7 @@ namespace App\Actions\PowerSync;
 
 use App\Data\PowerSync\BoatTypes\BoatTypePatchData;
 use App\Data\PowerSync\BoatTypes\BoatTypePutData;
+use App\Data\PowerSync\BoatTypes\BoatTypeResolvedPutData;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Models\BoatType;
 use App\Models\Program;
@@ -51,13 +52,13 @@ final class ApplyBoatTypePowerSyncCrudAction
                 throw new AuthorizationException;
             }
 
-            $name = $data->name;
+            $resolved = BoatTypeResolvedPutData::fromPut($data);
 
             BoatType::query()->updateOrCreate(
                 ['id' => $id],
                 [
-                    'program_id' => $data->program_id,
-                    'name' => ($name !== null && $name !== '') ? $name : 'Untitled',
+                    'program_id' => $resolved->program_id,
+                    'name' => $resolved->name,
                 ],
             );
 

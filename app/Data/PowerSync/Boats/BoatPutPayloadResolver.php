@@ -2,7 +2,6 @@
 
 namespace App\Data\PowerSync\Boats;
 
-use App\Data\PowerSync\Support\PowerSyncCrudInnerDataValidator;
 use App\Data\PowerSync\Support\PowerSyncDisplayName;
 use App\Data\PowerSync\Support\PowerSyncOptional;
 use App\Models\Boat;
@@ -10,7 +9,7 @@ use App\Models\Boat;
 /**
  * Resolves merged PUT attributes for {@see Boat} PowerSync uploads.
  *
- * @return array{name: string, notes: ?string, capacity: int, boat_type_id: ?string, program_id: string}
+ * @return array{name: string, notes: ?string, capacity: int|null, boat_type_id: ?string, program_id: string|null}
  */
 final class BoatPutPayloadResolver
 {
@@ -26,22 +25,12 @@ final class BoatPutPayloadResolver
         $boatTypeId = PowerSyncOptional::resolve($dto->boat_type_id, $existing?->boat_type_id);
         $programId = PowerSyncOptional::resolve($dto->program_id, $existing?->program_id);
 
-        PowerSyncCrudInnerDataValidator::validate(
-            ['capacity' => $capacity],
-            ['capacity' => ['required', 'integer', 'min:0']],
-        );
-
-        PowerSyncCrudInnerDataValidator::validate(
-            ['program_id' => $programId],
-            ['program_id' => ['required', 'ulid', 'exists:programs,id']],
-        );
-
         $name = PowerSyncDisplayName::resolve($nameMerged, $existingName);
 
         return [
             'name' => $name,
             'notes' => $notes,
-            'capacity' => (int) $capacity,
+            'capacity' => $capacity,
             'boat_type_id' => $boatTypeId,
             'program_id' => $programId,
         ];

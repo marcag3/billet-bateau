@@ -2,7 +2,6 @@
 
 namespace App\Data\PowerSync\WaterRoutes;
 
-use App\Data\PowerSync\Support\PowerSyncCrudInnerDataValidator;
 use App\Data\PowerSync\Support\PowerSyncDisplayName;
 use App\Data\PowerSync\Support\PowerSyncOptional;
 use App\Models\WaterRoute;
@@ -25,11 +24,6 @@ final class WaterRoutePutPayloadResolver
 
         $durationMinutes = PowerSyncOptional::resolve($dto->duration_minutes, $existing?->duration_minutes);
         $trace = PowerSyncOptional::resolve($dto->trace, $existing?->trace);
-
-        PowerSyncCrudInnerDataValidator::validate(
-            ['duration_minutes' => $durationMinutes],
-            ['duration_minutes' => ['required', 'integer', 'min:1']],
-        );
 
         if (! $trace instanceof LineString) {
             throw ValidationException::withMessages([

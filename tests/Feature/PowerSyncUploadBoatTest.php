@@ -130,8 +130,9 @@ class PowerSyncUploadBoatTest extends TestCase
 
         $response->assertUnprocessable();
         $errors = $response->json('errors') ?? [];
-        $this->assertArrayHasKey('data.capacity', $errors);
-        $this->assertNotEmpty($errors['data.capacity']);
+        $capacityErrors = $errors['capacity'] ?? $errors['data.capacity'] ?? null;
+        $this->assertNotNull($capacityErrors);
+        $this->assertNotEmpty($capacityErrors);
 
         $this->assertDatabaseMissing('boats', ['id' => $boatId]);
     }

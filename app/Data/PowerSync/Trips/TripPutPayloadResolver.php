@@ -2,7 +2,6 @@
 
 namespace App\Data\PowerSync\Trips;
 
-use App\Data\PowerSync\Support\PowerSyncCrudInnerDataValidator;
 use App\Data\PowerSync\Support\PowerSyncOptional;
 use App\Models\Trip;
 use Carbon\CarbonImmutable;
@@ -26,17 +25,6 @@ final class TripPutPayloadResolver
         $boatTypeId = PowerSyncOptional::resolve($dto->boat_type_id, $existing?->boat_type_id);
         $waterRouteId = PowerSyncOptional::resolve($dto->water_route_id, $existing?->water_route_id);
         $templateDaySlotId = PowerSyncOptional::resolve($dto->template_day_slot_id, $existing?->template_day_slot_id);
-
-        PowerSyncCrudInnerDataValidator::validate(
-            [
-                'scheduled_departure_at' => $scheduledAt,
-                'capacity' => $capacity,
-            ],
-            [
-                'scheduled_departure_at' => ['required', 'date'],
-                'capacity' => ['required', 'integer', 'min:1'],
-            ],
-        );
 
         $scheduledImmutable = $scheduledAt instanceof CarbonImmutable
             ? $scheduledAt

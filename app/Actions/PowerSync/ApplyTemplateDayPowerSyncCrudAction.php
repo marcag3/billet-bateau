@@ -6,6 +6,7 @@ use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\TemplateDays\TemplateDayPatchData;
 use App\Data\PowerSync\TemplateDays\TemplateDayPutData;
 use App\Data\PowerSync\TemplateDays\TemplateDayPutPayloadResolver;
+use App\Data\PowerSync\TemplateDays\TemplateDayResolvedPutData;
 use App\Models\Program;
 use App\Models\TemplateDay;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -87,13 +88,14 @@ final class ApplyTemplateDayPowerSyncCrudAction
             throw new AuthorizationException;
         }
 
-        $resolved = TemplateDayPutPayloadResolver::resolve($dto, $existing);
+        $merged = TemplateDayPutPayloadResolver::resolve($dto, $existing);
+        $resolved = TemplateDayResolvedPutData::validateAndCreate($merged);
 
         TemplateDay::query()->updateOrCreate(
             ['id' => $id],
             [
                 'program_id' => $programId,
-                'name' => $resolved['name'],
+                'name' => $resolved->name,
             ],
         );
     }

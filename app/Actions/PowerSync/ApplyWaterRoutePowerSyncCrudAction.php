@@ -6,6 +6,7 @@ use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\WaterRoutes\WaterRoutePatchData;
 use App\Data\PowerSync\WaterRoutes\WaterRoutePutData;
 use App\Data\PowerSync\WaterRoutes\WaterRoutePutPayloadResolver;
+use App\Data\PowerSync\WaterRoutes\WaterRouteResolvedPutData;
 use App\Models\Program;
 use App\Models\WaterRoute;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -101,15 +102,16 @@ final class ApplyWaterRoutePowerSyncCrudAction
             throw new AuthorizationException;
         }
 
-        $resolved = WaterRoutePutPayloadResolver::resolve($dto, $existing);
+        $merged = WaterRoutePutPayloadResolver::resolve($dto, $existing);
+        $resolved = WaterRouteResolvedPutData::validateAndCreate($merged);
 
         WaterRoute::query()->updateOrCreate(
             ['id' => $id],
             [
                 'program_id' => $programId,
-                'name' => $resolved['name'],
-                'duration_minutes' => $resolved['duration_minutes'],
-                'trace' => $resolved['trace'],
+                'name' => $resolved->name,
+                'duration_minutes' => $resolved->duration_minutes,
+                'trace' => $resolved->trace,
             ],
         );
     }

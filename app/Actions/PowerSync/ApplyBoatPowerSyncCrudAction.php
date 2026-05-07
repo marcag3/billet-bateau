@@ -5,9 +5,9 @@ namespace App\Actions\PowerSync;
 use App\Data\PowerSync\Boats\BoatPatchData;
 use App\Data\PowerSync\Boats\BoatPutData;
 use App\Data\PowerSync\Boats\BoatPutPayloadResolver;
+use App\Data\PowerSync\Boats\BoatResolvedPutData;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Models\Boat;
-use App\Models\Program;
 use Illuminate\Auth\Access\AuthorizationException;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Spatie\LaravelData\Optional;
@@ -65,16 +65,17 @@ final class ApplyBoatPowerSyncCrudAction
             $this->ensureUserMayMutateBoat($existing, $userId);
         }
 
-        $resolved = BoatPutPayloadResolver::resolve($data, $existing);
+        $merged = BoatPutPayloadResolver::resolve($data, $existing);
+        $resolved = BoatResolvedPutData::validateAndCreate($merged);
 
         Boat::query()->updateOrCreate(
             ['id' => $id],
             [
-                'name' => $resolved['name'],
-                'capacity' => $resolved['capacity'],
-                'notes' => $resolved['notes'],
-                'boat_type_id' => $resolved['boat_type_id'],
-                'program_id' => $resolved['program_id'],
+                'name' => $resolved->name,
+                'capacity' => $resolved->capacity,
+                'notes' => $resolved->notes,
+                'boat_type_id' => $resolved->boat_type_id,
+                'program_id' => $resolved->program_id,
             ],
         );
     }

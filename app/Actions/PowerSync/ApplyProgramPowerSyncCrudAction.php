@@ -6,6 +6,7 @@ use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\Programs\ProgramPatchData;
 use App\Data\PowerSync\Programs\ProgramPutData;
 use App\Data\PowerSync\Programs\ProgramPutPayloadResolver;
+use App\Data\PowerSync\Programs\ProgramResolvedPutData;
 use App\Data\PowerSync\Values\SlugNormalizer;
 use App\Models\Program;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -66,19 +67,20 @@ final class ApplyProgramPowerSyncCrudAction
         }
 
         $merged = ProgramPutPayloadResolver::resolve($dto, $existing);
+        $resolved = ProgramResolvedPutData::validateAndCreate($merged);
 
         $attributes = [
-            'name' => $merged['name'],
-            'description' => $merged['description'],
-            'theme_color' => $merged['theme_color'],
-            'is_active' => $merged['is_active'],
-            'is_archived' => $merged['is_archived'],
-            'slug' => $this->assignUniqueSlug((string) $id, $merged['base_slug']),
-            'line_1' => $merged['line_1'],
-            'line_2' => $merged['line_2'],
-            'city' => $merged['city'],
-            'postal_code' => $merged['postal_code'],
-            'country' => $merged['country'],
+            'name' => $resolved->name,
+            'description' => $resolved->description,
+            'theme_color' => $resolved->theme_color,
+            'is_active' => $resolved->is_active,
+            'is_archived' => $resolved->is_archived,
+            'slug' => $this->assignUniqueSlug((string) $id, $resolved->base_slug),
+            'line_1' => $resolved->line_1,
+            'line_2' => $resolved->line_2,
+            'city' => $resolved->city,
+            'postal_code' => $resolved->postal_code,
+            'country' => $resolved->country,
         ];
 
         Program::query()->updateOrCreate(

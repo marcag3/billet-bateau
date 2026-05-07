@@ -2,7 +2,6 @@
 
 namespace App\Data\PowerSync\TemplateDayDates;
 
-use App\Data\PowerSync\Support\PowerSyncCrudInnerDataValidator;
 use App\Data\PowerSync\Support\PowerSyncOptional;
 use App\Models\TemplateDay;
 use App\Models\TemplateDayDate;
@@ -64,17 +63,10 @@ final class TemplateDayDatePutPayloadResolver
                 : null;
         }
 
-        PowerSyncCrudInnerDataValidator::validate(
-            [
-                'service_date' => $serviceDate,
-            ],
-            [
-                'service_date' => ['required', 'date'],
-            ],
-        );
-
-        if (! $serviceDate instanceof CarbonImmutable) {
-            $serviceDate = CarbonImmutable::parse((string) $serviceDate);
+        if ($serviceDate === null) {
+            throw ValidationException::withMessages([
+                'data.service_date' => 'Service date is required.',
+            ]);
         }
 
         $serviceDate = $serviceDate->startOfDay();

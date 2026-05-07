@@ -4,6 +4,8 @@ namespace App\Actions\PowerSync;
 
 use App\Data\PowerSync\BookingTickets\BookingTicketPatchData;
 use App\Data\PowerSync\BookingTickets\BookingTicketPutData;
+use App\Data\PowerSync\BookingTickets\BookingTicketPutPayloadResolver;
+use App\Data\PowerSync\BookingTickets\BookingTicketResolvedPutData;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Models\Booking;
 use App\Models\BookingTicket;
@@ -71,22 +73,10 @@ final class ApplyBookingTicketPowerSyncCrudAction
     {
         $existing = BookingTicket::query()->whereKey($id)->first();
 
-        $bookingId = $dto->booking_id instanceof Optional ? ($existing?->booking_id ?? null) : $dto->booking_id;
-        $ticketTypeId = $dto->ticket_type_id instanceof Optional ? ($existing?->ticket_type_id ?? null) : $dto->ticket_type_id;
+        $merged = BookingTicketPutPayloadResolver::resolve($dto, $existing);
+        $resolved = BookingTicketResolvedPutData::validateAndCreate($merged);
 
-        if ($bookingId === null || $bookingId === '') {
-            throw ValidationException::withMessages([
-                'data.booking_id' => 'Booking is required.',
-            ]);
-        }
-
-        if ($ticketTypeId === null || $ticketTypeId === '') {
-            throw ValidationException::withMessages([
-                'data.ticket_type_id' => 'Ticket type is required.',
-            ]);
-        }
-
-        $booking = Booking::query()->whereKey($bookingId)->first();
+        $booking = Booking::query()->whereKey($resolved->booking_id)->first();
         if ($booking === null) {
             throw ValidationException::withMessages([
                 'data.booking_id' => 'Booking not found.',
@@ -95,7 +85,7 @@ final class ApplyBookingTicketPowerSyncCrudAction
 
         $this->assertProgramManaged((string) $booking->program_id, $userId);
 
-        $ticketType = TicketType::query()->whereKey($ticketTypeId)->first();
+        $ticketType = TicketType::query()->whereKey($resolved->ticket_type_id)->first();
         if ($ticketType === null) {
             throw ValidationException::withMessages([
                 'data.ticket_type_id' => 'Ticket type not found.',
@@ -108,44 +98,16 @@ final class ApplyBookingTicketPowerSyncCrudAction
             ]);
         }
 
-        $name = $dto->name instanceof Optional ? ($existing?->name ?? null) : $dto->name;
-        $email = $dto->email instanceof Optional ? ($existing?->email ?? null) : $dto->email;
-        $country = $dto->country instanceof Optional ? ($existing?->country ?? null) : $dto->country;
-        $customFields = $dto->custom_fields instanceof Optional
-            ? ($existing?->custom_fields ?? [])
-            : $this->normalizeCustomFields($dto->custom_fields);
-        $waiverConfirmationId = $dto->waiver_confirmation_id instanceof Optional
-            ? $existing?->waiver_confirmation_id
-            : $dto->waiver_confirmation_id;
-
-        if ($name === null || $name === '') {
-            throw ValidationException::withMessages([
-                'data.name' => 'Name is required.',
-            ]);
-        }
-
-        if ($email === null || $email === '') {
-            throw ValidationException::withMessages([
-                'data.email' => 'Email is required.',
-            ]);
-        }
-
-        if ($country === null || $country === '') {
-            throw ValidationException::withMessages([
-                'data.country' => 'Country is required.',
-            ]);
-        }
-
         BookingTicket::query()->updateOrCreate(
             ['id' => $id],
             [
-                'booking_id' => $bookingId,
-                'ticket_type_id' => $ticketTypeId,
-                'name' => $name,
-                'email' => $email,
-                'country' => $country,
-                'custom_fields' => $customFields,
-                'waiver_confirmation_id' => $waiverConfirmationId,
+                'booking_id' => $resolved->booking_id,
+                'ticket_type_id' => $resolved->ticket_type_id,
+                'name' => $resolved->name,
+                'email' => $resolved->email,
+                'country' => $resolved->country,
+                'custom_fields' => $resolved->custom_fields,
+                'waiver_confirmation_id' => $resolved->waiver_confirmation_id,
             ],
         );
     }

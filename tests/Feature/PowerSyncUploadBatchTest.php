@@ -83,7 +83,7 @@ class PowerSyncUploadBatchTest extends TestCase
         ])->assertUnprocessable();
     }
 
-    public function test_put_strips_created_at_from_inner_data(): void
+    public function test_put_ignores_client_created_at_in_inner_data(): void
     {
         $user = User::factory()->create();
         $id = (string) Str::ulid();
@@ -97,19 +97,23 @@ class PowerSyncUploadBatchTest extends TestCase
                     'data' => [
                         'name' => 'With client timestamp key',
                         'theme_color' => '#000000',
-                        'created_at' => '2026-01-01T00:00:00Z',
+                        'created_at' => '2000-01-01T00:00:00Z',
                     ],
                 ],
             ],
         ])->assertOk();
 
-        $this->assertDatabaseHas('programs', [
-            'id' => $id,
-            'name' => 'With client timestamp key',
-        ]);
+        $program = Program::query()->whereKey($id)->first();
+        $this->assertNotNull($program);
+        $this->assertSame('With client timestamp key', $program->name);
+        $this->assertNotSame(
+            2000,
+            (int) $program->created_at->format('Y'),
+            'Client-supplied created_at must not be written to the database.',
+        );
     }
 
-    public function test_patch_strips_updated_at_from_inner_data(): void
+    public function test_patch_ignores_client_updated_at_in_inner_data(): void
     {
         $user = User::factory()->create();
         $program = Program::factory()->withOwner($user)->create([
@@ -124,15 +128,38 @@ class PowerSyncUploadBatchTest extends TestCase
                     'id' => $program->getKey(),
                     'data' => [
                         'name' => 'Renamed',
-                        'updated_at' => '2026-01-01T00:00:00Z',
+                        'updated_at' => '2000-01-01T00:00:00Z',
                     ],
                 ],
             ],
         ])->assertOk();
 
-        $this->assertDatabaseHas('programs', [
-            'id' => $program->getKey(),
-            'name' => 'Renamed',
-        ]);
+        $program->refresh();
+        $this->assertSame('Renamed', $program->name);
+        $this->assertNotSame(
+            2000,
+            (int) $program->updated_at->format('Y'),
+            'Client-supplied updated_at must not be written to the database.',
+        );
+    }
+
+    public function test_boat_put_without_program_id_for_new_row_is_unprocessable(): void
+    {
+        $user = User::factory()->create();
+        Program::factory()->withOwner($user)->create();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'boats',
+                    'id' => (string) Str::ulid(),
+                    'data' => [
+                        'name' => 'Solo',
+                        'capacity' => 2,
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
     }
 }
