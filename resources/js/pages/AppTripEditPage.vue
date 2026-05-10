@@ -79,46 +79,22 @@
             v-else-if="currentTrip"
             :label="t('tripsList.editSection')"
         >
-            <q-form @submit.prevent="onSaveSubmit">
-                <AppFormStack>
-                    <q-input
-                        v-model="editScheduled"
-                        v-bind="editScheduledProps"
-                        outlined
-                        type="datetime-local"
-                        :label="t('tripsList.scheduledDeparture')"
-                        :disable="isSubmitting || isDeleting"
-                    />
-                    <q-input
-                        v-model.number="editCapacity"
-                        v-bind="editCapacityProps"
-                        outlined
-                        type="number"
-                        :label="t('tripsList.capacity')"
-                        :hint="t('tripsList.capacityHint')"
-                        :disable="isSubmitting || isDeleting"
-                    />
-                    <AppBoatTypeSelectField
-                        v-model="editBoatTypeId"
-                        v-bind="editBoatTypeIdProps"
-                        :program-id="programId"
-                        :label="t('tripsList.boatType')"
-                        :disable="isSubmitting || isDeleting"
-                    />
-                    <AppWaterRouteSelectField
-                        v-model="editWaterRouteId"
-                        v-bind="editWaterRouteIdProps"
-                        :program-id="programId"
-                        :label="t('tripsList.waterRoute')"
-                        :disable="isSubmitting || isDeleting"
-                    />
+            <AppTripForm
+                :program-id="programId"
+                :seed="tripFormSeed"
+                :disabled="isDeleting"
+                :submit-fn="submitUpdateTrip"
+            >
+                <template
+                    #actions="{ meta, isSubmitting, fieldsDisabled }"
+                >
                     <div class="row q-gutter-sm">
                         <q-btn
                             color="primary"
                             type="submit"
                             :label="t('tripsList.saveChanges')"
                             :loading="isSubmitting"
-                            :disable="!meta.valid || isDeleting"
+                            :disable="!meta.valid || fieldsDisabled"
                         />
                         <q-btn
                             flat
@@ -129,27 +105,22 @@
                             @click="confirmDelete"
                         />
                     </div>
-                </AppFormStack>
-            </q-form>
+                </template>
+            </AppTripForm>
         </AppCardSection>
     </AppEntityEditPageLayout>
 </template>
 
 <script setup lang="ts">
-import { useForm } from "vee-validate";
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
 import { useRoute, useRouter } from "vue-router";
-import {
-    createTripUpsertFormSchema,
-    type TripUpsertFormValues,
-} from "../models/trips/trips.validation";
+import type { TripUpsertFormValues } from "../models/trips/trips.validation";
 import {
     isoToLocalDatetimeInputValue,
     localDatetimeInputValueToIso,
 } from "../utilities/datetime-input";
-import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
@@ -162,9 +133,7 @@ import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch"
 import { parsePositiveInt } from "../validation/zod-fields";
 import AppEntityEditPageLayout from "../layouts/AppEntityEditPageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
-import AppFormStack from "../components/ui/AppFormStack.vue";
-import AppBoatTypeSelectField from "../components/ui/AppBoatTypeSelectField.vue";
-import AppWaterRouteSelectField from "../components/organisms/AppWaterRouteSelectField.vue";
+import AppTripForm from "../components/molecules/AppTripForm.vue";
 
 const { t, locale } = useI18n();
 const $q = useQuasar();
@@ -225,6 +194,28 @@ const showNotFound = computed(
         currentTrip.value == null,
 );
 
+const tripFormSeed = computed((): TripUpsertFormValues | null => {
+    const tr = currentTrip.value;
+    if (!tr) {
+        return null;
+    }
+    const cap = parsePositiveInt(tr.capacity);
+    return {
+        scheduledDepartureAt: isoToLocalDatetimeInputValue(
+            String(tr.scheduled_departure_at ?? ""),
+        ),
+        capacity: cap,
+        boatTypeId:
+            tr.boat_type_id == null || String(tr.boat_type_id).length === 0
+                ? null
+                : String(tr.boat_type_id),
+        waterRouteId:
+            tr.water_route_id == null || String(tr.water_route_id).length === 0
+                ? null
+                : String(tr.water_route_id),
+    } as TripUpsertFormValues;
+});
+
 function formatSwitcherLabel(tr: TripOutput) {
     const raw = tr.scheduled_departure_at;
     if (raw == null || String(raw) === "") {
@@ -245,59 +236,6 @@ const tripSwitcherOptions = computed(() =>
         label: formatSwitcherLabel(tr),
         value: String(tr.id),
     })),
-);
-
-const editSchema = createTripUpsertFormSchema(t);
-const { handleSubmit, defineField, meta, isSubmitting, setValues, resetForm } =
-    useForm<TripUpsertFormValues>({
-        validationSchema: editSchema,
-        initialValues: {
-            scheduledDepartureAt: "",
-            capacity: null,
-            boatTypeId: null,
-            waterRouteId: null,
-        } as unknown as TripUpsertFormValues,
-    });
-
-const quasarField = createQuasarFieldBinder(defineField);
-
-const [editScheduled, editScheduledProps] = quasarField("scheduledDepartureAt");
-const [editCapacity, editCapacityProps] = quasarField("capacity");
-const [editBoatTypeId, editBoatTypeIdProps] = quasarField("boatTypeId");
-const [editWaterRouteId, editWaterRouteIdProps] = quasarField("waterRouteId");
-
-function syncFormFromTrip() {
-    const tr = currentTrip.value;
-    if (!tr) {
-        return;
-    }
-    const cap = parsePositiveInt(tr.capacity);
-    setValues({
-        scheduledDepartureAt: isoToLocalDatetimeInputValue(
-            String(tr.scheduled_departure_at ?? ""),
-        ),
-        capacity: cap,
-        boatTypeId:
-            tr.boat_type_id == null || String(tr.boat_type_id).length === 0
-                ? null
-                : String(tr.boat_type_id),
-        waterRouteId:
-            tr.water_route_id == null || String(tr.water_route_id).length === 0
-                ? null
-                : String(tr.water_route_id),
-    });
-}
-
-watch(
-    [currentTrip, tripId],
-    () => {
-        if (currentTrip.value) {
-            syncFormFromTrip();
-        } else {
-            resetForm();
-        }
-    },
-    { immediate: true },
 );
 
 function onSwitchTrip(nextId: string | null | undefined) {
@@ -324,7 +262,9 @@ function goNext() {
     }
 }
 
-const onSaveSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
+async function submitUpdateTrip(
+    values: TripUpsertFormValues,
+): Promise<void> {
     const id = tripId.value;
     if (id.length === 0) {
         return;
@@ -363,7 +303,7 @@ const onSaveSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
             errorGeneric: t("tripsList.errorGeneric"),
         },
     );
-});
+}
 
 function confirmDelete() {
     const tr = currentTrip.value;

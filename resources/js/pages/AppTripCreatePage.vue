@@ -6,39 +6,12 @@
         :back-label="t('tripsList.backToList')"
     >
         <AppCardSection :label="t('tripsList.addNew')">
-            <q-form @submit.prevent="onCreateSubmit">
-                <AppFormStack>
-                    <q-input
-                        v-model="createScheduled"
-                        v-bind="createScheduledProps"
-                        outlined
-                        type="datetime-local"
-                        :label="t('tripsList.scheduledDeparture')"
-                        :disable="isSubmitting"
-                    />
-                    <q-input
-                        v-model.number="createCapacity"
-                        v-bind="createCapacityProps"
-                        outlined
-                        type="number"
-                        :label="t('tripsList.capacity')"
-                        :hint="t('tripsList.capacityHint')"
-                        :disable="isSubmitting"
-                    />
-                    <AppBoatTypeSelectField
-                        v-model="createBoatTypeId"
-                        v-bind="createBoatTypeIdProps"
-                        :program-id="programId"
-                        :label="t('tripsList.boatType')"
-                        :disable="isSubmitting"
-                    />
-                    <AppWaterRouteSelectField
-                        v-model="createWaterRouteId"
-                        v-bind="createWaterRouteIdProps"
-                        :program-id="programId"
-                        :label="t('tripsList.waterRoute')"
-                        :disable="isSubmitting"
-                    />
+            <AppTripForm
+                :program-id="programId"
+                :seed="null"
+                :submit-fn="submitCreateTrip"
+            >
+                <template #actions="{ meta, isSubmitting }">
                     <q-btn
                         color="primary"
                         type="submit"
@@ -51,33 +24,26 @@
                         "
                         class="self-start"
                     />
-                </AppFormStack>
-            </q-form>
+                </template>
+            </AppTripForm>
         </AppCardSection>
     </AppEntityCreatePageLayout>
 </template>
 
 <script setup lang="ts">
-import { useForm } from "vee-validate";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import {
-    createTripUpsertFormSchema,
-    type TripUpsertFormValues,
-} from "../models/trips/trips.validation";
 import { ulid } from "ulid";
+import type { TripUpsertFormValues } from "../models/trips/trips.validation";
 import { localDatetimeInputValueToIso } from "../utilities/datetime-input";
-import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 
 const powersync = getAppPowerSyncContext();
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import AppEntityCreatePageLayout from "../layouts/AppEntityCreatePageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
-import AppFormStack from "../components/ui/AppFormStack.vue";
-import AppBoatTypeSelectField from "../components/ui/AppBoatTypeSelectField.vue";
-import AppWaterRouteSelectField from "../components/organisms/AppWaterRouteSelectField.vue";
+import AppTripForm from "../components/molecules/AppTripForm.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -92,29 +58,7 @@ const backTo = computed(() => ({
     params: { programId: programId.value },
 }));
 
-const tripSchema = createTripUpsertFormSchema(t);
-const { handleSubmit, defineField, meta, isSubmitting, resetForm } =
-    useForm<TripUpsertFormValues>({
-        validationSchema: tripSchema,
-        initialValues: {
-            scheduledDepartureAt: "",
-            capacity: null,
-            boatTypeId: null,
-            waterRouteId: null,
-        } as unknown as TripUpsertFormValues,
-    });
-
-const quasarField = createQuasarFieldBinder(defineField);
-
-const [createScheduled, createScheduledProps] = quasarField(
-    "scheduledDepartureAt",
-);
-const [createCapacity, createCapacityProps] = quasarField("capacity");
-const [createBoatTypeId, createBoatTypeIdProps] = quasarField("boatTypeId");
-const [createWaterRouteId, createWaterRouteIdProps] =
-    quasarField("waterRouteId");
-
-const onCreateSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
+async function submitCreateTrip(values: TripUpsertFormValues): Promise<void> {
     await runWithNotify(
         async () => {
             const col = tripsCollection.value;
@@ -140,7 +84,6 @@ const onCreateSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
                 capacity: cap,
             }).isPersisted.promise;
             void powersync.refreshOutboxSnapshot();
-            resetForm();
             await router.push({
                 name: "trips.list",
                 params: { programId: programId.value },
@@ -151,5 +94,5 @@ const onCreateSubmit = handleSubmit(async (values: TripUpsertFormValues) => {
             errorGeneric: t("tripsList.errorGeneric"),
         },
     );
-});
+}
 </script>
