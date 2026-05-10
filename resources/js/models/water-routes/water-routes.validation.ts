@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { parsePositiveInt } from '../../validation/zod-fields';
 import { boatEntityNameSchema, type Translator } from '../boats/boats.validation';
 
-function createWaterRouteCreateZodSchema(t: Translator) {
+function createWaterRouteFormZodSchema(t: Translator) {
     return z.object({
         name: boatEntityNameSchema(t),
         durationMinutes: z
@@ -13,8 +13,16 @@ function createWaterRouteCreateZodSchema(t: Translator) {
     });
 }
 
-export type WaterRouteCreateFormValues = z.infer<ReturnType<typeof createWaterRouteCreateZodSchema>>;
+export type WaterRouteFormValues = z.infer<ReturnType<typeof createWaterRouteFormZodSchema>>;
 
-export function createWaterRouteCreateFormSchema(t: Translator) {
-    return toTypedSchema(createWaterRouteCreateZodSchema(t));
+export function createEmptyWaterRouteFormValues(): WaterRouteFormValues {
+    return {
+        name: '',
+        durationMinutes: 60,
+        traceGeoJson: '',
+    };
+}
+
+export function createWaterRouteFormSchema(t: Translator) {
+    return toTypedSchema(createWaterRouteFormZodSchema(t));
 }

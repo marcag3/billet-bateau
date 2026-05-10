@@ -225,6 +225,10 @@ export default {
         description:
             "Reusable paths for trips (GeoJSON LineString, SRID 4326). Changes sync through PowerSync; default geometry is used if trace is left blank.",
         addNew: "New water route",
+        editTitle: "Edit water route",
+        edit: "Edit",
+        save: "Save",
+        updated: "Water route updated.",
         name: "Name",
         duration: "Duration (minutes)",
         durationHint: "Positive integer — used with departures for ETA.",

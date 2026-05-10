@@ -235,6 +235,10 @@ export default {
         description:
             "Traces reutilisables pour les sorties (GeoJSON LineString, SRID 4326). Les changements se synchronisent via PowerSync ; une geometrie par defaut est utilisee si la trace est vide.",
         addNew: "Nouveau parcours",
+        editTitle: "Modifier le parcours",
+        edit: "Modifier",
+        save: "Enregistrer",
+        updated: "Parcours mis a jour.",
         name: "Nom",
         duration: "Duree (minutes)",
         durationHint:
