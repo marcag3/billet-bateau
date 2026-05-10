@@ -1,6 +1,6 @@
 <template>
     <div
-        class="trips-cal-day-header-actions row items-center no-wrap"
+        class="trips-cal-day-header-actions row items-start wrap"
         :class="{
             'trips-cal-day-header-actions--compact': compact,
         }"
@@ -74,6 +74,15 @@ const { t } = useI18n();
 </script>
 
 <style scoped>
+.trips-cal-day-header-actions {
+    gap: 0.25rem;
+}
+
+.trips-cal-day-header-actions :deep(.q-btn),
+.trips-cal-day-header-actions :deep(.q-btn-dropdown) {
+    max-width: 100%;
+}
+
 .trips-cal-day-header-actions--compact :deep(.q-btn) {
     min-width: 1.75rem;
     padding-left: 0.25rem;

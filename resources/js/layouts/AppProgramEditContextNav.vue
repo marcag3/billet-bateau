@@ -43,17 +43,17 @@
                 <q-item-section>{{ t("common.waterRoutes") }}</q-item-section>
             </q-item>
             <q-item
-                key="trips"
+                key="ticket-types"
                 v-ripple
                 clickable
-                :to="{ name: 'trips', params: { programId } }"
+                :to="{ name: 'ticket-types.list', params: { programId } }"
                 exact
                 active-class="app-nav-item--active"
             >
                 <q-item-section avatar>
-                    <q-icon name="calendar_month" />
+                    <q-icon name="confirmation_number" />
                 </q-item-section>
-                <q-item-section>{{ t("common.trips") }}</q-item-section>
+                <q-item-section>{{ t("common.ticketTypes") }}</q-item-section>
             </q-item>
             <q-item
                 key="template-days"
@@ -69,17 +69,17 @@
                 <q-item-section>{{ t("common.templateDays") }}</q-item-section>
             </q-item>
             <q-item
-                key="ticket-types"
+                key="trips"
                 v-ripple
                 clickable
-                :to="{ name: 'ticket-types.list', params: { programId } }"
+                :to="{ name: 'trips', params: { programId } }"
                 exact
                 active-class="app-nav-item--active"
             >
                 <q-item-section avatar>
-                    <q-icon name="confirmation_number" />
+                    <q-icon name="calendar_month" />
                 </q-item-section>
-                <q-item-section>{{ t("common.ticketTypes") }}</q-item-section>
+                <q-item-section>{{ t("common.trips") }}</q-item-section>
             </q-item>
 
         </template>

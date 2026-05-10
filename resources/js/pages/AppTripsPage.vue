@@ -59,13 +59,6 @@
             />
         </div>
 
-        <AppEmptyListRow
-            v-if="tripsViewMode !== 'list'"
-            class="q-mb-md"
-            :show="scheduledTripCount === 0"
-            :message="t('tripsCalendar.empty')"
-        />
-
         <AppEntityList v-if="tripsViewMode === 'list'">
             <AppEmptyListRow
                 :show="trips.length === 0"
@@ -1023,6 +1016,16 @@ function onMonthCalendarClickDay(payload: MonthClickDayPayload): void {
 .trips-calendar-surface {
     border-radius: 4px;
     overflow: hidden;
+}
+
+.trips-calendar-surface :deep(.q-calendar-day__day-interval),
+.trips-calendar-surface :deep(.q-calendar-day__day-interval--section),
+.trips-calendar-surface :deep(.q-calendar-month__day) {
+    cursor: pointer;
+}
+
+.trips-calendar-surface :deep(.q-calendar-month__day.disabled) {
+    cursor: default;
 }
 
 .trips-cal-day-body {

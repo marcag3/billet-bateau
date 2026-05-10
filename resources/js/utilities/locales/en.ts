@@ -240,7 +240,7 @@ export default {
         viewWeek: "Week",
         viewMonth: "Month",
         viewList: "List",
-        clearUnbookedTripsForDay: "Clear unbooked trips (day)",
+        clearUnbookedTripsForDay: "Clear trips",
         clearUnbookedConfirmTitle: "Clear unbooked trips for this day?",
         clearUnbookedConfirmMessage:
             "Delete all trips on {date} that have no bookings? Trips with bookings will be kept. This cannot be undone.",

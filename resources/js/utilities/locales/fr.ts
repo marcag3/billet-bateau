@@ -250,7 +250,7 @@ export default {
         viewWeek: "Semaine",
         viewMonth: "Mois",
         viewList: "Liste",
-        clearUnbookedTripsForDay: "Supprimer les sorties libres (jour)",
+        clearUnbookedTripsForDay: "Supprimer les sorties",
         clearUnbookedConfirmTitle: "Supprimer les sorties libres pour ce jour ?",
         clearUnbookedConfirmMessage:
             "Supprimer toutes les sorties du {date} sans reservation ? Les sorties avec reservation sont conservees. Action definitive.",
