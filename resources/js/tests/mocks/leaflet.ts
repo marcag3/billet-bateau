@@ -57,3 +57,5 @@ export const latLng = vi.fn((lat: number, lng: number) => ({ lat, lng }));
 export const latLngBounds = vi.fn(() => ({}));
 export const polyline = vi.fn(() => ({ ...MockLayer }));
 export const circleMarker = vi.fn(() => ({ ...MockLayer }));
+export const divIcon = vi.fn(() => ({}));
+export const marker = vi.fn(() => ({ ...MockLayer }));

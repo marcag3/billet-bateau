@@ -55,16 +55,18 @@ import {
 } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type {
+    DivIcon,
     LatLngExpression,
     Layer,
     LeafletMouseEvent,
     Map as LeafletMap,
 } from 'leaflet';
 import {
-    circleMarker as leafletCircleMarker,
+    divIcon as leafletDivIcon,
     latLng as leafletLatLng,
     latLngBounds as leafletLatLngBounds,
     map as createLeafletMap,
+    marker as leafletMarker,
     polyline as leafletPolyline,
     tileLayer as leafletTileLayer,
 } from 'leaflet';
@@ -125,7 +127,20 @@ function lngLatPairsToLeafletLatLngs(pairs: [number, number][]): LatLngExpressio
     return pairs.map(([lng, lat]) => leafletLatLng(lat, lng));
 }
 
-function redrawRoute(): void {
+const ENDPOINT_ICON_PX = 28;
+
+function endpointDivIcon(kind: 'start' | 'finish'): DivIcon {
+    const color = kind === 'start' ? '#2e7d32' : '#000000';
+    const glyph = kind === 'start' ? 'play_circle' : 'flag';
+    return leafletDivIcon({
+        className: 'app-polyline-trace-field__endpoint-marker',
+        html: `<span class="material-icons" style="font-size:${ENDPOINT_ICON_PX}px;color:${color};line-height:1;display:block;">${glyph}</span>`,
+        iconSize: [ENDPOINT_ICON_PX, ENDPOINT_ICON_PX],
+        iconAnchor: [ENDPOINT_ICON_PX / 2, ENDPOINT_ICON_PX / 2],
+    });
+}
+
+function redrawRoute(shouldSyncViewport = false): void {
     const map = mapRef.value;
     if (!map) {
         return;
@@ -137,15 +152,13 @@ function redrawRoute(): void {
     }
     const latLngs = lngLatPairsToLeafletLatLngs(pairs);
     if (pairs.length === 1) {
-        const cm = leafletCircleMarker(latLngs[0], {
-            radius: 6,
-            color: '#1976d2',
-            weight: 2,
-            fillColor: '#1976d2',
-            fillOpacity: 0.35,
+        const startMarker = leafletMarker(latLngs[0], {
+            icon: endpointDivIcon('start'),
         }).addTo(map);
-        routeLayersRef.value.push(cm);
-        map.setView(latLngs[0], Math.max(map.getZoom(), 13));
+        routeLayersRef.value.push(startMarker);
+        if (shouldSyncViewport) {
+            map.setView(latLngs[0], Math.max(map.getZoom(), 13));
+        }
         return;
     }
     const poly = leafletPolyline(latLngs, {
@@ -153,7 +166,17 @@ function redrawRoute(): void {
         weight: 4,
     }).addTo(map);
     routeLayersRef.value.push(poly);
-    map.fitBounds(leafletLatLngBounds(latLngs), { padding: [24, 24], maxZoom: 16 });
+    const startMarker = leafletMarker(latLngs[0], {
+        icon: endpointDivIcon('start'),
+    }).addTo(map);
+    routeLayersRef.value.push(startMarker);
+    const finishMarker = leafletMarker(latLngs[latLngs.length - 1], {
+        icon: endpointDivIcon('finish'),
+    }).addTo(map);
+    routeLayersRef.value.push(finishMarker);
+    if (shouldSyncViewport) {
+        map.fitBounds(leafletLatLngBounds(latLngs), { padding: [24, 24], maxZoom: 16 });
+    }
 }
 
 function emitFromCoordinates(): void {
@@ -177,7 +200,7 @@ function applyExternalModelValue(raw: string): void {
         return;
     }
     coordinatesRef.value = parsed.coordinates.map(([lng, lat]) => [lng, lat]);
-    redrawRoute();
+    redrawRoute(true);
 }
 
 function onMapClick(e: LeafletMouseEvent): void {
@@ -322,7 +345,7 @@ watch(
 <style scoped>
 .app-polyline-trace-field__map {
     width: 100%;
-    min-height: 280px;
+    min-height: 75vh;
     border-radius: 4px;
     overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.12);
@@ -331,5 +354,10 @@ watch(
 .app-polyline-trace-field__map--disabled {
     opacity: 0.65;
     pointer-events: none;
+}
+
+:deep(.app-polyline-trace-field__endpoint-marker) {
+    background: transparent;
+    border: none;
 }
 </style>
