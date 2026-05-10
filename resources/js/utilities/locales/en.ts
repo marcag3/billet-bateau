@@ -437,6 +437,7 @@ export default {
         saveChanges: "Save changes",
         nameRequired: "Name is required.",
         addSlot: "Add slot",
+        addSlotAndAnother: "Create and add another",
         slotCreated: "Slot created.",
         slotUpdated: "Slot updated.",
         addSlotTitle: "Add slot",

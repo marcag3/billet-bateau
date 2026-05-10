@@ -95,6 +95,7 @@
     <q-dialog
         v-model="slotDialogOpen"
         persistent
+        @show="onSlotDialogShow"
     >
         <q-card style="min-width: 480px; max-width: 600px">
             <q-card-section class="q-pb-none">
@@ -108,154 +109,18 @@
             </q-card-section>
 
             <q-card-section>
-                <q-form @submit.prevent="onSaveSlotSubmit">
-                    <AppFormStack>
-                        <q-input
-                            v-model="slotForm.departureTime"
-                            outlined
-                            type="time"
-                            :label="t('templateDaysList.departureTime')"
-                            :rules="[
-                                (val: string) =>
-                                    !!val ||
-                                    t('templateDaysList.departureTimeRequired'),
-                            ]"
-                        />
-
-                        <q-input
-                            v-model.number="slotForm.capacity"
-                            outlined
-                            type="number"
-                            min="1"
-                            :label="t('templateDaysList.capacity')"
-                            :rules="[
-                                (val: number) =>
-                                    (val != null && val >= 1) ||
-                                    t('templateDaysList.capacityRequired'),
-                            ]"
-                        />
-
-                        <AppBoatTypeSelectField
-                            v-model="slotForm.boatTypeId"
-                            :program-id="programId"
-                            :label="t('templateDaysList.boatType')"
-                            :hint="t('templateDaysList.boatTypeHint')"
-                        />
-
-                        <AppWaterRouteSelectField
-                            v-model="slotForm.waterRouteId"
-                            :program-id="programId"
-                            :label="t('templateDaysList.waterRoute')"
-                            :hint="t('templateDaysList.waterRouteHint')"
-                        />
-
-                        <q-card
-                            flat
-                            bordered
-                            class="q-pa-md"
-                        >
-                            <div class="text-subtitle2 q-mb-sm">
-                                {{ t('templateDaysList.ticketSetup') }}
-                            </div>
-
-                            <q-option-group
-                                v-model="slotForm.ticketPolicy"
-                                :options="ticketPolicyOptions"
-                                dense
-                                inline
-                            />
-
-                            <template v-if="slotForm.ticketPolicy === 'custom'">
-                                <q-select
-                                    v-model="slotForm.allowedTicketTypeIds"
-                                    outlined
-                                    multiple
-                                    use-chips
-                                    emit-value
-                                    map-options
-                                    :options="ticketTypeOptions"
-                                    :label="t('templateDaysList.allowedTicketTypes')"
-                                    :rules="[
-                                        (val: string[]) =>
-                                            val.length >= 1 ||
-                                            t('templateDaysList.allowedTicketTypesRequired'),
-                                    ]"
-                                    class="q-mt-md"
-                                />
-
-                                <q-input
-                                    v-model.number="slotForm.minPerBooking"
-                                    outlined
-                                    type="number"
-                                    min="1"
-                                    :label="t('templateDaysList.minPerBooking')"
-                                    class="q-mt-sm"
-                                />
-
-                                <q-input
-                                    v-model.number="slotForm.maxPerBooking"
-                                    outlined
-                                    type="number"
-                                    min="0"
-                                    :label="t('templateDaysList.maxPerBooking')"
-                                    class="q-mt-sm"
-                                    :hint="t('templateDaysList.maxPerBookingHint')"
-                                />
-
-                                <q-input
-                                    v-model="slotForm.constraintNotes"
-                                    outlined
-                                    type="textarea"
-                                    rows="2"
-                                    :label="t('templateDaysList.constraintNotes')"
-                                    class="q-mt-sm"
-                                />
-                            </template>
-                        </q-card>
-
-                        <q-input
-                            v-model="slotForm.internalNotes"
-                            outlined
-                            type="textarea"
-                            rows="3"
-                            :label="t('templateDaysList.internalNotes')"
-                            :hint="t('templateDaysList.internalNotesHint')"
-                            :maxlength="2000"
-                            counter
-                        />
-
-                        <div class="row q-gutter-sm items-center full-width">
-                            <q-btn
-                                v-if="editingSlotId"
-                                flat
-                                no-caps
-                                color="negative"
-                                :label="t('templateDaysList.deleteSlot')"
-                                :loading="isDeletingSlot"
-                                :disable="isSavingSlot || isDeletingSlot"
-                                @click="confirmDeleteSlotFromDialog"
-                            />
-                            <q-space />
-                            <q-btn
-                                flat
-                                :label="t('templateDaysList.cancel')"
-                                :disable="isDeletingSlot"
-                                @click="closeSlotDialog"
-                            />
-                            <q-btn
-                                color="primary"
-                                type="submit"
-                                :label="
-                                    editingSlotId
-                                        ? t('templateDaysList.saveSlot')
-                                        : t('templateDaysList.addSlot')
-                                "
-                                :loading="isSavingSlot"
-                                :disable="isSavingSlot || isDeletingSlot"
-                            />
-                        </div>
-                    </AppFormStack>
-                </q-form>
+                <AppTemplateDaySlotForm
+                    ref="templateDaySlotFormRef"
+                    v-model="slotForm"
+                    :program-id="programId"
+                    :editing-slot-id="editingSlotId"
+                    :ticket-type-options="ticketTypeOptions"
+                    :is-saving-slot="isSavingSlot"
+                    :is-deleting-slot="isDeletingSlot"
+                    @submit="submitSlotDialog"
+                    @cancel="closeSlotDialog"
+                    @delete-request="confirmDeleteSlotFromDialog"
+                />
             </q-card-section>
         </q-card>
     </q-dialog>
@@ -272,6 +137,12 @@ import { QCalendarDay, today } from "@quasar/quasar-ui-qcalendar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import type { TemplateDaySlotOutput } from "../powersync/template-day-slots.collection";
 import {
+    createEmptySlotForm,
+    parseTicketSetup,
+    serializeTicketSetup,
+    type SlotFormState,
+} from "../models/template-day-slots/template-day-slot-form";
+import {
     createTemplateDaySlotRow,
     deleteTemplateDaySlotRow,
     patchTemplateDaySlotRow,
@@ -285,8 +156,7 @@ import { useProgramWaterRoutes } from "../composables/useProgramWaterRoutes";
 import AppEntityEditPageLayout from "../layouts/AppEntityEditPageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
-import AppBoatTypeSelectField from "../components/ui/AppBoatTypeSelectField.vue";
-import AppWaterRouteSelectField from "../components/organisms/AppWaterRouteSelectField.vue";
+import AppTemplateDaySlotForm from "../components/molecules/AppTemplateDaySlotForm.vue";
 import {
     isValidCalendarDateYmd,
     isValidTimeHm,
@@ -642,112 +512,20 @@ function openEditSlotDialogByEventId(id: string): void {
 
 // --- Slot dialog ---
 
-interface SlotFormState {
-    departureTime: string;
-    capacity: number | null;
-    boatTypeId: string | null;
-    waterRouteId: string | null;
-    ticketPolicy: "defaults" | "custom";
-    allowedTicketTypeIds: string[];
-    minPerBooking: number | null;
-    maxPerBooking: number | null;
-    constraintNotes: string;
-    internalNotes: string;
-}
-
-function createEmptySlotForm(): SlotFormState {
-    return {
-        departureTime: "",
-        capacity: null,
-        boatTypeId: null,
-        waterRouteId: null,
-        ticketPolicy: "defaults",
-        allowedTicketTypeIds: [],
-        minPerBooking: 1,
-        maxPerBooking: null,
-        constraintNotes: "",
-        internalNotes: "",
-    };
-}
-
 const slotDialogOpen = ref(false);
 const editingSlotId = ref<string | null>(null);
 const slotForm = ref<SlotFormState>(createEmptySlotForm());
 const isSavingSlot = ref(false);
 const isDeletingSlot = ref(false);
+const templateDaySlotFormRef = ref<{
+    prepareAddModeFocus: () => void;
+} | null>(null);
 
-const ticketPolicyOptions = [
-    {
-        label: t("templateDaysList.ticketPolicyDefaults"),
-        value: "defaults",
-    },
-    {
-        label: t("templateDaysList.ticketPolicyCustom"),
-        value: "custom",
-    },
-];
-
-function parseTicketSetup(
-    raw: string | null | undefined,
-): Pick<
-    SlotFormState,
-    | "ticketPolicy"
-    | "allowedTicketTypeIds"
-    | "minPerBooking"
-    | "maxPerBooking"
-    | "constraintNotes"
-> {
-    if (raw == null) {
-        return {
-            ticketPolicy: "defaults",
-            allowedTicketTypeIds: [],
-            minPerBooking: 1,
-            maxPerBooking: null,
-            constraintNotes: "",
-        };
+function onSlotDialogShow(): void {
+    if (editingSlotId.value != null) {
+        return;
     }
-    try {
-        const parsed = JSON.parse(raw) as {
-            policy?: "defaults" | "custom";
-            allowed_ticket_type_ids?: string[];
-            min_per_booking?: number | null;
-            max_per_booking?: number | null;
-            notes?: string;
-        };
-        if (parsed.policy === "custom") {
-            return {
-                ticketPolicy: "custom",
-                allowedTicketTypeIds: parsed.allowed_ticket_type_ids ?? [],
-                minPerBooking: parsed.min_per_booking ?? 1,
-                maxPerBooking: parsed.max_per_booking ?? null,
-                constraintNotes: parsed.notes ?? "",
-            };
-        }
-    } catch {
-        // ignore parse errors, fall back to defaults
-    }
-    return {
-        ticketPolicy: "defaults",
-        allowedTicketTypeIds: [],
-        minPerBooking: 1,
-        maxPerBooking: null,
-        constraintNotes: "",
-    };
-}
-
-function serializeTicketSetup(
-    form: SlotFormState,
-): string | null {
-    if (form.ticketPolicy !== "custom") {
-        return null;
-    }
-    return JSON.stringify({
-        policy: "custom",
-        allowed_ticket_type_ids: form.allowedTicketTypeIds,
-        min_per_booking: form.minPerBooking ?? 1,
-        max_per_booking: form.maxPerBooking ?? null,
-        notes: form.constraintNotes.length > 0 ? form.constraintNotes : null,
-    });
+    templateDaySlotFormRef.value?.prepareAddModeFocus();
 }
 
 function openAddSlotDialog(prefill?: { departureTime?: string }): void {
@@ -832,7 +610,22 @@ function getNextSortOrder(): number {
     return (list[list.length - 1]?.sort_order ?? 0) + 1;
 }
 
-async function onSaveSlotSubmit() {
+function cloneSlotFormForAddAnother(form: SlotFormState): SlotFormState {
+    return {
+        departureTime: "",
+        capacity: form.capacity,
+        boatTypeId: form.boatTypeId,
+        waterRouteId: form.waterRouteId,
+        ticketPolicy: form.ticketPolicy,
+        allowedTicketTypeIds: [...form.allowedTicketTypeIds],
+        minPerBooking: form.minPerBooking,
+        maxPerBooking: form.maxPerBooking,
+        constraintNotes: form.constraintNotes,
+        internalNotes: form.internalNotes,
+    };
+}
+
+async function submitSlotDialog(closeAfter: boolean): Promise<void> {
     const form = slotForm.value;
 
     // Validate departure time
@@ -877,11 +670,12 @@ async function onSaveSlotSubmit() {
 
     const ticketSetupJson = serializeTicketSetup(form);
     const normalizedTime = normalizeTime(form.departureTime);
+    const isEdit = editingSlotId.value != null;
 
     isSavingSlot.value = true;
     await runWithNotify(
         async () => {
-            if (editingSlotId.value) {
+            if (isEdit && editingSlotId.value) {
                 await patchTemplateDaySlotRow(editingSlotId.value, {
                     departureTime: normalizedTime,
                     capacity: form.capacity ?? 0,
@@ -893,6 +687,7 @@ async function onSaveSlotSubmit() {
                             ? form.internalNotes
                             : null,
                 });
+                closeSlotDialog();
             } else {
                 await createTemplateDaySlotRow({
                     templateDayId: templateDayId.value,
@@ -907,11 +702,16 @@ async function onSaveSlotSubmit() {
                             ? form.internalNotes
                             : null,
                 });
+                if (closeAfter) {
+                    closeSlotDialog();
+                } else {
+                    slotForm.value = cloneSlotFormForAddAnother(form);
+                    templateDaySlotFormRef.value?.prepareAddModeFocus();
+                }
             }
-            closeSlotDialog();
         },
         {
-            successMessage: editingSlotId.value
+            successMessage: isEdit
                 ? t("templateDaysList.slotUpdated")
                 : t("templateDaysList.slotCreated"),
             errorGeneric: t("templateDaysList.errorGeneric"),

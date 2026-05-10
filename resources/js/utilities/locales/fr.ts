@@ -452,6 +452,7 @@ export default {
         saveChanges: "Enregistrer",
         nameRequired: "Le nom est obligatoire.",
         addSlot: "Ajouter un creneau",
+        addSlotAndAnother: "Creer et ajouter un autre",
         slotCreated: "Creneau cree.",
         slotUpdated: "Creneau mis a jour.",
         addSlotTitle: "Ajouter un creneau",
