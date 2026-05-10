@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\BoatType;
+use App\Models\Booking;
 use App\Models\Program;
 use App\Models\Trip;
 use App\Models\User;
@@ -115,6 +116,26 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
         ])->assertOk();
 
         $this->assertDatabaseMissing('trips', ['id' => $trip->getKey()]);
+    }
+
+    public function test_delete_trip_unprocessable_when_booking_references_trip(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->forProgram($program)->create();
+        Booking::factory()->forTrip($trip)->create();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'DELETE',
+                    'type' => 'trips',
+                    'id' => $trip->getKey(),
+                ],
+            ],
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseHas('trips', ['id' => $trip->getKey()]);
     }
 
     public function test_delete_trip_forbids_non_member(): void

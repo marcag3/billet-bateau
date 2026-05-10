@@ -43,6 +43,12 @@ final class ApplyTripPowerSyncCrudAction
                 throw new AuthorizationException;
             }
 
+            if ($trip->bookings()->exists()) {
+                throw ValidationException::withMessages([
+                    'trip' => 'This trip has bookings and cannot be deleted.',
+                ]);
+            }
+
             $trip->delete();
 
             return;

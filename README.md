@@ -28,10 +28,10 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 - Programs (base: name, description, theme, address, media; admin create; synced); `**slug`** on `programs` for public URLs
 - Boat types & boats: CRUD in admin UI + PowerSync downlink/uplink + tests
 - Water routes (*Parcours*): CRUD + sync; trace capture via **GeoJSON textarea** in admin (not an interactive map editor yet)
-- Trips (*Sorties*): migrations + PowerSync + admin list / create / edit pages (`boat_type_id`, `water_route_id`, `scheduled_departure_at`, `capacity`, optional `template_day_slot_id`)
-- Template days / slots / dates: migrations, PowerSync sync + uplink, TanStack collections + models + `PowerSyncUploadTemplateDayTest` — **no** dedicated scheduling/calendar UI yet
+- Trips (*Sorties*): concrete bookable rows (`boat_type_id`, `water_route_id`, `scheduled_departure_at`, `capacity`, optional `template_day_slot_id` for provenance only — **not** synced from template edits). PowerSync + admin list / create / edit / calendar
+- Template days / slots / dates: authoring helpers to speed up trip creation; **no** automatic updates to existing trips when templates change
 - Ticket types: per-program fields (title, `price_cents`, PWYC, min/max, `trip_inventory_caps` JSON) + PowerSync downlink/uplink (`PUT` / `PATCH` / `DELETE` on `POST /api/powersync/upload`; idempotent no-op when the row is missing; delete returns **422** if `booking_tickets` still reference the type) + `PowerSyncUploadTicketTypeBookingTicketTest` — **no** admin screens wired (models/sync only)
-- Booking **line items**: `booking_tickets` (name, email, country, `custom_fields` JSON, optional `waiver_confirmation_id`) + the same uplink path + tests — requires a pre-existing `bookings` row today (no uplink for parent **bookings** yet; `**bookings` not in local PowerSync schema**)
+- Booking **line items**: `booking_tickets` … requires a pre-existing `bookings` row; parent `bookings` includes optional `trip_id` (concrete sortie) and is **downlinked** to the admin client (no `bookings` uplink yet)
 - Public **read-only** catalog: `GET /api/public/programs`, `GET /api/public/programs/{slug}`, public home + program detail pages (`PublicHomePage`, `PublicProgramDetailPage`)
 - PHPUnit: PostGIS geometry + relations (`OnWaterDataModelTest`); PowerSync upload coverage (programs, boats, trips/water routes, template stack, ticket types / booking tickets); `PublicProgramApiTest`
 
@@ -62,9 +62,10 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 
 ### Trips and calendar
 
-- Trips as bookable rows with `**scheduled_departure_at`**, capacity, `program_id`, `**boat_type_id**`, `**water_route_id**`, optional link to `**template_day_slot_id**`
-- **Template calendar UX**: assign template days to dates and visualize trips — data layer exists without calendar screens
-- Manual “day planner” beyond today’s trip list CRUD (if the product needs it)
+- Trips as **concrete** bookable rows with `**scheduled_departure_at`**, capacity, `program_id`, `**boat_type_id**`, `**water_route_id**`, optional `**template_day_slot_id**` (snapshot / provenance only after creation)
+- **Template days** help staff create trips faster; editing or deleting a template does **not** change existing trips. To replace departures for a day, use **Clear unbooked trips (day)** on the trip calendar (issues one PowerSync `DELETE` per unbooked trip; booked trips stay) or delete trips individually
+- **Day grouping** for that action follows the **calendar grid** (local date of `scheduled_departure_at` as shown), not a separate server “service date” API
+- Trip calendar (week/day/month) + quick create from empty slots; click events to edit
 
 ### Backend — on-water data model
 
@@ -83,9 +84,9 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 
 ### PowerSync and admin client
 
-- **Synced today** (program scope in `docker/powersync/sync-config.yaml`): programs (user scope list), `boat_types`, `media`, `boat_program`, `boats`, `trips`, `water_routes`, `template_days` / `template_day_slots` / `template_day_dates`, `ticket_types`, `booking_tickets` (joined through `bookings`)
-- **Uplink** for those tables via `POST /api/powersync/upload` (`PowerSyncUploadRouter`)
-- Sync / uplink for `**bookings`** headers, `**voyages**`, `**guides**` (if edited offline), `**check_ins**`, `**passengers**`, operational pivots — required for field ops + check-in offline
+- **Synced today** (program scope in `docker/powersync/sync-config.yaml`): programs (user scope list), `boat_types`, `media`, `boat_program`, `boats`, `trips`, `water_routes`, `template_days` / `template_day_slots` / `template_day_dates`, `ticket_types`, `bookings` (subset: id, program_id, trip_id, contact fields), `booking_tickets` (joined through `bookings`)
+- **Uplink** for those tables via `POST /api/powersync/upload` (`PowerSyncUploadRouter`) — **excluding** parent `bookings` (headers) for now
+- Sync / uplink for `**bookings`** writes, `**voyages**`, `**guides**` (if edited offline), `**check_ins**`, `**passengers**`, operational pivots — required for field ops + check-in offline
 - Conflict rules (single-writer per voyage, queue retries, …) documented and enforced beyond best-effort FIFO batches
 - TanStack DB: optimistic voyage lifecycle + reconcile on reconnect; document offline-allowed vs forbidden actions
 

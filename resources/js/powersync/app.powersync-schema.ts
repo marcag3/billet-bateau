@@ -72,6 +72,14 @@ const bookingTicketsTable = new Table({
     waiver_confirmation_id: column.text,
 });
 
+const bookingsTable = new Table({
+    id: column.text,
+    program_id: column.text,
+    trip_id: column.text,
+    contact_name: column.text,
+    contact_email: column.text,
+});
+
 const waterRoutesTable = new Table({
     id: column.text,
     program_id: column.text,
@@ -111,6 +119,7 @@ export const appPowerSyncSchema = new Schema({
     boats: boatsTable,
     trips: tripsTable,
     ticket_types: ticketTypesTable,
+    bookings: bookingsTable,
     booking_tickets: bookingTicketsTable,
     water_routes: waterRoutesTable,
     template_days: templateDaysTable,
@@ -132,6 +141,9 @@ export const appTripsPowerSyncTable = appPowerSyncSchema.props.trips;
 
 /** @type {import('@powersync/web').Table} */
 export const appTicketTypesPowerSyncTable = appPowerSyncSchema.props.ticket_types;
+
+/** @type {import('@powersync/web').Table} */
+export const appBookingsPowerSyncTable = appPowerSyncSchema.props.bookings;
 
 /** @type {import('@powersync/web').Table} */
 export const appBookingTicketsPowerSyncTable = appPowerSyncSchema.props.booking_tickets;

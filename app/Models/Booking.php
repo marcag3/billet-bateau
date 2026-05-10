@@ -20,6 +20,7 @@ class Booking extends Model
     protected $fillable = [
         'id',
         'program_id',
+        'trip_id',
         'contact_name',
         'contact_email',
         'created_at',
@@ -37,6 +38,11 @@ class Booking extends Model
     public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class, 'program_id');
+    }
+
+    public function trip(): BelongsTo
+    {
+        return $this->belongsTo(Trip::class, 'trip_id');
     }
 
     public function checkIn(): HasOne

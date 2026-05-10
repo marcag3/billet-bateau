@@ -62,4 +62,14 @@ class Trip extends Model
     {
         return $this->hasMany(Voyage::class, 'trip_id');
     }
+
+    /**
+     * Bookings that reserve this concrete trip (see `bookings.trip_id`).
+     *
+     * @return HasMany<Booking, $this>
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'trip_id');
+    }
 }

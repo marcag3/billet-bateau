@@ -60,6 +60,14 @@
         </template>
 
         <q-banner
+            v-if="currentTrip && hasBookingsForTrip"
+            class="bg-info text-white q-mb-md"
+            rounded
+        >
+            {{ t("tripsList.deleteBlockedHasBookings") }}
+        </q-banner>
+
+        <q-banner
             v-if="showNotFound"
             class="bg-warning text-dark q-mb-md"
             rounded
@@ -101,7 +109,9 @@
                             color="negative"
                             icon="delete"
                             :label="t('tripsList.delete')"
-                            :disable="isSubmitting || isDeleting"
+                            :disable="
+                                isSubmitting || isDeleting || hasBookingsForTrip
+                            "
                             @click="confirmDelete"
                         />
                     </div>
@@ -145,6 +155,7 @@ const { confirm } = useConfirmDialog();
 const { runWithNotify } = useNotifyAsyncAction();
 const { notifyError } = useNotifyErrorFromCatch();
 const tripsCollection = powersync.collections.trips;
+const bookingsCollection = powersync.collections.bookings;
 const { data: trips } = useLiveQuery(
     (queryBuilder) => {
         const col = tripsCollection.value;
@@ -155,6 +166,24 @@ const { data: trips } = useLiveQuery(
             .where(({ t }) => eq(t.program_id, pid));
     },
     [tripsCollection, powersync.activeProgramIdRef],
+);
+
+const tripId = computed(() => String(route.params.tripId ?? "").trim());
+
+const { data: bookingsForTripRows } = useLiveQuery(
+    (queryBuilder) => {
+        const bCol = bookingsCollection.value;
+        const tid = tripId.value;
+        if (!bCol || tid.length === 0) return undefined;
+        return queryBuilder
+            .from({ b: bCol })
+            .where(({ b }) => eq(b.trip_id, tid));
+    },
+    [bookingsCollection, tripId],
+);
+
+const hasBookingsForTrip = computed(
+    () => (bookingsForTripRows.value ?? []).length > 0,
 );
 
 const currentTrip = computed(() => {
@@ -182,7 +211,6 @@ const hasBootstrapped = powersync.hasBootstrappedCollection;
 const isDeleting = ref(false);
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
-const tripId = computed(() => String(route.params.tripId ?? "").trim());
 
 const backTo = computed(() => ({
     name: "trips.list" as const,
@@ -315,6 +343,13 @@ async function submitUpdateTrip(
 function confirmDelete() {
     const tr = currentTrip.value;
     if (!tr) {
+        return;
+    }
+    if (hasBookingsForTrip.value) {
+        $q.notify({
+            type: "warning",
+            message: t("tripsList.deleteBlockedHasBookings"),
+        });
         return;
     }
     confirm({

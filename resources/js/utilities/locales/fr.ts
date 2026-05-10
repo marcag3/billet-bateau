@@ -225,6 +225,8 @@ export default {
         deleteConfirmTitle: "Supprimer la sortie ?",
         deleteConfirmMessage:
             "Supprimer cette sortie ? Cette action est definitive.",
+        deleteBlockedHasBookings:
+            "Cette sortie a des reservations. Retirez ou reassignez les reservations avant de supprimer.",
         errorGeneric: "Une erreur est survenue. Veuillez reessayer.",
         notFound:
             "Cette sortie ne figure pas a ce programme ou a ete supprimee.",
@@ -237,7 +239,7 @@ export default {
     tripsCalendar: {
         title: "Calendrier des sorties",
         description:
-            "Voir les departs planifies par jour, semaine ou mois. Cliquez un creneau ou un jour pour ajouter une sortie, ou un evenement pour la modifier.",
+            "Voir les departs planifies par jour, semaine ou mois. Cliquez un evenement pour le modifier. « Supprimer les sorties libres » envoie une suppression PowerSync pour chaque sortie du jour affichee sans reservation ; les sorties avec reservation restent. Le jour correspond a la date locale du depart sur ce calendrier.",
         empty:
             "Aucune sortie avec un depart planifie. Ajoutez une sortie ou definissez une date et une heure pour l’afficher ici.",
         eventCapacity: "{cap} passagers",
@@ -247,6 +249,17 @@ export default {
         viewDay: "Jour",
         viewWeek: "Semaine",
         viewMonth: "Mois",
+        clearUnbookedTripsForDay: "Supprimer les sorties libres (jour)",
+        clearUnbookedConfirmTitle: "Supprimer les sorties libres pour ce jour ?",
+        clearUnbookedConfirmMessage:
+            "Supprimer toutes les sorties du {date} sans reservation ? Les sorties avec reservation sont conservees. Action definitive.",
+        clearUnbookedSuccess:
+            "{deleted} sortie(s) supprimee(s). {skipped} avec reservation conservee(s).",
+        clearUnbookedSomeDeletesFailed:
+            "{deleted} supprimee(s), {skipped} conservee(s) (reservees), {failed} suppression(s) en echec — verifiez la connexion et reessayez.",
+        clearUnbookedNothingToDo: "Aucune sortie a supprimer pour ce jour.",
+        clearUnbookedErrorGeneric:
+            "Impossible de supprimer les sorties. Veuillez reessayer.",
     },
     waterRoutesList: {
         title: "Parcours",

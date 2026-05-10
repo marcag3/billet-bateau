@@ -11,11 +11,14 @@ return new class extends Migration
         Schema::create('bookings', function (Blueprint $table): void {
             $table->ulid('id')->primary();
             $table->foreignUlid('program_id')->constrained('programs')->cascadeOnDelete();
+            $table->foreignUlid('trip_id')->nullable()->constrained('trips')->restrictOnDelete();
             $table->string('contact_name')->nullable();
             $table->string('contact_email')->nullable();
             $table->timestamps();
 
             $table->index(['program_id', 'updated_at']);
+            $table->index(['trip_id']);
+            $table->index(['program_id', 'trip_id']);
         });
     }
 };

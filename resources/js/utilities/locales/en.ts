@@ -216,6 +216,8 @@ export default {
         delete: "Delete",
         deleteConfirmTitle: "Delete trip?",
         deleteConfirmMessage: "Remove this trip? This cannot be undone.",
+        deleteBlockedHasBookings:
+            "This trip has bookings. Remove or reassign bookings before deleting.",
         errorGeneric: "Something went wrong. Please try again.",
         notFound: "This trip is not in this program or may have been removed.",
         quickNavLabel: "Open another trip",
@@ -227,7 +229,7 @@ export default {
     tripsCalendar: {
         title: "Trip calendar",
         description:
-            "View scheduled departures by day, week, or month. Click a time slot or day to add a trip, or click an event to edit it.",
+            "View scheduled departures by day, week, or month. Click an event to edit. “Clear unbooked trips” removes trips shown on the selected calendar day that have no linked booking (via PowerSync delete); booked trips stay. Day boundaries match this calendar (local date of each departure).",
         empty:
             "No trips with a scheduled departure yet. Add a trip or set a departure time to see it here.",
         eventCapacity: "{cap} pax",
@@ -237,6 +239,16 @@ export default {
         viewDay: "Day",
         viewWeek: "Week",
         viewMonth: "Month",
+        clearUnbookedTripsForDay: "Clear unbooked trips (day)",
+        clearUnbookedConfirmTitle: "Clear unbooked trips for this day?",
+        clearUnbookedConfirmMessage:
+            "Delete all trips on {date} that have no bookings? Trips with bookings will be kept. This cannot be undone.",
+        clearUnbookedSuccess:
+            "Removed {deleted} trip(s). Skipped {skipped} with bookings.",
+        clearUnbookedSomeDeletesFailed:
+            "{deleted} removed, {skipped} skipped (booked), {failed} delete(s) failed — check your connection and try again.",
+        clearUnbookedNothingToDo: "No trips to remove for this day.",
+        clearUnbookedErrorGeneric: "Could not clear trips. Please try again.",
     },
     waterRoutesList: {
         title: "Water routes",

@@ -59,6 +59,16 @@
                     text-color="grey-8"
                     :options="viewToggleOptions"
                 />
+                <q-btn
+                    flat
+                    dense
+                    no-caps
+                    color="negative"
+                    icon="delete_sweep"
+                    :label="t('tripsCalendar.clearUnbookedTripsForDay')"
+                    :disable="programId.length === 0"
+                    @click="confirmClearUnbookedForSelectedDay"
+                />
             </div>
 
             <QCalendarDay
@@ -145,8 +155,10 @@ import { useRoute, useRouter } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import { QCalendarDay, QCalendarMonth, today } from "@quasar/quasar-ui-qcalendar";
+import { useQuasar } from "quasar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import { joinTripsWithRelations } from "../powersync/joined-queries";
+import { useConfirmDialog } from "../composables/useConfirmDialog";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
@@ -158,12 +170,38 @@ import {
 const powersync = getAppPowerSyncContext();
 
 const { t, locale } = useI18n();
+const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
+const { confirm } = useConfirmDialog();
 
 const tripsCollection = powersync.collections.trips;
 const boatTypesCollection = powersync.collections.boat_types;
 const waterRoutesCollection = powersync.collections.water_routes;
+const bookingsCollection = powersync.collections.bookings;
+
+const { data: bookingsRows } = useLiveQuery(
+    (queryBuilder) => {
+        const col = bookingsCollection.value;
+        const pid = powersync.activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ b: col })
+            .where(({ b }) => eq(b.program_id, pid));
+    },
+    [bookingsCollection, powersync.activeProgramIdRef],
+);
+
+const bookedTripIds = computed(() => {
+    const set = new Set<string>();
+    for (const row of bookingsRows.value ?? []) {
+        const tid = row.trip_id;
+        if (tid != null && String(tid).trim() !== "") {
+            set.add(String(tid));
+        }
+    }
+    return set;
+});
 
 const { data: tripsRaw } = useLiveQuery(
     (queryBuilder) => {
@@ -428,15 +466,86 @@ function eventPositionStyle(
     };
 }
 
-function onTripClick(tripId: string): void {
-    if (tripId.length === 0) {
+function confirmClearUnbookedForSelectedDay(): void {
+    const pid = programId.value.trim();
+    if (pid.length === 0) {
         return;
     }
-    void router.push({
-        name: "trips.edit",
-        params: {
-            programId: programId.value,
-            tripId,
+    const dateStr = selectedDateStr.value;
+    confirm({
+        title: t("tripsCalendar.clearUnbookedConfirmTitle"),
+        message: t("tripsCalendar.clearUnbookedConfirmMessage", {
+            date: dateStr,
+        }),
+        onOk: async () => {
+            const col = tripsCollection.value;
+            if (!col) {
+                $q.notify({
+                    type: "negative",
+                    message: t("tripsCalendar.clearUnbookedErrorGeneric"),
+                });
+                return;
+            }
+
+            const dayTripIds = tripEvents.value
+                .filter((ev) => ev.date === dateStr)
+                .map((ev) => ev.id);
+
+            if (dayTripIds.length === 0) {
+                $q.notify({
+                    type: "info",
+                    message: t("tripsCalendar.clearUnbookedNothingToDo"),
+                });
+                return;
+            }
+
+            const booked = bookedTripIds.value;
+            const toDelete = dayTripIds.filter((id) => !booked.has(id));
+            const skippedCount = dayTripIds.length - toDelete.length;
+
+            let deletedCount = 0;
+            let failedCount = 0;
+
+            try {
+                for (const id of toDelete) {
+                    try {
+                        await col.delete(id).isPersisted.promise;
+                        deletedCount += 1;
+                    } catch {
+                        failedCount += 1;
+                    }
+                }
+                void powersync.refreshOutboxSnapshot();
+
+                if (failedCount > 0) {
+                    $q.notify({
+                        type: "warning",
+                        message: t(
+                            "tripsCalendar.clearUnbookedSomeDeletesFailed",
+                            {
+                                deleted: deletedCount,
+                                skipped: skippedCount,
+                                failed: failedCount,
+                            },
+                        ),
+                    });
+                    return;
+                }
+
+                $q.notify({
+                    type: "positive",
+                    message: t("tripsCalendar.clearUnbookedSuccess", {
+                        deleted: deletedCount,
+                        skipped: skippedCount,
+                    }),
+                });
+            } catch (e) {
+                console.error(e);
+                $q.notify({
+                    type: "negative",
+                    message: t("tripsCalendar.clearUnbookedErrorGeneric"),
+                });
+            }
         },
     });
 }
@@ -478,6 +587,19 @@ function timestampToDepartureParts(
         return null;
     }
     return { date: dateRaw, time: timeStr };
+}
+
+function onTripClick(id: string): void {
+    if (id.length === 0) {
+        return;
+    }
+    void router.push({
+        name: "trips.edit",
+        params: {
+            programId: programId.value,
+            tripId: id,
+        },
+    });
 }
 
 function onDayCalendarClickTime(payload: CalendarClickTimePayload): void {
