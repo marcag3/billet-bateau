@@ -3,6 +3,7 @@ import {
     isValidCalendarDateYmd,
     isValidTimeHm,
     parseTripCreateDepartureQuery,
+    roundDepartureToNearestMinutes,
 } from "../../utilities/trip-departure-query";
 
 describe("trip-departure-query", () => {
@@ -44,6 +45,28 @@ describe("trip-departure-query", () => {
         ).toEqual({
             scheduledDepartureDate: "2026-05-10",
             scheduledDepartureTime: "09:30",
+        });
+    });
+
+    it("roundDepartureToNearestMinutes rounds within the same day", () => {
+        expect(roundDepartureToNearestMinutes("2026-05-10", "09:07", 15)).toEqual({
+            date: "2026-05-10",
+            time: "09:00",
+        });
+        expect(roundDepartureToNearestMinutes("2026-05-10", "09:08", 15)).toEqual({
+            date: "2026-05-10",
+            time: "09:15",
+        });
+    });
+
+    it("roundDepartureToNearestMinutes handles day rollover", () => {
+        expect(roundDepartureToNearestMinutes("2026-05-10", "23:53", 15)).toEqual({
+            date: "2026-05-11",
+            time: "00:00",
+        });
+        expect(roundDepartureToNearestMinutes("2026-05-10", "00:07", 15)).toEqual({
+            date: "2026-05-10",
+            time: "00:00",
         });
     });
 });

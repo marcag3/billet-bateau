@@ -10,7 +10,7 @@
                         color="primary"
                         icon="add"
                         :label="t('tripsList.addTrip')"
-                        :to="{ name: 'trips.create', params: { programId } }"
+                        @click="tripModalRef?.openCreateModal()"
                     />
                 </template>
             </AppPageHeader>
@@ -145,13 +145,14 @@
                 </template>
             </QCalendarMonth>
         </div>
+        <AppTripUpsertModal ref="tripModalRef" route-name="trips.calendar" />
     </AppEntityIndexPageLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import { QCalendarDay, QCalendarMonth, today } from "@quasar/quasar-ui-qcalendar";
@@ -162,9 +163,11 @@ import { useConfirmDialog } from "../composables/useConfirmDialog";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
+import AppTripUpsertModal from "../components/organisms/AppTripUpsertModal.vue";
 import {
     isValidCalendarDateYmd,
     isValidTimeHm,
+    roundDepartureToNearestMinutes,
 } from "../utilities/trip-departure-query";
 
 const powersync = getAppPowerSyncContext();
@@ -172,7 +175,6 @@ const powersync = getAppPowerSyncContext();
 const { t, locale } = useI18n();
 const $q = useQuasar();
 const route = useRoute();
-const router = useRouter();
 const { confirm } = useConfirmDialog();
 
 const tripsCollection = powersync.collections.trips;
@@ -263,6 +265,8 @@ interface DayBodyScope {
 const trips = computed(() => (tripsRaw.value ?? []) as TripCalendarRow[]);
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
+
+const tripModalRef = ref<InstanceType<typeof AppTripUpsertModal> | null>(null);
 
 const dateLocale = computed(() =>
     locale.value === "fr" ? "fr-CA" : "en-CA",
@@ -586,20 +590,15 @@ function timestampToDepartureParts(
     if (!isValidTimeHm(timeStr)) {
         return null;
     }
-    return { date: dateRaw, time: timeStr };
+
+    return roundDepartureToNearestMinutes(dateRaw, timeStr, 15);
 }
 
 function onTripClick(id: string): void {
     if (id.length === 0) {
         return;
     }
-    void router.push({
-        name: "trips.edit",
-        params: {
-            programId: programId.value,
-            tripId: id,
-        },
-    });
+    tripModalRef.value?.openEditModal(id);
 }
 
 function onDayCalendarClickTime(payload: CalendarClickTimePayload): void {
@@ -615,13 +614,9 @@ function onDayCalendarClickTime(payload: CalendarClickTimePayload): void {
     if (pid.length === 0) {
         return;
     }
-    void router.push({
-        name: "trips.create",
-        params: { programId: pid },
-        query: {
-            departureDate: parts.date,
-            departureTime: parts.time,
-        },
+    tripModalRef.value?.openCreateModal({
+        departureDate: parts.date,
+        departureTime: parts.time,
     });
 }
 
@@ -645,10 +640,8 @@ function onMonthCalendarClickDay(payload: MonthClickDayPayload): void {
     if (pid.length === 0) {
         return;
     }
-    void router.push({
-        name: "trips.create",
-        params: { programId: pid },
-        query: { departureDate: dateRaw },
+    tripModalRef.value?.openCreateModal({
+        departureDate: dateRaw,
     });
 }
 </script>

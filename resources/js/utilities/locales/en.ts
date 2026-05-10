@@ -189,12 +189,12 @@ export default {
         addTrip: "Add trip",
         addNew: "New trip",
         backToList: "Back to trips",
-        createPageTitle: "Add trip",
-        createPageDescription:
+        createModalTitle: "Add trip",
+        createModalDescription:
             "Create a bookable trip for this program. Changes sync through PowerSync.",
-        editPageTitle: "Edit trip",
-        editPageDescription:
-            "Update departure, capacity, and links. Use the switcher or side menu to move between trips.",
+        editModalTitle: "Edit trip",
+        editModalDescription:
+            "Update departure, capacity, and links. Use the switcher to move between trips.",
         scheduledDeparture: "Scheduled departure",
         scheduledDepartureDate: "Departure date",
         scheduledDepartureTime: "Departure time",
@@ -229,7 +229,7 @@ export default {
     tripsCalendar: {
         title: "Trip calendar",
         description:
-            "View scheduled departures by day, week, or month. Click an event to edit. “Clear unbooked trips” removes trips shown on the selected calendar day that have no linked booking (via PowerSync delete); booked trips stay. Day boundaries match this calendar (local date of each departure).",
+            "View scheduled departures by day, week, or month. Click an event to edit in a dialog. “Clear unbooked trips” removes trips shown on the selected calendar day that have no linked booking (via PowerSync delete); booked trips stay. Day boundaries match this calendar (local date of each departure).",
         empty:
             "No trips with a scheduled departure yet. Add a trip or set a departure time to see it here.",
         eventCapacity: "{cap} pax",

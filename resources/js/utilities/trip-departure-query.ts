@@ -32,6 +32,54 @@ export function isValidTimeHm(s: string): boolean {
     return h >= 0 && h <= 23 && mm >= 0 && mm <= 59;
 }
 
+function toYmd(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+}
+
+function toHm(d: Date): string {
+    const h = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${h}:${mm}`;
+}
+
+export interface DepartureParts {
+    date: string;
+    time: string;
+}
+
+/**
+ * Rounds a local date/time pair to the nearest interval in minutes.
+ * Returns `null` when input is invalid.
+ */
+export function roundDepartureToNearestMinutes(
+    dateYmd: string,
+    timeHm: string,
+    intervalMinutes: number,
+): DepartureParts | null {
+    if (
+        !isValidCalendarDateYmd(dateYmd) ||
+        !isValidTimeHm(timeHm) ||
+        !Number.isInteger(intervalMinutes) ||
+        intervalMinutes <= 0
+    ) {
+        return null;
+    }
+
+    const [year, month, day] = dateYmd.split("-").map((x) => Number(x));
+    const [hour, minute] = timeHm.split(":").map((x) => Number(x));
+    const raw = new Date(year, month - 1, day, hour, minute, 0, 0);
+    const intervalMs = intervalMinutes * 60 * 1000;
+    const rounded = new Date(Math.round(raw.getTime() / intervalMs) * intervalMs);
+
+    return {
+        date: toYmd(rounded),
+        time: toHm(rounded),
+    };
+}
+
 function pickQueryString(
     raw: LocationQueryValue | LocationQueryValue[] | undefined,
 ): string {

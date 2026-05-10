@@ -10,7 +10,7 @@
                         color="primary"
                         icon="add"
                         :label="t('tripsList.addTrip')"
-                        :to="{ name: 'trips.create', params: { programId } }"
+                        @click="tripModalRef?.openCreateModal()"
                     />
                 </template>
             </AppPageHeader>
@@ -44,34 +44,32 @@
                         outline
                         dense
                         :label="t('common.edit')"
-                        :to="{
-                            name: 'trips.edit',
-                            params: { programId, tripId: String(tr.id) },
-                        }"
+                        @click="tripModalRef?.openEditModal(String(tr.id))"
                     />
                 </q-item-section>
             </q-item>
         </AppEntityList>
+        <AppTripUpsertModal ref="tripModalRef" route-name="trips.list" />
     </AppEntityIndexPageLayout>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 
-const powersync = getAppPowerSyncContext();
 import { joinTripsWithRelations } from "../powersync/joined-queries";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEntityList from "../components/ui/AppEntityList.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
+import AppTripUpsertModal from "../components/organisms/AppTripUpsertModal.vue";
+
+const powersync = getAppPowerSyncContext();
 
 const { t, locale } = useI18n();
-const route = useRoute();
 const tripsCollection = powersync.collections.trips;
 const boatTypesCollection = powersync.collections.boat_types;
 const waterRoutesCollection = powersync.collections.water_routes;
@@ -108,7 +106,8 @@ const { data: trips } = useLiveQuery(
     ],
 );
 
-const programId = computed(() => String(route.params.programId ?? "").trim());
+
+const tripModalRef = ref<InstanceType<typeof AppTripUpsertModal> | null>(null);
 
 function formatDeparture(tr: { scheduled_departure_at?: unknown }) {
     const raw = tr.scheduled_departure_at;

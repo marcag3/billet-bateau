@@ -196,12 +196,12 @@ export default {
         addTrip: "Ajouter une sortie",
         addNew: "Nouvelle sortie",
         backToList: "Retour aux sorties",
-        createPageTitle: "Ajouter une sortie",
-        createPageDescription:
+        createModalTitle: "Ajouter une sortie",
+        createModalDescription:
             "Creez une sortie reservable pour ce programme. Les changements se synchronisent via PowerSync.",
-        editPageTitle: "Modifier la sortie",
-        editPageDescription:
-            "Modifiez le depart, la capacite et les liens. Utilisez le selecteur ou le menu pour passer d’une sortie a l’autre.",
+        editModalTitle: "Modifier la sortie",
+        editModalDescription:
+            "Modifiez le depart, la capacite et les liens. Utilisez le selecteur pour passer d’une sortie a l’autre.",
         scheduledDeparture: "Depart planifie",
         scheduledDepartureDate: "Date du depart",
         scheduledDepartureTime: "Heure du depart",
@@ -239,7 +239,7 @@ export default {
     tripsCalendar: {
         title: "Calendrier des sorties",
         description:
-            "Voir les departs planifies par jour, semaine ou mois. Cliquez un evenement pour le modifier. « Supprimer les sorties libres » envoie une suppression PowerSync pour chaque sortie du jour affichee sans reservation ; les sorties avec reservation restent. Le jour correspond a la date locale du depart sur ce calendrier.",
+            "Voir les departs planifies par jour, semaine ou mois. Cliquez un evenement pour le modifier dans une fenetre. « Supprimer les sorties libres » envoie une suppression PowerSync pour chaque sortie du jour affichee sans reservation ; les sorties avec reservation restent. Le jour correspond a la date locale du depart sur ce calendrier.",
         empty:
             "Aucune sortie avec un depart planifie. Ajoutez une sortie ou definissez une date et une heure pour l’afficher ici.",
         eventCapacity: "{cap} passagers",
