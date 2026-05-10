@@ -1,0 +1,191 @@
+<template>
+    <q-form @submit="onValidSubmit">
+        <AppFormStack>
+            <q-input
+                v-model="title"
+                v-bind="titleProps"
+                outlined
+                dense
+                :label="t('ticketTypesList.typeTitle')"
+                :disable="fieldsDisabled"
+            />
+            <q-input
+                :model-value="priceCentsDisplay"
+                v-bind="priceCentsProps"
+                outlined
+                dense
+                type="number"
+                :label="t('ticketTypesList.priceCents')"
+                :hint="t('ticketTypesList.priceCentsHint')"
+                :disable="fieldsDisabled"
+                @update:model-value="onPriceCentsInput"
+            />
+            <q-toggle
+                v-model="isPayWhatYouCan"
+                :label="t('ticketTypesList.payWhatYouCan')"
+                :disable="fieldsDisabled"
+            />
+            <AppFormRow>
+                <div class="col-12 col-sm-6">
+                    <q-input
+                        v-model.number="minPerPurchase"
+                        v-bind="minPerPurchaseProps"
+                        outlined
+                        dense
+                        type="number"
+                        :label="t('ticketTypesList.minPerPurchase')"
+                        :disable="fieldsDisabled"
+                    />
+                </div>
+                <div class="col-12 col-sm-6">
+                    <q-input
+                        :model-value="maxPerPurchaseDisplay"
+                        v-bind="maxPerPurchaseProps"
+                        outlined
+                        dense
+                        type="number"
+                        :label="t('ticketTypesList.maxPerPurchase')"
+                        :disable="fieldsDisabled"
+                        @update:model-value="onMaxPerPurchaseInput"
+                    />
+                </div>
+            </AppFormRow>
+            <q-input
+                v-model="tripInventoryCapsJson"
+                v-bind="tripInventoryCapsJsonProps"
+                outlined
+                dense
+                type="textarea"
+                autogrow
+                :label="t('ticketTypesList.tripInventoryCaps')"
+                :hint="t('ticketTypesList.tripInventoryCapsHint')"
+                :disable="fieldsDisabled"
+            />
+            <slot
+                name="actions"
+                :meta="meta"
+                :is-submitting="isSubmitting"
+                :fields-disabled="fieldsDisabled"
+            />
+        </AppFormStack>
+    </q-form>
+</template>
+
+<script setup lang="ts">
+import { useForm } from "vee-validate";
+import { computed, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import {
+    createEmptyTicketTypeFormValues,
+    createTicketTypeFormSchema,
+    type TicketTypeFormValues,
+} from "../../models/ticket-types/ticket-types.validation";
+import { createQuasarFieldBinder } from "../../validation/quasar-vee-fields";
+import AppFormStack from "../ui/AppFormStack.vue";
+import AppFormRow from "../ui/AppFormRow.vue";
+
+const props = defineProps<{
+    /**
+     * When set, merges into form values (edit prefill).
+     * When null, form resets to empty defaults.
+     */
+    seed: Partial<TicketTypeFormValues> | null;
+    /** Disables fields while submitting or external busy state. */
+    disabled?: boolean;
+    submitFn: (values: TicketTypeFormValues) => Promise<void>;
+}>();
+
+const { t } = useI18n();
+
+const ticketTypeFormSchema = createTicketTypeFormSchema(t);
+const { handleSubmit, defineField, meta, isSubmitting, resetForm, setFieldValue } =
+    useForm<TicketTypeFormValues>({
+        validationSchema: ticketTypeFormSchema,
+        initialValues: createEmptyTicketTypeFormValues(),
+    });
+
+const quasarField = createQuasarFieldBinder(defineField);
+const [title, titleProps] = quasarField("title");
+const [priceCents, priceCentsProps] = quasarField("priceCents");
+const [isPayWhatYouCan] = quasarField("isPayWhatYouCan");
+const [minPerPurchase, minPerPurchaseProps] = quasarField("minPerPurchase");
+const [maxPerPurchase, maxPerPurchaseProps] = quasarField("maxPerPurchase");
+const [tripInventoryCapsJson, tripInventoryCapsJsonProps] = quasarField(
+    "tripInventoryCapsJson",
+);
+
+const fieldsDisabled = computed(
+    () => Boolean(props.disabled) || isSubmitting.value,
+);
+
+const maxPerPurchaseDisplay = computed(() => {
+    const v = maxPerPurchase.value;
+    if (v === null || v === undefined) {
+        return "";
+    }
+    return v;
+});
+
+const priceCentsDisplay = computed(() => {
+    const v = priceCents.value;
+    if (v === null || v === undefined) {
+        return "";
+    }
+    return v;
+});
+
+/**
+ * @param {unknown} value
+ * @returns {void}
+ */
+function onPriceCentsInput(value: unknown): void {
+    if (value === "" || value === null || value === undefined) {
+        setFieldValue("priceCents", null);
+        return;
+    }
+    const n =
+        typeof value === "number" ? value : Number.parseInt(String(value), 10);
+    if (!Number.isFinite(n)) {
+        setFieldValue("priceCents", null);
+        return;
+    }
+    setFieldValue("priceCents", n);
+}
+
+/**
+ * @param {unknown} value
+ * @returns {void}
+ */
+function onMaxPerPurchaseInput(value: unknown): void {
+    if (value === "" || value === null || value === undefined) {
+        setFieldValue("maxPerPurchase", null);
+        return;
+    }
+    const n =
+        typeof value === "number" ? value : Number.parseInt(String(value), 10);
+    if (!Number.isFinite(n)) {
+        setFieldValue("maxPerPurchase", null);
+        return;
+    }
+    setFieldValue("maxPerPurchase", n);
+}
+
+watch(
+    () => props.seed,
+    (next) => {
+        if (next != null) {
+            resetForm({
+                values: {
+                    ...createEmptyTicketTypeFormValues(),
+                    ...next,
+                },
+            });
+        } else {
+            resetForm({ values: createEmptyTicketTypeFormValues() });
+        }
+    },
+    { immediate: true },
+);
+
+const onValidSubmit = handleSubmit((values) => props.submitFn(values));
+</script>
