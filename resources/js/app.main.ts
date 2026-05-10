@@ -3,6 +3,7 @@ import { createPinia } from "pinia";
 import { configure } from "vee-validate";
 import { Quasar, Notify, Dialog } from "quasar";
 import "@quasar/extras/material-icons/material-icons.css";
+import "leaflet/dist/leaflet.css";
 import "quasar/src/css/index.sass";
 import "../css/tokens.css";
 import "../css/app.scss";

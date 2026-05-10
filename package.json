@@ -40,6 +40,7 @@
         "@tanstack/powersync-db-collection": "^0.1.43",
         "@tanstack/vue-db": "^0.0.116",
         "@vee-validate/zod": "^4.15.1",
+        "leaflet": "^1.9.4",
         "pinia": "^3.0.4",
         "quasar": "^2.19.3",
         "ulid": "^3.0.2",

@@ -223,7 +223,7 @@ export default {
     waterRoutesList: {
         title: "Water routes",
         description:
-            "Reusable paths for trips (GeoJSON LineString, SRID 4326). Changes sync through PowerSync; default geometry is used if trace is left blank.",
+            "Reusable paths for trips (GeoJSON LineString, SRID 4326). Trace the route on the map below; changes sync through PowerSync. If you leave the trace empty, a default geometry is used.",
         addNew: "New water route",
         editTitle: "Edit water route",
         edit: "Edit",
@@ -233,9 +233,11 @@ export default {
         duration: "Duration (minutes)",
         durationHint: "Positive integer — used with departures for ETA.",
         durationRequired: "Duration is required.",
-        traceOptional: "Trace (GeoJSON LineString, optional)",
+        traceOptional: "Trace (optional)",
         traceHint:
-            "Leave blank to use a default Montreal-area line. Must be valid GeoJSON with type LineString.",
+            "Click the map to add points along the route (minimum two points). Undo removes the last point; Clear removes the trace. Leave empty to use a default Montreal-area line.",
+        traceUndo: "Undo last point",
+        traceClear: "Clear trace",
         create: "Create",
         empty: "No water routes yet. Create one above for trip planning.",
         rename: "Edit name",
@@ -247,7 +249,8 @@ export default {
         deleteConfirmMessage:
             'Remove "{name}"? Trips referencing it will clear the link on sync.',
         errorGeneric: "Something went wrong. Please try again.",
-        invalidGeoJson: "Trace must be valid GeoJSON with type LineString.",
+        invalidGeoJson:
+            "Trace must be empty or a valid GeoJSON LineString with at least two coordinates.",
     },
     ticketTypesList: {
         title: "Ticket types",

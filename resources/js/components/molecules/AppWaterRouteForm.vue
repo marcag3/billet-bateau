@@ -20,13 +20,9 @@
                 :hint="t('waterRoutesList.durationHint')"
                 :disable="isSubmitting"
             />
-            <q-input
+            <AppPolylineTraceField
                 v-model="traceGeoJson"
                 v-bind="traceGeoJsonProps"
-                outlined
-                dense
-                type="textarea"
-                autogrow
                 :label="t('waterRoutesList.traceOptional')"
                 :hint="t('waterRoutesList.traceHint')"
                 :disable="isSubmitting"
@@ -69,7 +65,9 @@ import { createQuasarFieldBinder } from '../../validation/quasar-vee-fields';
 import { getAppPowerSyncContext } from '../../powersync/app-powersync.runtime';
 import type { WaterRouteOutput } from '../../powersync/water-routes.collection';
 import { useNotifyErrorFromCatch } from '../../composables/useNotifyErrorFromCatch';
+import { isPersistableLineStringGeoJson } from '../../utilities/geojson-line-string';
 import AppFormStack from '../ui/AppFormStack.vue';
+import AppPolylineTraceField from './AppPolylineTraceField.vue';
 
 const props = defineProps<{
     programId: string;
@@ -132,28 +130,12 @@ const isEditMode = computed(
     () => props.waterRouteId != null && String(props.waterRouteId).length > 0,
 );
 
-function isValidLineStringGeoJson(raw: string): boolean {
-    const trimmed = raw.trim();
-    if (trimmed.length === 0) {
-        return false;
-    }
-    try {
-        const parsed = JSON.parse(trimmed) as { type?: string };
-        return (
-            parsed?.type === 'LineString' &&
-            Array.isArray((parsed as { coordinates?: unknown }).coordinates)
-        );
-    } catch {
-        return false;
-    }
-}
-
 function resolveTraceForPersist(traceRaw: string | undefined): string | null {
     const trimmed = traceRaw != null ? String(traceRaw).trim() : '';
     if (trimmed.length === 0) {
         return DEFAULT_WATER_ROUTE_TRACE_GEOJSON;
     }
-    if (!isValidLineStringGeoJson(trimmed)) {
+    if (!isPersistableLineStringGeoJson(trimmed)) {
         return null;
     }
     return trimmed;

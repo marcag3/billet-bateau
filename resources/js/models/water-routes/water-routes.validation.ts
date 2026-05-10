@@ -1,6 +1,7 @@
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 import { parsePositiveInt } from '../../validation/zod-fields';
+import { isPersistableLineStringGeoJson } from '../../utilities/geojson-line-string';
 import { boatEntityNameSchema, type Translator } from '../boats/boats.validation';
 
 function createWaterRouteFormZodSchema(t: Translator) {
@@ -9,7 +10,16 @@ function createWaterRouteFormZodSchema(t: Translator) {
         durationMinutes: z
             .preprocess((v) => parsePositiveInt(v), z.union([z.number().int().min(1), z.null()]))
             .refine((v): v is number => v !== null, { message: t('waterRoutesList.durationRequired') }),
-        traceGeoJson: z.string().optional(),
+        traceGeoJson: z.string().refine(
+            (v) => {
+                const trimmed = v.trim();
+                if (trimmed.length === 0) {
+                    return true;
+                }
+                return isPersistableLineStringGeoJson(trimmed);
+            },
+            { message: t('waterRoutesList.invalidGeoJson') },
+        ),
     });
 }
 

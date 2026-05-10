@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
 import { Quasar } from 'quasar';
 import '@quasar/extras/material-icons/material-icons.css';
+import 'leaflet/dist/leaflet.css';
 import 'quasar/src/css/index.sass';
 import '../css/public.css';
 import publicRouter from './router/public';

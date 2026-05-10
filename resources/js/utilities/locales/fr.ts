@@ -233,7 +233,7 @@ export default {
     waterRoutesList: {
         title: "Parcours",
         description:
-            "Traces reutilisables pour les sorties (GeoJSON LineString, SRID 4326). Les changements se synchronisent via PowerSync ; une geometrie par defaut est utilisee si la trace est vide.",
+            "Traces reutilisables pour les sorties (GeoJSON LineString, SRID 4326). Tracez le parcours sur la carte ci-dessous ; les changements se synchronisent via PowerSync. Si la trace est vide, une geometrie par defaut est utilisee.",
         addNew: "Nouveau parcours",
         editTitle: "Modifier le parcours",
         edit: "Modifier",
@@ -244,9 +244,11 @@ export default {
         durationHint:
             "Entier strictement positif — sert avec les departs pour l’ETA.",
         durationRequired: "La duree est obligatoire.",
-        traceOptional: "Trace (GeoJSON LineString, optionnel)",
+        traceOptional: "Trace (optionnel)",
         traceHint:
-            "Laissez vide pour une ligne par defaut (region de Montreal). Doit etre un GeoJSON valide de type LineString.",
+            "Cliquez sur la carte pour ajouter des points (minimum deux points). Annuler retire le dernier point ; Effacer supprime la trace. Laissez vide pour une ligne par defaut (region de Montreal).",
+        traceUndo: "Annuler le dernier point",
+        traceClear: "Effacer la trace",
         create: "Creer",
         empty: "Aucun parcours pour le moment. Creez-en un ci-dessus pour les sorties.",
         rename: "Modifier le nom",
@@ -259,7 +261,7 @@ export default {
             "Supprimer « {name} » ? Les sorties liees verront le lien efface a la synchronisation.",
         errorGeneric: "Une erreur est survenue. Veuillez reessayer.",
         invalidGeoJson:
-            "La trace doit etre un GeoJSON valide de type LineString.",
+            "La trace doit etre vide ou un GeoJSON LineString valide avec au moins deux coordonnees.",
     },
     ticketTypesList: {
         title: "Types de billet",

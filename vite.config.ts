@@ -1,9 +1,13 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import vue from '@vitejs/plugin-vue';
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 import { VitePWA } from 'vite-plugin-pwa';
+
+const projectDir = path.dirname(fileURLToPath(import.meta.url));
 
 const wayfinderDisabled = process.env.VITEST === 'true' || process.env.DISABLE_WAYFINDER === 'true';
 
@@ -19,6 +23,17 @@ export default defineConfig(({ mode }) => {
         .filter(Boolean);
 
     return {
+        resolve: {
+            alias:
+                process.env.VITEST === 'true'
+                    ? {
+                          leaflet: path.resolve(
+                              projectDir,
+                              'resources/js/tests/mocks/leaflet.ts',
+                          ),
+                      }
+                    : {},
+        },
         // PowerSync / WA-SQLite ship web workers + WASM; pre-bundling them breaks `db.init()` in dev (hangs forever).
         // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
         // https://github.com/powersync-ja/powersync-js/blob/main/demos/example-vite/vite.config.ts
