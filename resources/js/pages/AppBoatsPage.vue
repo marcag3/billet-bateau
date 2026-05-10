@@ -16,57 +16,6 @@
             </AppPageHeader>
         </template>
 
-        <template #filters>
-            <AppCardSection :label="t('boatsList.filters')">
-                <AppFormRow>
-                    <q-input
-                        v-model="filterName"
-                        class="col-12 col-sm-6 col-md-3"
-                        outlined
-                        dense
-                        clearable
-                        :label="t('boatsList.filterName')"
-                    />
-                    <q-input
-                        v-model="filterCapacity"
-                        class="col-12 col-sm-6 col-md-2"
-                        outlined
-                        dense
-                        clearable
-                        :label="t('boatsList.filterCapacity')"
-                    />
-                    <q-input
-                        v-model="filterNotes"
-                        class="col-12 col-sm-6 col-md-3"
-                        outlined
-                        dense
-                        clearable
-                        :label="t('boatsList.filterNotes')"
-                    />
-                    <q-select
-                        v-model="filterBoatTypeId"
-                        class="col-12 col-sm-6 col-md-3"
-                        outlined
-                        dense
-                        clearable
-                        emit-value
-                        map-options
-                        :options="boatTypeOptions"
-                        :label="t('boatsList.filterBoatType')"
-                    />
-                    <div class="col-12 col-md-1 flex items-end">
-                        <q-btn
-                            flat
-                            color="primary"
-                            :label="t('boatsList.clearFilters')"
-                            :disable="!hasActiveFilters"
-                            @click="clearFilters"
-                        />
-                    </div>
-                </AppFormRow>
-            </AppCardSection>
-        </template>
-
         <q-infinite-scroll
             :offset="400"
             :disable="infiniteScrollDisabled"
@@ -74,7 +23,7 @@
         >
             <AppEntityList>
                 <AppEmptyListRow
-                    :show="filteredBoats.length === 0"
+                    :show="boats.length === 0"
                     :message="emptyListMessage"
                 />
                 <q-item
@@ -143,8 +92,6 @@ const powersync = getAppPowerSyncContext();
 import { joinBoatsWithBoatTypes } from "../powersync/joined-queries";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
-import AppCardSection from "../components/ui/AppCardSection.vue";
-import AppFormRow from "../components/ui/AppFormRow.vue";
 import AppEntityList from "../components/ui/AppEntityList.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 
@@ -179,116 +126,17 @@ const boats = computed(() => {
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
-const filterName = ref("");
-const filterCapacity = ref("");
-const filterNotes = ref("");
-const filterBoatTypeId = ref<string | null>(null);
-
 const visibleCount = ref(PAGE_SIZE);
-
-// Scoped boat types query for the filter dropdown (all types in program, not just those with boats)
-const scopedBoatTypesCollection = boatTypesCollection;
-const { data: scopedBoatTypes } = useLiveQuery(
-    (queryBuilder) => {
-        const col = scopedBoatTypesCollection.value;
-        const pid = activeProgramIdRef.value.trim();
-        if (!col || pid.length === 0) return undefined;
-        return queryBuilder
-            .from({ bt: col })
-            .where(({ bt }) => eq(bt.program_id, pid));
-    },
-    [scopedBoatTypesCollection, activeProgramIdRef],
-);
-
-const boatTypeOptions = computed(() =>
-    (scopedBoatTypes.value ?? []).map((bt) => ({
-        label: String(bt.name ?? ""),
-        value: String(bt.id),
-    })),
-);
-
-const hasActiveFilters = computed(() => {
-    return (
-        filterName.value.trim().length > 0 ||
-        filterCapacity.value.trim().length > 0 ||
-        filterNotes.value.trim().length > 0 ||
-        (filterBoatTypeId.value != null &&
-            String(filterBoatTypeId.value).length > 0)
-    );
-});
-
-const filteredBoats = computed(() => {
-    const nq = filterName.value.trim().toLowerCase();
-    const capq = filterCapacity.value.trim();
-    const notesq = filterNotes.value.trim().toLowerCase();
-    const typeId = filterBoatTypeId.value;
-
-    return boats.value.filter((b) => {
-        const name = String(b.name ?? "").toLowerCase();
-        const notes = String(b.notes ?? "").toLowerCase();
-        const cap = b.capacity == null ? "" : String(b.capacity);
-
-        if (nq.length > 0 && !name.includes(nq)) {
-            return false;
-        }
-        if (notesq.length > 0 && !notes.includes(notesq)) {
-            return false;
-        }
-        if (capq.length > 0 && !cap.includes(capq)) {
-            return false;
-        }
-        if (typeId != null && String(typeId).length > 0) {
-            const bid =
-                b.boat_type_id == null || String(b.boat_type_id) === ""
-                    ? null
-                    : String(b.boat_type_id);
-            if (bid !== String(typeId)) {
-                return false;
-            }
-        }
-        return true;
-    });
-});
-
-const visibleBoats = computed(() =>
-    filteredBoats.value.slice(0, visibleCount.value),
-);
+const visibleBoats = computed(() => boats.value.slice(0, visibleCount.value));
 
 const infiniteScrollDisabled = computed(
-    () => visibleBoats.value.length >= filteredBoats.value.length,
+    () => visibleBoats.value.length >= boats.value.length,
 );
 
-const emptyListMessage = computed(() => {
-    if (filteredBoats.value.length > 0) {
-        return "";
-    }
-    if (boats.value.length > 0 && hasActiveFilters.value) {
-        return t("boatsList.emptyFiltered");
-    }
-    return t("boatsList.empty");
-});
-
-function clearFilters() {
-    filterName.value = "";
-    filterCapacity.value = "";
-    filterNotes.value = "";
-    filterBoatTypeId.value = null;
-}
+const emptyListMessage = computed(() => t("boatsList.empty"));
 
 watch(
-    () => [
-        filterName.value,
-        filterCapacity.value,
-        filterNotes.value,
-        filterBoatTypeId.value,
-    ],
-    () => {
-        visibleCount.value = PAGE_SIZE;
-    },
-);
-
-watch(
-    () => filteredBoats.value.length,
+    () => boats.value.length,
     (len) => {
         if (len < visibleCount.value) {
             visibleCount.value = Math.max(PAGE_SIZE, len);
@@ -297,12 +145,12 @@ watch(
 );
 
 function onLoadMore(_index: number, done: (stop?: boolean) => void) {
-    if (visibleBoats.value.length >= filteredBoats.value.length) {
+    if (visibleBoats.value.length >= boats.value.length) {
         done(true);
         return;
     }
     visibleCount.value += PAGE_SIZE;
-    const stop = visibleBoats.value.length >= filteredBoats.value.length;
+    const stop = visibleBoats.value.length >= boats.value.length;
     done(stop);
 }
 </script>
