@@ -1,36 +1,38 @@
 export type UserCoordinates = { lat: number; lng: number };
 
-function tryGetCurrentPosition(highAccuracy: boolean): Promise<GeolocationPosition | null> {
-    return new Promise((resolve) => {
+function getCurrentPositionAsync(highAccuracy: boolean): Promise<GeolocationPosition> {
+    return new Promise((resolve, reject) => {
         if (typeof navigator === 'undefined' || !navigator.geolocation) {
-            resolve(null);
+            reject(new Error('Geolocation API unavailable'));
             return;
         }
-        navigator.geolocation.getCurrentPosition(
-            (position) => resolve(position),
-            () => resolve(null),
-            { enableHighAccuracy: highAccuracy, timeout: 10000, maximumAge: 60000 },
-        );
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: highAccuracy,
+            timeout: 10000,
+            maximumAge: 60000,
+        });
     });
 }
 
 /**
- * Resolves the user's coordinates, preferring a precise (high-accuracy) reading
- * and falling back to an imprecise reading if the precise attempt is denied,
- * times out, or errors. Returns null when geolocation is unavailable or both
- * attempts fail.
+ * Resolves the user's coordinates by racing a precise (high-accuracy / GPS)
+ * request against an imprecise (network / Wi-Fi) request and taking whichever
+ * fix returns first. Imprecise typically resolves sub-second while precise
+ * waits for a GPS warm-up, so this avoids long delays without giving up the
+ * chance of a precise fix when it happens to arrive first. Returns null when
+ * geolocation is unavailable or both attempts fail.
  */
 export function useUserGeolocation() {
     async function resolveUserCoordinates(): Promise<UserCoordinates | null> {
-        const precise = await tryGetCurrentPosition(true);
-        if (precise) {
-            return { lat: precise.coords.latitude, lng: precise.coords.longitude };
+        try {
+            const position = await Promise.any([
+                getCurrentPositionAsync(true),
+                getCurrentPositionAsync(false),
+            ]);
+            return { lat: position.coords.latitude, lng: position.coords.longitude };
+        } catch {
+            return null;
         }
-        const imprecise = await tryGetCurrentPosition(false);
-        if (imprecise) {
-            return { lat: imprecise.coords.latitude, lng: imprecise.coords.longitude };
-        }
-        return null;
     }
 
     return { resolveUserCoordinates };
