@@ -1,7 +1,5 @@
 export default {
     common: {
-        publicExperience: "Experience publique",
-
         newProgram: "Nouveau programme",
         programs: "Programmes",
         boats: "Bateaux",
@@ -13,7 +11,6 @@ export default {
         calendar: "Calendrier",
         logout: "Se deconnecter",
         reauthenticate: "Se reconnecter",
-        openApp: "Ouvrir l'application",
         language: "Langue",
         welcome: "Bienvenue",
         dismiss: "Fermer",
@@ -124,9 +121,6 @@ export default {
     public: {
         minimalDescription:
             "Ce bundle public reste minimal et evite de charger les modules riches de l'application.",
-    },
-    publicLayout: {
-        catalog: "Catalogue",
     },
     publicHome: {
         noPrograms: "Aucun programme n’est publié pour le moment.",
