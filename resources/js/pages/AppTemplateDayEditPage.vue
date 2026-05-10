@@ -162,6 +162,12 @@ import {
     isValidTimeHm,
     roundDepartureToNearestMinutes,
 } from "../utilities/trip-departure-query";
+import {
+    assignOverlappingIntervalColumnLayout,
+    computeDayCalendarEventPositionStyle,
+    normalizeCalendarEventDurationMinutes,
+    type DayCalendarLayoutColumns,
+} from "../utilities/day-calendar-event-layout";
 
 const powersync = getAppPowerSyncContext();
 
@@ -289,6 +295,14 @@ function getWaterRouteLabel(id: string | null | undefined): string {
     return found ? String(found.name ?? "") : id;
 }
 
+const waterRouteDurationById = computed(() => {
+    const map = new Map<string, unknown>();
+    for (const wr of waterRoutes.value ?? []) {
+        map.set(String(wr.id), wr.duration_minutes ?? null);
+    }
+    return map;
+});
+
 // --- Ticket types ---
 
 const { data: ticketTypes } = useLiveQuery(
@@ -351,13 +365,15 @@ interface DayBodyScope {
     timeDurationHeight: (minutes: number) => number;
 }
 
-interface SlotCalendarEvent {
+interface SlotCalendarEvent extends DayCalendarLayoutColumns {
     id: string;
     title: string;
     /** Local calendar date `YYYY-MM-DD` (display only). */
     date: string;
     /** `HH:mm` (24h) for QCalendar interval positioning. */
     time: string;
+    /** Bar height in minutes (from water route duration). */
+    durationMinutes: number;
 }
 
 function slotDepartureTimeToHm(raw: unknown): string {
@@ -373,20 +389,30 @@ function slotDepartureTimeToHm(raw: unknown): string {
 
 const slotCalendarEvents = computed<SlotCalendarEvent[]>(() => {
     const date = slotCalendarDateStr.value;
-    const out: SlotCalendarEvent[] = [];
+    const durByRoute = waterRouteDurationById.value;
+    const base: Array<
+        Omit<SlotCalendarEvent, keyof DayCalendarLayoutColumns>
+    > = [];
     for (const slot of sortedSlots.value) {
         const hm = slotDepartureTimeToHm(slot.departure_time);
         if (!isValidTimeHm(hm)) {
             continue;
         }
-        out.push({
+        const routeId =
+            slot.water_route_id != null &&
+            String(slot.water_route_id).trim() !== ""
+                ? String(slot.water_route_id)
+                : null;
+        const rawDur = routeId ? durByRoute.get(routeId) : undefined;
+        base.push({
             id: String(slot.id),
             date,
             time: hm,
             title: buildSlotCalendarTitle(slot),
+            durationMinutes: normalizeCalendarEventDurationMinutes(rawDur),
         });
     }
-    return out;
+    return assignOverlappingIntervalColumnLayout(base);
 });
 
 function slotCalendarEventsForScope(scope: DayBodyScope): SlotCalendarEvent[] {
@@ -432,18 +458,12 @@ function slotEventPositionStyle(
     scope: DayBodyScope,
     ev: SlotCalendarEvent,
 ): Record<string, string> {
-    const top = scope.timeStartPos(ev.time, true);
-    const topPx = top === false ? 0 : top;
-    const slotH = scope.timeDurationHeight(30);
-    const minH = Math.max(slotH, 24);
-    return {
-        position: "absolute",
-        left: "2px",
-        right: "2px",
-        top: `${topPx}px`,
-        minHeight: `${minH}px`,
-        zIndex: "1",
-    };
+    return computeDayCalendarEventPositionStyle(scope, {
+        time: ev.time,
+        columnIndex: ev.columnIndex,
+        columnCount: ev.columnCount,
+        intervalMinutes: ev.durationMinutes,
+    });
 }
 
 /** QCalendar `click-time` payload (interval cell). */
@@ -745,9 +765,12 @@ async function submitSlotDialog(closeAfter: boolean): Promise<void> {
 
 .template-day-slot-cal-event-wrap {
     pointer-events: auto;
+    overflow: hidden;
 }
 
 .template-day-slot-cal-event-btn {
     font-size: 0.75rem;
+    height: 100%;
+    min-height: 0;
 }
 </style>

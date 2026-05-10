@@ -223,6 +223,12 @@ import {
     isValidTimeHm,
     roundDepartureToNearestMinutes,
 } from "../utilities/trip-departure-query";
+import {
+    assignOverlappingIntervalColumnLayout,
+    computeDayCalendarEventPositionStyle,
+    normalizeCalendarEventDurationMinutes,
+    type DayCalendarLayoutColumns,
+} from "../utilities/day-calendar-event-layout";
 
 const powersync = getAppPowerSyncContext();
 
@@ -370,9 +376,10 @@ interface TripCalendarRow {
     capacity?: unknown;
     boatTypeName?: unknown;
     waterRouteName?: unknown;
+    waterRouteDurationMinutes?: unknown;
 }
 
-interface TripCalendarEvent {
+interface TripCalendarEventBase {
     id: string;
     title: string;
     /** Local calendar date `YYYY-MM-DD`. */
@@ -380,7 +387,13 @@ interface TripCalendarEvent {
     /** `HH:mm` (24h) for QCalendar interval positioning. */
     time: string;
     start: Date;
+    /** Epoch ms at departure (for overlap column layout). */
+    startMs: number;
+    /** Bar height in minutes (from water route duration). */
+    durationMinutes: number;
 }
+
+type TripCalendarEvent = TripCalendarEventBase & DayCalendarLayoutColumns;
 
 /** QCalendar `#day-body` slot scope helpers (see `getScopeForSlot` in QCalendar). */
 interface DayBodyScope {
@@ -602,8 +615,8 @@ function toHHmm(d: Date): string {
     return `${h}:${mm}`;
 }
 
-const tripEvents = computed<TripCalendarEvent[]>(() => {
-    const out: TripCalendarEvent[] = [];
+const tripEvents = computed<TripCalendarEventBase[]>(() => {
+    const out: TripCalendarEventBase[] = [];
     for (const tr of trips.value) {
         const start = parseDepartureDate(tr.scheduled_departure_at);
         if (start == null) {
@@ -615,13 +628,17 @@ const tripEvents = computed<TripCalendarEvent[]>(() => {
             date: toYmd(start),
             time: toHHmm(start),
             start,
+            startMs: start.getTime(),
+            durationMinutes: normalizeCalendarEventDurationMinutes(
+                tr.waterRouteDurationMinutes,
+            ),
         });
     }
     return out;
 });
 
 const eventsByDate = computed(() => {
-    const map = new Map<string, TripCalendarEvent[]>();
+    const map = new Map<string, TripCalendarEventBase[]>();
     for (const ev of tripEvents.value) {
         const list = map.get(ev.date) ?? [];
         list.push(ev);
@@ -634,10 +651,9 @@ const eventsByDate = computed(() => {
 });
 
 function eventsForDay(date: string): TripCalendarEvent[] {
-    return eventsByDate.value.get(date) ?? [];
+    const list = eventsByDate.value.get(date) ?? [];
+    return assignOverlappingIntervalColumnLayout(list);
 }
-
-const scheduledTripCount = computed(() => tripEvents.value.length);
 
 function isValidServiceDateYmd(raw: unknown): boolean {
     if (raw == null || typeof raw !== "string") {
@@ -816,18 +832,12 @@ function eventPositionStyle(
     scope: DayBodyScope,
     ev: TripCalendarEvent,
 ): Record<string, string> {
-    const top = scope.timeStartPos(ev.time, true);
-    const topPx = top === false ? 0 : top;
-    const slotH = scope.timeDurationHeight(30);
-    const minH = Math.max(slotH, 24);
-    return {
-        position: "absolute",
-        left: "2px",
-        right: "2px",
-        top: `${topPx}px`,
-        minHeight: `${minH}px`,
-        zIndex: "1",
-    };
+    return computeDayCalendarEventPositionStyle(scope, {
+        time: ev.time,
+        columnIndex: ev.columnIndex,
+        columnCount: ev.columnCount,
+        intervalMinutes: ev.durationMinutes,
+    });
 }
 
 function confirmClearUnbookedForDay(dateStr: string): void {
@@ -1036,10 +1046,13 @@ function onMonthCalendarClickDay(payload: MonthClickDayPayload): void {
 
 .trips-cal-event-wrap {
     pointer-events: auto;
+    overflow: hidden;
 }
 
 .trips-cal-event-btn {
     font-size: 0.75rem;
+    height: 100%;
+    min-height: 0;
 }
 
 .trips-cal-month-day {

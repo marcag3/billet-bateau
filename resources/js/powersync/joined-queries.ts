@@ -84,6 +84,8 @@ export interface TripWithRelationsRow {
     boatTypeName: string | null;
     /** Resolved water route name */
     waterRouteName: string | null;
+    /** Resolved water route duration in minutes (null if no route join) */
+    waterRouteDurationMinutes: number | null;
 }
 
 /**
@@ -130,5 +132,6 @@ export function joinTripsWithRelations<
             capacity: t.capacity,
             boatTypeName: bt.name,
             waterRouteName: wr.name,
+            waterRouteDurationMinutes: wr.duration_minutes,
         }));
 }
