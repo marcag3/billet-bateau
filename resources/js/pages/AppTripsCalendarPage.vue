@@ -59,16 +59,6 @@
                     text-color="grey-8"
                     :options="viewToggleOptions"
                 />
-                <q-btn
-                    flat
-                    dense
-                    no-caps
-                    color="negative"
-                    icon="delete_sweep"
-                    :label="t('tripsCalendar.clearUnbookedTripsForDay')"
-                    :disable="programId.length === 0"
-                    @click="confirmClearUnbookedForSelectedDay"
-                />
             </div>
 
             <QCalendarDay
@@ -84,10 +74,28 @@
                 interval-count="48"
                 interval-height="22"
                 date-header="stacked"
+                column-header-after
                 :use-navigation="false"
                 class="trips-calendar-surface"
                 @click-time="onDayCalendarClickTime"
             >
+                <template #column-header-after="{ scope }">
+                    <div
+                        v-if="isValidServiceDateYmd(scope.timestamp.date)"
+                        class="trips-cal-col-header-after q-px-xs q-pb-xs"
+                    >
+                        <AppTripsCalendarDayHeaderActions
+                            :disabled="programId.length === 0"
+                            :template-days="templateDayMenuOptions"
+                            @apply="
+                                onApplyTemplateDay($event, scope.timestamp.date)
+                            "
+                            @clear-unbooked="
+                                confirmClearUnbookedForDay(scope.timestamp.date)
+                            "
+                        />
+                    </div>
+                </template>
                 <template #day-body="{ scope }">
                     <div class="trips-cal-day-body">
                         <div
@@ -155,15 +163,23 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
+import { ulid } from "ulid";
 import { QCalendarDay, QCalendarMonth, today } from "@quasar/quasar-ui-qcalendar";
 import { useQuasar } from "quasar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import { joinTripsWithRelations } from "../powersync/joined-queries";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
+import type { TemplateDaySlotOutput } from "../powersync/template-day-slots.collection";
+import type { TemplateDayOutput } from "../powersync/template-days.collection";
+import {
+    composeLocalDatetimeFromParts,
+    localDatetimeInputValueToIso,
+} from "../utilities/datetime-input";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 import AppTripUpsertModal from "../components/organisms/AppTripUpsertModal.vue";
+import AppTripsCalendarDayHeaderActions from "../components/molecules/AppTripsCalendarDayHeaderActions.vue";
 import {
     isValidCalendarDateYmd,
     isValidTimeHm,
@@ -181,6 +197,8 @@ const tripsCollection = powersync.collections.trips;
 const boatTypesCollection = powersync.collections.boat_types;
 const waterRoutesCollection = powersync.collections.water_routes;
 const bookingsCollection = powersync.collections.bookings;
+const templateDaysCollection = powersync.collections.template_days;
+const templateDaySlotsCollection = powersync.collections.template_day_slots;
 
 const { data: bookingsRows } = useLiveQuery(
     (queryBuilder) => {
@@ -235,6 +253,76 @@ const { data: tripsRaw } = useLiveQuery(
         powersync.activeProgramIdRef,
     ],
 );
+
+const { data: templateDaysRaw } = useLiveQuery(
+    (queryBuilder) => {
+        const col = templateDaysCollection.value;
+        const pid = powersync.activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ td: col })
+            .where(({ td }) => eq(td.program_id, pid))
+            .orderBy(({ td }) => td.id, "desc");
+    },
+    [templateDaysCollection, powersync.activeProgramIdRef],
+);
+
+const { data: templateSlotsRaw } = useLiveQuery(
+    (queryBuilder) => {
+        const col = templateDaySlotsCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ s: col });
+    },
+    [templateDaySlotsCollection],
+);
+
+const templateDaysList = computed(
+    () => (templateDaysRaw.value ?? []) as TemplateDayOutput[],
+);
+
+const templateDayIds = computed(() => {
+    const set = new Set<string>();
+    for (const td of templateDaysList.value) {
+        set.add(String(td.id));
+    }
+    return set;
+});
+
+const templateDayMenuOptions = computed(() => {
+    const list = templateDaysList.value.map((td) => ({
+        id: String(td.id),
+        name: String(td.name ?? "Untitled"),
+    }));
+    list.sort((a, b) =>
+        a.name.localeCompare(b.name, locale.value, { sensitivity: "base" }),
+    );
+    return list;
+});
+
+const slotsByTemplateDayId = computed(() => {
+    const map = new Map<string, TemplateDaySlotOutput[]>();
+    const allowed = templateDayIds.value;
+    for (const row of templateSlotsRaw.value ?? []) {
+        const slot = row as TemplateDaySlotOutput;
+        const tid = slot.template_day_id;
+        if (tid == null || String(tid).trim() === "") {
+            continue;
+        }
+        const idStr = String(tid);
+        if (!allowed.has(idStr)) {
+            continue;
+        }
+        const list = map.get(idStr) ?? [];
+        list.push(slot);
+        map.set(idStr, list);
+    }
+    for (const list of map.values()) {
+        list.sort(
+            (a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0),
+        );
+    }
+    return map;
+});
 
 /** Row shape from `joinTripsWithRelations` live query (virtual columns included). */
 interface TripCalendarRow {
@@ -425,6 +513,152 @@ function eventsForDay(date: string): TripCalendarEvent[] {
 
 const scheduledTripCount = computed(() => tripEvents.value.length);
 
+function isValidServiceDateYmd(raw: unknown): boolean {
+    if (raw == null || typeof raw !== "string") {
+        return false;
+    }
+    return isValidCalendarDateYmd(raw.trim());
+}
+
+function slotDepartureTimeToHm(raw: unknown): string {
+    if (raw == null) {
+        return "";
+    }
+    const t = String(raw).trim();
+    if (t.length >= 5 && t[2] === ":") {
+        return t.slice(0, 5);
+    }
+    return t;
+}
+
+function onApplyTemplateDay(
+    templateDayId: string,
+    serviceDateRaw: unknown,
+): void {
+    if (templateDayId.trim() === "") {
+        return;
+    }
+    const serviceDate =
+        typeof serviceDateRaw === "string" ? serviceDateRaw.trim() : "";
+    if (!isValidCalendarDateYmd(serviceDate)) {
+        return;
+    }
+    void applyTemplateDayFromSlots(templateDayId, serviceDate);
+}
+
+async function applyTemplateDayFromSlots(
+    templateDayId: string,
+    serviceDate: string,
+): Promise<void> {
+    const pid = programId.value.trim();
+    if (pid.length === 0) {
+        return;
+    }
+    const slots = slotsByTemplateDayId.value.get(templateDayId) ?? [];
+    if (slots.length === 0) {
+        $q.notify({
+            type: "info",
+            message: t("tripsCalendar.applyTemplateDayEmptySlots"),
+        });
+        return;
+    }
+    const col = tripsCollection.value;
+    if (!col) {
+        $q.notify({
+            type: "negative",
+            message: t("tripsCalendar.applyTemplateDayErrorGeneric"),
+        });
+        return;
+    }
+
+    let createdCount = 0;
+    let skippedCount = 0;
+
+    for (const slot of slots) {
+        const timeHm = slotDepartureTimeToHm(slot.departure_time);
+        if (!isValidTimeHm(timeHm)) {
+            skippedCount += 1;
+            continue;
+        }
+        const cap = slot.capacity;
+        if (
+            cap == null ||
+            typeof cap !== "number" ||
+            !Number.isInteger(cap) ||
+            cap < 1
+        ) {
+            skippedCount += 1;
+            continue;
+        }
+        const localCombined = composeLocalDatetimeFromParts(
+            serviceDate,
+            timeHm,
+        );
+        const iso = localDatetimeInputValueToIso(localCombined);
+        const id = ulid();
+        const bt =
+            slot.boat_type_id != null &&
+            String(slot.boat_type_id).trim() !== ""
+                ? String(slot.boat_type_id)
+                : null;
+        const wr =
+            slot.water_route_id != null &&
+            String(slot.water_route_id).trim() !== ""
+                ? String(slot.water_route_id)
+                : null;
+        try {
+            await col
+                .insert({
+                    id,
+                    program_id: pid,
+                    boat_type_id: bt,
+                    water_route_id: wr,
+                    template_day_slot_id: String(slot.id),
+                    scheduled_departure_at: iso,
+                    capacity: cap,
+                })
+                .isPersisted.promise;
+            createdCount += 1;
+        } catch {
+            skippedCount += 1;
+        }
+    }
+
+    void powersync.refreshOutboxSnapshot();
+
+    if (createdCount === 0) {
+        $q.notify({
+            type: skippedCount > 0 ? "warning" : "info",
+            message:
+                skippedCount > 0
+                    ? t("tripsCalendar.applyTemplateDayPartialSkipped", {
+                          created: createdCount,
+                          skipped: skippedCount,
+                      })
+                    : t("tripsCalendar.applyTemplateDayEmptySlots"),
+        });
+        return;
+    }
+
+    if (skippedCount > 0) {
+        $q.notify({
+            type: "warning",
+            message: t("tripsCalendar.applyTemplateDayPartialSkipped", {
+                created: createdCount,
+                skipped: skippedCount,
+            }),
+        });
+        return;
+    }
+
+    $q.notify({
+        type: "positive",
+        message: t("tripsCalendar.applyTemplateDaySuccess", {
+            created: createdCount,
+        }),
+    });
+}
+
 function buildEventTitle(tr: TripCalendarRow, departure: Date): string {
     const timeFmt = new Intl.DateTimeFormat(dateLocale.value, {
         timeStyle: "short",
@@ -470,12 +704,14 @@ function eventPositionStyle(
     };
 }
 
-function confirmClearUnbookedForSelectedDay(): void {
+function confirmClearUnbookedForDay(dateStr: string): void {
     const pid = programId.value.trim();
     if (pid.length === 0) {
         return;
     }
-    const dateStr = selectedDateStr.value;
+    if (!isValidCalendarDateYmd(dateStr)) {
+        return;
+    }
     confirm({
         title: t("tripsCalendar.clearUnbookedConfirmTitle"),
         message: t("tripsCalendar.clearUnbookedConfirmMessage", {
@@ -636,13 +872,8 @@ function onMonthCalendarClickDay(payload: MonthClickDayPayload): void {
     if (!isValidCalendarDateYmd(dateRaw)) {
         return;
     }
-    const pid = programId.value;
-    if (pid.length === 0) {
-        return;
-    }
-    tripModalRef.value?.openCreateModal({
-        departureDate: dateRaw,
-    });
+    selectedDateStr.value = dateRaw;
+    calendarMode.value = "day";
 }
 </script>
 
@@ -683,5 +914,9 @@ function onMonthCalendarClickDay(payload: MonthClickDayPayload): void {
 
 .trips-cal-month-event {
     font-size: 0.7rem;
+}
+
+.trips-cal-col-header-after {
+    width: 100%;
 }
 </style>

@@ -229,7 +229,7 @@ export default {
     tripsCalendar: {
         title: "Trip calendar",
         description:
-            "View scheduled departures by day, week, or month. Click an event to edit in a dialog. “Clear unbooked trips” removes trips shown on the selected calendar day that have no linked booking (via PowerSync delete); booked trips stay. Day boundaries match this calendar (local date of each departure).",
+            "View scheduled departures by day, week, or month. In month view, click a day to open it in day view. Click an event to edit in a dialog. Each day column header (day/week) lets you apply a template day (creates trips from its slots) or clear unbooked trips for that day (PowerSync delete; booked trips stay). Day boundaries match this calendar (local date of each departure).",
         empty:
             "No trips with a scheduled departure yet. Add a trip or set a departure time to see it here.",
         eventCapacity: "{cap} pax",
@@ -249,6 +249,14 @@ export default {
             "{deleted} removed, {skipped} skipped (booked), {failed} delete(s) failed — check your connection and try again.",
         clearUnbookedNothingToDo: "No trips to remove for this day.",
         clearUnbookedErrorGeneric: "Could not clear trips. Please try again.",
+        applyTemplateDay: "Apply template day",
+        applyTemplateDayNoTemplates: "No template days yet.",
+        applyTemplateDayEmptySlots: "This template has no usable slots.",
+        applyTemplateDaySuccess: "Created {created} trip(s).",
+        applyTemplateDayPartialSkipped:
+            "Created {created} trip(s); skipped {skipped} (invalid data or error).",
+        applyTemplateDayErrorGeneric:
+            "Could not apply template day. Please try again.",
     },
     waterRoutesList: {
         title: "Water routes",

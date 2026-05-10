@@ -239,7 +239,7 @@ export default {
     tripsCalendar: {
         title: "Calendrier des sorties",
         description:
-            "Voir les departs planifies par jour, semaine ou mois. Cliquez un evenement pour le modifier dans une fenetre. « Supprimer les sorties libres » envoie une suppression PowerSync pour chaque sortie du jour affichee sans reservation ; les sorties avec reservation restent. Le jour correspond a la date locale du depart sur ce calendrier.",
+            "Voir les departs planifies par jour, semaine ou mois. En vue mois, cliquez un jour pour l’ouvrir en vue jour. Cliquez un evenement pour le modifier dans une fenetre. L’en-tete de chaque jour (vues jour/semaine) permet d’appliquer une journee type (cree les sorties depuis ses creneaux) et de supprimer les sorties libres (sans reservation) pour ce jour. Le jour correspond a la date locale du depart sur ce calendrier.",
         empty:
             "Aucune sortie avec un depart planifie. Ajoutez une sortie ou definissez une date et une heure pour l’afficher ici.",
         eventCapacity: "{cap} passagers",
@@ -260,6 +260,15 @@ export default {
         clearUnbookedNothingToDo: "Aucune sortie a supprimer pour ce jour.",
         clearUnbookedErrorGeneric:
             "Impossible de supprimer les sorties. Veuillez reessayer.",
+        applyTemplateDay: "Appliquer une journee type",
+        applyTemplateDayNoTemplates: "Aucune journee type pour le moment.",
+        applyTemplateDayEmptySlots:
+            "Ce modele n'a pas de creneaux utilisables.",
+        applyTemplateDaySuccess: "{created} sortie(s) creee(s).",
+        applyTemplateDayPartialSkipped:
+            "{created} sortie(s) creee(s) ; {skipped} ignoree(s) (donnees invalides ou erreur).",
+        applyTemplateDayErrorGeneric:
+            "Impossible d'appliquer la journee type. Veuillez reessayer.",
     },
     waterRoutesList: {
         title: "Parcours",
