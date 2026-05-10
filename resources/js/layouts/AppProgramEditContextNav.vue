@@ -46,27 +46,14 @@
                 key="trips"
                 v-ripple
                 clickable
-                :to="{ name: 'trips.list', params: { programId } }"
+                :to="{ name: 'trips', params: { programId } }"
                 exact
                 active-class="app-nav-item--active"
             >
                 <q-item-section avatar>
-                    <q-icon name="event" />
+                    <q-icon name="calendar_month" />
                 </q-item-section>
                 <q-item-section>{{ t("common.trips") }}</q-item-section>
-            </q-item>
-            <q-item
-                key="trips-calendar"
-                v-ripple
-                clickable
-                :to="{ name: 'trips.calendar', params: { programId } }"
-                exact
-                active-class="app-nav-item--active"
-            >
-                <q-item-section avatar>
-                    <q-icon name="calendar_view_week" />
-                </q-item-section>
-                <q-item-section>{{ t("common.calendar") }}</q-item-section>
             </q-item>
             <q-item
                 key="template-days"
@@ -77,7 +64,7 @@
                 active-class="app-nav-item--active"
             >
                 <q-item-section avatar>
-                    <q-icon name="calendar_month" />
+                    <q-icon name="architecture" />
                 </q-item-section>
                 <q-item-section>{{ t("common.templateDays") }}</q-item-section>
             </q-item>

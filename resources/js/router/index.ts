@@ -78,13 +78,15 @@ const programScopeChildren: RouteRecordRaw[] = [
             },
             {
                 path: "trips/calendar",
-                name: "trips.calendar",
-                component: () => import("../pages/AppTripsCalendarPage.vue"),
-                meta: scopedProgramMeta,
+                redirect: (to) => ({
+                    name: "trips",
+                    params: { programId: String(to.params.programId ?? "") },
+                    query: { ...to.query },
+                }),
             },
             {
                 path: "trips",
-                name: "trips.list",
+                name: "trips",
                 component: () => import("../pages/AppTripsPage.vue"),
                 meta: scopedProgramMeta,
             },

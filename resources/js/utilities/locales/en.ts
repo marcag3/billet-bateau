@@ -227,9 +227,9 @@ export default {
         editSection: "Trip details",
     },
     tripsCalendar: {
-        title: "Trip calendar",
+        title: "Trips",
         description:
-            "View scheduled departures by day, week, or month. In month view, click a day to open it in day view. Click an event to edit in a dialog. Each day column header (day/week) lets you apply a template day (creates trips from its slots) or clear unbooked trips for that day (PowerSync delete; booked trips stay). Day boundaries match this calendar (local date of each departure).",
+            "Browse trips in list view or by day, week, or month on the calendar. The selected view is kept in the URL. In month view, click a day to open it in day view. Click an event to edit in a dialog. Each day column header (day/week) lets you apply a template day (creates trips from its slots) or clear unbooked trips for that day (PowerSync delete; booked trips stay). Day boundaries match this calendar (local date of each departure).",
         empty:
             "No trips with a scheduled departure yet. Add a trip or set a departure time to see it here.",
         eventCapacity: "{cap} pax",
@@ -239,6 +239,7 @@ export default {
         viewDay: "Day",
         viewWeek: "Week",
         viewMonth: "Month",
+        viewList: "List",
         clearUnbookedTripsForDay: "Clear unbooked trips (day)",
         clearUnbookedConfirmTitle: "Clear unbooked trips for this day?",
         clearUnbookedConfirmMessage:

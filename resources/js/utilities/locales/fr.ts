@@ -237,9 +237,9 @@ export default {
         editSection: "Details de la sortie",
     },
     tripsCalendar: {
-        title: "Calendrier des sorties",
+        title: "Sorties",
         description:
-            "Voir les departs planifies par jour, semaine ou mois. En vue mois, cliquez un jour pour l’ouvrir en vue jour. Cliquez un evenement pour le modifier dans une fenetre. L’en-tete de chaque jour (vues jour/semaine) permet d’appliquer une journee type (cree les sorties depuis ses creneaux) et de supprimer les sorties libres (sans reservation) pour ce jour. Le jour correspond a la date locale du depart sur ce calendrier.",
+            "Consultez les sorties en liste ou sur le calendrier (jour, semaine ou mois). La vue choisie est conservee dans l’URL. En vue mois, cliquez un jour pour l’ouvrir en vue jour. Cliquez un evenement pour le modifier dans une fenetre. L’en-tete de chaque jour (vues jour/semaine) permet d’appliquer une journee type (cree les sorties depuis ses creneaux) et de supprimer les sorties libres (sans reservation) pour ce jour. Le jour correspond a la date locale du depart sur ce calendrier.",
         empty:
             "Aucune sortie avec un depart planifie. Ajoutez une sortie ou definissez une date et une heure pour l’afficher ici.",
         eventCapacity: "{cap} passagers",
@@ -249,6 +249,7 @@ export default {
         viewDay: "Jour",
         viewWeek: "Semaine",
         viewMonth: "Mois",
+        viewList: "Liste",
         clearUnbookedTripsForDay: "Supprimer les sorties libres (jour)",
         clearUnbookedConfirmTitle: "Supprimer les sorties libres pour ce jour ?",
         clearUnbookedConfirmMessage:

@@ -23,7 +23,7 @@ import { parsePositiveInt } from "../validation/zod-fields";
 export const TRIP_MODAL_QUERY_KEY = "tripModal" as const;
 export const TRIP_MODAL_TRIP_ID_QUERY_KEY = "tripId" as const;
 
-export type TripModalBaseRouteName = "trips.list" | "trips.calendar";
+export type TripModalBaseRouteName = "trips";
 
 function stripTripModalKeys(query: LocationQuery): LocationQuery {
     const next: LocationQuery = { ...query };

@@ -2,8 +2,8 @@
     <AppEntityIndexPageLayout>
         <template #header>
             <AppPageHeader
-                :title="t('tripsList.title')"
-                :description="t('tripsList.description')"
+                :title="t('tripsCalendar.title')"
+                :description="t('tripsCalendar.description')"
             >
                 <template #actions>
                     <q-btn
@@ -16,12 +16,66 @@
             </AppPageHeader>
         </template>
 
-        <AppEntityList>
+        <div class="trips-calendar-toolbar row items-center no-wrap q-mb-sm q-gutter-xs">
+            <template v-if="tripsViewMode !== 'list'">
+                <q-btn
+                    flat
+                    round
+                    dense
+                    icon="chevron_left"
+                    :aria-label="t('tripsCalendar.prev')"
+                    @click="calendarPrev"
+                />
+                <q-btn
+                    flat
+                    dense
+                    no-caps
+                    :label="t('tripsCalendar.goToday')"
+                    @click="calendarToday"
+                />
+                <q-btn
+                    flat
+                    round
+                    dense
+                    icon="chevron_right"
+                    :aria-label="t('tripsCalendar.next')"
+                    @click="calendarNext"
+                />
+                <div
+                    class="col text-center text-subtitle1 text-weight-medium ellipsis"
+                >
+                    {{ calendarTitle }}
+                </div>
+            </template>
+            <div v-else class="col" />
+            <q-btn-toggle
+                v-model="tripsViewMode"
+                no-caps
+                unelevated
+                toggle-color="primary"
+                color="grey-3"
+                text-color="grey-8"
+                :options="viewToggleOptions"
+            />
+        </div>
+
+        <AppEmptyListRow
+            v-if="tripsViewMode !== 'list'"
+            class="q-mb-md"
+            :show="scheduledTripCount === 0"
+            :message="t('tripsCalendar.empty')"
+        />
+
+        <AppEntityList v-if="tripsViewMode === 'list'">
             <AppEmptyListRow
                 :show="trips.length === 0"
                 :message="t('tripsList.empty')"
             />
-            <q-item v-for="tr in trips" :key="String(tr.id)" class="q-pa-md">
+            <q-item
+                v-for="tr in trips"
+                :key="String(tr.id)"
+                class="q-pa-md"
+            >
                 <q-item-section>
                     <q-item-label class="text-h6">{{
                         formatDeparture(tr)
@@ -49,33 +103,173 @@
                 </q-item-section>
             </q-item>
         </AppEntityList>
-        <AppTripUpsertModal ref="tripModalRef" route-name="trips.list" />
+
+        <div v-if="tripsViewMode !== 'list'" class="trips-calendar">
+            <QCalendarDay
+                v-if="tripsViewMode !== 'month'"
+                ref="dayCalendarRef"
+                v-model="selectedDateStr"
+                :view="tripsViewMode === 'day' ? 'day' : 'week'"
+                bordered
+                :locale="dateLocale"
+                :weekdays="calendarWeekdays"
+                hour24-format
+                interval-minutes="30"
+                interval-count="48"
+                interval-height="22"
+                date-header="stacked"
+                column-header-after
+                :use-navigation="false"
+                class="trips-calendar-surface"
+                @click-time="onDayCalendarClickTime"
+            >
+                <template #column-header-after="{ scope }">
+                    <div
+                        v-if="isValidServiceDateYmd(scope.timestamp.date)"
+                        class="trips-cal-col-header-after q-px-xs q-pb-xs"
+                    >
+                        <AppTripsCalendarDayHeaderActions
+                            :disabled="programId.length === 0"
+                            :template-days="templateDayMenuOptions"
+                            @apply="
+                                onApplyTemplateDay($event, scope.timestamp.date)
+                            "
+                            @clear-unbooked="
+                                confirmClearUnbookedForDay(scope.timestamp.date)
+                            "
+                        />
+                    </div>
+                </template>
+                <template #day-body="{ scope }">
+                    <div class="trips-cal-day-body">
+                        <div
+                            v-for="ev in eventsForDay(scope.timestamp.date)"
+                            :key="ev.id"
+                            class="trips-cal-event-wrap"
+                            :style="eventPositionStyle(scope, ev)"
+                        >
+                            <q-btn
+                                dense
+                                no-caps
+                                padding="xs sm"
+                                outline
+                                color="primary"
+                                class="trips-cal-event-btn full-width text-left"
+                                @click.stop="onTripClick(ev.id)"
+                            >
+                                <span class="ellipsis block">{{ ev.title }}</span>
+                            </q-btn>
+                        </div>
+                    </div>
+                </template>
+            </QCalendarDay>
+
+            <QCalendarMonth
+                v-else
+                ref="monthCalendarRef"
+                v-model="selectedDateStr"
+                bordered
+                :locale="dateLocale"
+                :weekdays="calendarWeekdays"
+                :use-navigation="false"
+                class="trips-calendar-surface"
+                @click-day="onMonthCalendarClickDay"
+            >
+                <template #day="{ scope }">
+                    <div
+                        v-if="!scope.outside"
+                        class="trips-cal-month-day column q-gutter-xs q-pa-xs"
+                    >
+                        <q-btn
+                            v-for="ev in eventsForDay(scope.timestamp.date)"
+                            :key="ev.id"
+                            dense
+                            no-caps
+                            size="sm"
+                            outline
+                            color="primary"
+                            class="trips-cal-month-event full-width text-left"
+                            @click.stop="onTripClick(ev.id)"
+                        >
+                            <span class="ellipsis block">{{ ev.title }}</span>
+                        </q-btn>
+                    </div>
+                </template>
+            </QCalendarMonth>
+        </div>
+        <AppTripUpsertModal ref="tripModalRef" route-name="trips" />
     </AppEntityIndexPageLayout>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRoute, useRouter } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
+import { ulid } from "ulid";
+import { QCalendarDay, QCalendarMonth, today } from "@quasar/quasar-ui-qcalendar";
+import { useQuasar } from "quasar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
-
 import { joinTripsWithRelations } from "../powersync/joined-queries";
+import { useConfirmDialog } from "../composables/useConfirmDialog";
+import type { TemplateDaySlotOutput } from "../powersync/template-day-slots.collection";
+import type { TemplateDayOutput } from "../powersync/template-days.collection";
+import {
+    composeLocalDatetimeFromParts,
+    localDatetimeInputValueToIso,
+} from "../utilities/datetime-input";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEntityList from "../components/ui/AppEntityList.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 import AppTripUpsertModal from "../components/organisms/AppTripUpsertModal.vue";
+import AppTripsCalendarDayHeaderActions from "../components/molecules/AppTripsCalendarDayHeaderActions.vue";
+import {
+    isValidCalendarDateYmd,
+    isValidTimeHm,
+    roundDepartureToNearestMinutes,
+} from "../utilities/trip-departure-query";
 
 const powersync = getAppPowerSyncContext();
 
 const { t, locale } = useI18n();
+const $q = useQuasar();
+const route = useRoute();
+const router = useRouter();
+const { confirm } = useConfirmDialog();
+
 const tripsCollection = powersync.collections.trips;
 const boatTypesCollection = powersync.collections.boat_types;
 const waterRoutesCollection = powersync.collections.water_routes;
+const bookingsCollection = powersync.collections.bookings;
+const templateDaysCollection = powersync.collections.template_days;
+const templateDaySlotsCollection = powersync.collections.template_day_slots;
 
-// Trips joined with boat_types and water_routes — eliminates per-row .find() lookups
-const { data: trips } = useLiveQuery(
+const { data: bookingsRows } = useLiveQuery(
+    (queryBuilder) => {
+        const col = bookingsCollection.value;
+        const pid = powersync.activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ b: col })
+            .where(({ b }) => eq(b.program_id, pid));
+    },
+    [bookingsCollection, powersync.activeProgramIdRef],
+);
+
+const bookedTripIds = computed(() => {
+    const set = new Set<string>();
+    for (const row of bookingsRows.value ?? []) {
+        const tid = row.trip_id;
+        if (tid != null && String(tid).trim() !== "") {
+            set.add(String(tid));
+        }
+    }
+    return set;
+});
+
+const { data: tripsRaw } = useLiveQuery(
     (queryBuilder) => {
         const col = tripsCollection.value;
         const btCol = boatTypesCollection.value;
@@ -84,16 +278,17 @@ const { data: trips } = useLiveQuery(
         const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || !btCol || !wrCol || pid.length === 0) return undefined;
         return joinTripsWithRelations(queryBuilder, col, btCol, wrCol)
-            .where(({ t }: Record<string, Record<string, unknown>>) =>
-                eq(t.program_id, pid),
+            .where(({ t: trip }: Record<string, Record<string, unknown>>) =>
+                eq(trip.program_id, pid),
             )
             .orderBy(
-                ({ t }: Record<string, Record<string, unknown>>) =>
-                    t.scheduled_departure_at,
+                ({ t: trip }: Record<string, Record<string, unknown>>) =>
+                    trip.scheduled_departure_at,
                 "desc",
             )
             .orderBy(
-                ({ t }: Record<string, Record<string, unknown>>) => t.id,
+                ({ t: trip }: Record<string, Record<string, unknown>>) =>
+                    trip.id,
                 "desc",
             );
     },
@@ -101,15 +296,281 @@ const { data: trips } = useLiveQuery(
         tripsCollection,
         boatTypesCollection,
         waterRoutesCollection,
-
         powersync.activeProgramIdRef,
     ],
 );
 
+const { data: templateDaysRaw } = useLiveQuery(
+    (queryBuilder) => {
+        const col = templateDaysCollection.value;
+        const pid = powersync.activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder
+            .from({ td: col })
+            .where(({ td }) => eq(td.program_id, pid))
+            .orderBy(({ td }) => td.id, "desc");
+    },
+    [templateDaysCollection, powersync.activeProgramIdRef],
+);
+
+const { data: templateSlotsRaw } = useLiveQuery(
+    (queryBuilder) => {
+        const col = templateDaySlotsCollection.value;
+        if (!col) return undefined;
+        return queryBuilder.from({ s: col });
+    },
+    [templateDaySlotsCollection],
+);
+
+const templateDaysList = computed(
+    () => (templateDaysRaw.value ?? []) as TemplateDayOutput[],
+);
+
+const templateDayIds = computed(() => {
+    const set = new Set<string>();
+    for (const td of templateDaysList.value) {
+        set.add(String(td.id));
+    }
+    return set;
+});
+
+const templateDayMenuOptions = computed(() => {
+    const list = templateDaysList.value.map((td) => ({
+        id: String(td.id),
+        name: String(td.name ?? "Untitled"),
+    }));
+    list.sort((a, b) =>
+        a.name.localeCompare(b.name, locale.value, { sensitivity: "base" }),
+    );
+    return list;
+});
+
+const slotsByTemplateDayId = computed(() => {
+    const map = new Map<string, TemplateDaySlotOutput[]>();
+    const allowed = templateDayIds.value;
+    for (const row of templateSlotsRaw.value ?? []) {
+        const slot = row as TemplateDaySlotOutput;
+        const tid = slot.template_day_id;
+        if (tid == null || String(tid).trim() === "") {
+            continue;
+        }
+        const idStr = String(tid);
+        if (!allowed.has(idStr)) {
+            continue;
+        }
+        const list = map.get(idStr) ?? [];
+        list.push(slot);
+        map.set(idStr, list);
+    }
+    for (const list of map.values()) {
+        list.sort(
+            (a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0),
+        );
+    }
+    return map;
+});
+
+/** Row shape from `joinTripsWithRelations` live query (virtual columns included). */
+interface TripCalendarRow {
+    id: unknown;
+    scheduled_departure_at?: unknown;
+    capacity?: unknown;
+    boatTypeName?: unknown;
+    waterRouteName?: unknown;
+}
+
+interface TripCalendarEvent {
+    id: string;
+    title: string;
+    /** Local calendar date `YYYY-MM-DD`. */
+    date: string;
+    /** `HH:mm` (24h) for QCalendar interval positioning. */
+    time: string;
+    start: Date;
+}
+
+/** QCalendar `#day-body` slot scope helpers (see `getScopeForSlot` in QCalendar). */
+interface DayBodyScope {
+    timestamp: { date: string };
+    timeStartPos: (time: string, clamp?: boolean) => number | false;
+    timeDurationHeight: (minutes: number) => number;
+}
+
+const trips = computed(() => (tripsRaw.value ?? []) as TripCalendarRow[]);
+
+const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const tripModalRef = ref<InstanceType<typeof AppTripUpsertModal> | null>(null);
 
-function formatDeparture(tr: { scheduled_departure_at?: unknown }) {
+const dateLocale = computed(() =>
+    locale.value === "fr" ? "fr-CA" : "en-CA",
+);
+
+const calendarWeekdays = computed(() =>
+    locale.value === "fr" ? [1, 2, 3, 4, 5, 6, 0] : [0, 1, 2, 3, 4, 5, 6],
+);
+
+type TripsViewMode = "day" | "week" | "month" | "list";
+
+function queryParamToString(raw: unknown): string {
+    if (Array.isArray(raw)) {
+        return String(raw[0] ?? "").trim();
+    }
+    return String(raw ?? "").trim();
+}
+
+function normalizeTripsView(raw: unknown): TripsViewMode {
+    const v = queryParamToString(raw).toLowerCase();
+    if (
+        v === "day" ||
+        v === "week" ||
+        v === "month" ||
+        v === "list"
+    ) {
+        return v;
+    }
+    return "week";
+}
+
+const tripsViewMode = computed({
+    get(): TripsViewMode {
+        return normalizeTripsView(route.query.view);
+    },
+    set(next: TripsViewMode) {
+        void router.replace({
+            name: "trips",
+            params: {
+                programId: String(route.params.programId ?? "").trim(),
+            },
+            query: {
+                ...route.query,
+                view: next,
+            },
+        });
+    },
+});
+
+watch(
+    () => [route.name, route.query.view] as const,
+    () => {
+        if (route.name !== "trips") {
+            return;
+        }
+        const str = queryParamToString(route.query.view).toLowerCase();
+        const allowed: TripsViewMode[] = ["day", "week", "month", "list"];
+        if (str === "") {
+            void router.replace({
+                name: "trips",
+                params: {
+                    programId: String(route.params.programId ?? "").trim(),
+                },
+                query: { ...route.query, view: "week" },
+            });
+            return;
+        }
+        if (!allowed.includes(str as TripsViewMode)) {
+            void router.replace({
+                name: "trips",
+                params: {
+                    programId: String(route.params.programId ?? "").trim(),
+                },
+                query: { ...route.query, view: "week" },
+            });
+        }
+    },
+    { immediate: true },
+);
+
+const selectedDateStr = ref(today());
+
+interface QCalendarNavExpose {
+    prev: (amount?: number) => void;
+    next: (amount?: number) => void;
+    moveToToday: () => void;
+}
+
+const dayCalendarRef = ref<QCalendarNavExpose | null>(null);
+const monthCalendarRef = ref<QCalendarNavExpose | null>(null);
+
+const viewToggleOptions = computed(() => [
+    { label: t("tripsCalendar.viewDay"), value: "day" as const },
+    { label: t("tripsCalendar.viewWeek"), value: "week" as const },
+    { label: t("tripsCalendar.viewMonth"), value: "month" as const },
+    { label: t("tripsCalendar.viewList"), value: "list" as const },
+]);
+
+const mondayFirstWeek = computed(() => locale.value === "fr");
+
+function parseYmd(ymd: string): Date {
+    const [y, m, d] = ymd.split("-").map((x) => Number(x));
+    return new Date(y, m - 1, d);
+}
+
+function startOfWeekDate(d: Date, mondayFirst: boolean): Date {
+    const x = new Date(d);
+    const day = x.getDay();
+    const offset = mondayFirst ? (day === 0 ? -6 : 1 - day) : -day;
+    x.setDate(x.getDate() + offset);
+    x.setHours(0, 0, 0, 0);
+    return x;
+}
+
+function endOfWeekDate(start: Date): Date {
+    const e = new Date(start);
+    e.setDate(start.getDate() + 6);
+    return e;
+}
+
+const calendarTitle = computed(() => {
+    if (tripsViewMode.value === "list") {
+        return "";
+    }
+    const d = parseYmd(selectedDateStr.value);
+    const fmt = new Intl.DateTimeFormat(dateLocale.value, { dateStyle: "medium" });
+    if (tripsViewMode.value === "day") {
+        return new Intl.DateTimeFormat(dateLocale.value, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+        }).format(d);
+    }
+    if (tripsViewMode.value === "week") {
+        const s = startOfWeekDate(d, mondayFirstWeek.value);
+        const e = endOfWeekDate(s);
+        return `${fmt.format(s)} – ${fmt.format(e)}`;
+    }
+    return new Intl.DateTimeFormat(dateLocale.value, {
+        month: "long",
+        year: "numeric",
+    }).format(d);
+});
+
+function calendarPrev(): void {
+    if (tripsViewMode.value === "month") {
+        monthCalendarRef.value?.prev();
+    } else {
+        dayCalendarRef.value?.prev();
+    }
+}
+
+function calendarNext(): void {
+    if (tripsViewMode.value === "month") {
+        monthCalendarRef.value?.next();
+    } else {
+        dayCalendarRef.value?.next();
+    }
+}
+
+function calendarToday(): void {
+    if (tripsViewMode.value === "month") {
+        monthCalendarRef.value?.moveToToday();
+    } else {
+        dayCalendarRef.value?.moveToToday();
+    }
+}
+
+function formatDeparture(tr: { scheduled_departure_at?: unknown }): string {
     const raw = tr.scheduled_departure_at;
     if (raw == null || String(raw) === "") {
         return "—";
@@ -123,4 +584,472 @@ function formatDeparture(tr: { scheduled_departure_at?: unknown }) {
         timeStyle: "short",
     }).format(d);
 }
+
+function parseDepartureDate(raw: unknown): Date | null {
+    if (raw == null || String(raw).trim() === "") {
+        return null;
+    }
+    const d = new Date(String(raw));
+    if (Number.isNaN(d.getTime())) {
+        return null;
+    }
+    return d;
+}
+
+function toYmd(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+}
+
+function toHHmm(d: Date): string {
+    const h = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${h}:${mm}`;
+}
+
+const tripEvents = computed<TripCalendarEvent[]>(() => {
+    const out: TripCalendarEvent[] = [];
+    for (const tr of trips.value) {
+        const start = parseDepartureDate(tr.scheduled_departure_at);
+        if (start == null) {
+            continue;
+        }
+        out.push({
+            id: String(tr.id),
+            title: buildEventTitle(tr, start),
+            date: toYmd(start),
+            time: toHHmm(start),
+            start,
+        });
+    }
+    return out;
+});
+
+const eventsByDate = computed(() => {
+    const map = new Map<string, TripCalendarEvent[]>();
+    for (const ev of tripEvents.value) {
+        const list = map.get(ev.date) ?? [];
+        list.push(ev);
+        map.set(ev.date, list);
+    }
+    for (const list of map.values()) {
+        list.sort((a, b) => a.start.getTime() - b.start.getTime());
+    }
+    return map;
+});
+
+function eventsForDay(date: string): TripCalendarEvent[] {
+    return eventsByDate.value.get(date) ?? [];
+}
+
+const scheduledTripCount = computed(() => tripEvents.value.length);
+
+function isValidServiceDateYmd(raw: unknown): boolean {
+    if (raw == null || typeof raw !== "string") {
+        return false;
+    }
+    return isValidCalendarDateYmd(raw.trim());
+}
+
+function slotDepartureTimeToHm(raw: unknown): string {
+    if (raw == null) {
+        return "";
+    }
+    const t = String(raw).trim();
+    if (t.length >= 5 && t[2] === ":") {
+        return t.slice(0, 5);
+    }
+    return t;
+}
+
+function onApplyTemplateDay(
+    templateDayId: string,
+    serviceDateRaw: unknown,
+): void {
+    if (templateDayId.trim() === "") {
+        return;
+    }
+    const serviceDate =
+        typeof serviceDateRaw === "string" ? serviceDateRaw.trim() : "";
+    if (!isValidCalendarDateYmd(serviceDate)) {
+        return;
+    }
+    void applyTemplateDayFromSlots(templateDayId, serviceDate);
+}
+
+async function applyTemplateDayFromSlots(
+    templateDayId: string,
+    serviceDate: string,
+): Promise<void> {
+    const pid = programId.value.trim();
+    if (pid.length === 0) {
+        return;
+    }
+    const slots = slotsByTemplateDayId.value.get(templateDayId) ?? [];
+    if (slots.length === 0) {
+        $q.notify({
+            type: "info",
+            message: t("tripsCalendar.applyTemplateDayEmptySlots"),
+        });
+        return;
+    }
+    const col = tripsCollection.value;
+    if (!col) {
+        $q.notify({
+            type: "negative",
+            message: t("tripsCalendar.applyTemplateDayErrorGeneric"),
+        });
+        return;
+    }
+
+    let createdCount = 0;
+    let skippedCount = 0;
+
+    for (const slot of slots) {
+        const timeHm = slotDepartureTimeToHm(slot.departure_time);
+        if (!isValidTimeHm(timeHm)) {
+            skippedCount += 1;
+            continue;
+        }
+        const cap = slot.capacity;
+        if (
+            cap == null ||
+            typeof cap !== "number" ||
+            !Number.isInteger(cap) ||
+            cap < 1
+        ) {
+            skippedCount += 1;
+            continue;
+        }
+        const localCombined = composeLocalDatetimeFromParts(
+            serviceDate,
+            timeHm,
+        );
+        const iso = localDatetimeInputValueToIso(localCombined);
+        const id = ulid();
+        const bt =
+            slot.boat_type_id != null &&
+            String(slot.boat_type_id).trim() !== ""
+                ? String(slot.boat_type_id)
+                : null;
+        const wr =
+            slot.water_route_id != null &&
+            String(slot.water_route_id).trim() !== ""
+                ? String(slot.water_route_id)
+                : null;
+        try {
+            await col
+                .insert({
+                    id,
+                    program_id: pid,
+                    boat_type_id: bt,
+                    water_route_id: wr,
+                    template_day_slot_id: String(slot.id),
+                    scheduled_departure_at: iso,
+                    capacity: cap,
+                })
+                .isPersisted.promise;
+            createdCount += 1;
+        } catch {
+            skippedCount += 1;
+        }
+    }
+
+    void powersync.refreshOutboxSnapshot();
+
+    if (createdCount === 0) {
+        $q.notify({
+            type: skippedCount > 0 ? "warning" : "info",
+            message:
+                skippedCount > 0
+                    ? t("tripsCalendar.applyTemplateDayPartialSkipped", {
+                          created: createdCount,
+                          skipped: skippedCount,
+                      })
+                    : t("tripsCalendar.applyTemplateDayEmptySlots"),
+        });
+        return;
+    }
+
+    if (skippedCount > 0) {
+        $q.notify({
+            type: "warning",
+            message: t("tripsCalendar.applyTemplateDayPartialSkipped", {
+                created: createdCount,
+                skipped: skippedCount,
+            }),
+        });
+        return;
+    }
+
+    $q.notify({
+        type: "positive",
+        message: t("tripsCalendar.applyTemplateDaySuccess", {
+            created: createdCount,
+        }),
+    });
+}
+
+function buildEventTitle(tr: TripCalendarRow, departure: Date): string {
+    const timeFmt = new Intl.DateTimeFormat(dateLocale.value, {
+        timeStyle: "short",
+    }).format(departure);
+
+    const parts: string[] = [timeFmt];
+
+    const rawCap = tr.capacity;
+    const capNum =
+        rawCap == null || rawCap === ""
+            ? null
+            : Number(rawCap);
+    if (capNum != null && !Number.isNaN(capNum)) {
+        parts.push(t("tripsCalendar.eventCapacity", { cap: capNum }));
+    }
+
+    if (tr.boatTypeName != null && String(tr.boatTypeName).trim() !== "") {
+        parts.push(String(tr.boatTypeName));
+    }
+
+    if (tr.waterRouteName != null && String(tr.waterRouteName).trim() !== "") {
+        parts.push(String(tr.waterRouteName));
+    }
+
+    return parts.join(" · ");
+}
+
+function eventPositionStyle(
+    scope: DayBodyScope,
+    ev: TripCalendarEvent,
+): Record<string, string> {
+    const top = scope.timeStartPos(ev.time, true);
+    const topPx = top === false ? 0 : top;
+    const slotH = scope.timeDurationHeight(30);
+    const minH = Math.max(slotH, 24);
+    return {
+        position: "absolute",
+        left: "2px",
+        right: "2px",
+        top: `${topPx}px`,
+        minHeight: `${minH}px`,
+        zIndex: "1",
+    };
+}
+
+function confirmClearUnbookedForDay(dateStr: string): void {
+    const pid = programId.value.trim();
+    if (pid.length === 0) {
+        return;
+    }
+    if (!isValidCalendarDateYmd(dateStr)) {
+        return;
+    }
+    confirm({
+        title: t("tripsCalendar.clearUnbookedConfirmTitle"),
+        message: t("tripsCalendar.clearUnbookedConfirmMessage", {
+            date: dateStr,
+        }),
+        onOk: async () => {
+            const col = tripsCollection.value;
+            if (!col) {
+                $q.notify({
+                    type: "negative",
+                    message: t("tripsCalendar.clearUnbookedErrorGeneric"),
+                });
+                return;
+            }
+
+            const dayTripIds = tripEvents.value
+                .filter((ev) => ev.date === dateStr)
+                .map((ev) => ev.id);
+
+            if (dayTripIds.length === 0) {
+                $q.notify({
+                    type: "info",
+                    message: t("tripsCalendar.clearUnbookedNothingToDo"),
+                });
+                return;
+            }
+
+            const booked = bookedTripIds.value;
+            const toDelete = dayTripIds.filter((id) => !booked.has(id));
+            const skippedCount = dayTripIds.length - toDelete.length;
+
+            let deletedCount = 0;
+            let failedCount = 0;
+
+            try {
+                for (const id of toDelete) {
+                    try {
+                        await col.delete(id).isPersisted.promise;
+                        deletedCount += 1;
+                    } catch {
+                        failedCount += 1;
+                    }
+                }
+                void powersync.refreshOutboxSnapshot();
+
+                if (failedCount > 0) {
+                    $q.notify({
+                        type: "warning",
+                        message: t(
+                            "tripsCalendar.clearUnbookedSomeDeletesFailed",
+                            {
+                                deleted: deletedCount,
+                                skipped: skippedCount,
+                                failed: failedCount,
+                            },
+                        ),
+                    });
+                    return;
+                }
+
+                $q.notify({
+                    type: "positive",
+                    message: t("tripsCalendar.clearUnbookedSuccess", {
+                        deleted: deletedCount,
+                        skipped: skippedCount,
+                    }),
+                });
+            } catch (e) {
+                console.error(e);
+                $q.notify({
+                    type: "negative",
+                    message: t("tripsCalendar.clearUnbookedErrorGeneric"),
+                });
+            }
+        },
+    });
+}
+
+/** QCalendar `click-time` payload (interval cell). */
+interface CalendarClickTimePayload {
+    scope?: { timestamp?: Record<string, unknown> };
+}
+
+function timestampToDepartureParts(
+    ts: Record<string, unknown>,
+): { date: string; time: string } | null {
+    const dateRaw =
+        ts.date != null && String(ts.date).trim() !== ""
+            ? String(ts.date).trim()
+            : "";
+    if (!isValidCalendarDateYmd(dateRaw)) {
+        return null;
+    }
+    let timeStr = "";
+    if (
+        ts.hasTime === true &&
+        ts.time != null &&
+        String(ts.time).trim() !== ""
+    ) {
+        const t = String(ts.time).trim().slice(0, 5);
+        timeStr = isValidTimeHm(t) ? t : "";
+    }
+    if (timeStr === "") {
+        const h = typeof ts.hour === "number" ? ts.hour : null;
+        const m = typeof ts.minute === "number" ? ts.minute : null;
+        if (h != null && m != null) {
+            const hh = String(Math.max(0, Math.min(23, h))).padStart(2, "0");
+            const mm = String(Math.max(0, Math.min(59, m))).padStart(2, "0");
+            timeStr = `${hh}:${mm}`;
+        }
+    }
+    if (!isValidTimeHm(timeStr)) {
+        return null;
+    }
+
+    return roundDepartureToNearestMinutes(dateRaw, timeStr, 15);
+}
+
+function onTripClick(id: string): void {
+    if (id.length === 0) {
+        return;
+    }
+    tripModalRef.value?.openEditModal(id);
+}
+
+function onDayCalendarClickTime(payload: CalendarClickTimePayload): void {
+    const rawTs = payload.scope?.timestamp;
+    if (rawTs == null || typeof rawTs !== "object") {
+        return;
+    }
+    const parts = timestampToDepartureParts(rawTs);
+    if (parts == null) {
+        return;
+    }
+    const pid = programId.value;
+    if (pid.length === 0) {
+        return;
+    }
+    tripModalRef.value?.openCreateModal({
+        departureDate: parts.date,
+        departureTime: parts.time,
+    });
+}
+
+/** QCalendar month `click-day` payload. */
+interface MonthClickDayPayload {
+    scope?: { timestamp?: { date?: string }; outside?: boolean };
+}
+
+function onMonthCalendarClickDay(payload: MonthClickDayPayload): void {
+    if (payload.scope?.outside === true) {
+        return;
+    }
+    const dateRaw =
+        payload.scope?.timestamp?.date != null
+            ? String(payload.scope.timestamp.date).trim()
+            : "";
+    if (!isValidCalendarDateYmd(dateRaw)) {
+        return;
+    }
+    selectedDateStr.value = dateRaw;
+    tripsViewMode.value = "day";
+}
 </script>
+
+<style scoped>
+.trips-calendar {
+    min-height: 32rem;
+}
+
+.trips-calendar-toolbar {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    padding-bottom: 0.5rem;
+}
+
+.trips-calendar-surface {
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.trips-cal-day-body {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.trips-cal-event-wrap {
+    pointer-events: auto;
+}
+
+.trips-cal-event-btn {
+    font-size: 0.75rem;
+}
+
+.trips-cal-month-day {
+    min-height: 3rem;
+    max-height: 6.5rem;
+    overflow: auto;
+}
+
+.trips-cal-month-event {
+    font-size: 0.7rem;
+}
+
+.trips-cal-col-header-after {
+    width: 100%;
+}
+</style>
