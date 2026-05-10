@@ -13,6 +13,7 @@ const wayfinderDisabled = process.env.VITEST === 'true' || process.env.DISABLE_W
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
+    const isVitest = mode === 'test' || process.env.VITEST === 'true';
     const objectStorageOrigins = (
         env.VITE_OBJECT_STORAGE_ORIGINS
         ?? env.VITE_MEDIA_PUBLIC_BASE_URL
@@ -24,15 +25,11 @@ export default defineConfig(({ mode }) => {
 
     return {
         resolve: {
-            alias:
-                process.env.VITEST === 'true'
-                    ? {
-                          leaflet: path.resolve(
-                              projectDir,
-                              'resources/js/tests/mocks/leaflet.ts',
-                          ),
-                      }
-                    : {},
+            alias: isVitest
+                ? {
+                      leaflet: path.resolve(projectDir, 'resources/js/tests/mocks/leaflet.ts'),
+                  }
+                : {},
         },
         // PowerSync / WA-SQLite ship web workers + WASM; pre-bundling them breaks `db.init()` in dev (hangs forever).
         // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673

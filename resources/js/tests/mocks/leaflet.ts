@@ -24,28 +24,33 @@ const MockLayer = {
     }),
 };
 
-export const map = vi.fn(() => ({
-    on: vi.fn((ev: string, fn: (e: unknown) => void) => {
-        if (ev === 'click') {
-            leafletClickHandlers.push(
-                fn as (e: { latlng: { lng: number; lat: number } }) => void,
-            );
-        }
-    }),
-    off: vi.fn(),
-    remove: vi.fn(),
-    removeLayer: vi.fn(),
-    fitBounds: vi.fn(),
-    setView: vi.fn(),
-    getZoom: vi.fn(() => 12),
-    invalidateSize: vi.fn(),
-    dragging: { disable: vi.fn(), enable: vi.fn() },
-    doubleClickZoom: { disable: vi.fn(), enable: vi.fn() },
-    scrollWheelZoom: { disable: vi.fn(), enable: vi.fn() },
-    boxZoom: { disable: vi.fn(), enable: vi.fn() },
-    keyboard: { disable: vi.fn(), enable: vi.fn() },
-    tap: { disable: vi.fn(), enable: vi.fn() },
-}));
+export const map = vi.fn(() => {
+    const api = {
+        on: vi.fn((ev: string, fn: (e: unknown) => void) => {
+            if (ev === 'click') {
+                leafletClickHandlers.push(
+                    fn as (e: { latlng: { lng: number; lat: number } }) => void,
+                );
+            }
+        }),
+        off: vi.fn(),
+        remove: vi.fn(),
+        removeLayer: vi.fn(),
+        fitBounds: vi.fn(),
+        setView: vi.fn(function setView(this: typeof api) {
+            return this;
+        }),
+        getZoom: vi.fn(() => 12),
+        invalidateSize: vi.fn(),
+        dragging: { disable: vi.fn(), enable: vi.fn() },
+        doubleClickZoom: { disable: vi.fn(), enable: vi.fn() },
+        scrollWheelZoom: { disable: vi.fn(), enable: vi.fn() },
+        boxZoom: { disable: vi.fn(), enable: vi.fn() },
+        keyboard: { disable: vi.fn(), enable: vi.fn() },
+        tap: { disable: vi.fn(), enable: vi.fn() },
+    };
+    return api;
+});
 
 export const tileLayer = vi.fn(() => ({ addTo: vi.fn() }));
 export const latLng = vi.fn((lat: number, lng: number) => ({ lat, lng }));

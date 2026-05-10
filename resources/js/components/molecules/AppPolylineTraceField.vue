@@ -73,6 +73,7 @@ import {
     stringifyLineStringGeoJson,
     type LineStringGeoJson,
 } from '../../utilities/geojson-line-string';
+import { useUserGeolocation } from '../../composables/useUserGeolocation';
 
 const props = withDefaults(
     defineProps<{
@@ -97,6 +98,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const { resolveUserCoordinates } = useUserGeolocation();
 
 const mapContainerRef = ref<HTMLElement | null>(null);
 const mapRef = ref<LeafletMap | null>(null);
@@ -233,11 +235,11 @@ function initMap(): void {
     if (!el) {
         return;
     }
-    const defaultCenter = leafletLatLng(45.5017, -73.5673);
+    const fallbackCenter = leafletLatLng(45.5017, -73.5673);
     const map = createLeafletMap(el, {
         zoomControl: true,
         attributionControl: true,
-    }).setView(defaultCenter, 12);
+    }).setView(fallbackCenter, 12);
 
     leafletTileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution:
@@ -251,6 +253,17 @@ function initMap(): void {
     setMapInteractionDisabled(props.disable);
     void nextTick(() => {
         map.invalidateSize();
+    });
+
+    void resolveUserCoordinates().then((coords) => {
+        const currentMap = mapRef.value;
+        if (!currentMap || !coords) {
+            return;
+        }
+        if (coordinatesRef.value.length > 0) {
+            return;
+        }
+        currentMap.setView(leafletLatLng(coords.lat, coords.lng), 13);
     });
 }
 
