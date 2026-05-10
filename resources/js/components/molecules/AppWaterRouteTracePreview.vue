@@ -8,7 +8,9 @@
         <div
             class="app-water-route-trace-preview__title absolute-top text-white q-pa-sm"
         >
-            <div class="text-h6 text-shadow-1">{{ displayTitle }}</div>
+            <h3 class="app-water-route-trace-preview__title-text text-h6 text-shadow-1">
+                {{ displayTitle }}
+            </h3>
         </div>
     </div>
 </template>
@@ -144,7 +146,6 @@ function drawParsed(geo: LineStringGeoJson | null): void {
         }).addTo(map);
         routeLayersRef.value.push(startMarker);
         refitMapViewport();
-        removeMapElementsFromTabOrder();
         return;
     }
     const poly = leafletPolyline(latLngs, {
@@ -166,7 +167,6 @@ function drawParsed(geo: LineStringGeoJson | null): void {
     }).addTo(map);
     routeLayersRef.value.push(finishMarker);
     refitMapViewport();
-    removeMapElementsFromTabOrder();
 }
 
 function setPreviewInteractionDisabled(): void {
@@ -183,22 +183,6 @@ function setPreviewInteractionDisabled(): void {
     map.zoomControl?.remove();
 }
 
-function removeMapElementsFromTabOrder(): void {
-    // const mapContainer = mapContainerRef.value;
-    // if (!mapContainer) {
-    //     return;
-    // }
-
-    // mapContainer.tabIndex = -1;
-
-    // const focusableElements = mapContainer.querySelectorAll<HTMLElement>(
-    //     '[tabindex], a[href], button, input, select, textarea',
-    // );
-
-    // for (const element of focusableElements) {
-    //     element.tabIndex = -1;
-    // }
-}
 
 function initMap(): void {
     const el = mapContainerRef.value;
@@ -219,7 +203,6 @@ function initMap(): void {
 
     mapRef.value = map;
     setPreviewInteractionDisabled();
-    removeMapElementsFromTabOrder();
 
     mapResizeObserver = new ResizeObserver(() => {
         requestAnimationFrame(() => {
@@ -310,6 +293,10 @@ watch(
     z-index: 500;
     background: rgba(0, 0, 0, 0.42);
     pointer-events: none;
+}
+
+.app-water-route-trace-preview__title-text {
+    margin: 0;
 }
 
 .text-shadow-1 {

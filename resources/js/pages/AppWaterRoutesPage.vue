@@ -31,10 +31,13 @@
                 class="col-12 col-sm-6 col-md-4"
             >
                 <q-card
-                    tabindex="0"
                     class="water-route-card cursor-pointer full-height column relative-position"
+                    role="button"
+                    tabindex="0"
+                    :aria-label="`${t('common.edit')}: ${routeHeading(wr)}`"
                     @click="goEdit(wr)"
                     @keydown.enter.prevent="goEdit(wr)"
+                    @keydown.space.prevent="goEdit(wr)"
                 >
                     <AppWaterRouteTracePreview
                         :title="routeHeading(wr)"
@@ -42,6 +45,7 @@
                     />
                     <div
                         class="water-route-card__hint absolute-full flex flex-center text-white text-body1 text-weight-medium text-center q-px-md"
+                        aria-hidden="true"
                     >
                         {{ t("common.edit") }}
                     </div>
