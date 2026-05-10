@@ -43,124 +43,51 @@
                 </q-form>
             </AppCardSection>
 
-            <AppCardSection :label="t('templateDaysList.slotsSection')">
-                <template #label-extra>
-                    <q-btn
-                        color="primary"
-                        icon="add"
-                        size="sm"
-                        :label="t('templateDaysList.addSlot')"
-                        @click="openAddSlotDialog"
-                    />
-                </template>
-
-                <AppEmptyListRow
-                    :show="sortedSlots.length === 0"
-                    :message="t('templateDaysList.slotsEmpty')"
-                />
-
-                <q-list
-                    v-if="sortedSlots.length > 0"
-                    separator
-                >
-                    <q-item
-                        v-for="(slot, index) in sortedSlots"
-                        :key="String(slot.id)"
-                        class="q-pa-md"
+            <AppCardSection :label="t('templateDaysList.slotCalendarSection')">
+                <div class="text-caption text-grey-7 q-mb-sm">
+                    {{ t("templateDaysList.slotCalendarHint") }}
+                </div>
+                <div class="template-day-slot-calendar">
+                    <QCalendarDay
+                        v-model="slotCalendarDateStr"
+                        view="day"
+                        bordered
+                        no-header
+                        :locale="slotCalendarDateLocale"
+                        hour24-format
+                        interval-minutes="30"
+                        interval-count="48"
+                        interval-height="22"
+                        :use-navigation="false"
+                        class="template-day-slot-calendar-surface"
+                        @click-time="onSlotCalendarClickTime"
                     >
-                        <q-item-section>
-                            <q-item-label class="text-subtitle1">
-                                {{ formatDepartureTime(slot.departure_time) }}
-                                <q-badge
-                                    v-if="slot.capacity != null"
-                                    outline
-                                    color="primary"
-                                    class="q-ml-sm"
+                        <template #day-body="{ scope }">
+                            <div class="template-day-slot-cal-day-body">
+                                <div
+                                    v-for="ev in slotCalendarEventsForScope(scope)"
+                                    :key="ev.id"
+                                    class="template-day-slot-cal-event-wrap"
+                                    :style="slotEventPositionStyle(scope, ev)"
                                 >
-                                    {{ t('templateDaysList.capacityLabel', { cap: slot.capacity }) }}
-                                </q-badge>
-                            </q-item-label>
-                            <q-item-label
-                                caption
-                                class="q-mt-xs"
-                            >
-                                <span class="q-mr-md">
-                                    {{
-                                        slot.boat_type_id
-                                            ? getBoatTypeLabel(slot.boat_type_id)
-                                            : t('templateDaysList.anyBoatType')
-                                    }}
-                                </span>
-                                <span class="q-mr-md">
-                                    {{
-                                        slot.water_route_id
-                                            ? getWaterRouteLabel(slot.water_route_id)
-                                            : t('templateDaysList.noRoute')
-                                    }}
-                                </span>
-                                <span
-                                    v-if="slot.ticket_setup"
-                                    class="q-mr-md"
-                                >
-                                    {{ t('templateDaysList.ticketCustom') }}
-                                </span>
-                                <span
-                                    v-if="slot.internal_notes"
-                                    class="q-mr-md"
-                                >
-                                    <q-icon
-                                        name="description"
-                                        size="xs"
-                                    />
-                                    {{ t('templateDaysList.notes') }}
-                                </span>
-                            </q-item-label>
-                        </q-item-section>
-
-                        <q-item-section side>
-                            <div class="row q-gutter-xs items-center">
-                                <q-btn
-                                    flat
-                                    round
-                                    dense
-                                    icon="arrow_upward"
-                                    size="sm"
-                                    :disable="index === 0"
-                                    :aria-label="t('templateDaysList.moveUp')"
-                                    @click="moveSlotUp(slot, index)"
-                                />
-                                <q-btn
-                                    flat
-                                    round
-                                    dense
-                                    icon="arrow_downward"
-                                    size="sm"
-                                    :disable="index === sortedSlots.length - 1"
-                                    :aria-label="t('templateDaysList.moveDown')"
-                                    @click="moveSlotDown(slot, index)"
-                                />
-                                <q-btn
-                                    flat
-                                    round
-                                    dense
-                                    icon="edit"
-                                    :aria-label="t('templateDaysList.editSlot')"
-                                    @click="openEditSlotDialog(slot)"
-                                />
-                                <q-btn
-                                    flat
-                                    round
-                                    dense
-                                    icon="delete"
-                                    color="negative"
-                                    :disable="isDeletingSlot"
-                                    :aria-label="t('templateDaysList.deleteSlot')"
-                                    @click="confirmDeleteSlot(slot)"
-                                />
+                                    <q-btn
+                                        dense
+                                        no-caps
+                                        padding="xs sm"
+                                        outline
+                                        color="primary"
+                                        class="template-day-slot-cal-event-btn full-width text-left"
+                                        @click.stop="openEditSlotDialogByEventId(ev.id)"
+                                    >
+                                        <span class="ellipsis block">{{
+                                            ev.title
+                                        }}</span>
+                                    </q-btn>
+                                </div>
                             </div>
-                        </q-item-section>
-                    </q-item>
-                </q-list>
+                        </template>
+                    </QCalendarDay>
+                </div>
             </AppCardSection>
         </template>
     </AppEntityEditPageLayout>
@@ -297,10 +224,22 @@
                             counter
                         />
 
-                        <div class="row q-gutter-sm justify-end">
+                        <div class="row q-gutter-sm items-center full-width">
+                            <q-btn
+                                v-if="editingSlotId"
+                                flat
+                                no-caps
+                                color="negative"
+                                :label="t('templateDaysList.deleteSlot')"
+                                :loading="isDeletingSlot"
+                                :disable="isSavingSlot || isDeletingSlot"
+                                @click="confirmDeleteSlotFromDialog"
+                            />
+                            <q-space />
                             <q-btn
                                 flat
                                 :label="t('templateDaysList.cancel')"
+                                :disable="isDeletingSlot"
                                 @click="closeSlotDialog"
                             />
                             <q-btn
@@ -312,7 +251,7 @@
                                         : t('templateDaysList.addSlot')
                                 "
                                 :loading="isSavingSlot"
-                                :disable="isSavingSlot"
+                                :disable="isSavingSlot || isDeletingSlot"
                             />
                         </div>
                     </AppFormStack>
@@ -329,14 +268,13 @@ import { useQuasar } from "quasar";
 import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
+import { QCalendarDay, today } from "@quasar/quasar-ui-qcalendar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
-
-const powersync = getAppPowerSyncContext();
 import type { TemplateDaySlotOutput } from "../powersync/template-day-slots.collection";
 import {
     createTemplateDaySlotRow,
-    patchTemplateDaySlotRow,
     deleteTemplateDaySlotRow,
+    patchTemplateDaySlotRow,
 } from "../models/template-day-slots/template-day-slots.model";
 import { normalizeTime } from "../utilities/datetime-input";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
@@ -347,11 +285,17 @@ import { useProgramWaterRoutes } from "../composables/useProgramWaterRoutes";
 import AppEntityEditPageLayout from "../layouts/AppEntityEditPageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppFormStack from "../components/ui/AppFormStack.vue";
-import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 import AppBoatTypeSelectField from "../components/ui/AppBoatTypeSelectField.vue";
 import AppWaterRouteSelectField from "../components/organisms/AppWaterRouteSelectField.vue";
+import {
+    isValidCalendarDateYmd,
+    isValidTimeHm,
+    roundDepartureToNearestMinutes,
+} from "../utilities/trip-departure-query";
 
-const { t } = useI18n();
+const powersync = getAppPowerSyncContext();
+
+const { t, locale } = useI18n();
 const $q = useQuasar();
 const route = useRoute();
 const { confirm } = useConfirmDialog();
@@ -522,6 +466,180 @@ const sortedSlots = computed(() => {
     });
 });
 
+// --- Slot day calendar (generic local day; only departure times are stored) ---
+
+const slotCalendarDateStr = ref(today());
+
+const slotCalendarDateLocale = computed(() =>
+    locale.value === "fr" ? "fr-CA" : "en-CA",
+);
+
+/** QCalendar `#day-body` slot scope helpers (see `getScopeForSlot` in QCalendar). */
+interface DayBodyScope {
+    timestamp: { date: string };
+    timeStartPos: (time: string, clamp?: boolean) => number | false;
+    timeDurationHeight: (minutes: number) => number;
+}
+
+interface SlotCalendarEvent {
+    id: string;
+    title: string;
+    /** Local calendar date `YYYY-MM-DD` (display only). */
+    date: string;
+    /** `HH:mm` (24h) for QCalendar interval positioning. */
+    time: string;
+}
+
+function slotDepartureTimeToHm(raw: unknown): string {
+    if (raw == null) {
+        return "";
+    }
+    const time = String(raw).trim();
+    if (time.length >= 5 && time[2] === ":") {
+        return time.slice(0, 5);
+    }
+    return time;
+}
+
+const slotCalendarEvents = computed<SlotCalendarEvent[]>(() => {
+    const date = slotCalendarDateStr.value;
+    const out: SlotCalendarEvent[] = [];
+    for (const slot of sortedSlots.value) {
+        const hm = slotDepartureTimeToHm(slot.departure_time);
+        if (!isValidTimeHm(hm)) {
+            continue;
+        }
+        out.push({
+            id: String(slot.id),
+            date,
+            time: hm,
+            title: buildSlotCalendarTitle(slot),
+        });
+    }
+    return out;
+});
+
+function slotCalendarEventsForScope(scope: DayBodyScope): SlotCalendarEvent[] {
+    if (scope.timestamp.date !== slotCalendarDateStr.value) {
+        return [];
+    }
+    return slotCalendarEvents.value;
+}
+
+function buildSlotCalendarTitle(slot: TemplateDaySlotOutput): string {
+    const hm = slotDepartureTimeToHm(slot.departure_time);
+    const timeFmt = new Intl.DateTimeFormat(
+        slotCalendarDateLocale.value,
+        { timeStyle: "short" },
+    ).format(new Date(`2000-01-01T${hm}:00`));
+
+    const parts: string[] = [timeFmt];
+
+    const rawCap = slot.capacity;
+    const capNum = rawCap == null ? null : Number(rawCap);
+    if (capNum != null && !Number.isNaN(capNum)) {
+        parts.push(t("templateDaysList.capacityLabel", { cap: capNum }));
+    }
+
+    const boat = slot.boat_type_id
+        ? getBoatTypeLabel(slot.boat_type_id)
+        : "";
+    if (boat.trim() !== "") {
+        parts.push(boat);
+    }
+
+    const route = slot.water_route_id
+        ? getWaterRouteLabel(slot.water_route_id)
+        : "";
+    if (route.trim() !== "") {
+        parts.push(route);
+    }
+
+    return parts.join(" · ");
+}
+
+function slotEventPositionStyle(
+    scope: DayBodyScope,
+    ev: SlotCalendarEvent,
+): Record<string, string> {
+    const top = scope.timeStartPos(ev.time, true);
+    const topPx = top === false ? 0 : top;
+    const slotH = scope.timeDurationHeight(30);
+    const minH = Math.max(slotH, 24);
+    return {
+        position: "absolute",
+        left: "2px",
+        right: "2px",
+        top: `${topPx}px`,
+        minHeight: `${minH}px`,
+        zIndex: "1",
+    };
+}
+
+/** QCalendar `click-time` payload (interval cell). */
+interface CalendarClickTimePayload {
+    scope?: { timestamp?: Record<string, unknown> };
+}
+
+function timestampToClickedHm(
+    dateYmd: string,
+    ts: Record<string, unknown>,
+): string | null {
+    let timeStr = "";
+    if (
+        ts.hasTime === true &&
+        ts.time != null &&
+        String(ts.time).trim() !== ""
+    ) {
+        const tPart = String(ts.time).trim().slice(0, 5);
+        timeStr = isValidTimeHm(tPart) ? tPart : "";
+    }
+    if (timeStr === "") {
+        const h = typeof ts.hour === "number" ? ts.hour : null;
+        const m = typeof ts.minute === "number" ? ts.minute : null;
+        if (h != null && m != null) {
+            const hh = String(Math.max(0, Math.min(23, h))).padStart(2, "0");
+            const mm = String(Math.max(0, Math.min(59, m))).padStart(2, "0");
+            timeStr = `${hh}:${mm}`;
+        }
+    }
+    if (!isValidTimeHm(timeStr)) {
+        return null;
+    }
+
+    const rounded = roundDepartureToNearestMinutes(dateYmd, timeStr, 30);
+    return rounded?.time ?? null;
+}
+
+function onSlotCalendarClickTime(payload: CalendarClickTimePayload): void {
+    const rawTs = payload.scope?.timestamp;
+    if (rawTs == null || typeof rawTs !== "object") {
+        return;
+    }
+    const dateRaw =
+        rawTs.date != null && String(rawTs.date).trim() !== ""
+            ? String(rawTs.date).trim()
+            : "";
+    if (!isValidCalendarDateYmd(dateRaw)) {
+        return;
+    }
+    const hm = timestampToClickedHm(dateRaw, rawTs);
+    if (hm == null) {
+        return;
+    }
+    openAddSlotDialog({ departureTime: hm });
+}
+
+function openEditSlotDialogByEventId(id: string): void {
+    if (id.length === 0) {
+        return;
+    }
+    const slot = sortedSlots.value.find((s) => String(s.id) === id);
+    if (slot) {
+        openEditSlotDialog(slot);
+    }
+}
+
 // --- Slot dialog ---
 
 interface SlotFormState {
@@ -632,9 +750,17 @@ function serializeTicketSetup(
     });
 }
 
-function openAddSlotDialog() {
+function openAddSlotDialog(prefill?: { departureTime?: string }): void {
     editingSlotId.value = null;
-    slotForm.value = createEmptySlotForm();
+    const form = createEmptySlotForm();
+    const raw = prefill?.departureTime?.trim() ?? "";
+    if (raw.length > 0) {
+        const hm = raw.length >= 5 ? raw.slice(0, 5) : raw;
+        if (isValidTimeHm(hm)) {
+            form.departureTime = hm;
+        }
+    }
+    slotForm.value = form;
     slotDialogOpen.value = true;
 }
 
@@ -660,6 +786,44 @@ function closeSlotDialog() {
     slotDialogOpen.value = false;
     editingSlotId.value = null;
     slotForm.value = createEmptySlotForm();
+}
+
+function formatDepartureTimeForConfirm(raw: string): string {
+    const v = raw.trim();
+    if (v.length >= 5 && v[2] === ":") {
+        return v.substring(0, 5);
+    }
+    return v.length > 0 ? v : "—";
+}
+
+function confirmDeleteSlotFromDialog(): void {
+    if (isDeletingSlot.value) {
+        return;
+    }
+    const id = editingSlotId.value;
+    if (id == null || id.length === 0) {
+        return;
+    }
+    const time = formatDepartureTimeForConfirm(slotForm.value.departureTime);
+    confirm({
+        title: t("templateDaysList.deleteSlotConfirmTitle"),
+        message: t("templateDaysList.deleteSlotConfirmMessage", { time }),
+        onOk: async () => {
+            isDeletingSlot.value = true;
+            try {
+                await deleteTemplateDaySlotRow(id);
+                closeSlotDialog();
+                $q.notify({
+                    type: "positive",
+                    message: t("templateDaysList.slotDeleted"),
+                });
+            } catch (e) {
+                notifyError(e, t("templateDaysList.errorGeneric"));
+            } finally {
+                isDeletingSlot.value = false;
+            }
+        },
+    });
 }
 
 function getNextSortOrder(): number {
@@ -755,86 +919,35 @@ async function onSaveSlotSubmit() {
     );
     isSavingSlot.value = false;
 }
-
-function formatDepartureTime(
-    raw: string | null | undefined,
-): string {
-    if (raw == null) return "--:--";
-    // Strip seconds if present
-    if (raw.length >= 5 && raw[2] === ":") {
-        return raw.substring(0, 5);
-    }
-    return raw;
-}
-
-// --- Reorder ---
-
-async function moveSlotUp(
-    slot: TemplateDaySlotOutput,
-    index: number,
-) {
-    if (index <= 0) return;
-    const above = sortedSlots.value[index - 1];
-    if (!above) return;
-    const slotOrder = slot.sort_order ?? 0;
-    const aboveOrder = above.sort_order ?? 0;
-    try {
-        await patchTemplateDaySlotRow(String(slot.id), {
-            sortOrder: aboveOrder,
-        });
-        await patchTemplateDaySlotRow(String(above.id), {
-            sortOrder: slotOrder,
-        });
-        void powersync.refreshOutboxSnapshot();
-    } catch (e) {
-        notifyError(e, t("templateDaysList.errorGeneric"));
-    }
-}
-
-async function moveSlotDown(
-    slot: TemplateDaySlotOutput,
-    index: number,
-) {
-    if (index >= sortedSlots.value.length - 1) return;
-    const below = sortedSlots.value[index + 1];
-    if (!below) return;
-    const slotOrder = slot.sort_order ?? 0;
-    const belowOrder = below.sort_order ?? 0;
-    try {
-        await patchTemplateDaySlotRow(String(slot.id), {
-            sortOrder: belowOrder,
-        });
-        await patchTemplateDaySlotRow(String(below.id), {
-            sortOrder: slotOrder,
-        });
-        void powersync.refreshOutboxSnapshot();
-    } catch (e) {
-        notifyError(e, t("templateDaysList.errorGeneric"));
-    }
-}
-
-// --- Delete slot ---
-
-function confirmDeleteSlot(slot: TemplateDaySlotOutput) {
-    if (isDeletingSlot.value) return;
-    const time = formatDepartureTime(slot.departure_time);
-    confirm({
-        title: t("templateDaysList.deleteSlotConfirmTitle"),
-        message: t("templateDaysList.deleteSlotConfirmMessage", { time }),
-        onOk: async () => {
-            isDeletingSlot.value = true;
-            try {
-                await deleteTemplateDaySlotRow(String(slot.id));
-                $q.notify({
-                    type: "positive",
-                    message: t("templateDaysList.slotDeleted"),
-                });
-            } catch (e) {
-                notifyError(e, t("templateDaysList.errorGeneric"));
-            } finally {
-                isDeletingSlot.value = false;
-            }
-        },
-    });
-}
 </script>
+
+<style scoped>
+.template-day-slot-calendar {
+    min-height: 32rem;
+}
+
+.template-day-slot-calendar-surface {
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.template-day-slot-calendar-surface :deep(.q-calendar-day__day-interval),
+.template-day-slot-calendar-surface
+    :deep(.q-calendar-day__day-interval--section) {
+    cursor: pointer;
+}
+
+.template-day-slot-cal-day-body {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.template-day-slot-cal-event-wrap {
+    pointer-events: auto;
+}
+
+.template-day-slot-cal-event-btn {
+    font-size: 0.75rem;
+}
+</style>

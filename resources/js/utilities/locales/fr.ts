@@ -446,15 +446,14 @@ export default {
         notFound:
             "Impossible de charger ce modele de journee. Il a peut-etre ete supprime ou vous n'y avez pas acces.",
         detailsSection: "Details du modele",
-        slotsSection: "Creneaux",
+        slotCalendarSection: "Horaire du jour",
+        slotCalendarHint:
+            "Cliquez une case horaire pour ajouter un creneau a cette heure. Cliquez un creneau existant pour le modifier.",
         saveChanges: "Enregistrer",
         nameRequired: "Le nom est obligatoire.",
         addSlot: "Ajouter un creneau",
-        slotsEmpty:
-            "Aucun creneau pour le moment. Ajoutez un creneau pour definir un horaire, une capacite, un type d'embarcation et un parcours.",
         slotCreated: "Creneau cree.",
         slotUpdated: "Creneau mis a jour.",
-        slotDeleted: "Creneau supprime.",
         addSlotTitle: "Ajouter un creneau",
         editSlotTitle: "Modifier le creneau",
         saveSlot: "Enregistrer le creneau",
@@ -468,8 +467,6 @@ export default {
         boatTypeHint: "Tout type d'embarcation",
         waterRoute: "Parcours",
         waterRouteHint: "Aucun parcours",
-        anyBoatType: "Tout type d'embarcation",
-        noRoute: "Aucun parcours",
         ticketSetup: "Configuration des billets",
         ticketPolicyDefaults: "Utiliser les valeurs par defaut",
         ticketPolicyCustom: "Contraintes personnalisees",
@@ -485,16 +482,11 @@ export default {
         internalNotes: "Notes internes",
         internalNotesHint:
             "Visible par le personnel seulement. Utilisez pour les details operationnels (embarquement, horaires, exceptions).",
-        ticketCustom: "Billets : personnalise",
-        ticketDefaults: "Billets : valeurs par defaut",
-        notes: "Notes",
-        editSlot: "Modifier le creneau",
         deleteSlot: "Supprimer le creneau",
         deleteSlotConfirmTitle: "Supprimer le creneau ?",
         deleteSlotConfirmMessage:
             "Supprimer le depart de {time} ? Cette action est definitive.",
-        moveUp: "Monter",
-        moveDown: "Descendre",
+        slotDeleted: "Creneau supprime.",
         errorGeneric: "Une erreur est survenue. Veuillez reessayer.",
     },
     locale: {
