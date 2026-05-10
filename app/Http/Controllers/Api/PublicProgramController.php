@@ -15,7 +15,6 @@ class PublicProgramController extends Controller
         $programs = Program::query()
             ->active()
             ->where('is_archived', false)
-            ->with('media')
             ->orderBy('name')
             ->get();
 
@@ -24,8 +23,6 @@ class PublicProgramController extends Controller
 
     public function show(Program $program): PublicProgramData
     {
-        $program->load('media');
-
         return PublicProgramData::fromModel($program);
     }
 }

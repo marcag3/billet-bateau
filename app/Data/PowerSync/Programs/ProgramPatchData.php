@@ -7,11 +7,13 @@ use App\Data\PowerSync\Casts\SlugInputCast;
 use App\Data\PowerSync\Casts\ThemeColorCast;
 use App\Data\PowerSync\Casts\TrimmedNullableStringCast;
 use App\Data\PowerSync\Casts\TrimmedStringCast;
+use App\Support\Media\ImageUpload;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rule;
 use Spatie\LaravelData\Attributes\WithCast;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
+use Spatie\LaravelData\Support\Validation\ValidationContext;
 
 /**
  * Validated payload for PowerSync programs PATCH (inner {@code data} object).
@@ -40,12 +42,18 @@ final class ProgramPatchData extends Data
         public string|Optional|null $postal_code = new Optional,
         #[WithCast(TrimmedNullableStringCast::class)]
         public string|Optional|null $country = new Optional,
+        #[WithCast(TrimmedNullableStringCast::class)]
+        public string|Optional|null $banner_object_key = new Optional,
+        public string|Optional|null $banner_mime_type = new Optional,
+        public int|Optional|null $banner_size_bytes = new Optional,
+        public string|Optional|null $banner_etag = new Optional,
+        public string|Optional|null $banner_uploaded_at = new Optional,
     ) {}
 
     /**
-     * @return array<string, list<string|ValidationRule|Enum>>
+     * @return array<string, list<string|ValidationRule>>
      */
-    public static function rules(): array
+    public static function rules(?ValidationContext $context = null): array
     {
         return [
             'name' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -59,6 +67,17 @@ final class ProgramPatchData extends Data
             'city' => ['sometimes', 'nullable', 'string', 'max:120'],
             'postal_code' => ['sometimes', 'nullable', 'string', 'max:32'],
             'country' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'banner_object_key' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:1024',
+                ImageUpload::objectKeyValidationRule(),
+            ],
+            'banner_mime_type' => ['sometimes', 'nullable', 'string', Rule::in(ImageUpload::ALLOWED_MIME_TYPES)],
+            'banner_size_bytes' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:12582912'],
+            'banner_etag' => ['sometimes', 'nullable', 'string', 'max:128'],
+            'banner_uploaded_at' => ['sometimes', 'nullable', 'string', 'max:64'],
         ];
     }
 }

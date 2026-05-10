@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { boatsSchema } from '../../powersync/boats.collection';
 import { programSchema } from '../../powersync/programs.collection';
-import { mediaSchema } from '../../powersync/media.collection';
 
 describe('PowerSync collection Zod schemas', () => {
     it('parses program rows without timestamp columns', () => {
@@ -18,6 +17,11 @@ describe('PowerSync collection Zod schemas', () => {
             city: null,
             postal_code: null,
             country: null,
+            banner_object_key: null,
+            banner_mime_type: null,
+            banner_size_bytes: null,
+            banner_etag: null,
+            banner_uploaded_at: null,
         });
         expect(parsed.id).toBe('01HQABCDEFGHJKMNPQRSTVWXYZ');
         expect(parsed.name).toBe('Dockside');
@@ -33,28 +37,5 @@ describe('PowerSync collection Zod schemas', () => {
             notes: null,
         });
         expect(parsed.name).toBe('Launch');
-    });
-
-    it('parses media rows without timestamps', () => {
-        const parsed = mediaSchema.parse({
-            id: '42',
-            program_id: '01HQCCCCCCCCCCCCCCCCCCCCCC',
-            model_type: 'App\\Models\\Program',
-            model_id: '01HQDDDDDDDDDDDDDDDDDDDDDD',
-            uuid: null,
-            collection_name: 'images',
-            name: 'Hero',
-            file_name: 'hero.jpg',
-            mime_type: 'image/jpeg',
-            disk: 'public',
-            conversions_disk: null,
-            size: 1024,
-            manipulations: '{}',
-            custom_properties: '{}',
-            generated_conversions: '{}',
-            responsive_images: '{}',
-            order_column: 0,
-        });
-        expect(parsed.id).toBe('42');
     });
 });

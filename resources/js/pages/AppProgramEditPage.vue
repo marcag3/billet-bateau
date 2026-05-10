@@ -150,16 +150,14 @@
                     </div>
                 </q-expansion-item>
 
-                <q-file
-                    v-model="imagesModel"
-                    v-bind="imagesModelProps"
-                    outlined
-                    multiple
-                    use-chips
-                    counter
+                <AppImageUploadField
+                    ref="imageUploadField"
                     :label="t('programsCreate.images')"
+                    :disabled="isSubmitting"
                     accept="image/jpeg,image/png,image/webp"
-                    :disable="isSubmitting"
+                    :existing-image-url="currentProgramBannerUrl"
+                    :existing-image-caption="t('programsEdit.currentBannerCaption')"
+                    :presign-url="presignUpload.url()"
                 />
 
                 <div class="row q-gutter-sm">
@@ -188,7 +186,7 @@ import { useForm } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, nextTick } from "vue";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import {
@@ -203,12 +201,12 @@ import type { ProgramOutput } from "../powersync/programs.collection";
 import {
     normalizeAddressRowFields,
 } from "../utilities/program-helpers";
-import mediaRoutes from "../routes/api/media";
-import { requestFormData } from "../services/http.client";
-import { normalizeImageFiles } from "../utilities/image-files";
+import { mediaObjectPublicUrl } from "../utilities/media-url";
+import { presignUpload } from "../actions/App/Http/Controllers/Api/PresignUploadController";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
+import AppImageUploadField from "../components/molecules/AppImageUploadField.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -228,6 +226,10 @@ const { data: programs } = useLiveQuery(
 );
 
 const errorMessage = ref("");
+
+const imageUploadField = ref<InstanceType<typeof AppImageUploadField> | null>(
+    null,
+);
 const hasBootstrapped = powersync.hasBootstrappedCollection;
 const currentProgram = computed<ProgramOutput | null>(() => {
     const id = programId.value;
@@ -254,6 +256,21 @@ const showNotFound = computed(() => {
     }
     return currentProgram.value == null;
 });
+const currentProgramBannerUrlRemote = ref("");
+const currentProgramBannerUrlFromReplica = computed(() => {
+    const p = currentProgram.value;
+    if (p == null) {
+        return "";
+    }
+    return mediaObjectPublicUrl(p.banner_object_key);
+});
+const currentProgramBannerUrl = computed(() => {
+    const remoteUrl = currentProgramBannerUrlRemote.value;
+    if (remoteUrl.length > 0) {
+        return remoteUrl;
+    }
+    return currentProgramBannerUrlFromReplica.value;
+});
 
 const programEditSchema = createProgramEditFormSchema(t);
 const { handleSubmit, defineField, isSubmitting, meta, resetForm } =
@@ -273,7 +290,6 @@ const { handleSubmit, defineField, isSubmitting, meta, resetForm } =
                 postal_code: "",
                 country: "",
             },
-            imagesModel: null,
         } satisfies ProgramEditFormValues,
     });
 
@@ -290,7 +306,6 @@ const [line2, line2Props] = quasarField("address.line_2");
 const [city, cityProps] = quasarField("address.city");
 const [postalCode, postalCodeProps] = quasarField("address.postal_code");
 const [country, countryProps] = quasarField("address.country");
-const [imagesModel, imagesModelProps] = quasarField("imagesModel");
 
 function programToFormValues(p: ProgramOutput): ProgramEditFormValues {
     return {
@@ -313,7 +328,6 @@ function programToFormValues(p: ProgramOutput): ProgramEditFormValues {
                 typeof p.postal_code === "string" ? String(p.postal_code) : "",
             country: typeof p.country === "string" ? String(p.country) : "",
         },
-        imagesModel: null,
     } satisfies ProgramEditFormValues;
 }
 
@@ -350,7 +364,7 @@ function toProgramDraftPatch(values: ProgramEditFormValues): ProgramDraftPatch {
 
 watch(
     [programId, currentProgram],
-    ([id, p], previousTuple) => {
+    async ([id, p], previousTuple) => {
         if (id.length === 0) {
             return;
         }
@@ -367,6 +381,9 @@ watch(
         resetForm({
             values: programToFormValues(p),
         });
+        currentProgramBannerUrlRemote.value = "";
+        await nextTick();
+        imageUploadField.value?.clearSelection();
     },
     { immediate: true },
 );
@@ -389,27 +406,29 @@ const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
         }
         const patch = toProgramDraftPatch(values);
 
+        const uploadResult = await imageUploadField.value?.uploadIfNeeded();
+
+        const bannerPatch =
+            uploadResult != null
+                ? {
+                      banner_object_key: uploadResult.objectKey,
+                      banner_mime_type: uploadResult.mimeType,
+                      banner_size_bytes: uploadResult.sizeBytes,
+                      banner_etag: uploadResult.etag,
+                      banner_uploaded_at: new Date().toISOString(),
+                  }
+                : {};
+
         col.update(id, (draft) => {
-            Object.assign(draft, patch);
+            Object.assign(draft, patch, bannerPatch);
         });
 
         void powersync.refreshOutboxSnapshot();
 
-        const files = normalizeImageFiles(values.imagesModel);
-        if (files.length > 0) {
-            const formData = new FormData();
-            for (const file of files) {
-                formData.append("images[]", file);
-            }
-
-            await requestFormData(
-                mediaRoutes.store.url({ type: "program", id }),
-                formData,
-                {
-                    withCsrf: true,
-                },
-            );
+        if (uploadResult != null && uploadResult.publicUrl.length > 0) {
+            currentProgramBannerUrlRemote.value = uploadResult.publicUrl;
         }
+        void powersync.refreshOutboxSnapshot();
 
         $q.notify({ type: "positive", message: t("programsEdit.success") });
     } catch (error) {

@@ -12,6 +12,11 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->foreignUlid('program_id')->constrained('programs')->cascadeOnDelete();
             $table->string('name');
+            $table->string('banner_object_key')->nullable();
+            $table->string('banner_mime_type')->nullable();
+            $table->unsignedBigInteger('banner_size_bytes')->nullable();
+            $table->string('banner_etag', 128)->nullable();
+            $table->timestamp('banner_uploaded_at')->nullable();
             $table->timestamps();
 
             $table->index(['program_id', 'updated_at']);

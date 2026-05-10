@@ -5,25 +5,12 @@ namespace Tests\Feature;
 use App\Models\Program;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class ProgramControllerTest extends TestCase
 {
     use RefreshDatabase;
-
-    /** @var non-empty-string */
-    private const MINI_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-
-    private function fakePngUpload(string $filename = 'shot.png'): UploadedFile
-    {
-        $binary = base64_decode(self::MINI_PNG_BASE64, true);
-        $this->assertNotFalse($binary);
-
-        return UploadedFile::fake()->createWithContent($filename, $binary);
-    }
 
     public function test_guest_cannot_create_program(): void
     {
@@ -85,7 +72,7 @@ class ProgramControllerTest extends TestCase
         $response->assertJsonMissingPath('data.images');
 
         $program = Program::query()->findOrFail($id);
-        $this->assertCount(0, $program->getMedia('images'));
+        $this->assertNull($program->getImageUrl('banner'));
     }
 
     public function test_program_user_pivot_allows_multiple_users(): void
@@ -101,115 +88,5 @@ class ProgramControllerTest extends TestCase
         $this->assertCount(2, $program->users);
         $this->assertTrue($program->users->contains('id', $owner->getKey()));
         $this->assertTrue($program->users->contains('id', $collaborator->getKey()));
-    }
-
-    public function test_store_media_forbids_user_not_linked_to_program(): void
-    {
-        Storage::fake('public');
-
-        $owner = User::factory()->create();
-        $other = User::factory()->create();
-
-        $program = Program::factory()->withOwner($owner)->create();
-
-        $image = $this->fakePngUpload('x.png');
-
-        $this->actingAs($other)
-            ->post('/api/media/program/'.$program->getKey(), [
-                'images' => [$image],
-            ])
-            ->assertForbidden();
-
-        $program->refresh();
-        $this->assertCount(0, $program->getMedia('images'));
-    }
-
-    public function test_store_media_allows_user_linked_via_program_user_pivot(): void
-    {
-        Storage::fake('public');
-
-        $owner = User::factory()->create();
-        $collaborator = User::factory()->create();
-
-        $program = Program::factory()->withOwner($owner)->create();
-        $program->users()->syncWithoutDetaching([(string) $collaborator->getAuthIdentifier()]);
-
-        $image = $this->fakePngUpload('x.png');
-
-        $this->actingAs($collaborator)
-            ->post('/api/media/program/'.$program->getKey(), [
-                'images' => [$image],
-            ])
-            ->assertOk()
-            ->assertJsonPath('data.0.name', 'x');
-
-        $program->refresh();
-        $this->assertCount(1, $program->getMedia('images'));
-
-        $this->assertDatabaseHas('media', [
-            'model_id' => $program->getKey(),
-            'program_id' => $program->getKey(),
-            'model_type' => Program::class,
-        ]);
-    }
-
-    public function test_store_media_appends_images(): void
-    {
-        Storage::fake('public');
-
-        $user = User::factory()->create();
-        $program = Program::factory()->withOwner($user)->create();
-
-        $image = $this->fakePngUpload('a.png');
-
-        $this->actingAs($user)
-            ->post('/api/media/program/'.$program->getKey(), [
-                'images' => [$image],
-            ])
-            ->assertOk()
-            ->assertJsonPath('data.0.name', 'a');
-
-        $program->refresh();
-        $this->assertCount(1, $program->getMedia('images'));
-
-        $this->assertDatabaseHas('media', [
-            'model_id' => $program->getKey(),
-            'program_id' => $program->getKey(),
-            'model_type' => Program::class,
-        ]);
-    }
-
-    public function test_guest_cannot_list_program_media(): void
-    {
-        $user = User::factory()->create();
-        $program = Program::factory()->withOwner($user)->create();
-
-        $this->getJson('/api/media/program/'.$program->getKey())->assertUnauthorized();
-    }
-
-    public function test_index_media_lists_program_images(): void
-    {
-        Storage::fake('public');
-
-        $user = User::factory()->create();
-        $program = Program::factory()->withOwner($user)->create();
-        $image = $this->fakePngUpload('list.png');
-
-        $this->actingAs($user)
-            ->post('/api/media/program/'.$program->getKey(), [
-                'images' => [$image],
-            ])
-            ->assertOk();
-
-        $this->assertDatabaseHas('media', [
-            'model_id' => $program->getKey(),
-            'program_id' => $program->getKey(),
-            'model_type' => Program::class,
-        ]);
-
-        $this->actingAs($user)
-            ->getJson('/api/media/program/'.$program->getKey())
-            ->assertOk()
-            ->assertJsonPath('data.0.name', 'list');
     }
 }

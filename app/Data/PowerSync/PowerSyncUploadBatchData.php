@@ -2,6 +2,8 @@
 
 namespace App\Data\PowerSync;
 
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Validation\Rules\In;
 use Spatie\LaravelData\Attributes\MergeValidationRules;
 use Spatie\LaravelData\Data;
 
@@ -16,7 +18,7 @@ final class PowerSyncUploadBatchData extends Data
     ) {}
 
     /**
-     * @return array<string, list<string|\Illuminate\Contracts\Validation\ValidationRule|\Illuminate\Validation\Rules\In>>
+     * @return array<string, list<string|ValidationRule|In>>
      */
     public static function rules(): array
     {

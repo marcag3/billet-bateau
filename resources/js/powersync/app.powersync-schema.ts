@@ -13,12 +13,22 @@ const programsTable = new Table({
     city: column.text,
     postal_code: column.text,
     country: column.text,
+    banner_object_key: column.text,
+    banner_mime_type: column.text,
+    banner_size_bytes: column.integer,
+    banner_etag: column.text,
+    banner_uploaded_at: column.text,
 });
 
 const boatTypesTable = new Table({
     id: column.text,
     program_id: column.text,
     name: column.text,
+    banner_object_key: column.text,
+    banner_mime_type: column.text,
+    banner_size_bytes: column.integer,
+    banner_etag: column.text,
+    banner_uploaded_at: column.text,
 });
 
 const boatsTable = new Table({
@@ -95,26 +105,6 @@ const templateDayDatesTable = new Table({
     service_date: column.text,
 });
 
-const mediaTable = new Table({
-    id: column.text,
-    program_id: column.text,
-    model_type: column.text,
-    model_id: column.text,
-    uuid: column.text,
-    collection_name: column.text,
-    name: column.text,
-    file_name: column.text,
-    mime_type: column.text,
-    disk: column.text,
-    conversions_disk: column.text,
-    size: column.integer,
-    manipulations: column.text,
-    custom_properties: column.text,
-    generated_conversions: column.text,
-    responsive_images: column.text,
-    order_column: column.integer,
-});
-
 export const appPowerSyncSchema = new Schema({
     programs: programsTable,
     boat_types: boatTypesTable,
@@ -126,7 +116,6 @@ export const appPowerSyncSchema = new Schema({
     template_days: templateDaysTable,
     template_day_slots: templateDaySlotsTable,
     template_day_dates: templateDayDatesTable,
-    media: mediaTable,
 });
 
 /** @type {import('@powersync/web').Table} */
@@ -158,6 +147,3 @@ export const appTemplateDaySlotsPowerSyncTable = appPowerSyncSchema.props.templa
 
 /** @type {import('@powersync/web').Table} */
 export const appTemplateDayDatesPowerSyncTable = appPowerSyncSchema.props.template_day_dates;
-
-/** @type {import('@powersync/web').Table} */
-export const appMediaPowerSyncTable = appPowerSyncSchema.props.media;

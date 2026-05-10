@@ -38,7 +38,12 @@ streams:
           line_2,
           city,
           postal_code,
-          country
+          country,
+          banner_object_key,
+          banner_mime_type,
+          banner_size_bytes,
+          banner_etag,
+          banner_uploaded_at
         FROM programs
         WHERE id IN accessible_program_ids
 
@@ -46,32 +51,18 @@ streams:
     priority: 2
     queries:
       - |
-        SELECT id, program_id, name
-        FROM boat_types
-        WHERE boat_types.program_id = subscription.parameter('program_id')
-          AND boat_types.program_id IN accessible_program_ids
-      - |
         SELECT
           id,
           program_id,
-          model_type,
-          model_id,
-          uuid,
-          collection_name,
           name,
-          file_name,
-          mime_type,
-          disk,
-          conversions_disk,
-          size,
-          manipulations,
-          custom_properties,
-          generated_conversions,
-          responsive_images,
-          order_column
-        FROM media
-        WHERE media.program_id = subscription.parameter('program_id')
-          AND media.program_id IN accessible_program_ids
+          banner_object_key,
+          banner_mime_type,
+          banner_size_bytes,
+          banner_etag,
+          banner_uploaded_at
+        FROM boat_types
+        WHERE boat_types.program_id = subscription.parameter('program_id')
+          AND boat_types.program_id IN accessible_program_ids
       - |
         SELECT id, boat_type_id, program_id, name, capacity, notes
         FROM boats

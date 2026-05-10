@@ -3,7 +3,6 @@
 use App\Http\Controllers\Auth\InstallController;
 use App\Http\Controllers\Auth\SessionController;
 use App\Http\Middleware\EnsureApplicationIsInstalled;
-use App\Models\Media;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -29,10 +28,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
         return view('app');
     })->where('any', '.*');
 });
-
-Route::get('/media/{media:uuid}', function (Media $media) {
-    return redirect()->away($media->getFullUrl());
-})->whereUuid('media');
 
 Route::fallback(function () {
     return view('public');

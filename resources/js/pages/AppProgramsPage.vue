@@ -70,7 +70,7 @@
                     >
                         <q-card>
                             <q-img
-                                :src="primaryImageFor(String(p.id))"
+                                :src="primaryImageFor(p)"
                                 :style="placeholderStyle(p)"
                                 :ratio="16 / 9"
                             >
@@ -159,11 +159,11 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 import { useLiveQuery } from "@tanstack/vue-db";
-import { eq } from "@tanstack/db";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 
 const powersync = getAppPowerSyncContext();
 import type { ProgramOutput } from "../powersync/programs.collection";
+import { mediaObjectPublicUrl } from "../utilities/media-url";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
@@ -172,8 +172,6 @@ import {
     isProgramsInitialLoadPending as computeProgramsInitialLoadPending,
     shouldShowProgramsEmptyState as computeShowProgramsEmptyState,
 } from "../utilities/programs-first-run-loading";
-
-const PROGRAM_MODEL = "App\\Models\\Program";
 
 const { t } = useI18n();
 
@@ -192,20 +190,6 @@ const { data: programs, isLoading: programsQueryLoading } = useLiveQuery(
             .orderBy(({ p }) => p.id, "desc");
     },
     [programsCollection],
-);
-
-const mediaCollection = powersync.collections.media;
-const { data: mediaRows } = useLiveQuery(
-    (queryBuilder) => {
-        const col = mediaCollection.value;
-        if (!col) return undefined;
-        return queryBuilder
-            .from({ m: col })
-            .where(({ m }) => eq(m.collection_name, "images"))
-            .orderBy(({ m }) => m.order_column, "asc")
-            .orderBy(({ m }) => m.id, "asc");
-    },
-    [mediaCollection],
 );
 
 const programTab = ref<"active" | "archived">("active");
@@ -285,28 +269,13 @@ function addressDisplayLines(p: ProgramOutput): string[] {
     return lines;
 }
 
-function primaryImageFor(programId: string) {
-    const rows = mediaRows.value ?? [];
-    const match = rows.find(
-        (m) =>
-            m != null &&
-            String((m as Record<string, unknown>).model_type) ===
-                PROGRAM_MODEL &&
-            String((m as Record<string, unknown>).model_id) === programId &&
-            String((m as Record<string, unknown>).collection_name) === "images",
-    ) as Record<string, unknown> | undefined;
-    if (!match) {
-        return undefined;
+function primaryImageFor(p: ProgramOutput): string | undefined {
+    const fromKey = mediaObjectPublicUrl(p.banner_object_key);
+    if (fromKey.length > 0) {
+        return fromKey;
     }
-    const name = match.name;
-    if (typeof name !== "string" || name.length === 0) {
-        return undefined;
-    }
-    const fileName = typeof match.file_name === "string" ? match.file_name : "";
-    if (fileName.length === 0) {
-        return undefined;
-    }
-    return `/media/${String(match.uuid)}`;
+
+    return undefined;
 }
 
 function placeholderStyle(p: ProgramOutput) {

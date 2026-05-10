@@ -2,8 +2,9 @@
 
 namespace App\Data\PowerSync\Programs;
 
+use App\Support\Media\ImageUpload;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rule;
 use Spatie\LaravelData\Data;
 
 /**
@@ -23,10 +24,15 @@ final class ProgramResolvedPutData extends Data
         public ?string $city,
         public ?string $postal_code,
         public ?string $country,
+        public ?string $banner_object_key,
+        public ?string $banner_mime_type,
+        public ?int $banner_size_bytes,
+        public ?string $banner_etag,
+        public ?string $banner_uploaded_at,
     ) {}
 
     /**
-     * @return array<string, list<string|ValidationRule|Enum>>
+     * @return array<string, list<string|ValidationRule>>
      */
     public static function rules(): array
     {
@@ -42,6 +48,21 @@ final class ProgramResolvedPutData extends Data
             'city' => ['nullable', 'string', 'max:120'],
             'postal_code' => ['nullable', 'string', 'max:32'],
             'country' => ['nullable', 'string', 'max:120'],
+            'banner_object_key' => [
+                'nullable',
+                'string',
+                'max:1024',
+                ImageUpload::objectKeyValidationRule(),
+            ],
+            'banner_mime_type' => [
+                'nullable',
+                'string',
+                Rule::in(ImageUpload::ALLOWED_MIME_TYPES),
+                'required_with:banner_object_key',
+            ],
+            'banner_size_bytes' => ['nullable', 'integer', 'min:1', 'max:12582912', 'required_with:banner_object_key'],
+            'banner_etag' => ['nullable', 'string', 'max:128'],
+            'banner_uploaded_at' => ['nullable', 'string', 'max:64', 'required_with:banner_object_key'],
         ];
     }
 }

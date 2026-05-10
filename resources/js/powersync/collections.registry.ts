@@ -9,7 +9,6 @@ import { createBookingTicketsCollection } from "./booking-tickets.collection";
 import { createTemplateDaysCollection } from "./template-days.collection";
 import { createTemplateDaySlotsCollection } from "./template-day-slots.collection";
 import { createTemplateDayDatesCollection } from "./template-day-dates.collection";
-import { createMediaCollection } from "./media.collection";
 import {
     collectionRefs,
     errorMessage,
@@ -55,7 +54,6 @@ const collectionFactories: {
         createTemplateDaySlotsCollection(db, onError, onLoad),
     template_day_dates: (db, onError, onLoad) =>
         createTemplateDayDatesCollection(db, onError, onLoad),
-    media: (db, onError, onLoad) => createMediaCollection(db, onError, onLoad),
 };
 
 export function wirePowerSyncCollections(db: PowerSyncDatabase): void {

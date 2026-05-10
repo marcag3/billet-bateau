@@ -7,9 +7,6 @@ use Spatie\LaravelData\Data;
 
 final class PublicProgramData extends Data
 {
-    /**
-     * @param  array<int, array{uuid: string, name: string, url: string, mime_type: ?string, size: int}>  $images
-     */
     public function __construct(
         public string $id,
         public string $name,
@@ -21,23 +18,12 @@ final class PublicProgramData extends Data
         public ?string $city,
         public ?string $postal_code,
         public ?string $country,
-        public array $images,
+        public ?string $banner_url,
+        public ?string $banner_mime_type,
     ) {}
 
     public static function fromModel(Program $program): self
     {
-        $images = [];
-
-        foreach ($program->getMedia('images') as $media) {
-            $images[] = [
-                'uuid' => (string) $media->uuid,
-                'name' => (string) $media->name,
-                'url' => $media->getFullUrl(),
-                'mime_type' => $media->mime_type,
-                'size' => (int) $media->size,
-            ];
-        }
-
         return new self(
             id: (string) $program->getKey(),
             name: (string) $program->name,
@@ -49,7 +35,8 @@ final class PublicProgramData extends Data
             city: $program->city,
             postal_code: $program->postal_code,
             country: $program->country,
-            images: $images,
+            banner_url: $program->getImageUrl('banner'),
+            banner_mime_type: $program->banner_mime_type,
         );
     }
 }

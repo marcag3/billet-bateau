@@ -3,7 +3,8 @@
 namespace App\Models;
 
 use App\Enums\ProgramRole;
-use App\Models\ProgramUser;
+use App\Models\Concerns\ResolvesMediaUrl;
+use App\Support\ObjectStorage\EtagNormalizer;
 use Database\Factories\ProgramFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,16 +15,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Program extends Model implements HasMedia
+class Program extends Model
 {
     /** @use HasFactory<ProgramFactory> */
     use HasFactory;
 
     use HasUlids;
-    use InteractsWithMedia;
+    use ResolvesMediaUrl;
 
     protected $fillable = [
         'id',
@@ -38,6 +37,11 @@ class Program extends Model implements HasMedia
         'city',
         'postal_code',
         'country',
+        'banner_object_key',
+        'banner_mime_type',
+        'banner_size_bytes',
+        'banner_etag',
+        'banner_uploaded_at',
         'created_at',
         'updated_at',
     ];
@@ -47,21 +51,27 @@ class Program extends Model implements HasMedia
         return [
             'is_active' => 'boolean',
             'is_archived' => 'boolean',
+            'banner_uploaded_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return Attribute<string|null, string|null>
+     */
+    protected function bannerEtag(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => $value,
+            set: fn (?string $value): ?string => EtagNormalizer::normalize($value),
+        );
     }
 
     #[Scope]
     protected function active(Builder $query): void
     {
         $query->where('is_active', true);
-    }
-
-    public function registerMediaCollections(): void
-    {
-        $this->addMediaCollection('images')
-            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
     }
 
     /** @return BelongsToMany<User, $this> */

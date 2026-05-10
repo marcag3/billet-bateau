@@ -5,25 +5,12 @@ namespace Tests\Feature;
 use App\Models\Program;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class PublicProgramApiTest extends TestCase
 {
     use RefreshDatabase;
-
-    /** @var non-empty-string */
-    private const MINI_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-
-    private function miniPngUpload(): UploadedFile
-    {
-        $binary = base64_decode(self::MINI_PNG_BASE64, true);
-        $this->assertNotFalse($binary);
-
-        return UploadedFile::fake()->createWithContent('b.png', $binary);
-    }
 
     public function test_index_includes_only_active_programs_with_link_fields(): void
     {
@@ -128,19 +115,17 @@ class PublicProgramApiTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_index_exposes_image_url_for_first_image(): void
+    public function test_index_exposes_image_url_for_banner(): void
     {
-        Storage::fake('public');
+        config(['media.public_base_url' => 'http://localhost:9000/app']);
 
         $u = User::factory()->create();
-        $p = Program::factory()->withOwner($u)->create(['is_active' => true]);
-        $p->addMedia($this->miniPngUpload())->toMediaCollection('images');
-        $p->refresh();
-        $media = $p->getFirstMedia('images');
-        $this->assertNotNull($media);
-        $expected = $media->getFullUrl();
-        $this->assertIsString($expected);
-        $this->assertNotSame('', $expected);
+        $key = 'uploads/01ARZ3NDEKTSV4RRFFQ69G5FAV.png';
+        $expected = 'http://localhost:9000/app/'.$key;
+        Program::factory()->withOwner($u)->create([
+            'is_active' => true,
+            'banner_object_key' => $key,
+        ]);
 
         $r = $this->getJson('/api/public/programs');
         $r->assertOk();

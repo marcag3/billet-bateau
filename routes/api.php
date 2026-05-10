@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\PowerSyncCredentialsController;
 use App\Http\Controllers\Api\PowerSyncUploadController;
+use App\Http\Controllers\Api\PresignUploadController;
 use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\PublicProgramController;
 use App\Http\Controllers\Auth\SessionController;
@@ -23,17 +23,7 @@ Route::middleware(['web', 'auth:sanctum', 'throttle:60,1'])->group(function (): 
     Route::get('/powersync/credentials', PowerSyncCredentialsController::class)->name('api.powersync.credentials');
     Route::post('/powersync/upload', PowerSyncUploadController::class)->name('api.powersync.upload');
     Route::post('/programs', [ProgramController::class, 'store'])->name('api.programs.store');
-    Route::get('/media/{type}/{id}', [MediaController::class, 'index'])
-        ->whereIn('type', ['program', 'boat_type'])
-        ->whereUlid('id')
-        ->name('api.media.index');
-    Route::post('/media/{type}/{id}', [MediaController::class, 'store'])
-        ->whereIn('type', ['program', 'boat_type'])
-        ->whereUlid('id')
-        ->name('api.media.store');
-    Route::delete('/media/{type}/{id}/{media}', [MediaController::class, 'destroy'])
-        ->whereIn('type', ['program', 'boat_type'])
-        ->whereUlid('id')
-        ->whereUuid('media')
-        ->name('api.media.destroy');
+
+    Route::post('/presign-upload', [PresignUploadController::class, 'presignUpload'])
+        ->name('api.presign-upload');
 });

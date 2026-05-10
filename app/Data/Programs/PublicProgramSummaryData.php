@@ -19,9 +19,6 @@ final class PublicProgramSummaryData extends Data
 
     public static function fromModel(Program $program): self
     {
-        $first = $program->getMedia('images')->first();
-        $imageUrl = $first?->getFullUrl();
-
         $pathSegment = (string) $program->slug;
 
         return new self(
@@ -30,7 +27,7 @@ final class PublicProgramSummaryData extends Data
             description: $program->description,
             theme_color: (string) $program->theme_color,
             slug: (string) $program->slug,
-            image_url: $imageUrl,
+            image_url: $program->getImageUrl('banner'),
             path_segment: $pathSegment,
         );
     }

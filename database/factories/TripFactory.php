@@ -4,9 +4,7 @@ namespace Database\Factories;
 
 use App\Models\BoatType;
 use App\Models\Program;
-use App\Models\ProgramUser;
 use App\Models\Trip;
-use App\Models\User;
 use App\Models\WaterRoute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;

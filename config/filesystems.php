@@ -64,6 +64,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | S3 Presign Endpoint
+    |--------------------------------------------------------------------------
+    |
+    | Optional browser-reachable endpoint used to sign temporary upload URLs.
+    | When empty, the S3 disk endpoint is used.
+    |
+    */
+    's3_presign_endpoint' => env('AWS_ENDPOINT_PUBLIC', env('AWS_ENDPOINT', env('AWS_ENDPOINT', ''))),
+
+    /*
+    |--------------------------------------------------------------------------
+    | S3 CORS Allowed Origins
+    |--------------------------------------------------------------------------
+    |
+    | Origins that may perform browser-direct PUT/GET requests against the S3
+    | API endpoint (presigned uploads and public object reads).
+    |
+    */
+    's3_cors_allowed_origins' => array_values(array_filter(
+        array_map(
+            static fn (string $origin): string => trim($origin),
+            explode(',', (string) env('AWS_CORS_ALLOWED_ORIGINS', '*')),
+        ),
+        static fn (string $origin): bool => $origin !== '',
+    )),
+
+    /*
+    |--------------------------------------------------------------------------
     | Symbolic Links
     |--------------------------------------------------------------------------
     |

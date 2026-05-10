@@ -13,7 +13,7 @@ export const domainModelBootstraps = {
 };
 
 /**
- * Boots PowerSync once with the unified app schema (programs, boats, media metadata, …).
+ * Boots PowerSync once with the unified app schema (programs, boats, trips, …).
  *
  * @returns {Promise<void>}
  */

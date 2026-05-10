@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Services\PowerSyncTokenIssuer;
+use App\Support\ObjectStorage\ObjectStorage;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\ServiceProvider;
 use Lorisleiva\Actions\Facades\Actions;
@@ -17,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PowerSyncTokenIssuer::class, fn (): PowerSyncTokenIssuer => PowerSyncTokenIssuer::fromConfig());
+
+        $this->app->singleton(ObjectStorage::class, fn ($app): ObjectStorage => new ObjectStorage(
+            $app->make(FilesystemManager::class),
+        ));
     }
 
     /**

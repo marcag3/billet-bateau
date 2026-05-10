@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\ProgramRole;
 use App\Models\Program;
 use App\Models\User;
 

@@ -2,6 +2,7 @@
 
 namespace App\Actions\PowerSync;
 
+use App\Actions\Media\TryDeleteStoredObjectAction;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\Programs\ProgramPatchData;
 use App\Data\PowerSync\Programs\ProgramPutData;
@@ -9,6 +10,7 @@ use App\Data\PowerSync\Programs\ProgramPutPayloadResolver;
 use App\Data\PowerSync\Programs\ProgramResolvedPutData;
 use App\Data\PowerSync\Values\SlugNormalizer;
 use App\Models\Program;
+use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Str;
 use Lorisleiva\Actions\Concerns\AsAction;
@@ -36,7 +38,9 @@ final class ApplyProgramPowerSyncCrudAction
             }
 
             $this->ensureUserManagesProgram($program, $userId);
+            $previousBannerKey = $program->banner_object_key;
             $program->delete();
+            TryDeleteStoredObjectAction::run($previousBannerKey);
 
             return;
         }
@@ -66,6 +70,8 @@ final class ApplyProgramPowerSyncCrudAction
             $this->ensureUserManagesProgram($existing, $userId);
         }
 
+        $previousBannerKey = $existing?->banner_object_key;
+
         $merged = ProgramPutPayloadResolver::resolve($dto, $existing);
         $resolved = ProgramResolvedPutData::validateAndCreate($merged);
 
@@ -83,6 +89,8 @@ final class ApplyProgramPowerSyncCrudAction
             'country' => $resolved->country,
         ];
 
+        $attributes = array_merge($attributes, $this->resolvedProgramBannerAttributes($resolved));
+
         Program::query()->updateOrCreate(
             ['id' => $id],
             $attributes,
@@ -90,6 +98,11 @@ final class ApplyProgramPowerSyncCrudAction
 
         if ($existing === null) {
             Program::query()->whereKey($id)->first()?->users()->syncWithoutDetaching([$userId]);
+        }
+
+        $newKey = Program::query()->whereKey($id)->value('banner_object_key');
+        if ($this->shouldDeleteReplacedBannerObject($previousBannerKey, $newKey)) {
+            TryDeleteStoredObjectAction::run($previousBannerKey);
         }
     }
 
@@ -102,6 +115,8 @@ final class ApplyProgramPowerSyncCrudAction
         }
 
         $this->ensureUserManagesProgram($program, $userId);
+
+        $previousBannerKey = $program->banner_object_key;
 
         if (! ($patch->name instanceof Optional) && $patch->name !== null && $patch->name !== '') {
             $program->name = $patch->name;
@@ -149,7 +164,78 @@ final class ApplyProgramPowerSyncCrudAction
             $program->country = $patch->country;
         }
 
+        if (! ($patch->banner_object_key instanceof Optional)) {
+            $program->banner_object_key = $patch->banner_object_key === '' ? null : $patch->banner_object_key;
+        }
+
+        if (! ($patch->banner_mime_type instanceof Optional)) {
+            $program->banner_mime_type = $patch->banner_mime_type;
+        }
+
+        if (! ($patch->banner_size_bytes instanceof Optional)) {
+            $program->banner_size_bytes = $patch->banner_size_bytes;
+        }
+
+        if (! ($patch->banner_etag instanceof Optional)) {
+            $program->banner_etag = $patch->banner_etag;
+        }
+
+        if (! ($patch->banner_uploaded_at instanceof Optional)) {
+            $program->banner_uploaded_at = $patch->banner_uploaded_at !== null && $patch->banner_uploaded_at !== ''
+                ? CarbonImmutable::parse($patch->banner_uploaded_at)
+                : null;
+        }
+
+        if ($program->banner_object_key === null || $program->banner_object_key === '') {
+            $program->banner_mime_type = null;
+            $program->banner_size_bytes = null;
+            $program->banner_etag = null;
+            $program->banner_uploaded_at = null;
+        }
+
         $program->save();
+
+        $newKey = $program->banner_object_key;
+        if ($this->shouldDeleteReplacedBannerObject($previousBannerKey, $newKey)) {
+            TryDeleteStoredObjectAction::run($previousBannerKey);
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolvedProgramBannerAttributes(ProgramResolvedPutData $resolved): array
+    {
+        $key = $resolved->banner_object_key;
+
+        if ($key === null || $key === '') {
+            return [
+                'banner_object_key' => null,
+                'banner_mime_type' => null,
+                'banner_size_bytes' => null,
+                'banner_etag' => null,
+                'banner_uploaded_at' => null,
+            ];
+        }
+
+        return [
+            'banner_object_key' => $key,
+            'banner_mime_type' => $resolved->banner_mime_type,
+            'banner_size_bytes' => $resolved->banner_size_bytes,
+            'banner_etag' => $resolved->banner_etag,
+            'banner_uploaded_at' => $resolved->banner_uploaded_at !== null && $resolved->banner_uploaded_at !== ''
+                ? CarbonImmutable::parse($resolved->banner_uploaded_at)
+                : null,
+        ];
+    }
+
+    private function shouldDeleteReplacedBannerObject(?string $previousKey, ?string $newKey): bool
+    {
+        if ($previousKey === null || $previousKey === '') {
+            return false;
+        }
+
+        return $previousKey !== $newKey;
     }
 
     private function ensureUserManagesProgram(Program $program, string $userId): void

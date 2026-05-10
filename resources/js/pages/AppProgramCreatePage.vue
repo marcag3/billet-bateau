@@ -122,16 +122,12 @@
                     </div>
                 </q-expansion-item>
 
-                <q-file
-                    v-model="imagesModel"
-                    v-bind="imagesModelProps"
-                    outlined
-                    multiple
-                    use-chips
-                    counter
+                <AppImageUploadField
+                    ref="imageUploadField"
                     :label="t('programsCreate.images')"
+                    :disabled="isSubmitting"
                     accept="image/jpeg,image/png,image/webp"
-                    :disable="isSubmitting"
+                    :presign-url="presignUpload.url()"
                 />
 
                 <div class="row q-gutter-sm">
@@ -161,6 +157,7 @@ import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { ulid } from "ulid";
+import { ref } from "vue";
 import {
     createProgramCreateFormSchema,
     type ProgramCreateFormValues,
@@ -174,19 +171,21 @@ import {
     buildInitialProgramSlug,
     normalizeAddressRowFields,
 } from "../utilities/program-helpers";
-import mediaRoutes from "../routes/api/media";
-import { requestFormData } from "../services/http.client";
-import { ref } from "vue";
-import { normalizeImageFiles } from "../utilities/image-files";
+import { presignUpload } from "../actions/App/Http/Controllers/Api/PresignUploadController";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
+import AppImageUploadField from "../components/molecules/AppImageUploadField.vue";
 
 const { t } = useI18n();
 const router = useRouter();
 const $q = useQuasar();
 
 const errorMessage = ref("");
+
+const imageUploadField = ref<InstanceType<typeof AppImageUploadField> | null>(
+    null,
+);
 
 const programCreateSchema = createProgramCreateFormSchema(t);
 const { handleSubmit, defineField, isSubmitting } =
@@ -204,7 +203,6 @@ const { handleSubmit, defineField, isSubmitting } =
                 postal_code: "",
                 country: "",
             },
-            imagesModel: null,
         } satisfies ProgramCreateFormValues,
     });
 
@@ -219,7 +217,6 @@ const [line2, line2Props] = quasarField("address.line_2");
 const [city, cityProps] = quasarField("address.city");
 const [postalCode, postalCodeProps] = quasarField("address.postal_code");
 const [country, countryProps] = quasarField("address.country");
-const [imagesModel, imagesModelProps] = quasarField("imagesModel");
 
 async function ensureBootstrapped(): Promise<void> {
     if (!powersync.hasBootstrappedCollection.value) {
@@ -262,24 +259,25 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
             city: addressFields.city,
             postal_code: addressFields.postal_code,
             country: addressFields.country,
+            banner_object_key: null,
+            banner_mime_type: null,
+            banner_size_bytes: null,
+            banner_etag: null,
+            banner_uploaded_at: null,
         }).isPersisted.promise;
 
         void powersync.refreshOutboxSnapshot();
 
-        const files = normalizeImageFiles(values.imagesModel);
-        if (files.length > 0) {
-            const formData = new FormData();
-            for (const file of files) {
-                formData.append("images[]", file);
-            }
-
-            await requestFormData(
-                mediaRoutes.store.url({ type: "program", id: id }),
-                formData,
-                {
-                    withCsrf: true,
-                },
-            );
+        const uploadResult = await imageUploadField.value?.uploadIfNeeded();
+        if (uploadResult != null) {
+            col.update(id, (draft) => {
+                draft.banner_object_key = uploadResult.objectKey;
+                draft.banner_mime_type = uploadResult.mimeType;
+                draft.banner_size_bytes = uploadResult.sizeBytes;
+                draft.banner_etag = uploadResult.etag;
+                draft.banner_uploaded_at = new Date().toISOString();
+            });
+            void powersync.refreshOutboxSnapshot();
         }
 
         $q.notify({ type: "positive", message: t("programsCreate.success") });

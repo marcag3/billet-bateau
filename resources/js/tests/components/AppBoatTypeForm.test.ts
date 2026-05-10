@@ -151,11 +151,18 @@ describe('AppBoatTypeForm', () => {
         await textInput.setValue('Day cruiser');
         await flushPromises();
         await submitViaQForm();
-        expect(mockCollectionRef.value?.insert).toHaveBeenCalledWith({
-            id: 'test-ulid-new',
-            program_id: 'p1',
-            name: 'Day cruiser',
-        });
+        expect(mockCollectionRef.value?.insert).toHaveBeenCalledWith(
+            expect.objectContaining({
+                id: 'test-ulid-new',
+                program_id: 'p1',
+                name: 'Day cruiser',
+                banner_object_key: null,
+                banner_mime_type: null,
+                banner_size_bytes: null,
+                banner_etag: null,
+                banner_uploaded_at: null,
+            }),
+        );
         expect(wrapper!.emitted('success')?.[0]).toEqual([
             { id: 'test-ulid-new', mode: 'create' },
         ]);

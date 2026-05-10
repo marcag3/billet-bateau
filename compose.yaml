@@ -89,10 +89,10 @@ services:
     garage:
         image: "dxflrs/garage:v2.3.0"
         restart: unless-stopped
-        command: "/garage -c /etc/garage.toml server --single-node --default-bucket"
+        command: "/garage server --single-node --default-bucket"
         environment:
-            GARAGE_DEFAULT_ACCESS_KEY: "${AWS_ACCESS_KEY_ID:-GKb69252a3b0643e8bd08d4cd4}"
-            GARAGE_DEFAULT_SECRET_KEY: "${AWS_SECRET_ACCESS_KEY:-9115be9c9e4994306a4176543b0db461f4eb04c5c8a388676d1b57392d0f4e93}"
+            GARAGE_DEFAULT_ACCESS_KEY: "${AWS_ACCESS_KEY_ID}"
+            GARAGE_DEFAULT_SECRET_KEY: "${AWS_SECRET_ACCESS_KEY}"
             GARAGE_DEFAULT_BUCKET: "${AWS_BUCKET:-app}"
         volumes:
             - "./docker/garage/garage.toml:/etc/garage.toml:ro"

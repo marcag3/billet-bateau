@@ -10,10 +10,9 @@ import type { createBookingTicketsCollection } from "./booking-tickets.collectio
 import type { createTemplateDaysCollection } from "./template-days.collection";
 import type { createTemplateDaySlotsCollection } from "./template-day-slots.collection";
 import type { createTemplateDayDatesCollection } from "./template-day-dates.collection";
-import type { createMediaCollection } from "./media.collection";
 import { translate } from "../utilities/i18n";
 
-export const DB_FILENAME = "billbateau-app-v17.db";
+export const DB_FILENAME = "billbateau-app-v18.db";
 
 export const loadFailedMessage = translate("sync.unableLoadSync");
 export const persistenceLimitedMessage = translate("sync.persistenceLimited");
@@ -28,8 +27,7 @@ export type PowerSyncCollectionKey =
     | "water_routes"
     | "template_days"
     | "template_day_slots"
-    | "template_day_dates"
-    | "media";
+    | "template_day_dates";
 
 export type PowerSyncCollectionRefs = {
     [K in PowerSyncCollectionKey]: ShallowRef<PowerSyncCollectionInstance<K> | null>;
@@ -46,7 +44,6 @@ type PowerSyncCollectionInstanceMap = {
     template_days: ReturnType<typeof createTemplateDaysCollection>;
     template_day_slots: ReturnType<typeof createTemplateDaySlotsCollection>;
     template_day_dates: ReturnType<typeof createTemplateDayDatesCollection>;
-    media: ReturnType<typeof createMediaCollection>;
 };
 
 type PowerSyncCollectionInstance<K extends PowerSyncCollectionKey> =
@@ -75,7 +72,6 @@ export const collectionRefs: PowerSyncCollectionRefs = {
     template_day_dates: shallowRef<
         PowerSyncCollectionInstance<"template_day_dates"> | null
     >(null),
-    media: shallowRef<PowerSyncCollectionInstance<"media"> | null>(null),
 };
 
 export const isLoading = ref(true);

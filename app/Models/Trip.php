@@ -62,5 +62,4 @@ class Trip extends Model
     {
         return $this->hasMany(Voyage::class, 'trip_id');
     }
-
 }

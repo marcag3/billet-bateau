@@ -20,7 +20,6 @@ describe('Program edit schema normalization', () => {
                 postal_code: '  K7L 2Y7  ',
                 country: '  Canada  ',
             },
-            imagesModel: null,
         });
 
         expect(parsed.name).toBe('Harbor North');

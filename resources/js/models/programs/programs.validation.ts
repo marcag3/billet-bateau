@@ -30,8 +30,6 @@ const programAddressObjectSchema = z.object({
     country: z.preprocess(coerceStringInput, z.string().trim()),
 });
 
-const imagesFieldSchema = z.union([z.array(z.instanceof(File)), z.null()]);
-
 function createProgramCreateZodSchema(t: Translator) {
     return z.object({
         name: zRequiredTrimmedString(t('programsCreate.validationRequired')),
@@ -39,7 +37,6 @@ function createProgramCreateZodSchema(t: Translator) {
         themeColor: zHexColorSix(t('programsCreate.validationHex')),
         isActive: z.boolean(),
         address: programAddressObjectSchema,
-        imagesModel: imagesFieldSchema,
     });
 }
 
@@ -72,7 +69,6 @@ export function createProgramEditZodSchema(t: Translator) {
         isActive: z.boolean(),
         isArchived: z.boolean(),
         address: programAddressObjectSchema,
-        imagesModel: imagesFieldSchema,
     });
 }
 

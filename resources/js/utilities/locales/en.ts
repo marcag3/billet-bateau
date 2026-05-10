@@ -68,6 +68,8 @@ export default {
             "This program could not be loaded. It may have been removed or you may not have access.",
         backToList: "Back to programs",
         isArchived: "Archived (hidden from Active tab)",
+        currentBannerCaption:
+            "Current program banner. Choose a new file above to replace it.",
     },
     notFoundPage: {
         title: "Page not found",

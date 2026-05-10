@@ -71,6 +71,8 @@ export default {
             "Impossible de charger ce programme. Il a peut-etre ete supprime ou vous n’y avez pas acces.",
         backToList: "Retour aux programmes",
         isArchived: "Archive (absent de l’onglet Actifs)",
+        currentBannerCaption:
+            "Banniere actuelle du programme. Choisissez un nouveau fichier ci-dessus pour la remplacer.",
     },
     notFoundPage: {
         title: "Page introuvable",

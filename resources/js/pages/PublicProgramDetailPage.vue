@@ -23,18 +23,14 @@
                 <p v-if="program.description" class="text-body1 text-grey-8 program-description">
                     {{ program.description }}
                 </p>
-                <div v-if="(program.images ?? []).length" class="row q-col-gutter-sm q-my-md">
-                    <div
-                        v-for="img in program.images ?? []"
-                        :key="img.uuid"
-                        class="col-6 col-sm-4 col-md-3"
-                    >
+                <div v-if="program.banner_url" class="row q-col-gutter-sm q-my-md">
+                    <div class="col-12 col-sm-8 col-md-6">
                         <q-img
-                            v-if="img.url"
-                            :src="img.url"
-                            :alt="img.name"
+                            v-if="program.banner_url"
+                            :src="program.banner_url"
                             class="rounded-borders"
                             fit="cover"
+                            :ratio="16 / 9"
                         />
                     </div>
                 </div>
@@ -52,11 +48,10 @@ const props = defineProps<{
     identifier: string;
 }>();
 
-type ProgramImage = { uuid: string; url?: string; name?: string };
 type PublicProgram = {
     name?: string;
     description?: string;
-    images?: ProgramImage[];
+    banner_url?: string | null;
 };
 
 const { t } = useI18n();
