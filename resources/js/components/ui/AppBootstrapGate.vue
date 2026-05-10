@@ -1,6 +1,16 @@
 <template>
     <div class="relative-position">
-        <q-inner-loading v-if="!ready && hasLoadingCopy" :showing="true">
+        <q-banner
+            v-if="!ready && hasErrorMessage"
+            rounded
+            class="bg-red-1 text-negative q-mb-md"
+        >
+            {{ errorMessage }}
+        </q-banner>
+        <q-inner-loading
+            v-else-if="!ready && hasLoadingCopy"
+            :showing="true"
+        >
             <div class="column items-center q-gutter-sm q-px-md">
                 <q-spinner color="primary" size="42px" />
                 <div
@@ -30,11 +40,13 @@ const props = withDefaults(
         ready?: boolean;
         loadingTitle?: string;
         loadingSubcopy?: string;
+        errorMessage?: string;
     }>(),
     {
         ready: false,
         loadingTitle: "",
         loadingSubcopy: "",
+        errorMessage: "",
     },
 );
 
@@ -42,5 +54,8 @@ const hasLoadingCopy = computed(
     () =>
         (props.loadingTitle != null && props.loadingTitle !== "") ||
         (props.loadingSubcopy != null && props.loadingSubcopy !== ""),
+);
+const hasErrorMessage = computed(
+    () => props.errorMessage != null && props.errorMessage.trim().length > 0,
 );
 </script>

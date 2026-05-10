@@ -1,5 +1,8 @@
 <template>
-    <AppBootstrapGate :ready="hasBootstrapped">
+    <AppBootstrapGate
+        :ready="hasBootstrapped"
+        :error-message="powersyncErrorMessage"
+    >
         <router-view />
     </AppBootstrapGate>
     <AppProgramEditContextNav />
@@ -12,4 +15,5 @@ import AppProgramEditContextNav from "./AppProgramEditContextNav.vue";
 
 const powersync = getAppPowerSyncContext();
 const hasBootstrapped = powersync.hasBootstrappedCollection;
+const powersyncErrorMessage = powersync.errorMessage;
 </script>

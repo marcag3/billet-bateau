@@ -14,8 +14,8 @@ function detachUserScopeStream(): void {
     if (userScopeUnsubscribe) {
         try {
             userScopeUnsubscribe();
-        } catch {
-            // Ignore unsubscribe errors during teardown
+        } catch (error) {
+            console.warn("PowerSync user_scope unsubscribe failed:", error);
         }
         userScopeUnsubscribe = null;
     }
@@ -46,8 +46,8 @@ export function attachProgramScopeStreamSubscription(): void {
     if (programScopeUnsubscribe) {
         try {
             programScopeUnsubscribe();
-        } catch {
-            // Ignore unsubscribe errors during teardown
+        } catch (error) {
+            console.warn("PowerSync program_scope unsubscribe failed:", error);
         }
         programScopeUnsubscribe = null;
     }
@@ -75,8 +75,11 @@ export function detachAllPowerSyncStreams(): void {
     if (programScopeUnsubscribe) {
         try {
             programScopeUnsubscribe();
-        } catch {
-            // Ignore
+        } catch (error) {
+            console.warn(
+                "PowerSync program_scope unsubscribe failed during detach:",
+                error,
+            );
         }
         programScopeUnsubscribe = null;
     }

@@ -89,7 +89,8 @@ export async function refreshOutboxSnapshot(): Promise<void> {
         const stats = await db.getUploadQueueStats(false);
         outboxPendingCount.value =
             typeof stats?.count === "number" ? stats.count : 0;
-    } catch {
+    } catch (error) {
+        console.error("PowerSync outbox stats refresh failed:", error);
         outboxPendingCount.value = 0;
     }
 }

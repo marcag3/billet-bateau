@@ -16,6 +16,7 @@ export default {
         language: "Langue",
         welcome: "Bienvenue",
         dismiss: "Fermer",
+        edit: "Modifier",
         backToPrograms: "Retour aux programmes",
         back: "Retour",
         switchProgram: "Changer de programme",
@@ -161,7 +162,6 @@ export default {
             "Ce bateau ne figure pas a la liste de ce programme ou a ete supprime.",
         loadMore: "Faire defiler pour en voir plus",
         saveChanges: "Enregistrer",
-        edit: "Modifier",
         name: "Nom",
         capacity: "Capacite",
         capacityHint:
@@ -212,7 +212,6 @@ export default {
         waterRoute: "Parcours",
         create: "Creer la sortie",
         empty: "Aucune sortie pour le moment. Utilisez Ajouter une sortie pour en creer une.",
-        edit: "Modifier",
         saveChanges: "Enregistrer",
         created: "Sortie enregistree.",
         changesSaved: "Sortie mise a jour.",
@@ -233,10 +232,20 @@ export default {
     waterRoutesList: {
         title: "Parcours",
         description:
-            "Traces reutilisables pour les sorties (GeoJSON LineString, SRID 4326). Tracez le parcours sur la carte ci-dessous ; les changements se synchronisent via PowerSync. Si la trace est vide, une geometrie par defaut est utilisee.",
+            "Traces reutilisables pour les sorties (GeoJSON LineString, SRID 4326). Apercu ci-dessous ; ouvrez un parcours pour le modifier sur la carte. Les changements se synchronisent via PowerSync.",
+        addWaterRoute: "Ajouter un parcours",
+        routeCardHeading: "{name} ({minutes} min)",
+        backToList: "Retour aux parcours",
+        createPageTitle: "Ajouter un parcours",
+        createPageDescription:
+            "Tracez le parcours sur la carte ; si la trace est vide, une geometrie par defaut est utilisee. Les changements se synchronisent via PowerSync.",
+        editPageTitle: "Modifier le parcours",
+        editPageDescription:
+            "Mettez a jour la trace sur la carte ; si vous effacez la trace, une geometrie par defaut est utilisee a l’enregistrement. Les changements se synchronisent via PowerSync.",
+        notFound:
+            "Ce parcours ne figure pas a ce programme ou a ete supprime.",
         addNew: "Nouveau parcours",
         editTitle: "Modifier le parcours",
-        edit: "Modifier",
         save: "Enregistrer",
         updated: "Parcours mis a jour.",
         name: "Nom",
@@ -246,11 +255,11 @@ export default {
         durationRequired: "La duree est obligatoire.",
         traceOptional: "Trace (optionnel)",
         traceHint:
-            "Cliquez sur la carte pour ajouter des points (minimum deux points). Annuler retire le dernier point ; Effacer supprime la trace. Laissez vide pour une ligne par defaut (region de Montreal).",
+            "Cliquez sur la carte pour ajouter des points (minimum deux points).",
         traceUndo: "Annuler le dernier point",
         traceClear: "Effacer la trace",
         create: "Creer",
-        empty: "Aucun parcours pour le moment. Creez-en un ci-dessus pour les sorties.",
+        empty: "Aucun parcours pour le moment. Ajoutez-en un pour les sorties.",
         rename: "Modifier le nom",
         editDuration: "Duree",
         created: "Parcours enregistre.",
@@ -268,7 +277,6 @@ export default {
         description:
             "Definissez les produits billets pour ce programme (prix, libre prix, limites, plafonds optionnels par sortie). Les changements se synchronisent via PowerSync.",
         addType: "Ajouter un type de billet",
-        edit: "Modifier",
         createTitle: "Nouveau type de billet",
         editTitle: "Modifier le type de billet",
         cancel: "Annuler",
@@ -393,7 +401,6 @@ export default {
         deleteConfirmTitle: "Supprimer le modele de journee ?",
         deleteConfirmMessage:
             'Supprimer "{name}" ? Cette action est definitive.',
-        edit: "Modifier",
         notFound:
             "Impossible de charger ce modele de journee. Il a peut-etre ete supprime ou vous n'y avez pas acces.",
         detailsSection: "Details du modele",

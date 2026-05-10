@@ -40,7 +40,7 @@
                             color="primary"
                             outline
                             dense
-                            :label="t('ticketTypesList.edit')"
+                            :label="t('common.edit')"
                             @click="() => openEditDialog(row)"
                         />
                         <q-btn

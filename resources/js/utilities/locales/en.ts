@@ -16,6 +16,7 @@ export default {
         language: "Language",
         welcome: "Welcome",
         dismiss: "Dismiss",
+        edit: "Edit",
         backToPrograms: "Back to programs",
         back: "Back",
         switchProgram: "Switch program",
@@ -157,7 +158,6 @@ export default {
             "This boat is not in this program roster or may have been removed.",
         loadMore: "Scroll for more",
         saveChanges: "Save",
-        edit: "Edit",
         name: "Name",
         capacity: "Capacity",
         capacityHint: "Non-negative integer passenger capacity (required).",
@@ -204,7 +204,6 @@ export default {
         waterRoute: "Water route",
         create: "Create trip",
         empty: "No trips yet. Use Add trip to create one.",
-        edit: "Edit",
         saveChanges: "Save",
         created: "Trip saved.",
         changesSaved: "Trip updated.",
@@ -223,10 +222,20 @@ export default {
     waterRoutesList: {
         title: "Water routes",
         description:
-            "Reusable paths for trips (GeoJSON LineString, SRID 4326). Trace the route on the map below; changes sync through PowerSync. If you leave the trace empty, a default geometry is used.",
+            "Reusable paths for trips (GeoJSON LineString, SRID 4326). Preview traces below; open a route to edit on the map. Changes sync through PowerSync.",
+        addWaterRoute: "Add water route",
+        routeCardHeading: "{name} ({minutes} min)",
+        backToList: "Back to water routes",
+        createPageTitle: "Add water route",
+        createPageDescription:
+            "Trace the route on the map; if you leave the trace empty, a default geometry is used. Changes sync through PowerSync.",
+        editPageTitle: "Edit water route",
+        editPageDescription:
+            "Update the trace on the map; if you clear the trace, a default geometry is used on save. Changes sync through PowerSync.",
+        notFound:
+            "This water route is not in this program or may have been removed.",
         addNew: "New water route",
         editTitle: "Edit water route",
-        edit: "Edit",
         save: "Save",
         updated: "Water route updated.",
         name: "Name",
@@ -235,11 +244,11 @@ export default {
         durationRequired: "Duration is required.",
         traceOptional: "Trace (optional)",
         traceHint:
-            "Click the map to add points along the route (minimum two points). Undo removes the last point; Clear removes the trace. Leave empty to use a default Montreal-area line.",
+            "Click the map to add points along the route (minimum two points).",
         traceUndo: "Undo last point",
         traceClear: "Clear trace",
         create: "Create",
-        empty: "No water routes yet. Create one above for trip planning.",
+        empty: "No water routes yet. Add one to use on trips.",
         rename: "Edit name",
         editDuration: "Duration",
         created: "Water route saved.",
@@ -257,7 +266,6 @@ export default {
         description:
             "Define ticket products for this program (price, pay-what-you-can, limits, optional per-sortie caps). Changes sync through PowerSync.",
         addType: "Add ticket type",
-        edit: "Edit",
         createTitle: "New ticket type",
         editTitle: "Edit ticket type",
         cancel: "Cancel",
@@ -380,7 +388,6 @@ export default {
         delete: "Delete",
         deleteConfirmTitle: "Delete template day?",
         deleteConfirmMessage: 'Remove "{name}"? This cannot be undone.',
-        edit: "Edit",
         notFound:
             "This template day could not be loaded. It may have been removed or you may not have access.",
         detailsSection: "Template day details",

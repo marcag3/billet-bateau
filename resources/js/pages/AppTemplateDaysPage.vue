@@ -41,7 +41,7 @@
                             round
                             dense
                             icon="edit"
-                            :aria-label="t('templateDaysList.edit')"
+                            :aria-label="t('common.edit')"
                             :to="{
                                 name: 'template-days.edit',
                                 params: {

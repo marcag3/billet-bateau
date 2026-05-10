@@ -1,4 +1,4 @@
-import { createCollection } from '@tanstack/db';
+import { BasicIndex, createCollection } from '@tanstack/db';
 import { powerSyncCollectionOptions } from '@tanstack/powersync-db-collection';
 import { z } from 'zod';
 import { appProgramsPowerSyncTable } from './app.powersync-schema';
@@ -43,8 +43,9 @@ export function createProgramsCollection(
     onError: (error: unknown) => void,
     onLoad?: () => void | (() => void) | Promise<void | (() => void)>,
 ) {
-    return createCollection(
-        powerSyncCollectionOptions({
+    const collection = createCollection({
+        defaultIndexType: BasicIndex,
+        ...powerSyncCollectionOptions({
             database,
             table: appProgramsPowerSyncTable,
             schema: programSchema,
@@ -53,5 +54,9 @@ export function createProgramsCollection(
             },
             ...(onLoad ? { onLoad } : {}),
         }),
-    );
+    });
+
+    collection.createIndex((row) => row.id);
+
+    return collection;
 }

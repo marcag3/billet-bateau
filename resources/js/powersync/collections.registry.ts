@@ -58,6 +58,7 @@ const collectionFactories: {
 
 export function wirePowerSyncCollections(db: PowerSyncDatabase): void {
     const sharedOnError = (err: unknown) => {
+        console.error("PowerSync collection deserialization failed:", err);
         errorMessage.value =
             err instanceof Error ? err.message : loadFailedMessage;
     };

@@ -61,7 +61,7 @@
                                 color="primary"
                                 outline
                                 dense
-                                :label="t('boatsList.edit')"
+                                :label="t('common.edit')"
                                 :to="{
                                     name: 'boats.edit',
                                     params: { programId, boatId: String(b.id) },

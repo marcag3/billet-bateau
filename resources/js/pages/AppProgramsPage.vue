@@ -15,6 +15,7 @@
             :ready="hasBootstrapped"
             :loading-title="t('programsList.loadingLocal')"
             :loading-subcopy="t('programsList.loadingLocalHint')"
+            :error-message="powersyncErrorMessage"
         >
             <q-tabs
                 v-model="programTab"
@@ -180,6 +181,7 @@ usePageLayout({ documentTitleKey: "programsList.title" });
 const programsCollection = powersync.collections.programs;
 const hasBootstrapped = powersync.hasBootstrappedCollection;
 const initialUserScopeSyncComplete = powersync.initialUserScopeSyncComplete;
+const powersyncErrorMessage = powersync.errorMessage;
 
 const { data: programs, isLoading: programsQueryLoading } = useLiveQuery(
     (queryBuilder) => {

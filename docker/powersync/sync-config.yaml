@@ -108,7 +108,12 @@ streams:
         WHERE bookings.program_id = subscription.parameter('program_id')
           AND bookings.program_id IN accessible_program_ids
       - |
-        SELECT id, program_id, name, trace, duration_minutes
+        SELECT
+          id,
+          program_id,
+          name,
+          ST_AsGeoJSON(trace) AS trace,
+          duration_minutes
         FROM water_routes
         WHERE water_routes.program_id = subscription.parameter('program_id')
           AND water_routes.program_id IN accessible_program_ids

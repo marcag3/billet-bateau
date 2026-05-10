@@ -43,7 +43,7 @@
                         color="primary"
                         outline
                         dense
-                        :label="t('tripsList.edit')"
+                        :label="t('common.edit')"
                         :to="{
                             name: 'trips.edit',
                             params: { programId, tripId: String(tr.id) },

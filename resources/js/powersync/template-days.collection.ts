@@ -1,4 +1,4 @@
-import { createCollection } from '@tanstack/db';
+import { BasicIndex, createCollection } from '@tanstack/db';
 import { powerSyncCollectionOptions } from '@tanstack/powersync-db-collection';
 import { z } from 'zod';
 import { appTemplateDaysPowerSyncTable } from './app.powersync-schema';
@@ -17,8 +17,9 @@ export function createTemplateDaysCollection(
     onError: (error: unknown) => void,
     onLoad?: () => void | (() => void) | Promise<void | (() => void)>,
 ) {
-    return createCollection(
-        powerSyncCollectionOptions({
+    const collection = createCollection({
+        defaultIndexType: BasicIndex,
+        ...powerSyncCollectionOptions({
             database,
             table: appTemplateDaysPowerSyncTable,
             schema: templateDaysSchema,
@@ -27,5 +28,9 @@ export function createTemplateDaysCollection(
             },
             ...(onLoad ? { onLoad } : {}),
         }),
-    );
+    });
+
+    collection.createIndex((row) => row.id);
+
+    return collection;
 }

@@ -114,6 +114,7 @@ export async function bootstrapAppPowerSync(): Promise<void> {
             runtimeState.persistenceUnavailable.value = false;
             await refreshOutboxSnapshot();
         } catch (error) {
+            console.error("PowerSync bootstrap failed:", error);
             runtimeState.setBootstrapPromise(null);
             runtimeState.hasBootstrappedCollection.value = false;
             runtimeState.initialUserScopeSyncComplete.value = false;
@@ -125,8 +126,11 @@ export async function bootstrapAppPowerSync(): Promise<void> {
             runtimeState.setPowerSyncStatusUnsubscribe(null);
             try {
                 await runtimeState.powerSyncDbRef.value?.close();
-            } catch {
-                // ignore close errors during failed bootstrap
+            } catch (closeError) {
+                console.error(
+                    "PowerSync close failed during bootstrap recovery:",
+                    closeError,
+                );
             }
             runtimeState.powerSyncDbRef.value = null;
             for (const ref of Object.values(runtimeState.collectionRefs)) {
