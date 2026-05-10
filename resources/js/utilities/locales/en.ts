@@ -10,6 +10,7 @@ export default {
         templateDays: "Template days",
         ticketTypes: "Ticket types",
         waterRoutes: "Water routes",
+        calendar: "Calendar",
         logout: "Logout",
         reauthenticate: "Reauthenticate",
         openApp: "Open App",
@@ -218,6 +219,20 @@ export default {
         nextTrip: "Next trip",
         positionInList: "{index} of {total}",
         editSection: "Trip details",
+    },
+    tripsCalendar: {
+        title: "Trip calendar",
+        description:
+            "View scheduled departures by day, week, or month. Click an event to edit the trip.",
+        empty:
+            "No trips with a scheduled departure yet. Add a trip or set a departure time to see it here.",
+        eventCapacity: "{cap} pax",
+        goToday: "Today",
+        prev: "Previous period",
+        next: "Next period",
+        viewDay: "Day",
+        viewWeek: "Week",
+        viewMonth: "Month",
     },
     waterRoutesList: {
         title: "Water routes",

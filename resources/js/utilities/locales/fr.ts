@@ -10,6 +10,7 @@ export default {
         templateDays: "Journees types",
         ticketTypes: "Types de billet",
         waterRoutes: "Parcours",
+        calendar: "Calendrier",
         logout: "Se deconnecter",
         reauthenticate: "Se reconnecter",
         openApp: "Ouvrir l'application",
@@ -228,6 +229,20 @@ export default {
         nextTrip: "Sortie suivante",
         positionInList: "{index} sur {total}",
         editSection: "Details de la sortie",
+    },
+    tripsCalendar: {
+        title: "Calendrier des sorties",
+        description:
+            "Voir les departs planifies par jour, semaine ou mois. Cliquez un evenement pour modifier la sortie.",
+        empty:
+            "Aucune sortie avec un depart planifie. Ajoutez une sortie ou definissez une date et une heure pour l’afficher ici.",
+        eventCapacity: "{cap} passagers",
+        goToday: "Aujourd’hui",
+        prev: "Periode precedente",
+        next: "Periode suivante",
+        viewDay: "Jour",
+        viewWeek: "Semaine",
+        viewMonth: "Mois",
     },
     waterRoutesList: {
         title: "Parcours",

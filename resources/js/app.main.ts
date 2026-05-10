@@ -3,6 +3,8 @@ import { createPinia } from "pinia";
 import { configure } from "vee-validate";
 import { Quasar, Notify, Dialog } from "quasar";
 import "@quasar/extras/material-icons/material-icons.css";
+import "@quasar/quasar-ui-qcalendar/index.min.css";
+import { QCalendarDay, QCalendarMonth } from "@quasar/quasar-ui-qcalendar";
 import "leaflet/dist/leaflet.css";
 import "quasar/src/css/index.sass";
 import "../css/tokens.css";
@@ -36,6 +38,8 @@ app.use(Quasar, {
         Dialog,
     },
 });
+app.component("QCalendarDay", QCalendarDay);
+app.component("QCalendarMonth", QCalendarMonth);
 app.use(i18n);
 
 await syncQuasarLanguageWithI18n();

@@ -35,6 +35,7 @@
         "@powersync/common": "^1.52.0",
         "@powersync/web": "^1.37.2",
         "@quasar/extras": "^1.18.0",
+        "@quasar/quasar-ui-qcalendar": "^4.1.2",
         "@rolldown/binding-linux-x64-gnu": "^1.0.0-rc.17",
         "@tanstack/db": "^0.6.5",
         "@tanstack/powersync-db-collection": "^0.1.43",
