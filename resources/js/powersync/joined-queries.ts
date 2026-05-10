@@ -27,6 +27,8 @@ export interface BoatWithBoatTypeRow {
     notes: string | null;
     /** Resolved boat type name (null if no boat_type_id) */
     boatTypeName: string | null;
+    /** Boat type banner storage key (null if no type or no banner) */
+    boatTypeBannerObjectKey: string | null;
 }
 
 /**
@@ -62,6 +64,7 @@ export function joinBoatsWithBoatTypes<
             capacity: b.capacity,
             notes: b.notes,
             boatTypeName: bt.name,
+            boatTypeBannerObjectKey: bt.banner_object_key,
         }));
 }
 
