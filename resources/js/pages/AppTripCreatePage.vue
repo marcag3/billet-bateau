@@ -8,7 +8,7 @@
         <AppCardSection :label="t('tripsList.addNew')">
             <AppTripForm
                 :program-id="programId"
-                :seed="null"
+                :seed="tripCreateSeed"
                 :submit-fn="submitCreateTrip"
             >
                 <template #actions="{ meta, isSubmitting }">
@@ -31,19 +31,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, shallowRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { ulid } from "ulid";
 import type { TripUpsertFormValues } from "../models/trips/trips.validation";
-import { localDatetimeInputValueToIso } from "../utilities/datetime-input";
+import {
+    composeLocalDatetimeFromParts,
+    localDatetimeInputValueToIso,
+} from "../utilities/datetime-input";
+import { parseTripCreateDepartureQuery } from "../utilities/trip-departure-query";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
-
-const powersync = getAppPowerSyncContext();
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import AppEntityCreatePageLayout from "../layouts/AppEntityCreatePageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppTripForm from "../components/molecules/AppTripForm.vue";
+
+const powersync = getAppPowerSyncContext();
 
 const { t } = useI18n();
 const route = useRoute();
@@ -58,6 +62,27 @@ const backTo = computed(() => ({
     params: { programId: programId.value },
 }));
 
+const tripCreateSeed = shallowRef<Partial<TripUpsertFormValues> | null>(null);
+
+watch(
+    () => [route.query.departureDate, route.query.departureTime] as const,
+    () => {
+        const parsed = parseTripCreateDepartureQuery(route.query);
+        if (parsed == null) {
+            tripCreateSeed.value = null;
+            return;
+        }
+        tripCreateSeed.value = {
+            scheduledDepartureDate: parsed.scheduledDepartureDate,
+            scheduledDepartureTime: parsed.scheduledDepartureTime,
+            capacity: null,
+            boatTypeId: null,
+            waterRouteId: null,
+        };
+    },
+    { immediate: true },
+);
+
 async function submitCreateTrip(values: TripUpsertFormValues): Promise<void> {
     await runWithNotify(
         async () => {
@@ -67,9 +92,11 @@ async function submitCreateTrip(values: TripUpsertFormValues): Promise<void> {
             if (pid.length === 0)
                 throw new Error("Select a program before adding trips.");
             const id = ulid();
-            const iso = localDatetimeInputValueToIso(
-                String(values.scheduledDepartureAt),
+            const localCombined = composeLocalDatetimeFromParts(
+                values.scheduledDepartureDate,
+                values.scheduledDepartureTime,
             );
+            const iso = localDatetimeInputValueToIso(localCombined);
             const cap = Number.parseInt(String(values.capacity), 10);
             if (!Number.isFinite(cap) || cap < 1)
                 throw new Error("Trip capacity must be a positive integer.");

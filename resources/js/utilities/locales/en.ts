@@ -196,6 +196,10 @@ export default {
         editPageDescription:
             "Update departure, capacity, and links. Use the switcher or side menu to move between trips.",
         scheduledDeparture: "Scheduled departure",
+        scheduledDepartureDate: "Departure date",
+        scheduledDepartureTime: "Departure time",
+        scheduledDepartureDateRequired: "Departure date is required.",
+        scheduledDepartureTimeRequired: "Departure time is required.",
         scheduledDepartureRequired: "Scheduled departure is required.",
         scheduledDepartureInvalid: "Enter a valid date and time.",
         capacity: "Capacity",
@@ -223,7 +227,7 @@ export default {
     tripsCalendar: {
         title: "Trip calendar",
         description:
-            "View scheduled departures by day, week, or month. Click an event to edit the trip.",
+            "View scheduled departures by day, week, or month. Click a time slot or day to add a trip, or click an event to edit it.",
         empty:
             "No trips with a scheduled departure yet. Add a trip or set a departure time to see it here.",
         eventCapacity: "{cap} pax",

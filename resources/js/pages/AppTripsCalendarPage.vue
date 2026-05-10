@@ -76,6 +76,7 @@
                 date-header="stacked"
                 :use-navigation="false"
                 class="trips-calendar-surface"
+                @click-time="onDayCalendarClickTime"
             >
                 <template #day-body="{ scope }">
                     <div class="trips-cal-day-body">
@@ -92,7 +93,7 @@
                                 outline
                                 color="primary"
                                 class="trips-cal-event-btn full-width text-left"
-                                @click="onTripClick(ev.id)"
+                                @click.stop="onTripClick(ev.id)"
                             >
                                 <span class="ellipsis block">{{ ev.title }}</span>
                             </q-btn>
@@ -110,6 +111,7 @@
                 :weekdays="calendarWeekdays"
                 :use-navigation="false"
                 class="trips-calendar-surface"
+                @click-day="onMonthCalendarClickDay"
             >
                 <template #day="{ scope }">
                     <div
@@ -125,7 +127,7 @@
                             outline
                             color="primary"
                             class="trips-cal-month-event full-width text-left"
-                            @click="onTripClick(ev.id)"
+                            @click.stop="onTripClick(ev.id)"
                         >
                             <span class="ellipsis block">{{ ev.title }}</span>
                         </q-btn>
@@ -148,6 +150,10 @@ import { joinTripsWithRelations } from "../powersync/joined-queries";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
+import {
+    isValidCalendarDateYmd,
+    isValidTimeHm,
+} from "../utilities/trip-departure-query";
 
 const powersync = getAppPowerSyncContext();
 
@@ -432,6 +438,95 @@ function onTripClick(tripId: string): void {
             programId: programId.value,
             tripId,
         },
+    });
+}
+
+/** QCalendar `click-time` payload (interval cell). */
+interface CalendarClickTimePayload {
+    scope?: { timestamp?: Record<string, unknown> };
+}
+
+function timestampToDepartureParts(
+    ts: Record<string, unknown>,
+): { date: string; time: string } | null {
+    const dateRaw =
+        ts.date != null && String(ts.date).trim() !== ""
+            ? String(ts.date).trim()
+            : "";
+    if (!isValidCalendarDateYmd(dateRaw)) {
+        return null;
+    }
+    let timeStr = "";
+    if (
+        ts.hasTime === true &&
+        ts.time != null &&
+        String(ts.time).trim() !== ""
+    ) {
+        const t = String(ts.time).trim().slice(0, 5);
+        timeStr = isValidTimeHm(t) ? t : "";
+    }
+    if (timeStr === "") {
+        const h = typeof ts.hour === "number" ? ts.hour : null;
+        const m = typeof ts.minute === "number" ? ts.minute : null;
+        if (h != null && m != null) {
+            const hh = String(Math.max(0, Math.min(23, h))).padStart(2, "0");
+            const mm = String(Math.max(0, Math.min(59, m))).padStart(2, "0");
+            timeStr = `${hh}:${mm}`;
+        }
+    }
+    if (!isValidTimeHm(timeStr)) {
+        return null;
+    }
+    return { date: dateRaw, time: timeStr };
+}
+
+function onDayCalendarClickTime(payload: CalendarClickTimePayload): void {
+    const rawTs = payload.scope?.timestamp;
+    if (rawTs == null || typeof rawTs !== "object") {
+        return;
+    }
+    const parts = timestampToDepartureParts(rawTs);
+    if (parts == null) {
+        return;
+    }
+    const pid = programId.value;
+    if (pid.length === 0) {
+        return;
+    }
+    void router.push({
+        name: "trips.create",
+        params: { programId: pid },
+        query: {
+            departureDate: parts.date,
+            departureTime: parts.time,
+        },
+    });
+}
+
+/** QCalendar month `click-day` payload. */
+interface MonthClickDayPayload {
+    scope?: { timestamp?: { date?: string }; outside?: boolean };
+}
+
+function onMonthCalendarClickDay(payload: MonthClickDayPayload): void {
+    if (payload.scope?.outside === true) {
+        return;
+    }
+    const dateRaw =
+        payload.scope?.timestamp?.date != null
+            ? String(payload.scope.timestamp.date).trim()
+            : "";
+    if (!isValidCalendarDateYmd(dateRaw)) {
+        return;
+    }
+    const pid = programId.value;
+    if (pid.length === 0) {
+        return;
+    }
+    void router.push({
+        name: "trips.create",
+        params: { programId: pid },
+        query: { departureDate: dateRaw },
     });
 }
 </script>

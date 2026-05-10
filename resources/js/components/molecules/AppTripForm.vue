@@ -2,11 +2,19 @@
     <q-form @submit="onValidSubmit">
         <AppFormStack>
             <q-input
-                v-model="scheduledDepartureAt"
-                v-bind="scheduledDepartureAtProps"
+                v-model="scheduledDepartureDate"
+                v-bind="scheduledDepartureDateProps"
                 outlined
-                type="datetime-local"
-                :label="t('tripsList.scheduledDeparture')"
+                type="date"
+                :label="t('tripsList.scheduledDepartureDate')"
+                :disable="fieldsDisabled"
+            />
+            <q-input
+                v-model="scheduledDepartureTime"
+                v-bind="scheduledDepartureTimeProps"
+                outlined
+                type="time"
+                :label="t('tripsList.scheduledDepartureTime')"
                 :disable="fieldsDisabled"
             />
             <q-input
@@ -57,8 +65,11 @@ import AppWaterRouteSelectField from "../organisms/AppWaterRouteSelectField.vue"
 
 const props = defineProps<{
     programId: string;
-    /** When set, replaces form values (e.g. edit mode). When null, form resets to empty defaults. */
-    seed: TripUpsertFormValues | null;
+    /**
+     * When set, merges into form values (create prefill may omit time).
+     * When null, form resets to empty defaults.
+     */
+    seed: Partial<TripUpsertFormValues> | null;
     /** Disables fields (e.g. while a delete dialog action runs). */
     disabled?: boolean;
     submitFn: (values: TripUpsertFormValues) => Promise<void>;
@@ -68,7 +79,8 @@ const { t } = useI18n();
 
 const emptyValues = (): TripUpsertFormValues =>
     ({
-        scheduledDepartureAt: "",
+        scheduledDepartureDate: "",
+        scheduledDepartureTime: "",
         capacity: null,
         boatTypeId: null,
         waterRouteId: null,
@@ -83,8 +95,11 @@ const { handleSubmit, defineField, meta, isSubmitting, setValues, resetForm } =
 
 const quasarField = createQuasarFieldBinder(defineField);
 
-const [scheduledDepartureAt, scheduledDepartureAtProps] = quasarField(
-    "scheduledDepartureAt",
+const [scheduledDepartureDate, scheduledDepartureDateProps] = quasarField(
+    "scheduledDepartureDate",
+);
+const [scheduledDepartureTime, scheduledDepartureTimeProps] = quasarField(
+    "scheduledDepartureTime",
 );
 const [capacity, capacityProps] = quasarField("capacity");
 const [boatTypeId, boatTypeIdProps] = quasarField("boatTypeId");
@@ -98,7 +113,7 @@ watch(
     () => props.seed,
     (next) => {
         if (next != null) {
-            setValues({ ...next });
+            setValues({ ...emptyValues(), ...next });
         } else {
             resetForm({ values: emptyValues() });
         }

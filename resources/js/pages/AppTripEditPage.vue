@@ -118,8 +118,10 @@ import { useQuasar } from "quasar";
 import { useRoute, useRouter } from "vue-router";
 import type { TripUpsertFormValues } from "../models/trips/trips.validation";
 import {
+    composeLocalDatetimeFromParts,
     isoToLocalDatetimeInputValue,
     localDatetimeInputValueToIso,
+    splitLocalDatetimeInputToDateAndTime,
 } from "../utilities/datetime-input";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
@@ -194,16 +196,19 @@ const showNotFound = computed(
         currentTrip.value == null,
 );
 
-const tripFormSeed = computed((): TripUpsertFormValues | null => {
+const tripFormSeed = computed((): Partial<TripUpsertFormValues> | null => {
     const tr = currentTrip.value;
     if (!tr) {
         return null;
     }
     const cap = parsePositiveInt(tr.capacity);
+    const localCombined = isoToLocalDatetimeInputValue(
+        String(tr.scheduled_departure_at ?? ""),
+    );
+    const { date, time } = splitLocalDatetimeInputToDateAndTime(localCombined);
     return {
-        scheduledDepartureAt: isoToLocalDatetimeInputValue(
-            String(tr.scheduled_departure_at ?? ""),
-        ),
+        scheduledDepartureDate: date,
+        scheduledDepartureTime: time,
         capacity: cap,
         boatTypeId:
             tr.boat_type_id == null || String(tr.boat_type_id).length === 0
@@ -213,7 +218,7 @@ const tripFormSeed = computed((): TripUpsertFormValues | null => {
             tr.water_route_id == null || String(tr.water_route_id).length === 0
                 ? null
                 : String(tr.water_route_id),
-    } as TripUpsertFormValues;
+    };
 });
 
 function formatSwitcherLabel(tr: TripOutput) {
@@ -275,9 +280,11 @@ async function submitUpdateTrip(
             if (cap === null) {
                 throw new Error("capacity");
             }
-            const iso = localDatetimeInputValueToIso(
-                String(values.scheduledDepartureAt),
+            const localCombined = composeLocalDatetimeFromParts(
+                values.scheduledDepartureDate,
+                values.scheduledDepartureTime,
             );
+            const iso = localDatetimeInputValueToIso(localCombined);
             const nextBoatType =
                 values.boatTypeId != null &&
                 String(values.boatTypeId).length > 0

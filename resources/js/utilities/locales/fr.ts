@@ -203,6 +203,10 @@ export default {
         editPageDescription:
             "Modifiez le depart, la capacite et les liens. Utilisez le selecteur ou le menu pour passer d’une sortie a l’autre.",
         scheduledDeparture: "Depart planifie",
+        scheduledDepartureDate: "Date du depart",
+        scheduledDepartureTime: "Heure du depart",
+        scheduledDepartureDateRequired: "La date du depart est obligatoire.",
+        scheduledDepartureTimeRequired: "L’heure du depart est obligatoire.",
         scheduledDepartureRequired: "Le depart planifie est obligatoire.",
         scheduledDepartureInvalid: "Entrez une date et une heure valides.",
         capacity: "Capacite",
@@ -233,7 +237,7 @@ export default {
     tripsCalendar: {
         title: "Calendrier des sorties",
         description:
-            "Voir les departs planifies par jour, semaine ou mois. Cliquez un evenement pour modifier la sortie.",
+            "Voir les departs planifies par jour, semaine ou mois. Cliquez un creneau ou un jour pour ajouter une sortie, ou un evenement pour la modifier.",
         empty:
             "Aucune sortie avec un depart planifie. Ajoutez une sortie ou definissez une date et une heure pour l’afficher ici.",
         eventCapacity: "{cap} passagers",
