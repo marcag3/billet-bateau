@@ -49,7 +49,7 @@
                         :key="`prog-skel-${i}`"
                         class="col-12 col-sm-6 col-md-4"
                     >
-                        <q-card flat bordered>
+                        <q-card >
                             <q-skeleton height="160px" square />
                             <q-card-section>
                                 <q-skeleton type="text" class="text-subtitle1" />
@@ -65,30 +65,30 @@
                         :message="emptyListMessage"
                     />
                     <div
-                        v-for="p in filteredPrograms"
-                        :key="String(p.id)"
+                        v-for="program in filteredPrograms"
+                        :key="String(program.id)"
                         class="col-12 col-sm-6 col-md-4"
                     >
                         <q-card>
                             <q-img
-                                :src="primaryImageFor(p)"
-                                :style="placeholderStyle(p)"
+                                :src="primaryImageFor(program)"
+                                :style="placeholderStyle(program)"
                                 :ratio="16 / 9"
                             >
                                 <div class="absolute-bottom">
-                                    <div class="text-h6">{{ p.name }}</div>
+                                    <div class="text-h6">{{ program.name }}</div>
                                     <div
                                         class="text-subtitle2"
-                                        v-if="programDescription(p)"
+                                        v-if="programDescription(program)"
                                     >
-                                        {{ programDescription(p) }}
+                                        {{ programDescription(program) }}
                                     </div>
                                 </div>
                             </q-img>
 
                             <q-card-section class="col-grow">
                                 <div
-                                    v-if="addressDisplayLines(p).length"
+                                    v-if="addressDisplayLines(program).length"
                                     class="row no-wrap items-start text-body2 text-grey-7 q-gutter-sm"
                                 >
                                     <q-icon
@@ -99,9 +99,9 @@
                                     <div>
                                         <div
                                             v-for="(line, i) in addressDisplayLines(
-                                                p,
+                                                program,
                                             )"
-                                            :key="`addr-${String(p.id)}-${i}`"
+                                            :key="`addr-${String(program.id)}-${i}`"
                                         >
                                             {{ line }}
                                         </div>
@@ -121,7 +121,7 @@
                                     :label="t('programsList.editProgram')"
                                     :to="{
                                         name: 'programs.edit',
-                                        params: { programId: String(p.id) },
+                                        params: { programId: String(program.id) },
                                     }"
                                 />
                                 <q-btn
@@ -132,7 +132,7 @@
                                     :label="t('programsList.controlPanel')"
                                     :to="{
                                         name: 'programs.control',
-                                        params: { programId: String(p.id) },
+                                        params: { programId: String(program.id) },
                                     }"
                                 />
                                 <q-btn
@@ -143,7 +143,7 @@
                                     :label="t('programsList.checkinManager')"
                                     :to="{
                                         name: 'programs.checkin',
-                                        params: { programId: String(p.id) },
+                                        params: { programId: String(program.id) },
                                     }"
                                 />
                             </q-card-actions>

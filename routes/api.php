@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\PowerSyncCredentialsController;
 use App\Http\Controllers\Api\PowerSyncUploadController;
 use App\Http\Controllers\Api\PresignUploadController;
 use App\Http\Controllers\Api\ProgramController;
+use App\Http\Controllers\Api\PublicBookingController;
 use App\Http\Controllers\Api\PublicProgramController;
 use App\Http\Controllers\Auth\SessionController;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,12 @@ Route::prefix('public')->middleware('throttle:120,1')->group(function (): void {
     Route::get('programs/{program:slug}', [PublicProgramController::class, 'show'])
         ->where('program', '[^/]+')
         ->name('api.public.programs.show');
+    Route::get('programs/{program:slug}/booking-options', [PublicBookingController::class, 'bookingOptions'])
+        ->where('program', '[^/]+')
+        ->name('api.public.programs.booking-options');
+    Route::post('programs/{program:slug}/bookings', [PublicBookingController::class, 'store'])
+        ->where('program', '[^/]+')
+        ->name('api.public.programs.bookings.store');
 });
 
 Route::middleware(['web', 'throttle:60,1'])->group(function (): void {

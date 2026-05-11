@@ -1,15 +1,9 @@
 <template>
-    <q-page class="public-home-page q-pa-md q-pa-sm-md" padding>
-        <section class="hero-wrap text-center q-mb-lg">
-            <div class="text-h3 q-mb-sm text-weight-bold">{{ t('common.welcome') }}</div>
-            <p class="text-body1 q-mb-none hero-copy">
-                {{ t('public.minimalDescription') }}
-            </p>
-        </section>
+    <q-page >
 
-        <q-banner v-if="errorMessage" class="bg-red-1 text-negative q-mb-md" rounded>
-            {{ errorMessage }}
-        </q-banner>
+        <h1 class="text-h3 q-mb-sm text-weight-bold">{{ t('common.welcome') }}</h1>
+        <p class="text-body1 text-grey-8 q-mb-lg">{{ t('publicHome.description') }}</p>
+
 
         <div v-if="isLoading" class="row justify-center q-pa-xl">
             <q-spinner color="primary" size="48px" />
@@ -19,45 +13,53 @@
             <p v-if="items.length === 0" class="text-body1 text-center q-mb-md">
                 {{ t('publicHome.noPrograms') }}
             </p>
-            <div v-else class="row q-col-gutter-md q-justify-center">
+            <div v-else class="row q-col-gutter-md">
                 <div
-                    v-for="p in items"
-                    :key="p.id"
+                    v-for="program in items"
+                    :key="program.id"
                     class="col-12 col-sm-6 col-md-4 col-lg-3"
                 >
                     <q-card
                         v-ripple
                         class="public-program-card cursor-pointer"
-                        flat
-                        bordered
-                        @click="goProgram(p)"
+
+                        @click="goProgram(program)"
                     >
                         <q-img
-                            v-if="p.image_url"
-                            :src="p.image_url"
-                            :alt="p.name"
-                            height="200px"
-                            no-spinner
-                            fit="cover"
-                        />
-                        <q-card-section v-else>
-                            <div
-                                class="row items-center justify-center"
-                                :style="placeholderBoxStyle(p.theme_color)"
-                            >
-                                <q-icon name="image" size="4rem" color="white" />
-                            </div>
-                        </q-card-section>
-                        <q-separator v-if="p.image_url" />
-                        <q-card-section>
-                            <div class="text-h6 text-weight-bold">{{ p.name }}</div>
+                            :src="program.image_url"
+                            :alt="program.name"
+                            :ratio="1/1"
+                        >
+                        <div class="absolute-bottom">
+                            <div class="text-h6">{{ program.name }}</div>
                             <p
-                                v-if="p.description"
-                                class="text-body2 text-grey-7 q-mb-none ellipsis-3"
+                                v-if="program.description"
+                                class="text-subtitle2"
                             >
-                                {{ p.description }}
+                                {{ program.description }}
                             </p>
-                        </q-card-section>
+                            <div
+                                    v-if="addressDisplayLines(program).length"
+                                    class="row no-wrap items-start text-body2 text-grey-7 q-gutter-sm"
+                                >
+                                    <q-icon
+                                        name="place"
+                                        size="sm"
+                                        class="q-pt-xs"
+                                    />
+                                    <div>
+                                        <div
+                                            v-for="(line, i) in addressDisplayLines(
+                                                program,
+                                            )"
+                                            :key="`addr-${String(program.id)}-${i}`"
+                                        >
+                                            {{ line }}
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                        </q-img>
                     </q-card>
                 </div>
             </div>
@@ -78,6 +80,11 @@ type PublicProgramCard = {
     path_segment?: string;
     image_url?: string;
     theme_color?: string;
+    line_1?: string | null;
+    line_2?: string | null;
+    city?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
 };
 
 const { t } = useI18n();
@@ -95,11 +102,28 @@ const items = computed((): PublicProgramCard[] => {
     return Array.isArray(d) ? (d as PublicProgramCard[]) : [];
 });
 
-function placeholderBoxStyle(themeColor: string | undefined) {
-    return {
-        minHeight: '200px',
-        background: themeColor || '#02153D',
-    };
+function addressDisplayLines(p: PublicProgramCard): string[] {
+    const lines: string[] = [];
+    const l1 = p.line_1 != null ? String(p.line_1).trim() : "";
+    const l2 = p.line_2 != null ? String(p.line_2).trim() : "";
+    if (l1.length > 0) {
+        lines.push(l1);
+    }
+    if (l2.length > 0) {
+        lines.push(l2);
+    }
+    const city = p.city != null ? String(p.city).trim() : "";
+    const pc = p.postal_code != null ? String(p.postal_code).trim() : "";
+    const cityLine = [city, pc].filter((x) => x.length > 0).join(", ");
+    if (cityLine.length > 0) {
+        lines.push(cityLine);
+    }
+    const country = p.country != null ? String(p.country).trim() : "";
+    if (country.length > 0) {
+        lines.push(country);
+    }
+
+    return lines;
 }
 
 function goProgram(p: PublicProgramCard) {
@@ -133,9 +157,6 @@ onMounted(() => {
     overflow: hidden;
 }
 .public-program-card {
-    min-height: 6rem;
-    border-radius: 1rem;
-    border-color: hsla(226, 97%, 12%, 0.12);
     transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
@@ -145,9 +166,6 @@ onMounted(() => {
     border-color: hsla(358, 84%, 52%, 0.36);
 }
 
-.public-home-page {
-    padding-top: 2rem;
-}
 
 .hero-wrap {
     max-width: 48rem;

@@ -30,4 +30,11 @@ class TicketTypeFactory extends Factory
             'trip_inventory_caps' => [],
         ];
     }
+
+    public function forProgram(Program $program): static
+    {
+        return $this->state(fn (): array => [
+            'program_id' => $program->getKey(),
+        ]);
+    }
 }

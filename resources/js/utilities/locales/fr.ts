@@ -118,17 +118,48 @@ export default {
         analyticsSubtitle:
             "Suivez les reservations et les tendances de conversion.",
     },
-    public: {
-        minimalDescription:
-            "Ce bundle public reste minimal et evite de charger les modules riches de l'application.",
-    },
     publicHome: {
+        description: "Parcourez les programmes et trouvez votre prochaine aventure.",
         noPrograms: "Aucun programme n’est publié pour le moment.",
         loadError: "Impossible de charger les programmes. Reessayez plus tard.",
     },
     publicProgram: {
         notFound: "Programme introuvable.",
         backToCatalog: "Retour au catalogue",
+    },
+    publicBooking: {
+        bookTitle: "Reserver une sortie",
+        loadOptionsError:
+            "Impossible de charger les options de reservation. Reessayez plus tard.",
+        noTrips: "Aucune sortie a venir n’est disponible pour le moment.",
+        noTicketTypes: "Aucun type de billet n’est disponible pour ce programme.",
+        stepTrip: "Choisir une sortie",
+        stepTickets: "Billets",
+        stepContact: "Contact",
+        departure: "Depart",
+        remainingSeats: "{count} places restantes",
+        continue: "Continuer",
+        back: "Retour",
+        ticketQuantityLabel: "{title}",
+        minPerType: "Minimum {min} pour ce type de billet lorsqu’il est selectionne.",
+        maxPerType: "Maximum {max} pour ce type de billet.",
+        totalExceedsTrip:
+            "Vous avez selectionne plus de billets qu’il ne reste de places sur cette sortie.",
+        selectAtLeastOneTicket: "Selectionnez au moins un billet.",
+        selectTripFirst: "Choisissez une sortie pour continuer.",
+        contactName: "Nom du contact",
+        contactEmail: "Courriel du contact",
+        contactNameRequired: "Le nom du contact est requis.",
+        contactEmailRequired: "Le courriel est requis.",
+        contactEmailInvalid: "Entrez une adresse courriel valide.",
+        submitBook: "Confirmer la reservation",
+        submitting: "Reservation…",
+        successTitle: "Reservation confirmee",
+        successBody:
+            "Nous avons bien recu votre reservation pour {total} billet(s). La reference est {id}.",
+        bookAnother: "Reserver une autre sortie",
+        payWhatYouCan: "Prix libre",
+        priceFromCents: "{amount}",
     },
     boatsList: {
         title: "Bateaux",
@@ -327,7 +358,7 @@ export default {
         maxPerPurchase: "Maximum par achat (optionnel)",
         tripInventoryCaps: "Plafonds par sortie (JSON, optionnel)",
         tripInventoryCapsHint:
-            'Objet associant l’id de sortie a un plafond entier positif ou null (illimite). Exemple : {"01ARZ3NDEKTSV4RRFFQ69G5FAV": 12}',
+            'Objet associant l’id de sortie a un plafond entier positif ou null (illimite). Exemple : {'{'}\"01ARZ3NDEKTSV4RRFFQ69G5FAV\": 12{'}'}',
         empty: "Aucun type de billet. Ajoutez-en un pour les sorties.",
         created: "Type de billet enregistre.",
         changesSaved: "Type de billet mis a jour.",

@@ -1,6 +1,6 @@
 <template>
-    <q-layout view="Lpr lff" class="public-shell">
-        <q-page-container class="public-page-container">
+    <q-layout view="hHh lpr fFf" class="public-shell">
+        <q-page-container style="width: 100%;">
             <router-view />
         </q-page-container>
     </q-layout>
@@ -13,8 +13,4 @@
         linear-gradient(180deg, #f8fafc 0%, #f2f4fb 100%);
 }
 
-.public-page-container :deep(.q-page) {
-    width: min(76rem, 100%);
-    margin: 0 auto;
-}
 </style>
