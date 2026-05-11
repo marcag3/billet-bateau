@@ -16,7 +16,6 @@ return new class extends Migration
             $table->boolean('is_pay_what_you_can')->default(false);
             $table->unsignedInteger('min_per_purchase')->default(0);
             $table->unsignedInteger('max_per_purchase')->nullable();
-            $table->jsonb('trip_inventory_caps')->default('{}');
             $table->timestamps();
 
             $table->index(['program_id', 'updated_at']);

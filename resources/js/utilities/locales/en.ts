@@ -327,7 +327,7 @@ export default {
     ticketTypesList: {
         title: "Ticket types",
         description:
-            "Define ticket products for this program (price, pay-what-you-can, limits, optional per-sortie caps). Changes sync through PowerSync.",
+            "Define ticket products for this program (price, pay-what-you-can, limits). Changes sync through PowerSync.",
         addType: "Add ticket type",
         createTitle: "New ticket type",
         editTitle: "Edit ticket type",
@@ -341,9 +341,6 @@ export default {
         payWhatYouCan: "Pay what you can",
         minPerPurchase: "Minimum per purchase",
         maxPerPurchase: "Maximum per purchase (optional)",
-        tripInventoryCaps: "Per-trip inventory caps (JSON, optional)",
-        tripInventoryCapsHint:
-            "Object mapping sortie (trip) id to a non-negative cap, or null for unlimited. Example: {'{'}\"01ARZ3NDEKTSV4RRFFQ69G5FAV\": 12{'}'}",
         empty: "No ticket types yet. Add one to sell on sorties.",
         created: "Ticket type saved.",
         changesSaved: "Ticket type updated.",
@@ -356,13 +353,10 @@ export default {
         validationTitleRequired: "Title is required.",
         validationMaxGteMin:
             "Maximum must be greater than or equal to minimum.",
-        invalidCapsJson:
-            "Per-trip caps must be valid JSON: an object with sortie ids as keys and non-negative integers or null as values.",
         summaryPwyc: "Pay what you can",
         summaryPrice: "{price}",
         summaryMinMax: "Min {min} · Max {max}",
         summaryMinMaxUnlimited: "Min {min} · Max unlimited",
-        summaryCaps: "Caps: {count} sorties",
     },
     boatTypesList: {
         title: "Boat types",

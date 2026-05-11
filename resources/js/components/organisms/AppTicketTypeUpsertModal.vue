@@ -64,10 +64,7 @@ import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ulid } from "ulid";
 import AppTicketTypeForm from "../molecules/AppTicketTypeForm.vue";
-import {
-    parseTripInventoryCapsJson,
-    type TicketTypeFormValues,
-} from "../../models/ticket-types/ticket-types.validation";
+import type { TicketTypeFormValues } from "../../models/ticket-types/ticket-types.validation";
 import type { TicketTypeOutput } from "../../powersync/ticket-types.collection";
 import { getAppPowerSyncContext } from "../../powersync/app-powersync.runtime";
 import { useNotifyAsyncAction } from "../../composables/useNotifyAsyncAction";
@@ -88,34 +85,17 @@ const formSeed = ref<Partial<TicketTypeFormValues> | null>(null);
  * @returns {TicketTypeFormValues}
  */
 function rowToFormValues(row: TicketTypeOutput): TicketTypeFormValues {
-    const capsRaw = row.trip_inventory_caps;
-    let capsJson = "";
-    if (typeof capsRaw === "string" && capsRaw.trim().length > 0) {
-        try {
-            capsJson = JSON.stringify(JSON.parse(capsRaw), null, 2);
-        } catch {
-            capsJson = String(capsRaw);
-        }
-    } else if (capsRaw !== null && typeof capsRaw === "object") {
-        capsJson = JSON.stringify(capsRaw, null, 2);
-    }
-
     const max = row.max_per_purchase;
     const price = row.price_cents;
 
     return {
         title: String(row.title ?? ""),
         priceCents:
-            price === null || price === undefined || price === ""
-                ? null
-                : Number(price),
+            price === null || price === undefined ? null : Number(price),
         isPayWhatYouCan: row.is_pay_what_you_can === true,
         minPerPurchase: Number(row.min_per_purchase ?? 0),
         maxPerPurchase:
-            max === null || max === undefined || max === ""
-                ? null
-                : Number(max),
-        tripInventoryCapsJson: capsJson,
+            max === null || max === undefined ? null : Number(max),
     };
 }
 
@@ -168,7 +148,6 @@ function openEditModal(row: TicketTypeOutput): void {
  * @returns {Promise<void>}
  */
 async function onSubmitTicketType(values: TicketTypeFormValues): Promise<void> {
-    const caps = parseTripInventoryCapsJson(values.tripInventoryCapsJson, t);
     const idSnapshot = editingId.value.trim();
     const wasEditing = idSnapshot.length > 0;
 
@@ -185,7 +164,6 @@ async function onSubmitTicketType(values: TicketTypeFormValues): Promise<void> {
                     draft.is_pay_what_you_can = values.isPayWhatYouCan ? 1 : 0;
                     draft.min_per_purchase = values.minPerPurchase;
                     draft.max_per_purchase = values.maxPerPurchase;
-                    draft.trip_inventory_caps = JSON.stringify(caps);
                 });
                 void powersync.refreshOutboxSnapshot();
             } else {
@@ -209,7 +187,6 @@ async function onSubmitTicketType(values: TicketTypeFormValues): Promise<void> {
                         is_pay_what_you_can: values.isPayWhatYouCan ? 1 : 0,
                         min_per_purchase: values.minPerPurchase ?? 0,
                         max_per_purchase: values.maxPerPurchase,
-                        trip_inventory_caps: JSON.stringify(caps),
                     })
                     .isPersisted.promise;
                 void powersync.refreshOutboxSnapshot();

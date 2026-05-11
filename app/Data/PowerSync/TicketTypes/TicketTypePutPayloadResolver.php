@@ -16,8 +16,7 @@ use Spatie\LaravelData\Optional;
  *     price_cents: int|null,
  *     is_pay_what_you_can: bool,
  *     min_per_purchase: int,
- *     max_per_purchase: int|null,
- *     trip_inventory_caps: array<string, int|null>
+ *     max_per_purchase: int|null
  * }
  */
 final class TicketTypePutPayloadResolver
@@ -29,8 +28,7 @@ final class TicketTypePutPayloadResolver
      *     price_cents: int|null,
      *     is_pay_what_you_can: bool,
      *     min_per_purchase: int,
-     *     max_per_purchase: int|null,
-     *     trip_inventory_caps: array<string, int|null>
+     *     max_per_purchase: int|null
      * }
      */
     public static function resolve(TicketTypePutData $dto, ?TicketType $existing): array
@@ -63,9 +61,6 @@ final class TicketTypePutPayloadResolver
             : (bool) $dto->is_pay_what_you_can;
         $minPerPurchase = $dto->min_per_purchase instanceof Optional ? ($existing?->min_per_purchase ?? 0) : $dto->min_per_purchase;
         $maxPerPurchase = $dto->max_per_purchase instanceof Optional ? $existing?->max_per_purchase : $dto->max_per_purchase;
-        $tripInventoryCaps = $dto->trip_inventory_caps instanceof Optional
-            ? (is_array($existing?->trip_inventory_caps) ? $existing->trip_inventory_caps : [])
-            : self::normalizeTripInventoryCaps($dto->trip_inventory_caps);
 
         if ($minPerPurchase === null) {
             $minPerPurchase = 0;
@@ -78,57 +73,6 @@ final class TicketTypePutPayloadResolver
             'is_pay_what_you_can' => $isPayWhatYouCan,
             'min_per_purchase' => (int) $minPerPurchase,
             'max_per_purchase' => $maxPerPurchase,
-            'trip_inventory_caps' => $tripInventoryCaps,
         ];
-    }
-
-    /**
-     * @param  array<string, mixed>|string|null  $rawCaps
-     * @return array<string, int|null>
-     */
-    private static function normalizeTripInventoryCaps(array|string|null $rawCaps): array
-    {
-        if ($rawCaps === null) {
-            return [];
-        }
-
-        if (is_string($rawCaps)) {
-            if ($rawCaps === '') {
-                return [];
-            }
-
-            $decoded = json_decode($rawCaps, true);
-            if (! is_array($decoded)) {
-                throw ValidationException::withMessages([
-                    'data.trip_inventory_caps' => 'Trip inventory caps must be a valid JSON object.',
-                ]);
-            }
-
-            $rawCaps = $decoded;
-        }
-
-        $caps = [];
-        foreach ($rawCaps as $tripId => $cap) {
-            $tripIdString = (string) $tripId;
-            if ($tripIdString === '') {
-                continue;
-            }
-
-            if ($cap === null) {
-                $caps[$tripIdString] = null;
-
-                continue;
-            }
-
-            if (! is_numeric($cap) || (int) $cap < 0) {
-                throw ValidationException::withMessages([
-                    'data.trip_inventory_caps' => 'Each trip inventory cap must be a non-negative integer or null.',
-                ]);
-            }
-
-            $caps[$tripIdString] = (int) $cap;
-        }
-
-        return $caps;
     }
 }

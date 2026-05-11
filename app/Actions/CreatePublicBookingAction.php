@@ -102,38 +102,6 @@ final class CreatePublicBookingAction
                         ])],
                     ]);
                 }
-
-                $caps = $ticketType->trip_inventory_caps;
-                if (! is_array($caps)) {
-                    $caps = [];
-                }
-
-                $tripKey = (string) $trip->getKey();
-                if (array_key_exists($tripKey, $caps)) {
-                    $cap = $caps[$tripKey];
-                    if ($cap !== null) {
-                        if (! is_int($cap) || $cap < 0) {
-                            throw ValidationException::withMessages([
-                                'trip_id' => [__('This trip cannot be booked right now. Please try again later.')],
-                            ]);
-                        }
-
-                        $soldForTypeOnTrip = BookingTicket::query()
-                            ->where('ticket_type_id', $ticketTypeId)
-                            ->whereHas('booking', static function ($query) use ($trip): void {
-                                $query->where('trip_id', $trip->getKey());
-                            })
-                            ->count();
-
-                        if ($soldForTypeOnTrip + $quantity > $cap) {
-                            throw ValidationException::withMessages([
-                                "ticket_quantities.{$ticketTypeId}" => [__('Not enough tickets remain for :title on this trip.', [
-                                    'title' => $ticketType->title,
-                                ])],
-                            ]);
-                        }
-                    }
-                }
             }
 
             $usedSeats = BookingTicket::query()

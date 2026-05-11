@@ -136,10 +136,6 @@ function summaryLine(row: TicketTypeOutput): string {
             }),
         );
     }
-    const capN = tripCapsKeyCount(row);
-    if (capN > 0) {
-        parts.push(t("ticketTypesList.summaryCaps", { count: String(capN) }));
-    }
     return parts.join(" · ");
 }
 
@@ -156,36 +152,6 @@ function formatPriceCents(cents: unknown): string {
         style: "currency",
         currency: "CAD",
     }).format(n / 100);
-}
-
-/**
- * @param {TicketTypeOutput} row
- * @returns {number}
- */
-function tripCapsKeyCount(row: TicketTypeOutput): number {
-    const raw = row.trip_inventory_caps;
-    if (raw == null || raw === "") {
-        return 0;
-    }
-    if (typeof raw === "string") {
-        try {
-            const parsed: unknown = JSON.parse(raw);
-            if (
-                parsed !== null &&
-                typeof parsed === "object" &&
-                !Array.isArray(parsed)
-            ) {
-                return Object.keys(parsed as Record<string, unknown>).length;
-            }
-        } catch {
-            return 0;
-        }
-        return 0;
-    }
-    if (typeof raw === "object" && !Array.isArray(raw)) {
-        return Object.keys(raw as Record<string, unknown>).length;
-    }
-    return 0;
 }
 
 /**

@@ -34,9 +34,6 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
                         'is_pay_what_you_can' => false,
                         'min_per_purchase' => 1,
                         'max_per_purchase' => 6,
-                        'trip_inventory_caps' => [
-                            (string) Str::ulid() => 30,
-                        ],
                     ],
                 ],
             ],
@@ -552,56 +549,6 @@ class PowerSyncUploadTicketTypeBookingTicketTest extends TestCase
                         'title' => 'Bad limits',
                         'min_per_purchase' => 5,
                         'max_per_purchase' => 2,
-                    ],
-                ],
-            ],
-        ])->assertUnprocessable();
-
-        $this->assertDatabaseMissing('ticket_types', ['id' => $ticketTypeId]);
-    }
-
-    public function test_put_ticket_type_rejects_invalid_trip_inventory_caps_json_returns_unprocessable(): void
-    {
-        $user = User::factory()->create();
-        $program = Program::factory()->withOwner($user)->create();
-        $ticketTypeId = (string) Str::ulid();
-
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'PUT',
-                    'type' => 'ticket_types',
-                    'id' => $ticketTypeId,
-                    'data' => [
-                        'program_id' => $program->getKey(),
-                        'title' => 'Caps',
-                        'trip_inventory_caps' => '{not-json',
-                    ],
-                ],
-            ],
-        ])->assertUnprocessable();
-
-        $this->assertDatabaseMissing('ticket_types', ['id' => $ticketTypeId]);
-    }
-
-    public function test_put_ticket_type_rejects_negative_trip_inventory_cap_returns_unprocessable(): void
-    {
-        $user = User::factory()->create();
-        $program = Program::factory()->withOwner($user)->create();
-        $ticketTypeId = (string) Str::ulid();
-
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'PUT',
-                    'type' => 'ticket_types',
-                    'id' => $ticketTypeId,
-                    'data' => [
-                        'program_id' => $program->getKey(),
-                        'title' => 'Caps',
-                        'trip_inventory_caps' => [
-                            (string) Str::ulid() => -1,
-                        ],
                     ],
                 ],
             ],

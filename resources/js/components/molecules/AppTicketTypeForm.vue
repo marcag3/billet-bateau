@@ -50,17 +50,6 @@
                     />
                 </div>
             </AppFormRow>
-            <q-input
-                v-model="tripInventoryCapsJson"
-                v-bind="tripInventoryCapsJsonProps"
-                outlined
-                dense
-                type="textarea"
-                autogrow
-                :label="t('ticketTypesList.tripInventoryCaps')"
-                :hint="t('ticketTypesList.tripInventoryCapsHint')"
-                :disable="fieldsDisabled"
-            />
             <slot
                 name="actions"
                 :meta="meta"
@@ -110,9 +99,6 @@ const [priceCents, priceCentsProps] = quasarField("priceCents");
 const [isPayWhatYouCan] = quasarField("isPayWhatYouCan");
 const [minPerPurchase, minPerPurchaseProps] = quasarField("minPerPurchase");
 const [maxPerPurchase, maxPerPurchaseProps] = quasarField("maxPerPurchase");
-const [tripInventoryCapsJson, tripInventoryCapsJsonProps] = quasarField(
-    "tripInventoryCapsJson",
-);
 
 const fieldsDisabled = computed(
     () => Boolean(props.disabled) || isSubmitting.value,

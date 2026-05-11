@@ -24,7 +24,6 @@ class TicketType extends Model
         'is_pay_what_you_can',
         'min_per_purchase',
         'max_per_purchase',
-        'trip_inventory_caps',
         'created_at',
         'updated_at',
     ];
@@ -36,7 +35,6 @@ class TicketType extends Model
             'is_pay_what_you_can' => 'boolean',
             'min_per_purchase' => 'integer',
             'max_per_purchase' => 'integer',
-            'trip_inventory_caps' => 'array',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

@@ -30,7 +30,7 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 - Water routes (*Parcours*): CRUD + sync; trace capture via **GeoJSON textarea** in admin (not an interactive map editor yet)
 - Trips (*Sorties*): concrete bookable rows (`boat_type_id`, `water_route_id`, `scheduled_departure_at`, `capacity`, optional `template_day_slot_id` for provenance only — **not** synced from template edits). PowerSync + admin list / create / edit / calendar
 - Template days / slots / dates: authoring helpers to speed up trip creation; **no** automatic updates to existing trips when templates change
-- Ticket types: per-program fields (title, `price_cents`, PWYC, min/max, `trip_inventory_caps` JSON) + PowerSync downlink/uplink (`PUT` / `PATCH` / `DELETE` on `POST /api/powersync/upload`; idempotent no-op when the row is missing; delete returns **422** if `booking_tickets` still reference the type) + `PowerSyncUploadTicketTypeBookingTicketTest` — **no** admin screens wired (models/sync only)
+- Ticket types: per-program fields (title, `price_cents`, PWYC, min/max) + PowerSync downlink/uplink (`PUT` / `PATCH` / `DELETE` on `POST /api/powersync/upload`; idempotent no-op when the row is missing; delete returns **422** if `booking_tickets` still reference the type) + `PowerSyncUploadTicketTypeBookingTicketTest` — **no** admin screens wired (models/sync only)
 - Booking **line items**: `booking_tickets` … requires a pre-existing `bookings` row; parent `bookings` includes optional `trip_id` (concrete sortie) and is **downlinked** to the admin client (no `bookings` uplink yet)
 - Public **read-only** catalog: `GET /api/public/programs`, `GET /api/public/programs/{slug}`, public home + program detail pages (`PublicHomePage`, `PublicProgramDetailPage`)
 - PHPUnit: PostGIS geometry + relations (`OnWaterDataModelTest`); PowerSync upload coverage (programs, boats, trips/water routes, template stack, ticket types / booking tickets); `PublicProgramApiTest`
@@ -50,9 +50,8 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 ### Ticket types
 
 - Backend + sync: title, price, PWYC, min/max per purchase
-- Store **per-trip caps** in `**trip_inventory_caps`** (JSON map of trip id → cap); enforcement logic still open
 - Admin UI (Quasar) to manage ticket types for the selected program
-- Server-side inventory enforcement against caps per trip
+- Server-side enforcement: trip capacity and per-ticket-type min/max per purchase on public booking
 
 ### Companion / ratio rules
 

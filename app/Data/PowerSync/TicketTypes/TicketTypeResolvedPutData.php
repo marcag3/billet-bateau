@@ -12,9 +12,6 @@ use Spatie\LaravelData\Data;
  */
 final class TicketTypeResolvedPutData extends Data
 {
-    /**
-     * @param  array<string, int|null>  $trip_inventory_caps
-     */
     public function __construct(
         public string $program_id,
         public string $title,
@@ -22,7 +19,6 @@ final class TicketTypeResolvedPutData extends Data
         public bool $is_pay_what_you_can,
         public int $min_per_purchase,
         public ?int $max_per_purchase,
-        public array $trip_inventory_caps,
     ) {}
 
     /**
@@ -37,7 +33,6 @@ final class TicketTypeResolvedPutData extends Data
             'is_pay_what_you_can' => ['required', 'boolean'],
             'min_per_purchase' => ['required', 'integer', 'min:0'],
             'max_per_purchase' => ['nullable', 'integer', 'min:0'],
-            'trip_inventory_caps' => ['present', 'array'],
         ];
     }
 
@@ -52,26 +47,6 @@ final class TicketTypeResolvedPutData extends Data
                     'max_per_purchase',
                     'Max per purchase must be greater than or equal to min per purchase.',
                 );
-            }
-
-            $caps = $data['trip_inventory_caps'] ?? [];
-            if (! is_array($caps)) {
-                return;
-            }
-
-            foreach ($caps as $cap) {
-                if ($cap === null) {
-                    continue;
-                }
-
-                if (! is_int($cap) || $cap < 0) {
-                    $validator->errors()->add(
-                        'trip_inventory_caps',
-                        'Each trip inventory cap must be a non-negative integer or null.',
-                    );
-
-                    return;
-                }
             }
         });
     }

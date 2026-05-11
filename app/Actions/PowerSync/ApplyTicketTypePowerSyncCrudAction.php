@@ -86,7 +86,6 @@ final class ApplyTicketTypePowerSyncCrudAction
                 'is_pay_what_you_can' => $resolved->is_pay_what_you_can,
                 'min_per_purchase' => $resolved->min_per_purchase,
                 'max_per_purchase' => $resolved->max_per_purchase,
-                'trip_inventory_caps' => $resolved->trip_inventory_caps,
             ],
         );
     }
@@ -138,10 +137,6 @@ final class ApplyTicketTypePowerSyncCrudAction
             ]);
         }
 
-        if (! ($dto->trip_inventory_caps instanceof Optional)) {
-            $ticketType->trip_inventory_caps = $this->normalizeTripInventoryCaps($dto->trip_inventory_caps);
-        }
-
         $ticketType->save();
     }
 
@@ -152,51 +147,5 @@ final class ApplyTicketTypePowerSyncCrudAction
         if ($program === null || ! $program->userCanManage($userId)) {
             throw new AuthorizationException;
         }
-    }
-
-    /**
-     * @param  array<string, mixed>|string  $rawCaps
-     * @return array<string, int|null>
-     */
-    private function normalizeTripInventoryCaps(array|string $rawCaps): array
-    {
-        if (is_string($rawCaps)) {
-            if ($rawCaps === '') {
-                return [];
-            }
-
-            $decoded = json_decode($rawCaps, true);
-            if (! is_array($decoded)) {
-                throw ValidationException::withMessages([
-                    'data.trip_inventory_caps' => 'Trip inventory caps must be a valid JSON object.',
-                ]);
-            }
-
-            $rawCaps = $decoded;
-        }
-
-        $caps = [];
-        foreach ($rawCaps as $tripId => $cap) {
-            $tripIdString = (string) $tripId;
-            if ($tripIdString === '') {
-                continue;
-            }
-
-            if ($cap === null) {
-                $caps[$tripIdString] = null;
-
-                continue;
-            }
-
-            if (! is_numeric($cap) || (int) $cap < 0) {
-                throw ValidationException::withMessages([
-                    'data.trip_inventory_caps' => 'Each trip inventory cap must be a non-negative integer or null.',
-                ]);
-            }
-
-            $caps[$tripIdString] = (int) $cap;
-        }
-
-        return $caps;
     }
 }

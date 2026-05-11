@@ -14,9 +14,6 @@ use Spatie\LaravelData\Optional;
  */
 final class TicketTypePatchData extends Data
 {
-    /**
-     * @param  array<string, int|null>|string|Optional  $trip_inventory_caps
-     */
     public function __construct(
         public string|Optional|null $program_id = new Optional,
         #[WithCast(TrimmedStringCast::class)]
@@ -25,7 +22,6 @@ final class TicketTypePatchData extends Data
         public bool|Optional|null $is_pay_what_you_can = new Optional,
         public int|Optional|null $min_per_purchase = new Optional,
         public int|Optional|null $max_per_purchase = new Optional,
-        public array|string|Optional $trip_inventory_caps = new Optional,
     ) {}
 
     /**
@@ -40,7 +36,6 @@ final class TicketTypePatchData extends Data
             'is_pay_what_you_can' => ['sometimes', 'nullable', 'boolean'],
             'min_per_purchase' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'max_per_purchase' => ['sometimes', 'nullable', 'integer', 'min:0'],
-            'trip_inventory_caps' => ['sometimes'],
         ];
     }
 }

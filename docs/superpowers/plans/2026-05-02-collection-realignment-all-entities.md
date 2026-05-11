@@ -185,7 +185,7 @@ export const tripsSchema = z.object({
 ### ticket_types
 
 ```typescript
-// Table: program_id, title, price_cents, is_pay_what_you_can (INTEGER→boolean), min_per_purchase, max_per_purchase, trip_inventory_caps, created_at, updated_at
+// Table: program_id, title, price_cents, is_pay_what_you_can (INTEGER→boolean), min_per_purchase, max_per_purchase, created_at, updated_at
 export const ticketTypesSchema = z.object({
     id: z.string(),
     program_id: z.string().nullable(),
@@ -194,7 +194,6 @@ export const ticketTypesSchema = z.object({
     is_pay_what_you_can: z.boolean().nullable(),
     min_per_purchase: z.number().int().nullable(),
     max_per_purchase: z.number().int().nullable(),
-    trip_inventory_caps: z.string().nullable(),
     created_at: z.string().nullable(),
     updated_at: z.string().nullable(),
 });

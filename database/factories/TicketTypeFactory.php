@@ -27,7 +27,6 @@ class TicketTypeFactory extends Factory
             'is_pay_what_you_can' => false,
             'min_per_purchase' => 0,
             'max_per_purchase' => fake()->numberBetween(1, 10),
-            'trip_inventory_caps' => [],
         ];
     }
 

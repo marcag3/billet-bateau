@@ -58,7 +58,6 @@ const ticketTypesTable = new Table({
     is_pay_what_you_can: column.integer,
     min_per_purchase: column.integer,
     max_per_purchase: column.integer,
-    trip_inventory_caps: column.text,
 });
 
 const bookingTicketsTable = new Table({

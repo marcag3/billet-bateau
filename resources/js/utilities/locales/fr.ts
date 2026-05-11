@@ -342,7 +342,7 @@ export default {
     ticketTypesList: {
         title: "Types de billet",
         description:
-            "Definissez les produits billets pour ce programme (prix, libre prix, limites, plafonds optionnels par sortie). Les changements se synchronisent via PowerSync.",
+            "Definissez les produits billets pour ce programme (prix, libre prix, limites). Les changements se synchronisent via PowerSync.",
         addType: "Ajouter un type de billet",
         createTitle: "Nouveau type de billet",
         editTitle: "Modifier le type de billet",
@@ -356,9 +356,6 @@ export default {
         payWhatYouCan: "Prix libre",
         minPerPurchase: "Minimum par achat",
         maxPerPurchase: "Maximum par achat (optionnel)",
-        tripInventoryCaps: "Plafonds par sortie (JSON, optionnel)",
-        tripInventoryCapsHint:
-            "Objet associant l’id de sortie a un plafond entier positif ou null (illimite). Exemple : {'{'}\"01ARZ3NDEKTSV4RRFFQ69G5FAV\": 12{'}'}",
         empty: "Aucun type de billet. Ajoutez-en un pour les sorties.",
         created: "Type de billet enregistre.",
         changesSaved: "Type de billet mis a jour.",
@@ -371,13 +368,10 @@ export default {
         validationTitleRequired: "Le titre est obligatoire.",
         validationMaxGteMin:
             "Le maximum doit etre superieur ou egal au minimum.",
-        invalidCapsJson:
-            "Les plafonds par sortie doivent etre un JSON valide : objet dont les cles sont des ids de sortie et les valeurs des entiers positifs ou null.",
         summaryPwyc: "Prix libre",
         summaryPrice: "{price}",
         summaryMinMax: "Min {min} · Max {max}",
         summaryMinMaxUnlimited: "Min {min} · Max illimite",
-        summaryCaps: "Plafonds : {count} sorties",
     },
     boatTypesList: {
         title: "Types de bateau",
