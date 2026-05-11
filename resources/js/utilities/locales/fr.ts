@@ -358,7 +358,7 @@ export default {
         maxPerPurchase: "Maximum par achat (optionnel)",
         tripInventoryCaps: "Plafonds par sortie (JSON, optionnel)",
         tripInventoryCapsHint:
-            'Objet associant l’id de sortie a un plafond entier positif ou null (illimite). Exemple : {'{'}\"01ARZ3NDEKTSV4RRFFQ69G5FAV\": 12{'}'}',
+            "Objet associant l’id de sortie a un plafond entier positif ou null (illimite). Exemple : {'{'}\"01ARZ3NDEKTSV4RRFFQ69G5FAV\": 12{'}'}",
         empty: "Aucun type de billet. Ajoutez-en un pour les sorties.",
         created: "Type de billet enregistre.",
         changesSaved: "Type de billet mis a jour.",
