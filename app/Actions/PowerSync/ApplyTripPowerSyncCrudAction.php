@@ -7,10 +7,9 @@ use App\Data\PowerSync\Trips\TripPatchData;
 use App\Data\PowerSync\Trips\TripPutData;
 use App\Data\PowerSync\Trips\TripPutPayloadResolver;
 use App\Data\PowerSync\Trips\TripResolvedPutData;
+use App\Models\Product;
 use App\Models\Program;
-use App\Models\TemplateDaySlot;
 use App\Models\Trip;
-use App\Models\WaterRoute;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
 use Lorisleiva\Actions\Concerns\AsAction;
@@ -102,18 +101,14 @@ final class ApplyTripPowerSyncCrudAction
         $merged = TripPutPayloadResolver::resolve($dto, $existing);
         $resolved = TripResolvedPutData::validateAndCreate($merged);
 
-        $this->assertWaterRouteBelongsToProgram($resolved->water_route_id, $programId);
-        $this->assertTemplateDaySlotBelongsToProgram($resolved->template_day_slot_id, $programId);
+        $this->assertProductBelongsToProgram($resolved->product_id, $programId);
 
         Trip::query()->updateOrCreate(
             ['id' => $id],
             [
                 'program_id' => $programId,
-                'boat_type_id' => $resolved->boat_type_id,
-                'water_route_id' => $resolved->water_route_id,
-                'template_day_slot_id' => $resolved->template_day_slot_id,
+                'product_id' => $resolved->product_id,
                 'scheduled_departure_at' => $resolved->scheduled_departure_at,
-                'capacity' => $resolved->capacity,
             ],
         );
     }
@@ -143,58 +138,21 @@ final class ApplyTripPowerSyncCrudAction
             $trip->scheduled_departure_at = $patch->scheduled_departure_at;
         }
 
-        if (! ($patch->capacity instanceof Optional)) {
-            $trip->capacity = $patch->capacity;
-        }
-
-        if (! ($patch->boat_type_id instanceof Optional)) {
-            $trip->boat_type_id = $patch->boat_type_id;
-        }
-
-        if (! ($patch->water_route_id instanceof Optional)) {
-            $this->assertWaterRouteBelongsToProgram($patch->water_route_id, (string) $trip->program_id);
-            $trip->water_route_id = $patch->water_route_id;
-        }
-
-        if (! ($patch->template_day_slot_id instanceof Optional)) {
-            $this->assertTemplateDaySlotBelongsToProgram($patch->template_day_slot_id, (string) $trip->program_id);
-            $trip->template_day_slot_id = $patch->template_day_slot_id;
+        if (! ($patch->product_id instanceof Optional)) {
+            $this->assertProductBelongsToProgram($patch->product_id, (string) $trip->program_id);
+            $trip->product_id = $patch->product_id;
         }
 
         $trip->save();
     }
 
-    private function assertWaterRouteBelongsToProgram(?string $waterRouteId, string $programId): void
+    private function assertProductBelongsToProgram(string $productId, string $programId): void
     {
-        if ($waterRouteId === null) {
-            return;
-        }
+        $product = Product::query()->whereKey($productId)->first();
 
-        $route = WaterRoute::query()->whereKey($waterRouteId)->first();
-
-        if ($route === null || (string) $route->program_id !== $programId) {
+        if ($product === null || (string) $product->program_id !== $programId) {
             throw ValidationException::withMessages([
-                'data.water_route_id' => 'Water route must belong to the same program.',
-            ]);
-        }
-    }
-
-    private function assertTemplateDaySlotBelongsToProgram(?string $templateDaySlotId, string $programId): void
-    {
-        if ($templateDaySlotId === null) {
-            return;
-        }
-
-        $isValid = TemplateDaySlot::query()
-            ->whereKey($templateDaySlotId)
-            ->whereHas('templateDay', static function ($q) use ($programId): void {
-                $q->where('program_id', $programId);
-            })
-            ->exists();
-
-        if (! $isValid) {
-            throw ValidationException::withMessages([
-                'data.template_day_slot_id' => 'Template slot must belong to the same program.',
+                'data.product_id' => 'Product must belong to the same program.',
             ]);
         }
     }

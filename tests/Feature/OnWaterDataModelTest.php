@@ -6,6 +6,7 @@ use App\Enums\VoyageStatus;
 use App\Models\Boat;
 use App\Models\Guide;
 use App\Models\Passenger;
+use App\Models\Product;
 use App\Models\Program;
 use App\Models\Trip;
 use App\Models\Voyage;
@@ -51,12 +52,18 @@ class OnWaterDataModelTest extends TestCase
             ->withWaterRoute()
             ->create();
 
-        $trip->load(['program', 'waterRoute']);
+        $trip->load(['program', 'product.waterRoute']);
 
         $this->assertTrue($trip->relationLoaded('program'));
-        $this->assertTrue($trip->relationLoaded('waterRoute'));
+        $this->assertTrue($trip->relationLoaded('product'));
+        $this->assertNotNull($trip->product);
+        $this->assertTrue($trip->product->relationLoaded('waterRoute'));
         $this->assertSame((string) $trip->program_id, (string) $trip->program->getKey());
-        $this->assertSame((string) $trip->water_route_id, (string) $trip->waterRoute->getKey());
+        $this->assertNotNull($trip->product->waterRoute);
+        $this->assertSame(
+            (string) $trip->product->water_route_id,
+            (string) $trip->product->waterRoute->getKey(),
+        );
     }
 
     #[Test]
@@ -89,8 +96,10 @@ class OnWaterDataModelTest extends TestCase
             'program_id' => $program->getKey(),
             'duration_minutes' => 45,
         ]);
-        $trip = Trip::factory()->forProgram($program)->create([
+        $product = Product::factory()->forProgram($program)->create([
             'water_route_id' => $plannedRoute->getKey(),
+        ]);
+        $trip = Trip::factory()->forProgram($program)->forProduct($product)->create([
             'scheduled_departure_at' => '2026-06-01 10:00:00',
         ]);
 

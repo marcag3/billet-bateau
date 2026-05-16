@@ -82,12 +82,43 @@
                         <div v-if="tripOptions.length === 0" class="text-body1 text-grey-8">
                             {{ t('publicBooking.noTrips') }}
                         </div>
-                        <q-option-group
-                            v-else
-                            v-model="selectedTripId"
-                            type="radio"
-                            :options="tripRadioOptions"
-                        />
+                        <q-list v-else bordered separator class="rounded-borders">
+                            <q-item
+                                v-for="trip in tripOptions"
+                                :key="String(trip.id)"
+                                v-ripple
+                                tag="label"
+                                clickable
+                                :active="String(selectedTripId) === String(trip.id)"
+                                active-class="bg-blue-1"
+                            >
+                                <q-item-section side top class="q-pt-sm">
+                                    <q-radio v-model="selectedTripId" :val="String(trip.id)" />
+                                </q-item-section>
+                                <q-item-section
+                                    v-if="
+                                        trip.product_banner_url != null &&
+                                        trip.product_banner_url.length > 0
+                                    "
+                                    avatar
+                                    top
+                                >
+                                    <q-avatar rounded size="40px">
+                                        <q-img
+                                            :src="trip.product_banner_url"
+                                            ratio="1"
+                                            fit="cover"
+                                            :alt="trip.product_name"
+                                        />
+                                    </q-avatar>
+                                </q-item-section>
+                                <q-item-section>
+                                    <q-item-label class="text-body1">{{
+                                        formatTripOptionLabel(trip)
+                                    }}</q-item-label>
+                                </q-item-section>
+                            </q-item>
+                        </q-list>
                         <div class="row q-gutter-sm q-mt-md justify-end">
                             <q-btn
                                 color="primary"
@@ -214,6 +245,13 @@ type BookingTripOption = {
     scheduled_departure_at: string;
     capacity: number;
     remaining_capacity: number;
+    product_id: string;
+    product_name: string;
+    product_description: string | null;
+    product_banner_url: string | null;
+    boat_type_name: string | null;
+    water_route_name: string | null;
+    water_route_duration_minutes: number | null;
 };
 
 type BookingTicketTypeOption = {
@@ -278,19 +316,20 @@ const selectedTrip = computed((): BookingTripOption | undefined =>
     tripOptions.value.find((x) => String(x.id) === selectedTripId.value),
 );
 
-const tripRadioOptions = computed(() =>
-    tripOptions.value.map((trip) => ({
-        label: formatTripOptionLabel(trip),
-        value: String(trip.id),
-    })),
-);
-
 const canContinueFromTripStep = computed(() => selectedTripId.value.trim().length > 0);
 
 function formatTripOptionLabel(trip: BookingTripOption): string {
     const when = formatDeparture(trip.scheduled_departure_at);
     const seats = t('publicBooking.remainingSeats', { count: String(trip.remaining_capacity) });
-    return `${when} — ${seats}`;
+    const boat = trip.boat_type_name != null && trip.boat_type_name.length > 0 ? trip.boat_type_name : '—';
+    const route =
+        trip.water_route_name != null && trip.water_route_name.length > 0 ? trip.water_route_name : '—';
+    const meta = t('publicBooking.tripProductMeta', {
+        boat,
+        route,
+        capacity: String(trip.capacity),
+    });
+    return `${when} — ${trip.product_name} — ${meta} — ${seats}`;
 }
 
 function formatDeparture(iso: string): string {

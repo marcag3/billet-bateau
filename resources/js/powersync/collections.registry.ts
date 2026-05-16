@@ -5,6 +5,7 @@ import { createTicketTypesCollection } from "./ticket-types.collection";
 import { createBoatsCollection } from "./boats.collection";
 import { createWaterRoutesCollection } from "./water-routes.collection";
 import { createTripsCollection } from "./trips.collection";
+import { createProductsCollection } from "./products.collection";
 import { createBookingTicketsCollection } from "./booking-tickets.collection";
 import { createBookingsCollection } from "./bookings.collection";
 import { createTemplateDaysCollection } from "./template-days.collection";
@@ -42,6 +43,8 @@ const collectionFactories: {
     boat_types: (db, onError, onLoad) =>
         createBoatTypesCollection(db, onError, onLoad),
     boats: (db, onError, onLoad) => createBoatsCollection(db, onError, onLoad),
+    products: (db, onError, onLoad) =>
+        createProductsCollection(db, onError, onLoad),
     trips: (db, onError, onLoad) => createTripsCollection(db, onError, onLoad),
     ticket_types: (db, onError, onLoad) =>
         createTicketTypesCollection(db, onError, onLoad),

@@ -114,6 +114,14 @@ class Program extends Model
         return $this->hasMany(Trip::class, 'program_id');
     }
 
+    /**
+     * @return HasMany<Product, $this>
+     */
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class, 'program_id');
+    }
+
     public function waterRoutes(): HasMany
     {
         return $this->hasMany(WaterRoute::class, 'program_id');

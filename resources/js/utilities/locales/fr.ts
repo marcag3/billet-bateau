@@ -138,6 +138,7 @@ export default {
         stepContact: "Contact",
         departure: "Depart",
         remainingSeats: "{count} places restantes",
+        tripProductMeta: "{boat} · {route} · jusqu’a {capacity} passagers",
         continue: "Continuer",
         back: "Retour",
         ticketQuantityLabel: "{title}",
@@ -240,6 +241,8 @@ export default {
         capacityRequired: "La capacite est obligatoire.",
         boatType: "Type d’embarcation",
         waterRoute: "Parcours",
+        productFromTemplate: "Depuis le modele",
+        productDefaultName: "Offre reservable",
         create: "Creer la sortie",
         empty: "Aucune sortie pour le moment. Utilisez Ajouter une sortie pour en creer une.",
         saveChanges: "Enregistrer",
@@ -260,6 +263,12 @@ export default {
         nextTrip: "Sortie suivante",
         positionInList: "{index} sur {total}",
         editSection: "Details de la sortie",
+        productImage: "Image de l’offre",
+        productImageHint:
+            "Optionnel. Affichee sur la reservation publique et dans la liste des sorties lorsque definie.",
+        productImageUploadFailed:
+            "L’image de l’offre n’a pas pu etre televersee. Reessayez.",
+        productImageRemove: "Retirer l’image de l’offre",
     },
     tripsCalendar: {
         title: "Sorties",

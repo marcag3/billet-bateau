@@ -110,8 +110,11 @@
                     :label="t('tripsList.addNew')"
                 >
                     <AppTripForm
+                        ref="tripFormRef"
                         :program-id="programId"
                         :seed="tripCreateSeed"
+                        :persisted-product-id="''"
+                        :existing-product-banner-key="null"
                         :submit-fn="submitCreateTrip"
                     >
                         <template #actions="{ meta, isSubmitting }">
@@ -136,8 +139,11 @@
                     :label="t('tripsList.editSection')"
                 >
                     <AppTripForm
+                        ref="tripFormRef"
                         :program-id="programId"
                         :seed="tripFormSeed"
+                        :persisted-product-id="tripFormPersistedProductId"
+                        :existing-product-banner-key="tripFormExistingProductBannerKey"
                         :disabled="isDeleting"
                         :submit-fn="submitUpdateTrip"
                     >
@@ -170,6 +176,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
     useTripModalUpsert,
@@ -184,6 +191,8 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
+const tripFormRef = ref<InstanceType<typeof AppTripForm> | null>(null);
+
 const {
     programId,
     modalMode,
@@ -194,6 +203,8 @@ const {
     editTripId,
     tripCreateSeed,
     tripFormSeed,
+    tripFormPersistedProductId,
+    tripFormExistingProductBannerKey,
     currentTrip,
     neighbors,
     tripSwitcherOptions,
@@ -207,7 +218,7 @@ const {
     confirmDelete,
     modalTitle,
     modalDescription,
-} = useTripModalUpsert(props.routeName);
+} = useTripModalUpsert(props.routeName, tripFormRef);
 
 defineExpose({
     openCreateModal,

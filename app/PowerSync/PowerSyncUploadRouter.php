@@ -5,6 +5,7 @@ namespace App\PowerSync;
 use App\Actions\PowerSync\ApplyBoatPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyBoatTypePowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyBookingTicketPowerSyncCrudAction;
+use App\Actions\PowerSync\ApplyProductPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyProgramPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyTemplateDayDatePowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyTemplateDayPowerSyncCrudAction;
@@ -20,6 +21,7 @@ final class PowerSyncUploadRouter
     {
         match ($entry->type) {
             PowerSyncCrudType::Programs => ApplyProgramPowerSyncCrudAction::run($entry, $userId),
+            PowerSyncCrudType::Products => ApplyProductPowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::Boats => ApplyBoatPowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::BoatTypes => ApplyBoatTypePowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::Trips => ApplyTripPowerSyncCrudAction::run($entry, $userId),

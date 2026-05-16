@@ -40,14 +40,26 @@ const boatsTable = new Table({
     notes: column.text,
 });
 
-const tripsTable = new Table({
+const productsTable = new Table({
     id: column.text,
     program_id: column.text,
     boat_type_id: column.text,
     water_route_id: column.text,
-    template_day_slot_id: column.text,
-    scheduled_departure_at: column.text,
     capacity: column.integer,
+    name: column.text,
+    description: column.text,
+    banner_object_key: column.text,
+    banner_mime_type: column.text,
+    banner_size_bytes: column.integer,
+    banner_etag: column.text,
+    banner_uploaded_at: column.text,
+});
+
+const tripsTable = new Table({
+    id: column.text,
+    program_id: column.text,
+    product_id: column.text,
+    scheduled_departure_at: column.text,
 });
 
 const ticketTypesTable = new Table({
@@ -116,6 +128,7 @@ export const appPowerSyncSchema = new Schema({
     programs: programsTable,
     boat_types: boatTypesTable,
     boats: boatsTable,
+    products: productsTable,
     trips: tripsTable,
     ticket_types: ticketTypesTable,
     bookings: bookingsTable,
@@ -134,6 +147,9 @@ export const appBoatTypesPowerSyncTable = appPowerSyncSchema.props.boat_types;
 
 /** @type {import('@powersync/web').Table} */
 export const appBoatsPowerSyncTable = appPowerSyncSchema.props.boats;
+
+/** @type {import('@powersync/web').Table} */
+export const appProductsPowerSyncTable = appPowerSyncSchema.props.products;
 
 /** @type {import('@powersync/web').Table} */
 export const appTripsPowerSyncTable = appPowerSyncSchema.props.trips;

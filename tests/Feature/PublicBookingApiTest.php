@@ -9,6 +9,7 @@ use App\Models\TicketType;
 use App\Models\Trip;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class PublicBookingApiTest extends TestCase
@@ -25,8 +26,8 @@ class PublicBookingApiTest extends TestCase
 
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->addDays(3),
-            'capacity' => 20,
         ]);
+        $trip->product->forceFill(['capacity' => 20, 'name' => 'Lake run'])->save();
 
         $type = TicketType::factory()->forProgram($program)->create([
             'title' => 'Adult',
@@ -39,8 +40,38 @@ class PublicBookingApiTest extends TestCase
         $r->assertJsonPath('data.trips.0.id', $trip->getKey());
         $r->assertJsonPath('data.trips.0.capacity', 20);
         $r->assertJsonPath('data.trips.0.remaining_capacity', 20);
+        $r->assertJsonPath('data.trips.0.product_name', 'Lake run');
+        $r->assertJsonPath('data.trips.0.product_banner_url', null);
         $r->assertJsonPath('data.ticket_types.0.id', $type->getKey());
         $r->assertJsonPath('data.ticket_types.0.title', 'Adult');
+    }
+
+    public function test_booking_options_includes_product_banner_url_when_set(): void
+    {
+        config(['media.public_base_url' => 'https://cdn.example']);
+
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'is_active' => true,
+            'slug' => 'banner-prog',
+        ]);
+
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addDays(2),
+        ]);
+
+        $key = 'uploads/'.Str::ulid().'.png';
+        $trip->product->forceFill([
+            'name' => 'Photo tour',
+            'banner_object_key' => $key,
+            'banner_mime_type' => 'image/png',
+            'banner_size_bytes' => 10,
+            'banner_uploaded_at' => now(),
+        ])->save();
+
+        $this->getJson('/api/public/programs/banner-prog/booking-options')
+            ->assertOk()
+            ->assertJsonPath('data.trips.0.product_banner_url', 'https://cdn.example/'.$key);
     }
 
     public function test_booking_options_excludes_past_trips(): void
@@ -52,7 +83,6 @@ class PublicBookingApiTest extends TestCase
 
         Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->subDay(),
-            'capacity' => 10,
         ]);
 
         $this->getJson('/api/public/programs/past-only/booking-options')
@@ -69,8 +99,8 @@ class PublicBookingApiTest extends TestCase
 
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->addWeek(),
-            'capacity' => 10,
         ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
 
         $type = TicketType::factory()->forProgram($program)->create([
             'min_per_purchase' => 1,
@@ -109,8 +139,8 @@ class PublicBookingApiTest extends TestCase
 
         $tripB = Trip::factory()->forProgram($programB)->create([
             'scheduled_departure_at' => now()->addWeek(),
-            'capacity' => 10,
         ]);
+        $tripB->product->forceFill(['capacity' => 10])->save();
 
         $typeA = TicketType::factory()->forProgram($programA)->create();
 
@@ -128,8 +158,8 @@ class PublicBookingApiTest extends TestCase
         $program = Program::factory()->withOwner($u)->create(['slug' => 'zero']);
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->addWeek(),
-            'capacity' => 10,
         ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
         $type = TicketType::factory()->forProgram($program)->create();
 
         $this->postJson('/api/public/programs/zero/bookings', [
@@ -146,8 +176,8 @@ class PublicBookingApiTest extends TestCase
         $program = Program::factory()->withOwner($u)->create(['slug' => 'full']);
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->addWeek(),
-            'capacity' => 2,
         ]);
+        $trip->product->forceFill(['capacity' => 2])->save();
         $type = TicketType::factory()->forProgram($program)->create([
             'min_per_purchase' => 1,
             'max_per_purchase' => 10,
@@ -177,8 +207,8 @@ class PublicBookingApiTest extends TestCase
         $program = Program::factory()->withOwner($u)->create(['slug' => 'bad-mail']);
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->addWeek(),
-            'capacity' => 10,
         ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
         $type = TicketType::factory()->forProgram($program)->create();
 
         $this->postJson('/api/public/programs/bad-mail/bookings', [

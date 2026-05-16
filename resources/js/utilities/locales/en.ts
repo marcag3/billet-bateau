@@ -133,6 +133,7 @@ export default {
         stepContact: "Contact",
         departure: "Departure",
         remainingSeats: "{count} seats left",
+        tripProductMeta: "{boat} · {route} · up to {capacity} passengers",
         continue: "Continue",
         back: "Back",
         ticketQuantityLabel: "{title}",
@@ -230,6 +231,8 @@ export default {
         capacityRequired: "Capacity is required.",
         boatType: "Boat type",
         waterRoute: "Water route",
+        productFromTemplate: "From template",
+        productDefaultName: "Bookable offering",
         create: "Create trip",
         empty: "No trips yet. Use Add trip to create one.",
         saveChanges: "Save",
@@ -248,6 +251,11 @@ export default {
         nextTrip: "Next trip",
         positionInList: "{index} of {total}",
         editSection: "Trip details",
+        productImage: "Offering image",
+        productImageHint:
+            "Optional. Shown on the public booking page and in the trip list when set.",
+        productImageUploadFailed: "The offering image could not be uploaded. Try again.",
+        productImageRemove: "Remove offering image",
     },
     tripsCalendar: {
         title: "Trips",

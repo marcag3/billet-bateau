@@ -69,6 +69,16 @@
                 :key="String(tr.id)"
                 class="q-pa-md"
             >
+                <q-item-section v-if="tripListProductImageUrl(tr).length > 0" avatar>
+                    <q-avatar rounded size="48px">
+                        <q-img
+                            :src="tripListProductImageUrl(tr)"
+                            ratio="1"
+                            fit="cover"
+                            :alt="t('tripsList.productImage')"
+                        />
+                    </q-avatar>
+                </q-item-section>
                 <q-item-section>
                     <q-item-label class="text-h6">{{
                         formatDeparture(tr)
@@ -205,6 +215,7 @@ import { QCalendarDay, QCalendarMonth, today } from "@quasar/quasar-ui-qcalendar
 import { useQuasar } from "quasar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import { joinTripsWithRelations } from "../powersync/joined-queries";
+import { mediaObjectPublicUrl } from "../utilities/media-url";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import type { TemplateDaySlotOutput } from "../powersync/template-day-slots.collection";
 import type { TemplateDayOutput } from "../powersync/template-days.collection";
@@ -239,6 +250,7 @@ const router = useRouter();
 const { confirm } = useConfirmDialog();
 
 const tripsCollection = powersync.collections.trips;
+const productsCollection = powersync.collections.products;
 const boatTypesCollection = powersync.collections.boat_types;
 const waterRoutesCollection = powersync.collections.water_routes;
 const bookingsCollection = powersync.collections.bookings;
@@ -271,12 +283,13 @@ const bookedTripIds = computed(() => {
 const { data: tripsRaw } = useLiveQuery(
     (queryBuilder) => {
         const col = tripsCollection.value;
+        const pCol = productsCollection.value;
         const btCol = boatTypesCollection.value;
         const wrCol = waterRoutesCollection.value;
 
         const pid = powersync.activeProgramIdRef.value.trim();
-        if (!col || !btCol || !wrCol || pid.length === 0) return undefined;
-        return joinTripsWithRelations(queryBuilder, col, btCol, wrCol)
+        if (!col || !pCol || !btCol || !wrCol || pid.length === 0) return undefined;
+        return joinTripsWithRelations(queryBuilder, col, pCol, btCol, wrCol)
             .where(({ t: trip }: Record<string, Record<string, unknown>>) =>
                 eq(trip.program_id, pid),
             )
@@ -293,6 +306,7 @@ const { data: tripsRaw } = useLiveQuery(
     },
     [
         tripsCollection,
+        productsCollection,
         boatTypesCollection,
         waterRoutesCollection,
         powersync.activeProgramIdRef,
@@ -377,6 +391,7 @@ interface TripCalendarRow {
     boatTypeName?: unknown;
     waterRouteName?: unknown;
     waterRouteDurationMinutes?: unknown;
+    productBannerObjectKey?: unknown;
 }
 
 interface TripCalendarEventBase {
@@ -403,6 +418,13 @@ interface DayBodyScope {
 }
 
 const trips = computed(() => (tripsRaw.value ?? []) as TripCalendarRow[]);
+
+function tripListProductImageUrl(tr: TripCalendarRow): string {
+    const k = tr.productBannerObjectKey;
+    return mediaObjectPublicUrl(
+        k == null || String(k).trim() === "" ? null : String(k),
+    );
+}
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
@@ -705,7 +727,8 @@ async function applyTemplateDayFromSlots(
         return;
     }
     const col = tripsCollection.value;
-    if (!col) {
+    const productsCol = productsCollection.value;
+    if (!col || !productsCol) {
         $q.notify({
             type: "negative",
             message: t("tripsCalendar.applyTemplateDayErrorGeneric"),
@@ -737,7 +760,8 @@ async function applyTemplateDayFromSlots(
             timeHm,
         );
         const iso = localDatetimeInputValueToIso(localCombined);
-        const id = ulid();
+        const tripId = ulid();
+        const productId = ulid();
         const bt =
             slot.boat_type_id != null &&
             String(slot.boat_type_id).trim() !== ""
@@ -749,15 +773,28 @@ async function applyTemplateDayFromSlots(
                 ? String(slot.water_route_id)
                 : null;
         try {
-            await col
+            await productsCol
                 .insert({
-                    id,
+                    id: productId,
                     program_id: pid,
+                    name: t("tripsList.productFromTemplate"),
+                    description: null,
+                    capacity: cap,
                     boat_type_id: bt,
                     water_route_id: wr,
-                    template_day_slot_id: String(slot.id),
+                    banner_object_key: null,
+                    banner_mime_type: null,
+                    banner_size_bytes: null,
+                    banner_etag: null,
+                    banner_uploaded_at: null,
+                })
+                .isPersisted.promise;
+            await col
+                .insert({
+                    id: tripId,
+                    program_id: pid,
+                    product_id: productId,
                     scheduled_departure_at: iso,
-                    capacity: cap,
                 })
                 .isPersisted.promise;
             createdCount += 1;

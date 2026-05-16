@@ -9,6 +9,8 @@ enum PowerSyncCrudType: string
 {
     case Programs = 'programs';
 
+    case Products = 'products';
+
     case Boats = 'boats';
 
     case BoatTypes = 'boat_types';

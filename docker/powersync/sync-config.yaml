@@ -74,9 +74,23 @@ streams:
           program_id,
           boat_type_id,
           water_route_id,
-          template_day_slot_id,
-          scheduled_departure_at,
-          capacity
+          capacity,
+          name,
+          description,
+          banner_object_key,
+          banner_mime_type,
+          banner_size_bytes,
+          banner_etag,
+          banner_uploaded_at
+        FROM products
+        WHERE products.program_id = subscription.parameter('program_id')
+          AND products.program_id IN accessible_program_ids
+      - |
+        SELECT
+          id,
+          program_id,
+          product_id,
+          scheduled_departure_at
         FROM trips
         WHERE trips.program_id = subscription.parameter('program_id')
           AND trips.program_id IN accessible_program_ids

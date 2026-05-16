@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+import { computed, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
 import { useRoute, useRouter, type LocationQuery } from "vue-router";
@@ -14,11 +14,12 @@ import {
 } from "../utilities/datetime-input";
 import { parseTripCreateDepartureQuery } from "../utilities/trip-departure-query";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
-import type { TripOutput } from "../powersync/trips.collection";
+import { joinTripsWithRelations, type TripWithRelationsRow } from "../powersync/joined-queries";
 import { useConfirmDialog } from "./useConfirmDialog";
 import { useNotifyAsyncAction } from "./useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "./useNotifyErrorFromCatch";
 import { parsePositiveInt } from "../validation/zod-fields";
+import type AppTripForm from "../components/molecules/AppTripForm.vue";
 
 export const TRIP_MODAL_QUERY_KEY = "tripModal" as const;
 export const TRIP_MODAL_TRIP_ID_QUERY_KEY = "tripId" as const;
@@ -38,13 +39,19 @@ function stripTripModalKeys(query: LocationQuery): LocationQuery {
  * Route-driven trip create/edit modal: reads `tripModal=create|edit` and optional
  * `tripId`, `departureDate`, `departureTime` from the current route query.
  */
-export function useTripModalUpsert(baseRouteName: TripModalBaseRouteName) {
+export function useTripModalUpsert(
+    baseRouteName: TripModalBaseRouteName,
+    tripFormRef: Ref<InstanceType<typeof AppTripForm> | null>,
+) {
     const route = useRoute();
     const router = useRouter();
     const { t, locale } = useI18n();
     const $q = useQuasar();
     const powersync = getAppPowerSyncContext();
     const tripsCollection = powersync.collections.trips;
+    const productsCollection = powersync.collections.products;
+    const boatTypesCollection = powersync.collections.boat_types;
+    const waterRoutesCollection = powersync.collections.water_routes;
     const { runWithNotify } = useNotifyAsyncAction();
     const { confirm } = useConfirmDialog();
     const { notifyError } = useNotifyErrorFromCatch();
@@ -141,31 +148,40 @@ export function useTripModalUpsert(baseRouteName: TripModalBaseRouteName) {
         });
     }
 
-    const { data: trips } = useLiveQuery(
+    const { data: tripsJoined } = useLiveQuery(
         (queryBuilder) => {
             const col = tripsCollection.value;
+            const pCol = productsCollection.value;
+            const btCol = boatTypesCollection.value;
+            const wrCol = waterRoutesCollection.value;
             const pid = powersync.activeProgramIdRef.value.trim();
-            if (!col || pid.length === 0) {
+            if (!col || !pCol || !btCol || !wrCol || pid.length === 0) {
                 return undefined;
             }
-            return queryBuilder
-                .from({ t: col })
+            return joinTripsWithRelations(queryBuilder, col, pCol, btCol, wrCol)
                 .where(({ t }) => eq(t.program_id, pid));
         },
-        [tripsCollection, powersync.activeProgramIdRef],
+        [
+            tripsCollection,
+            productsCollection,
+            boatTypesCollection,
+            waterRoutesCollection,
+            powersync.activeProgramIdRef,
+        ],
     );
 
-    const currentTrip = computed(() => {
+    const currentTrip = computed((): TripWithRelationsRow | null => {
         const id = editTripId.value;
         if (id.length === 0) {
             return null;
         }
-        return (trips.value ?? []).find((t) => String(t.id) === id) ?? null;
+        const rows = (tripsJoined.value ?? []) as unknown as TripWithRelationsRow[];
+        return rows.find((row) => String(row.id) === id) ?? null;
     });
 
     const neighbors = computed(() => {
         const id = editTripId.value;
-        const list = trips.value ?? [];
+        const list = (tripsJoined.value ?? []) as unknown as TripWithRelationsRow[];
         const ids = list.map((t) => String(t.id));
         const idx = id.length === 0 ? -1 : ids.indexOf(id);
         if (idx < 0) {
@@ -234,13 +250,12 @@ export function useTripModalUpsert(baseRouteName: TripModalBaseRouteName) {
         };
     });
 
-    function formatSwitcherLabel(tr: TripOutput) {
+    function formatSwitcherLabel(tr: TripWithRelationsRow) {
         const raw = tr.scheduled_departure_at;
         if (raw == null || String(raw) === "") {
             return String(tr.id ?? "");
         }
-        const d =
-            raw instanceof Date ? raw : new Date(String(raw));
+        const d = new Date(String(raw));
         if (Number.isNaN(d.getTime())) {
             return String(raw);
         }
@@ -254,8 +269,8 @@ export function useTripModalUpsert(baseRouteName: TripModalBaseRouteName) {
     }
 
     const tripSwitcherOptions = computed(() =>
-        (trips.value ?? []).map((tr) => ({
-            label: formatSwitcherLabel(tr as TripOutput),
+        ((tripsJoined.value ?? []) as unknown as TripWithRelationsRow[]).map((tr) => ({
+            label: formatSwitcherLabel(tr),
             value: String(tr.id),
         })),
     );
@@ -287,14 +302,16 @@ export function useTripModalUpsert(baseRouteName: TripModalBaseRouteName) {
         await runWithNotify(
             async () => {
                 const col = tripsCollection.value;
-                if (!col) {
-                    throw new Error("Trips collection not ready.");
+                const productsCol = productsCollection.value;
+                if (!col || !productsCol) {
+                    throw new Error("Trips or products collection not ready.");
                 }
                 const pid = powersync.activeProgramIdRef.value.trim();
                 if (pid.length === 0) {
                     throw new Error("Select a program before adding trips.");
                 }
-                const id = ulid();
+                const tripId = ulid();
+                const productId = ulid();
                 const localCombined = composeLocalDatetimeFromParts(
                     values.scheduledDepartureDate,
                     values.scheduledDepartureTime,
@@ -305,15 +322,37 @@ export function useTripModalUpsert(baseRouteName: TripModalBaseRouteName) {
                     throw new Error("Trip capacity must be a positive integer.");
                 }
 
-                await col
+                await productsCol
                     .insert({
-                        id,
+                        id: productId,
                         program_id: pid,
+                        name: t("tripsList.productDefaultName"),
+                        description: null,
+                        capacity: cap,
                         boat_type_id: values.boatTypeId ?? null,
                         water_route_id: values.waterRouteId ?? null,
-                        template_day_slot_id: null,
+                        banner_object_key: null,
+                        banner_mime_type: null,
+                        banner_size_bytes: null,
+                        banner_etag: null,
+                        banner_uploaded_at: null,
+                    })
+                    .isPersisted.promise;
+
+                try {
+                    await tripFormRef.value?.finalizeProductBannerAfterPersistence(
+                        productId,
+                    );
+                } catch (e) {
+                    notifyError(e, t("tripsList.productImageUploadFailed"));
+                }
+
+                await col
+                    .insert({
+                        id: tripId,
+                        program_id: pid,
+                        product_id: productId,
                         scheduled_departure_at: iso,
-                        capacity: cap,
                     })
                     .isPersisted.promise;
                 void powersync.refreshOutboxSnapshot();
@@ -335,6 +374,10 @@ export function useTripModalUpsert(baseRouteName: TripModalBaseRouteName) {
         }
         await runWithNotify(
             async () => {
+                const tr = currentTrip.value;
+                if (tr === null || tr.product_id == null) {
+                    throw new Error("Trip not found.");
+                }
                 const cap = parsePositiveInt(values.capacity);
                 if (cap === null) {
                     throw new Error("capacity");
@@ -355,15 +398,26 @@ export function useTripModalUpsert(baseRouteName: TripModalBaseRouteName) {
                         ? String(values.waterRouteId)
                         : null;
                 const col = tripsCollection.value;
-                if (!col) {
-                    throw new Error("Trips collection not ready.");
+                const productsCol = productsCollection.value;
+                if (!col || !productsCol) {
+                    throw new Error("Trips or products collection not ready.");
                 }
-                col.update(id, (draft) => {
-                    draft.scheduled_departure_at = iso;
+                const productId = String(tr.product_id);
+                productsCol.update(productId, (draft) => {
                     draft.capacity = cap;
                     draft.boat_type_id = nextBoatType;
                     draft.water_route_id = nextWaterRoute;
                 });
+                col.update(id, (draft) => {
+                    draft.scheduled_departure_at = iso;
+                });
+                try {
+                    await tripFormRef.value?.finalizeProductBannerAfterPersistence(
+                        productId,
+                    );
+                } catch (e) {
+                    notifyError(e, t("tripsList.productImageUploadFailed"));
+                }
                 void powersync.refreshOutboxSnapshot();
             },
             {
@@ -372,6 +426,22 @@ export function useTripModalUpsert(baseRouteName: TripModalBaseRouteName) {
             },
         );
     }
+
+    const tripFormPersistedProductId = computed((): string => {
+        if (modalMode.value !== "edit" || currentTrip.value == null) {
+            return "";
+        }
+        const pid = currentTrip.value.product_id;
+        return pid == null || String(pid).length === 0 ? "" : String(pid);
+    });
+
+    const tripFormExistingProductBannerKey = computed((): string | null => {
+        if (modalMode.value !== "edit" || currentTrip.value == null) {
+            return null;
+        }
+        const k = currentTrip.value.productBannerObjectKey;
+        return k == null || String(k).length === 0 ? null : String(k);
+    });
 
     function confirmDelete(): void {
         const tr = currentTrip.value;
@@ -444,6 +514,8 @@ export function useTripModalUpsert(baseRouteName: TripModalBaseRouteName) {
         isDeleting,
         submitCreateTrip,
         submitUpdateTrip,
+        tripFormPersistedProductId,
+        tripFormExistingProductBannerKey,
         confirmDelete,
         modalTitle,
         modalDescription,

@@ -3,10 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\BoatType;
+use App\Models\Product;
 use App\Models\Program;
 use App\Models\TemplateDay;
 use App\Models\TemplateDaySlot;
-use App\Models\Trip;
 use App\Models\User;
 use App\Models\WaterRoute;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -254,14 +254,17 @@ class PowerSyncUploadTemplateDayTest extends TestCase
         ]);
     }
 
-    public function test_put_trip_accepts_template_day_slot_in_same_program(): void
+    public function test_put_trip_with_product_in_same_program(): void
     {
         $user = User::factory()->create();
         $program = Program::factory()->withOwner($user)->create();
-        $templateDay = TemplateDay::factory()->forProgram($program)->create();
-        $slot = TemplateDaySlot::factory()->forTemplateDay($templateDay)->create();
         $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
+        $product = Product::factory()->forProgram($program)->create([
+            'boat_type_id' => $boatType->getKey(),
+            'water_route_id' => $route->getKey(),
+            'capacity' => 12,
+        ]);
         $tripId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -273,10 +276,7 @@ class PowerSyncUploadTemplateDayTest extends TestCase
                     'data' => [
                         'program_id' => $program->getKey(),
                         'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
-                        'capacity' => 12,
-                        'boat_type_id' => $boatType->getKey(),
-                        'water_route_id' => $route->getKey(),
-                        'template_day_slot_id' => $slot->getKey(),
+                        'product_id' => $product->getKey(),
                     ],
                 ],
             ],
@@ -284,67 +284,7 @@ class PowerSyncUploadTemplateDayTest extends TestCase
 
         $this->assertDatabaseHas('trips', [
             'id' => $tripId,
-            'template_day_slot_id' => $slot->getKey(),
-        ]);
-    }
-
-    public function test_put_trip_rejects_template_day_slot_from_other_program(): void
-    {
-        $user = User::factory()->create();
-        $programA = Program::factory()->withOwner($user)->create();
-        $programB = Program::factory()->withOwner($user)->create();
-        $slotB = TemplateDaySlot::factory()
-            ->forTemplateDay(TemplateDay::factory()->forProgram($programB)->create())
-            ->create();
-        $boatType = BoatType::factory()->create(['program_id' => $programA->getKey()]);
-        $route = WaterRoute::factory()->create(['program_id' => $programA->getKey()]);
-        $tripId = (string) Str::ulid();
-
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'PUT',
-                    'type' => 'trips',
-                    'id' => $tripId,
-                    'data' => [
-                        'program_id' => $programA->getKey(),
-                        'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
-                        'capacity' => 12,
-                        'boat_type_id' => $boatType->getKey(),
-                        'water_route_id' => $route->getKey(),
-                        'template_day_slot_id' => $slotB->getKey(),
-                    ],
-                ],
-            ],
-        ])->assertUnprocessable();
-
-        $this->assertDatabaseMissing('trips', ['id' => $tripId]);
-    }
-
-    public function test_delete_template_day_slot_nulls_linked_trip_reference(): void
-    {
-        $user = User::factory()->create();
-        $program = Program::factory()->withOwner($user)->create();
-        $templateDay = TemplateDay::factory()->forProgram($program)->create();
-        $slot = TemplateDaySlot::factory()->forTemplateDay($templateDay)->create();
-        $trip = Trip::factory()->forProgram($program)->create([
-            'template_day_slot_id' => $slot->getKey(),
-        ]);
-
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'DELETE',
-                    'type' => 'template_day_slots',
-                    'id' => $slot->getKey(),
-                ],
-            ],
-        ])->assertOk();
-
-        $this->assertDatabaseMissing('template_day_slots', ['id' => $slot->getKey()]);
-        $this->assertDatabaseHas('trips', [
-            'id' => $trip->getKey(),
-            'template_day_slot_id' => null,
+            'product_id' => $product->getKey(),
         ]);
     }
 }

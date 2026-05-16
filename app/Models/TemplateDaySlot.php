@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TemplateDaySlot extends Model
 {
@@ -54,10 +53,5 @@ class TemplateDaySlot extends Model
     public function waterRoute(): BelongsTo
     {
         return $this->belongsTo(WaterRoute::class, 'water_route_id');
-    }
-
-    public function trips(): HasMany
-    {
-        return $this->hasMany(Trip::class, 'template_day_slot_id');
     }
 }

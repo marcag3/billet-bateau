@@ -6,8 +6,9 @@
  *
  * Relations defined:
  *   boats  ->  boat_types   (boats.boat_type_id  -> boat_types.id)
- *   trips  ->  boat_types   (trips.boat_type_id  -> boat_types.id)
- *   trips  ->  water_routes (trips.water_route_id -> water_routes.id)
+ *   trips  ->  products     (trips.product_id -> products.id)
+ *   products -> boat_types  (products.boat_type_id -> boat_types.id)
+ *   products -> water_routes (products.water_route_id -> water_routes.id)
  */
 
 import { eq, type Collection, type InitialQueryBuilder } from "@tanstack/db";
@@ -69,16 +70,17 @@ export function joinBoatsWithBoatTypes<
 }
 
 // ---------------------------------------------------------------------------
-// Trips + BoatType + WaterRoute join
+// Trips + Product + BoatType + WaterRoute join
 // ---------------------------------------------------------------------------
 
 export interface TripWithRelationsRow {
     id: string;
     program_id: string | null;
+    product_id: string | null;
+    product_name: string | null;
+    scheduled_departure_at: string | null;
     boat_type_id: string | null;
     water_route_id: string | null;
-    template_day_slot_id: string | null;
-    scheduled_departure_at: string | null;
     capacity: number | null;
     /** Resolved boat type name */
     boatTypeName: string | null;
@@ -86,19 +88,22 @@ export interface TripWithRelationsRow {
     waterRouteName: string | null;
     /** Resolved water route duration in minutes (null if no route join) */
     waterRouteDurationMinutes: number | null;
+    /** Product banner storage key (null if none) */
+    productBannerObjectKey: string | null;
 }
 
 /**
- * Build a query fragment that joins trips -> boat_types and trips -> water_routes.
+ * Build a query fragment that joins trips -> products -> boat_types / water_routes.
  *
  * @example
  * ```ts
  * const { data: trips } = useLiveQuery((qb) => {
  *   const col = tripsCollection.value
+ *   const pCol = productsCollection.value
  *   const btCol = boatTypesCollection.value
  *   const wrCol = waterRoutesCollection.value
- *   if (!col || !btCol || !wrCol || pid.length === 0) return undefined
- *   return joinTripsWithRelations(qb, col, btCol, wrCol)
+ *   if (!col || !pCol || !btCol || !wrCol || pid.length === 0) return undefined
+ *   return joinTripsWithRelations(qb, col, pCol, btCol, wrCol)
  *     .where(({ t }) => t.program_id, "=", pid)
  *     .orderBy(({ t }) => t.scheduled_departure_at, "desc")
  * })
@@ -106,32 +111,39 @@ export interface TripWithRelationsRow {
  */
 export function joinTripsWithRelations<
     T extends Collection<any, any>,
+    P extends Collection<any, any>,
     BT extends Collection<any, any>,
     WR extends Collection<any, any>,
 >(
     qb: InitialQueryBuilder,
     tripsCollection: T,
+    productsCollection: P,
     boatTypesCollection: BT,
     waterRoutesCollection: WR,
 ) {
     return qb
         .from({ t: tripsCollection })
-        .leftJoin({ bt: boatTypesCollection }, ({ t, bt }) =>
-            eq(t.boat_type_id, bt.id),
+        .innerJoin({ p: productsCollection }, ({ t, p }) =>
+            eq(t.product_id, p.id),
         )
-        .leftJoin({ wr: waterRoutesCollection }, ({ t, wr }) =>
-            eq(t.water_route_id, wr.id),
+        .leftJoin({ bt: boatTypesCollection }, ({ p, bt }) =>
+            eq(p.boat_type_id, bt.id),
         )
-        .select(({ t, bt, wr }) => ({
+        .leftJoin({ wr: waterRoutesCollection }, ({ p, wr }) =>
+            eq(p.water_route_id, wr.id),
+        )
+        .select(({ t, p, bt, wr }) => ({
             id: t.id,
             program_id: t.program_id,
-            boat_type_id: t.boat_type_id,
-            water_route_id: t.water_route_id,
-            template_day_slot_id: t.template_day_slot_id,
+            product_id: t.product_id,
+            product_name: p.name,
             scheduled_departure_at: t.scheduled_departure_at,
-            capacity: t.capacity,
+            boat_type_id: p.boat_type_id,
+            water_route_id: p.water_route_id,
+            capacity: p.capacity,
             boatTypeName: bt.name,
             waterRouteName: wr.name,
             waterRouteDurationMinutes: wr.duration_minutes,
+            productBannerObjectKey: p.banner_object_key,
         }));
 }

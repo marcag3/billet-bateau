@@ -11,11 +11,8 @@ return new class extends Migration
         Schema::create('trips', function (Blueprint $table): void {
             $table->ulid('id')->primary();
             $table->foreignUlid('program_id')->constrained('programs')->cascadeOnDelete();
-            $table->foreignUlid('boat_type_id')->nullable()->constrained('boat_types')->nullOnDelete();
-            $table->foreignUlid('water_route_id')->nullable()->constrained('water_routes')->nullOnDelete();
-            $table->foreignUlid('template_day_slot_id')->nullable()->constrained('template_day_slots')->nullOnDelete();
+            $table->foreignUlid('product_id')->constrained('products')->restrictOnDelete();
             $table->dateTimeTz('scheduled_departure_at');
-            $table->unsignedInteger('capacity');
             $table->timestamps();
 
             $table->index(['program_id', 'scheduled_departure_at']);

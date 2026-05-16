@@ -31,6 +31,7 @@ final class CreatePublicBookingAction
             $trip = Trip::query()
                 ->where('program_id', $program->getKey())
                 ->whereKey($data->trip_id)
+                ->with('product')
                 ->lockForUpdate()
                 ->first();
 
@@ -43,6 +44,13 @@ final class CreatePublicBookingAction
             if ($trip->scheduled_departure_at->isPast()) {
                 throw ValidationException::withMessages([
                     'trip_id' => [__('This trip is no longer available for booking.')],
+                ]);
+            }
+
+            $product = $trip->product;
+            if ($product === null) {
+                throw ValidationException::withMessages([
+                    'trip_id' => [__('The selected trip is not available for this program.')],
                 ]);
             }
 
@@ -110,7 +118,7 @@ final class CreatePublicBookingAction
                 })
                 ->count();
 
-            if ($usedSeats + $totalTickets > (int) $trip->capacity) {
+            if ($usedSeats + $totalTickets > (int) $product->capacity) {
                 throw ValidationException::withMessages([
                     'ticket_quantities' => [__('This trip does not have enough remaining capacity.')],
                 ]);

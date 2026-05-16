@@ -19,11 +19,8 @@ class Trip extends Model
     protected $fillable = [
         'id',
         'program_id',
-        'boat_type_id',
-        'water_route_id',
-        'template_day_slot_id',
+        'product_id',
         'scheduled_departure_at',
-        'capacity',
         'created_at',
         'updated_at',
     ];
@@ -32,32 +29,30 @@ class Trip extends Model
     {
         return [
             'scheduled_departure_at' => 'datetime',
-            'capacity' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
     }
 
+    /**
+     * @return BelongsTo<Program, $this>
+     */
     public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class, 'program_id');
     }
 
-    public function boatType(): BelongsTo
+    /**
+     * @return BelongsTo<Product, $this>
+     */
+    public function product(): BelongsTo
     {
-        return $this->belongsTo(BoatType::class, 'boat_type_id');
+        return $this->belongsTo(Product::class, 'product_id');
     }
 
-    public function waterRoute(): BelongsTo
-    {
-        return $this->belongsTo(WaterRoute::class, 'water_route_id');
-    }
-
-    public function templateDaySlot(): BelongsTo
-    {
-        return $this->belongsTo(TemplateDaySlot::class, 'template_day_slot_id');
-    }
-
+    /**
+     * @return HasMany<Voyage, $this>
+     */
     public function voyages(): HasMany
     {
         return $this->hasMany(Voyage::class, 'trip_id');

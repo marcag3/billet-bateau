@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\BoatType;
 use App\Models\Booking;
+use App\Models\Product;
 use App\Models\Program;
 use App\Models\Trip;
 use App\Models\User;
@@ -23,10 +24,23 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
         $program = Program::factory()->withOwner($user)->create();
         $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
+        $productId = (string) Str::ulid();
         $tripId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'products',
+                    'id' => $productId,
+                    'data' => [
+                        'program_id' => $program->getKey(),
+                        'name' => 'Test product',
+                        'capacity' => 12,
+                        'boat_type_id' => $boatType->getKey(),
+                        'water_route_id' => $route->getKey(),
+                    ],
+                ],
                 [
                     'op' => 'PUT',
                     'type' => 'trips',
@@ -34,24 +48,28 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
                     'data' => [
                         'program_id' => $program->getKey(),
                         'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
-                        'capacity' => 12,
-                        'boat_type_id' => $boatType->getKey(),
-                        'water_route_id' => $route->getKey(),
+                        'product_id' => $productId,
                     ],
                 ],
             ],
         ])->assertOk();
 
+        $this->assertDatabaseHas('products', [
+            'id' => $productId,
+            'program_id' => $program->getKey(),
+            'capacity' => 12,
+            'boat_type_id' => $boatType->getKey(),
+            'water_route_id' => $route->getKey(),
+        ]);
+
         $this->assertDatabaseHas('trips', [
             'id' => $tripId,
             'program_id' => $program->getKey(),
-            'boat_type_id' => $boatType->getKey(),
-            'water_route_id' => $route->getKey(),
-            'capacity' => 12,
+            'product_id' => $productId,
         ]);
     }
 
-    public function test_put_new_trip_without_capacity_is_unprocessable(): void
+    public function test_put_new_trip_without_product_id_is_unprocessable(): void
     {
         $user = User::factory()->create();
         $program = Program::factory()->withOwner($user)->create();
@@ -80,6 +98,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
         $intruder = User::factory()->create();
         $program = Program::factory()->withOwner($owner)->create();
         $tripId = (string) Str::ulid();
+        $product = Product::factory()->forProgram($program)->create();
 
         $this->actingAs($intruder)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -90,7 +109,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
                     'data' => [
                         'program_id' => $program->getKey(),
                         'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
-                        'capacity' => 8,
+                        'product_id' => $product->getKey(),
                     ],
                 ],
             ],
@@ -281,12 +300,12 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
         $this->assertDatabaseHas('water_routes', ['id' => $route->getKey()]);
     }
 
-    public function test_put_trip_rejects_water_route_from_other_program(): void
+    public function test_put_trip_rejects_product_from_other_program(): void
     {
         $user = User::factory()->create();
         $programA = Program::factory()->withOwner($user)->create();
         $programB = Program::factory()->withOwner($user)->create();
-        $routeB = WaterRoute::factory()->create(['program_id' => $programB->getKey()]);
+        $productB = Product::factory()->forProgram($programB)->create();
         $tripId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -298,8 +317,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
                     'data' => [
                         'program_id' => $programA->getKey(),
                         'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
-                        'capacity' => 10,
-                        'water_route_id' => $routeB->getKey(),
+                        'product_id' => $productB->getKey(),
                     ],
                 ],
             ],
@@ -308,22 +326,22 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
         $this->assertDatabaseMissing('trips', ['id' => $tripId]);
     }
 
-    public function test_put_trip_rejects_invalid_boat_type_ulid_returns_unprocessable(): void
+    public function test_put_product_rejects_invalid_boat_type_ulid_returns_unprocessable(): void
     {
         $user = User::factory()->create();
         $program = Program::factory()->withOwner($user)->create();
         $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
-        $tripId = (string) Str::ulid();
+        $productId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
                 [
                     'op' => 'PUT',
-                    'type' => 'trips',
-                    'id' => $tripId,
+                    'type' => 'products',
+                    'id' => $productId,
                     'data' => [
                         'program_id' => $program->getKey(),
-                        'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
+                        'name' => 'Bad boat type',
                         'capacity' => 10,
                         'boat_type_id' => 'not-a-ulid',
                         'water_route_id' => $route->getKey(),
@@ -332,6 +350,6 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
             ],
         ])->assertUnprocessable();
 
-        $this->assertDatabaseMissing('trips', ['id' => $tripId]);
+        $this->assertDatabaseMissing('products', ['id' => $productId]);
     }
 }

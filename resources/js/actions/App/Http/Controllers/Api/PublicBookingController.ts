@@ -69,7 +69,7 @@ bookingOptions.head = (args: { program: string | { slug: string } } | [program: 
 
 /**
 * @see \App\Http\Controllers\Api\PublicBookingController::store
-* @see app/Http/Controllers/Api/PublicBookingController.php:61
+* @see app/Http/Controllers/Api/PublicBookingController.php:62
 * @route '/api/public/programs/{program}/bookings'
 */
 export const store = (args: { program: string | { slug: string } } | [program: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -84,7 +84,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicBookingController::store
-* @see app/Http/Controllers/Api/PublicBookingController.php:61
+* @see app/Http/Controllers/Api/PublicBookingController.php:62
 * @route '/api/public/programs/{program}/bookings'
 */
 store.url = (args: { program: string | { slug: string } } | [program: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions) => {
@@ -117,7 +117,7 @@ store.url = (args: { program: string | { slug: string } } | [program: string | {
 
 /**
 * @see \App\Http\Controllers\Api\PublicBookingController::store
-* @see app/Http/Controllers/Api/PublicBookingController.php:61
+* @see app/Http/Controllers/Api/PublicBookingController.php:62
 * @route '/api/public/programs/{program}/bookings'
 */
 store.post = (args: { program: string | { slug: string } } | [program: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({

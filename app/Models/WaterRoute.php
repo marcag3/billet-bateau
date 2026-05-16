@@ -42,9 +42,12 @@ class WaterRoute extends Model
         return $this->belongsTo(Program::class, 'program_id');
     }
 
-    public function trips(): HasMany
+    /**
+     * @return HasMany<Product, $this>
+     */
+    public function products(): HasMany
     {
-        return $this->hasMany(Trip::class, 'water_route_id');
+        return $this->hasMany(Product::class, 'water_route_id');
     }
 
     public function voyages(): HasMany

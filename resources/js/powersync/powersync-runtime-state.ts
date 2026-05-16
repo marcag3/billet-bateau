@@ -6,6 +6,7 @@ import type { createTicketTypesCollection } from "./ticket-types.collection";
 import type { createBoatsCollection } from "./boats.collection";
 import type { createWaterRoutesCollection } from "./water-routes.collection";
 import type { createTripsCollection } from "./trips.collection";
+import type { createProductsCollection } from "./products.collection";
 import type { createBookingsCollection } from "./bookings.collection";
 import type { createBookingTicketsCollection } from "./booking-tickets.collection";
 import type { createTemplateDaysCollection } from "./template-days.collection";
@@ -13,7 +14,7 @@ import type { createTemplateDaySlotsCollection } from "./template-day-slots.coll
 import type { createTemplateDayDatesCollection } from "./template-day-dates.collection";
 import { translate } from "../utilities/i18n";
 
-export const DB_FILENAME = "billbateau-app-v19.db";
+export const DB_FILENAME = "billbateau-app-v21.db";
 
 export const loadFailedMessage = translate("sync.unableLoadSync");
 export const persistenceLimitedMessage = translate("sync.persistenceLimited");
@@ -22,6 +23,7 @@ export type PowerSyncCollectionKey =
     | "programs"
     | "boat_types"
     | "boats"
+    | "products"
     | "trips"
     | "ticket_types"
     | "bookings"
@@ -39,6 +41,7 @@ type PowerSyncCollectionInstanceMap = {
     programs: ReturnType<typeof createProgramsCollection>;
     boat_types: ReturnType<typeof createBoatTypesCollection>;
     boats: ReturnType<typeof createBoatsCollection>;
+    products: ReturnType<typeof createProductsCollection>;
     trips: ReturnType<typeof createTripsCollection>;
     ticket_types: ReturnType<typeof createTicketTypesCollection>;
     bookings: ReturnType<typeof createBookingsCollection>;
@@ -56,6 +59,9 @@ export const collectionRefs: PowerSyncCollectionRefs = {
     programs: shallowRef<PowerSyncCollectionInstance<"programs"> | null>(null),
     boat_types: shallowRef<PowerSyncCollectionInstance<"boat_types"> | null>(null),
     boats: shallowRef<PowerSyncCollectionInstance<"boats"> | null>(null),
+    products: shallowRef<PowerSyncCollectionInstance<"products"> | null>(
+        null,
+    ),
     trips: shallowRef<PowerSyncCollectionInstance<"trips"> | null>(null),
     ticket_types: shallowRef<PowerSyncCollectionInstance<"ticket_types"> | null>(
         null,
