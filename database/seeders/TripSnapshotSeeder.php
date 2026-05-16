@@ -59,12 +59,23 @@ class TripSnapshotSeeder extends Seeder
             ->where('name', 'Rabaska')
             ->firstOrFail();
 
-        $waterRoutePie9 = WaterRoute::query()
+        $waterRoutes = WaterRoute::query()
             ->where('program_id', $program->getKey())
-            ->where('name', 'pie9')
-            ->firstOrFail();
+            ->whereIn('name', ['pie9', 'olivier-charbonneau'])
+            ->get()
+            ->keyBy('name');
 
-        $product = Product::query()->updateOrCreate(
+        $waterRoutePie9 = $waterRoutes->get('pie9');
+        if ($waterRoutePie9 === null) {
+            throw new \RuntimeException('Missing water route: pie9');
+        }
+
+        $waterRouteOlivierCharbonneau = $waterRoutes->get('olivier-charbonneau');
+        if ($waterRouteOlivierCharbonneau === null) {
+            throw new \RuntimeException('Missing water route: olivier-charbonneau');
+        }
+
+        $productPie9 = Product::query()->updateOrCreate(
             [
                 'program_id' => $program->getKey(),
                 'boat_type_id' => $boatType->getKey(),
@@ -73,6 +84,19 @@ class TripSnapshotSeeder extends Seeder
             ],
             [
                 'name' => 'Rabaska · pie9',
+                'description' => null,
+            ],
+        );
+
+        Product::query()->updateOrCreate(
+            [
+                'program_id' => $program->getKey(),
+                'boat_type_id' => $boatType->getKey(),
+                'water_route_id' => $waterRouteOlivierCharbonneau->getKey(),
+                'capacity' => 10,
+            ],
+            [
+                'name' => 'Rabaska · olivier-charbonneau',
                 'description' => null,
             ],
         );
@@ -87,7 +111,7 @@ class TripSnapshotSeeder extends Seeder
                         'scheduled_departure_at' => $scheduledAt,
                     ],
                     [
-                        'product_id' => $product->getKey(),
+                        'product_id' => $productPie9->getKey(),
                     ],
                 );
             }
