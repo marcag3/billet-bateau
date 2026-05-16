@@ -30,17 +30,17 @@
                 <q-item-section>{{ t("common.boats") }}</q-item-section>
             </q-item>
             <q-item
-                key="water-routes"
+                key="products"
                 v-ripple
                 clickable
-                :to="{ name: 'water-routes.list', params: { programId } }"
+                :to="{ name: 'products.list', params: { programId } }"
                 exact
                 active-class="app-nav-item--active"
             >
                 <q-item-section avatar>
-                    <q-icon name="timeline" />
+                    <q-icon name="inventory_2" />
                 </q-item-section>
-                <q-item-section>{{ t("common.waterRoutes") }}</q-item-section>
+                <q-item-section>{{ t("common.products") }}</q-item-section>
             </q-item>
             <q-item
                 key="ticket-types"

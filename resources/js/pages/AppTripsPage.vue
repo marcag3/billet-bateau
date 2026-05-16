@@ -75,16 +75,20 @@
                             :src="tripListProductImageUrl(tr)"
                             ratio="1"
                             fit="cover"
-                            :alt="t('tripsList.productImage')"
+                            :alt="t('productsList.image')"
                         />
                     </q-avatar>
                 </q-item-section>
                 <q-item-section>
                     <q-item-label class="text-h6">{{
-                        formatDeparture(tr)
+                        productDisplayName(tr)
                     }}</q-item-label>
                     <q-item-label caption>
-                        {{ t("tripsList.capacity") }}: {{ tr.capacity }}
+                        {{ t("tripsList.scheduledDeparture") }}:
+                        {{ formatDeparture(tr) }}
+                        <template v-if="tr.capacity != null">
+                            · {{ t("tripsList.capacity") }}: {{ tr.capacity }}
+                        </template>
                         <template v-if="tr.boatTypeName">
                             · {{ t("tripsList.boatType") }}:
                             {{ tr.boatTypeName }}
@@ -269,6 +273,21 @@ const { data: bookingsRows } = useLiveQuery(
     [bookingsCollection, powersync.activeProgramIdRef],
 );
 
+const { data: productsRaw } = useLiveQuery(
+    (queryBuilder) => {
+        const col = productsCollection.value;
+        const pid = powersync.activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) {
+            return undefined;
+        }
+        return queryBuilder
+            .from({ p: col })
+            .where(({ p }) => eq(p.program_id, pid))
+            .orderBy(({ p }) => p.id, "asc");
+    },
+    [productsCollection, powersync.activeProgramIdRef],
+);
+
 const bookedTripIds = computed(() => {
     const set = new Set<string>();
     for (const row of bookingsRows.value ?? []) {
@@ -386,12 +405,20 @@ const slotsByTemplateDayId = computed(() => {
 /** Row shape from `joinTripsWithRelations` live query (virtual columns included). */
 interface TripCalendarRow {
     id: unknown;
+    product_name?: unknown;
     scheduled_departure_at?: unknown;
     capacity?: unknown;
     boatTypeName?: unknown;
     waterRouteName?: unknown;
     waterRouteDurationMinutes?: unknown;
     productBannerObjectKey?: unknown;
+}
+
+interface ProductLookupRow {
+    id: unknown;
+    capacity?: unknown;
+    boat_type_id?: unknown;
+    water_route_id?: unknown;
 }
 
 interface TripCalendarEventBase {
@@ -418,6 +445,17 @@ interface DayBodyScope {
 }
 
 const trips = computed(() => (tripsRaw.value ?? []) as TripCalendarRow[]);
+const programProducts = computed(
+    () => (productsRaw.value ?? []) as ProductLookupRow[],
+);
+
+function productDisplayName(tr: TripCalendarRow): string {
+    const name = String(tr.product_name ?? "").trim();
+    if (name.length > 0) {
+        return name;
+    }
+    return t("productsList.untitled");
+}
 
 function tripListProductImageUrl(tr: TripCalendarRow): string {
     const k = tr.productBannerObjectKey;
@@ -695,6 +733,52 @@ function slotDepartureTimeToHm(raw: unknown): string {
     return t;
 }
 
+function normalizeRefId(raw: unknown): string | null {
+    if (raw == null || String(raw).trim() === "") {
+        return null;
+    }
+    return String(raw);
+}
+
+function normalizeCapacity(raw: unknown): number | null {
+    if (raw == null || raw === "") {
+        return null;
+    }
+    const n = Number(raw);
+    if (!Number.isFinite(n)) {
+        return null;
+    }
+    return n;
+}
+
+function findMatchingProductIdForSlot(slot: TemplateDaySlotOutput): string | null {
+    const slotCapacity = normalizeCapacity(slot.capacity);
+    const slotBoatTypeId = normalizeRefId(slot.boat_type_id);
+    const slotWaterRouteId = normalizeRefId(slot.water_route_id);
+
+    if (slotCapacity == null || slotCapacity < 1) {
+        return null;
+    }
+
+    const matchingProduct = programProducts.value.find((product) => {
+        const capacity = normalizeCapacity(product.capacity);
+        const boatTypeId = normalizeRefId(product.boat_type_id);
+        const waterRouteId = normalizeRefId(product.water_route_id);
+
+        return (
+            capacity === slotCapacity &&
+            boatTypeId === slotBoatTypeId &&
+            waterRouteId === slotWaterRouteId
+        );
+    });
+
+    if (!matchingProduct || String(matchingProduct.id).trim() === "") {
+        return null;
+    }
+
+    return String(matchingProduct.id);
+}
+
 function onApplyTemplateDay(
     templateDayId: string,
     serviceDateRaw: unknown,
@@ -727,8 +811,7 @@ async function applyTemplateDayFromSlots(
         return;
     }
     const col = tripsCollection.value;
-    const productsCol = productsCollection.value;
-    if (!col || !productsCol) {
+    if (!col) {
         $q.notify({
             type: "negative",
             message: t("tripsCalendar.applyTemplateDayErrorGeneric"),
@@ -761,34 +844,12 @@ async function applyTemplateDayFromSlots(
         );
         const iso = localDatetimeInputValueToIso(localCombined);
         const tripId = ulid();
-        const productId = ulid();
-        const bt =
-            slot.boat_type_id != null &&
-            String(slot.boat_type_id).trim() !== ""
-                ? String(slot.boat_type_id)
-                : null;
-        const wr =
-            slot.water_route_id != null &&
-            String(slot.water_route_id).trim() !== ""
-                ? String(slot.water_route_id)
-                : null;
+        const productId = findMatchingProductIdForSlot(slot);
+        if (productId == null) {
+            skippedCount += 1;
+            continue;
+        }
         try {
-            await productsCol
-                .insert({
-                    id: productId,
-                    program_id: pid,
-                    name: t("tripsList.productFromTemplate"),
-                    description: null,
-                    capacity: cap,
-                    boat_type_id: bt,
-                    water_route_id: wr,
-                    banner_object_key: null,
-                    banner_mime_type: null,
-                    banner_size_bytes: null,
-                    banner_etag: null,
-                    banner_uploaded_at: null,
-                })
-                .isPersisted.promise;
             await col
                 .insert({
                     id: tripId,
@@ -843,7 +904,7 @@ function buildEventTitle(tr: TripCalendarRow, departure: Date): string {
         timeStyle: "short",
     }).format(departure);
 
-    const parts: string[] = [timeFmt];
+    const parts: string[] = [timeFmt, productDisplayName(tr)];
 
     const rawCap = tr.capacity;
     const capNum =

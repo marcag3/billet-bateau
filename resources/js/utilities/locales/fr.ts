@@ -3,6 +3,7 @@ export default {
         newProgram: "Nouveau programme",
         programs: "Programmes",
         boats: "Bateaux",
+        products: "Produits",
         boatTypes: "Types de bateau",
         trips: "Sorties",
         templateDays: "Journees types",
@@ -218,16 +219,16 @@ export default {
     tripsList: {
         title: "Sorties",
         description:
-            "Departs planifies pour ce programme. Capacite obligatoire ; type d’embarcation et parcours optionnels ; synchronisation via PowerSync.",
+            "Departs planifies pour ce programme. Chaque sortie selectionne un produit existant ; les metadonnees du produit se gerent dans la page Produits.",
         addTrip: "Ajouter une sortie",
         addNew: "Nouvelle sortie",
         backToList: "Retour aux sorties",
         createModalTitle: "Ajouter une sortie",
         createModalDescription:
-            "Creez une sortie reservable pour ce programme. Les changements se synchronisent via PowerSync.",
+            "Creez une sortie en choisissant un depart et un produit existant.",
         editModalTitle: "Modifier la sortie",
         editModalDescription:
-            "Modifiez le depart, la capacite et les liens. Utilisez le selecteur pour passer d’une sortie a l’autre.",
+            "Modifiez le depart et l’association de produit. Utilisez le selecteur pour passer d’une sortie a l’autre.",
         scheduledDeparture: "Depart planifie",
         scheduledDepartureDate: "Date du depart",
         scheduledDepartureTime: "Heure du depart",
@@ -235,14 +236,11 @@ export default {
         scheduledDepartureTimeRequired: "L’heure du depart est obligatoire.",
         scheduledDepartureRequired: "Le depart planifie est obligatoire.",
         scheduledDepartureInvalid: "Entrez une date et une heure valides.",
+        product: "Produit",
+        productRequired: "Le produit est obligatoire.",
         capacity: "Capacite",
-        capacityHint:
-            "Capacite passagers en entier strictement positif (obligatoire).",
-        capacityRequired: "La capacite est obligatoire.",
         boatType: "Type d’embarcation",
         waterRoute: "Parcours",
-        productFromTemplate: "Depuis le modele",
-        productDefaultName: "Offre reservable",
         create: "Creer la sortie",
         empty: "Aucune sortie pour le moment. Utilisez Ajouter une sortie pour en creer une.",
         saveChanges: "Enregistrer",
@@ -263,12 +261,6 @@ export default {
         nextTrip: "Sortie suivante",
         positionInList: "{index} sur {total}",
         editSection: "Details de la sortie",
-        productImage: "Image de l’offre",
-        productImageHint:
-            "Optionnel. Affichee sur la reservation publique et dans la liste des sorties lorsque definie.",
-        productImageUploadFailed:
-            "L’image de l’offre n’a pas pu etre televersee. Reessayez.",
-        productImageRemove: "Retirer l’image de l’offre",
     },
     tripsCalendar: {
         title: "Sorties",
@@ -305,21 +297,50 @@ export default {
         applyTemplateDayErrorGeneric:
             "Impossible d'appliquer la journee type. Veuillez reessayer.",
     },
+    productsList: {
+        title: "Produits",
+        description:
+            "Produits reutilisables pour les sorties de ce programme. Gerez la capacite, le type de bateau, le parcours et la banniere optionnelle une seule fois, puis assignez les produits aux sorties.",
+        addProduct: "Ajouter un produit",
+        createTitle: "Nouveau produit",
+        editTitle: "Modifier le produit",
+        cancel: "Annuler",
+        create: "Creer",
+        save: "Enregistrer",
+        name: "Nom",
+        nameRequired: "Le nom est obligatoire.",
+        capacity: "Capacite",
+        capacityHint:
+            "Capacite passagers en entier strictement positif (obligatoire).",
+        capacityRequired: "La capacite est obligatoire.",
+        capacityLabel: "{cap} passagers",
+        capacityUnknown: "Capacite non definie",
+        boatType: "Type d'embarcation",
+        waterRoute: "Parcours",
+        boatTypeSummary: "Type d'embarcation : {value}",
+        waterRouteSummary: "Parcours : {value}",
+        image: "Image du produit",
+        imageHint:
+            "Optionnel. Affichee sur la reservation publique et dans les listes de sorties lorsqu’elle est definie.",
+        imageRemove: "Retirer l'image du produit",
+        imageUploadFailed:
+            "L'image du produit n'a pas pu etre televersee. Reessayez.",
+        untitled: "Produit sans nom",
+        empty:
+            "Aucun produit pour le moment. Ajoutez-en un avant de creer des sorties.",
+        created: "Produit enregistre.",
+        changesSaved: "Produit mis a jour.",
+        deleted: "Produit supprime.",
+        delete: "Supprimer",
+        deleteConfirmTitle: "Supprimer le produit ?",
+        deleteConfirmMessage:
+            "Supprimer « {name} » ? Les sorties qui l'utilisent perdront ce lien a la synchronisation.",
+        errorGeneric: "Une erreur est survenue. Veuillez reessayer.",
+    },
     waterRoutesList: {
         title: "Parcours",
         description:
             "Traces reutilisables pour les sorties (GeoJSON LineString, SRID 4326). Apercu ci-dessous ; ouvrez un parcours pour le modifier sur la carte. Les changements se synchronisent via PowerSync.",
-        addWaterRoute: "Ajouter un parcours",
-        routeCardHeading: "{name} ({minutes} min)",
-        backToList: "Retour aux parcours",
-        createPageTitle: "Ajouter un parcours",
-        createPageDescription:
-            "Tracez le parcours sur la carte ; si la trace est vide, une geometrie par defaut est utilisee. Les changements se synchronisent via PowerSync.",
-        editPageTitle: "Modifier le parcours",
-        editPageDescription:
-            "Mettez a jour la trace sur la carte ; si vous effacez la trace, une geometrie par defaut est utilisee a l’enregistrement. Les changements se synchronisent via PowerSync.",
-        notFound:
-            "Ce parcours ne figure pas a ce programme ou a ete supprime.",
         addNew: "Nouveau parcours",
         editTitle: "Modifier le parcours",
         save: "Enregistrer",

@@ -1,4 +1,4 @@
-import { computed, ref, type Ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
 import { useRoute, useRouter, type LocationQuery } from "vue-router";
@@ -18,8 +18,6 @@ import { joinTripsWithRelations, type TripWithRelationsRow } from "../powersync/
 import { useConfirmDialog } from "./useConfirmDialog";
 import { useNotifyAsyncAction } from "./useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "./useNotifyErrorFromCatch";
-import { parsePositiveInt } from "../validation/zod-fields";
-import type AppTripForm from "../components/molecules/AppTripForm.vue";
 
 export const TRIP_MODAL_QUERY_KEY = "tripModal" as const;
 export const TRIP_MODAL_TRIP_ID_QUERY_KEY = "tripId" as const;
@@ -41,7 +39,6 @@ function stripTripModalKeys(query: LocationQuery): LocationQuery {
  */
 export function useTripModalUpsert(
     baseRouteName: TripModalBaseRouteName,
-    tripFormRef: Ref<InstanceType<typeof AppTripForm> | null>,
 ) {
     const route = useRoute();
     const router = useRouter();
@@ -216,9 +213,7 @@ export function useTripModalUpsert(
         return {
             scheduledDepartureDate: parsed.scheduledDepartureDate,
             scheduledDepartureTime: parsed.scheduledDepartureTime,
-            capacity: null,
-            boatTypeId: null,
-            waterRouteId: null,
+            productId: "",
         };
     });
 
@@ -227,7 +222,6 @@ export function useTripModalUpsert(
         if (!tr) {
             return null;
         }
-        const cap = parsePositiveInt(tr.capacity as unknown);
         const localCombined = isoToLocalDatetimeInputValue(
             String(tr.scheduled_departure_at ?? ""),
         );
@@ -236,17 +230,10 @@ export function useTripModalUpsert(
         return {
             scheduledDepartureDate: date,
             scheduledDepartureTime: time,
-            capacity: cap,
-            boatTypeId:
-                tr.boat_type_id == null ||
-                String(tr.boat_type_id).length === 0
-                    ? null
-                    : String(tr.boat_type_id),
-            waterRouteId:
-                tr.water_route_id == null ||
-                String(tr.water_route_id).length === 0
-                    ? null
-                    : String(tr.water_route_id),
+            productId:
+                tr.product_id == null || String(tr.product_id).length === 0
+                    ? ""
+                    : String(tr.product_id),
         };
     });
 
@@ -302,50 +289,23 @@ export function useTripModalUpsert(
         await runWithNotify(
             async () => {
                 const col = tripsCollection.value;
-                const productsCol = productsCollection.value;
-                if (!col || !productsCol) {
-                    throw new Error("Trips or products collection not ready.");
+                if (!col) {
+                    throw new Error("Trips collection not ready.");
                 }
                 const pid = powersync.activeProgramIdRef.value.trim();
                 if (pid.length === 0) {
                     throw new Error("Select a program before adding trips.");
                 }
+                const productId = String(values.productId ?? "").trim();
+                if (productId.length === 0) {
+                    throw new Error("Product is required.");
+                }
                 const tripId = ulid();
-                const productId = ulid();
                 const localCombined = composeLocalDatetimeFromParts(
                     values.scheduledDepartureDate,
                     values.scheduledDepartureTime,
                 );
                 const iso = localDatetimeInputValueToIso(localCombined);
-                const cap = Number.parseInt(String(values.capacity), 10);
-                if (!Number.isFinite(cap) || cap < 1) {
-                    throw new Error("Trip capacity must be a positive integer.");
-                }
-
-                await productsCol
-                    .insert({
-                        id: productId,
-                        program_id: pid,
-                        name: t("tripsList.productDefaultName"),
-                        description: null,
-                        capacity: cap,
-                        boat_type_id: values.boatTypeId ?? null,
-                        water_route_id: values.waterRouteId ?? null,
-                        banner_object_key: null,
-                        banner_mime_type: null,
-                        banner_size_bytes: null,
-                        banner_etag: null,
-                        banner_uploaded_at: null,
-                    })
-                    .isPersisted.promise;
-
-                try {
-                    await tripFormRef.value?.finalizeProductBannerAfterPersistence(
-                        productId,
-                    );
-                } catch (e) {
-                    notifyError(e, t("tripsList.productImageUploadFailed"));
-                }
 
                 await col
                     .insert({
@@ -375,49 +335,26 @@ export function useTripModalUpsert(
         await runWithNotify(
             async () => {
                 const tr = currentTrip.value;
-                if (tr === null || tr.product_id == null) {
+                if (tr === null) {
                     throw new Error("Trip not found.");
-                }
-                const cap = parsePositiveInt(values.capacity);
-                if (cap === null) {
-                    throw new Error("capacity");
                 }
                 const localCombined = composeLocalDatetimeFromParts(
                     values.scheduledDepartureDate,
                     values.scheduledDepartureTime,
                 );
                 const iso = localDatetimeInputValueToIso(localCombined);
-                const nextBoatType =
-                    values.boatTypeId != null &&
-                    String(values.boatTypeId).length > 0
-                        ? String(values.boatTypeId)
-                        : null;
-                const nextWaterRoute =
-                    values.waterRouteId != null &&
-                    String(values.waterRouteId).length > 0
-                        ? String(values.waterRouteId)
-                        : null;
-                const col = tripsCollection.value;
-                const productsCol = productsCollection.value;
-                if (!col || !productsCol) {
-                    throw new Error("Trips or products collection not ready.");
+                const nextProductId = String(values.productId ?? "").trim();
+                if (nextProductId.length === 0) {
+                    throw new Error("Product is required.");
                 }
-                const productId = String(tr.product_id);
-                productsCol.update(productId, (draft) => {
-                    draft.capacity = cap;
-                    draft.boat_type_id = nextBoatType;
-                    draft.water_route_id = nextWaterRoute;
-                });
+                const col = tripsCollection.value;
+                if (!col) {
+                    throw new Error("Trips collection not ready.");
+                }
                 col.update(id, (draft) => {
                     draft.scheduled_departure_at = iso;
+                    draft.product_id = nextProductId;
                 });
-                try {
-                    await tripFormRef.value?.finalizeProductBannerAfterPersistence(
-                        productId,
-                    );
-                } catch (e) {
-                    notifyError(e, t("tripsList.productImageUploadFailed"));
-                }
                 void powersync.refreshOutboxSnapshot();
             },
             {
@@ -426,22 +363,6 @@ export function useTripModalUpsert(
             },
         );
     }
-
-    const tripFormPersistedProductId = computed((): string => {
-        if (modalMode.value !== "edit" || currentTrip.value == null) {
-            return "";
-        }
-        const pid = currentTrip.value.product_id;
-        return pid == null || String(pid).length === 0 ? "" : String(pid);
-    });
-
-    const tripFormExistingProductBannerKey = computed((): string | null => {
-        if (modalMode.value !== "edit" || currentTrip.value == null) {
-            return null;
-        }
-        const k = currentTrip.value.productBannerObjectKey;
-        return k == null || String(k).length === 0 ? null : String(k);
-    });
 
     function confirmDelete(): void {
         const tr = currentTrip.value;
@@ -514,8 +435,6 @@ export function useTripModalUpsert(
         isDeleting,
         submitCreateTrip,
         submitUpdateTrip,
-        tripFormPersistedProductId,
-        tripFormExistingProductBannerKey,
         confirmDelete,
         modalTitle,
         modalDescription,

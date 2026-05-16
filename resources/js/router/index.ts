@@ -58,22 +58,9 @@ const programScopeChildren: RouteRecordRaw[] = [
                 meta: scopedProgramMeta,
             },
             {
-                path: "water-routes/create",
-                name: "water-routes.create",
-                component: () =>
-                    import("../pages/AppWaterRouteCreatePage.vue"),
-                meta: scopedProgramMeta,
-            },
-            {
-                path: "water-routes/:waterRouteId/edit",
-                name: "water-routes.edit",
-                component: () => import("../pages/AppWaterRouteEditPage.vue"),
-                meta: scopedProgramMeta,
-            },
-            {
-                path: "water-routes",
-                name: "water-routes.list",
-                component: () => import("../pages/AppWaterRoutesPage.vue"),
+                path: "products",
+                name: "products.list",
+                component: () => import("../pages/AppProductsPage.vue"),
                 meta: scopedProgramMeta,
             },
             {

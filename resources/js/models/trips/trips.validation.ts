@@ -1,7 +1,6 @@
 import { isValid } from 'ulid';
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
-import { parsePositiveInt } from '../../validation/zod-fields';
 import { composeLocalDatetimeFromParts } from '../../utilities/datetime-input';
 import {
     isValidCalendarDateYmd,
@@ -10,9 +9,9 @@ import {
 
 export type Translator = (key: string) => string;
 
-const optionalUlidRefSchema = z.preprocess(
-    (v) => (v == null || v === '' ? null : String(v)),
-    z.union([z.string().refine((s) => isValid(s)), z.null()]),
+const requiredUlidRefSchema = z.preprocess(
+    (v) => (v == null || v === '' ? '' : String(v)),
+    z.string().refine((s) => isValid(s)),
 );
 
 function buildTripUpsertZodSchema(t: Translator) {
@@ -28,14 +27,9 @@ function buildTripUpsertZodSchema(t: Translator) {
                 .trim()
                 .min(1, t('tripsList.scheduledDepartureTimeRequired'))
                 .refine((s) => isValidTimeHm(s), t('tripsList.scheduledDepartureInvalid')),
-            capacity: z
-                .preprocess(
-                    (v) => parsePositiveInt(v),
-                    z.union([z.number().int().min(1), z.null()]),
-                )
-                .refine((v): v is number => v !== null, { message: t('tripsList.capacityRequired') }),
-            boatTypeId: optionalUlidRefSchema,
-            waterRouteId: optionalUlidRefSchema,
+            productId: requiredUlidRefSchema.refine((s) => s.length > 0, {
+                message: t('tripsList.productRequired'),
+            }),
         })
         .superRefine((data, ctx) => {
             const composed = composeLocalDatetimeFromParts(

@@ -5,13 +5,11 @@ describe("Trip upsert zod schema", () => {
     const t = (key: string) => key;
     const schema = buildTripUpsertZodSchemaForTests(t);
 
-    it("accepts valid departure date, time, and capacity", () => {
+    it("accepts valid departure date, time, and product", () => {
         const r = schema.safeParse({
             scheduledDepartureDate: "2026-05-10",
             scheduledDepartureTime: "14:30",
-            capacity: 12,
-            boatTypeId: null,
-            waterRouteId: null,
+            productId: "01HZY7R5TS4QXF58T1TEF0C8WX",
         });
         expect(r.success).toBe(true);
     });
@@ -20,9 +18,7 @@ describe("Trip upsert zod schema", () => {
         const r = schema.safeParse({
             scheduledDepartureDate: "2026-05-10",
             scheduledDepartureTime: "",
-            capacity: 2,
-            boatTypeId: null,
-            waterRouteId: null,
+            productId: "01HZY7R5TS4QXF58T1TEF0C8WX",
         });
         expect(r.success).toBe(false);
     });
@@ -31,9 +27,7 @@ describe("Trip upsert zod schema", () => {
         const r = schema.safeParse({
             scheduledDepartureDate: "2026-05-10",
             scheduledDepartureTime: "9:30",
-            capacity: 2,
-            boatTypeId: null,
-            waterRouteId: null,
+            productId: "01HZY7R5TS4QXF58T1TEF0C8WX",
         });
         expect(r.success).toBe(false);
     });
