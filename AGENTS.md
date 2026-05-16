@@ -157,3 +157,6 @@ Two sync streams in `docker/powersync/sync-config.yaml`:
 - To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>
+
+# Frontend design
+we use quasar components as atomic components. Minimize added style and relies on default quasar styling. Create atomic design components that could be reused across pages.

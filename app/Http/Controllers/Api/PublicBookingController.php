@@ -20,7 +20,22 @@ class PublicBookingController extends Controller
         $trips = $program->trips()
             ->where('scheduled_departure_at', '>=', now())
             ->orderBy('scheduled_departure_at')
-            ->with(['product.boatType', 'product.waterRoute'])
+            ->with([
+                'product' => static function ($query): void {
+                    $query->select([
+                        'id',
+                        'program_id',
+                        'boat_type_id',
+                        'water_route_id',
+                        'capacity',
+                        'name',
+                        'description',
+                        'banner_object_key',
+                    ]);
+                },
+                'product.boatType:id,name,banner_object_key',
+                'product.waterRoute:id,name,duration_minutes,trace',
+            ])
             ->get(['id', 'program_id', 'product_id', 'scheduled_departure_at']);
 
         $tripIds = $trips->pluck('id')->map(static fn ($id): string => (string) $id)->all();

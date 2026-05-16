@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Booking;
 use App\Models\BookingTicket;
+use App\Models\BoatType;
 use App\Models\Program;
 use App\Models\TicketType;
 use App\Models\Trip;
 use App\Models\User;
+use App\Models\WaterRoute;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -42,6 +44,10 @@ class PublicBookingApiTest extends TestCase
         $r->assertJsonPath('data.trips.0.remaining_capacity', 20);
         $r->assertJsonPath('data.trips.0.product_name', 'Lake run');
         $r->assertJsonPath('data.trips.0.product_banner_url', null);
+        $r->assertJsonPath('data.trips.0.boat_type_id', null);
+        $r->assertJsonPath('data.trips.0.boat_type_banner_url', null);
+        $r->assertJsonPath('data.trips.0.water_route_id', null);
+        $r->assertJsonPath('data.trips.0.water_route_trace_geojson', null);
         $r->assertJsonPath('data.ticket_types.0.id', $type->getKey());
         $r->assertJsonPath('data.ticket_types.0.title', 'Adult');
     }
@@ -72,6 +78,51 @@ class PublicBookingApiTest extends TestCase
         $this->getJson('/api/public/programs/banner-prog/booking-options')
             ->assertOk()
             ->assertJsonPath('data.trips.0.product_banner_url', 'https://cdn.example/'.$key);
+    }
+
+    public function test_booking_options_includes_boat_type_banner_and_route_trace_geojson_when_set(): void
+    {
+        config(['media.public_base_url' => 'https://cdn.example']);
+
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'is_active' => true,
+            'slug' => 'trace-prog',
+        ]);
+
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addDays(2),
+        ]);
+
+        $boatType = BoatType::factory()->create([
+            'program_id' => $program->getKey(),
+            'name' => 'Open deck',
+            'banner_object_key' => 'uploads/boat-banner.png',
+        ]);
+        $waterRoute = WaterRoute::factory()->create([
+            'program_id' => $program->getKey(),
+            'name' => 'River Loop',
+        ]);
+
+        $trip->product->forceFill([
+            'boat_type_id' => $boatType->getKey(),
+            'water_route_id' => $waterRoute->getKey(),
+        ])->save();
+
+        $response = $this->getJson('/api/public/programs/trace-prog/booking-options')
+            ->assertOk()
+            ->assertJsonPath('data.trips.0.boat_type_id', $boatType->getKey())
+            ->assertJsonPath('data.trips.0.boat_type_name', 'Open deck')
+            ->assertJsonPath('data.trips.0.boat_type_banner_url', 'https://cdn.example/uploads/boat-banner.png')
+            ->assertJsonPath('data.trips.0.water_route_id', $waterRoute->getKey())
+            ->assertJsonPath('data.trips.0.water_route_name', 'River Loop');
+
+        $traceGeoJsonRaw = $response->json('data.trips.0.water_route_trace_geojson');
+        $this->assertIsString($traceGeoJsonRaw);
+        $traceGeoJson = json_decode($traceGeoJsonRaw, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('LineString', $traceGeoJson['type'] ?? null);
+        $this->assertIsArray($traceGeoJson['coordinates'] ?? null);
+        $this->assertNotEmpty($traceGeoJson['coordinates'] ?? []);
     }
 
     public function test_booking_options_excludes_past_trips(): void

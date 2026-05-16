@@ -79,124 +79,35 @@
                     class="rounded-borders"
                 >
                     <q-step :name="1" :title="t('publicBooking.stepTrip')" :done="step > 1">
-                        <div v-if="tripOptions.length === 0" class="text-body1 text-grey-8">
-                            {{ t('publicBooking.noTrips') }}
-                        </div>
-                        <q-list v-else bordered separator class="rounded-borders">
-                            <q-item
-                                v-for="trip in tripOptions"
-                                :key="String(trip.id)"
-                                v-ripple
-                                tag="label"
-                                clickable
-                                :active="String(selectedTripId) === String(trip.id)"
-                                active-class="bg-blue-1"
-                            >
-                                <q-item-section side top class="q-pt-sm">
-                                    <q-radio v-model="selectedTripId" :val="String(trip.id)" />
-                                </q-item-section>
-                                <q-item-section
-                                    v-if="
-                                        trip.product_banner_url != null &&
-                                        trip.product_banner_url.length > 0
-                                    "
-                                    avatar
-                                    top
-                                >
-                                    <q-avatar rounded size="40px">
-                                        <q-img
-                                            :src="trip.product_banner_url"
-                                            ratio="1"
-                                            fit="cover"
-                                            :alt="trip.product_name"
-                                        />
-                                    </q-avatar>
-                                </q-item-section>
-                                <q-item-section>
-                                    <q-item-label class="text-body1">{{
-                                        formatTripOptionLabel(trip)
-                                    }}</q-item-label>
-                                </q-item-section>
-                            </q-item>
-                        </q-list>
-                        <div class="row q-gutter-sm q-mt-md justify-end">
-                            <q-btn
-                                color="primary"
-                                no-caps
-                                :label="t('publicBooking.continue')"
-                                :disable="!canContinueFromTripStep"
-                                @click="goToTicketsStep"
-                            />
-                        </div>
+                        <PublicProgramBookingTripStep
+                            :key="tripStepResetKey"
+                            v-model:selected-trip-id="selectedTripId"
+                            :trip-options="tripOptions"
+                            @continue="goToTicketsStep"
+                        />
                     </q-step>
 
                     <q-step :name="2" :title="t('publicBooking.stepTickets')" :done="step > 2">
-                        <div v-if="ticketTypeOptions.length === 0" class="text-body1 text-grey-8">
-                            {{ t('publicBooking.noTicketTypes') }}
-                        </div>
-                        <div v-else class="column q-gutter-md">
-                            <div
-                                v-for="tt in ticketTypeOptions"
-                                :key="`tt-${String(tt.id)}`"
-                                class="row items-center q-col-gutter-sm"
-                            >
-                                <div class="col-12 col-sm-6">
-                                    <div class="text-subtitle1 text-weight-medium">{{ tt.title }}</div>
-                                    <div class="text-caption text-grey-7">{{ formatTicketTypePrice(tt) }}</div>
-                                </div>
-                                <div class="col-12 col-sm-4">
-                                    <q-input
-                                        v-model.number="ticketQuantities[String(tt.id)]"
-                                        type="number"
-                                        outlined
-                                        dense
-                                        :min="0"
-                                        :label="t('publicBooking.ticketQuantityLabel', { title: tt.title })"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row q-gutter-sm q-mt-md justify-between">
-                            <q-btn flat no-caps color="primary" :label="t('publicBooking.back')" @click="step = 1" />
-                            <q-btn
-                                color="primary"
-                                no-caps
-                                :label="t('publicBooking.continue')"
-                                :disable="ticketTypeOptions.length === 0"
-                                @click="goToContactStep"
-                            />
-                        </div>
+                        <PublicProgramBookingTicketsStep
+                            v-model:ticket-quantities="ticketQuantities"
+                            :ticket-type-options="ticketTypeOptions"
+                            :format-ticket-type-price="formatTicketTypePrice"
+                            @back="step = 1"
+                            @continue="goToContactStep"
+                        />
                     </q-step>
 
                     <q-step :name="3" :title="t('publicBooking.stepContact')">
-                        <q-form class="column q-gutter-md" @submit="onContactSubmit">
-                            <q-input
-                                v-model="contactName"
-                                v-bind="contactNameProps"
-                                outlined
-                                :disable="isSubmitting"
-                                :label="t('publicBooking.contactName')"
-                            />
-                            <q-input
-                                v-model="contactEmail"
-                                v-bind="contactEmailProps"
-                                outlined
-                                type="email"
-                                :disable="isSubmitting"
-                                :label="t('publicBooking.contactEmail')"
-                            />
-                            <div class="row q-gutter-sm q-mt-sm justify-between">
-                                <q-btn flat no-caps color="primary" :label="t('publicBooking.back')" @click="step = 2" />
-                                <q-btn
-                                    color="primary"
-                                    no-caps
-                                    type="submit"
-                                    :label="t('publicBooking.submitBook')"
-                                    :loading="isSubmitting"
-                                    :disable="!meta.valid || isSubmitting"
-                                />
-                            </div>
-                        </q-form>
+                        <PublicProgramBookingContactStep
+                            v-model:contact-name="contactName"
+                            v-model:contact-email="contactEmail"
+                            :contact-name-props="contactNameProps"
+                            :contact-email-props="contactEmailProps"
+                            :is-submitting="isSubmitting"
+                            :can-submit="meta.valid"
+                            @back="step = 2"
+                            @submit="onContactSubmit"
+                        />
                     </q-step>
                 </q-stepper>
 
@@ -218,6 +129,10 @@ import { computed, ref, watch } from 'vue';
 import { useForm } from 'vee-validate';
 import { useI18n } from 'vue-i18n';
 import { bookingOptions, store } from '../actions/App/Http/Controllers/Api/PublicBookingController';
+import { show } from '../routes/api/public/programs';
+import PublicProgramBookingContactStep from '../components/public-program/PublicProgramBookingContactStep.vue';
+import PublicProgramBookingTicketsStep from '../components/public-program/PublicProgramBookingTicketsStep.vue';
+import PublicProgramBookingTripStep from '../components/public-program/PublicProgramBookingTripStep.vue';
 import {
     PublicApiRequestError,
     fetchPublicJson,
@@ -228,6 +143,12 @@ import {
     type PublicBookingContactFormValues,
 } from '../models/public-booking/public-booking.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
+import type {
+    BookingOptionsPayload,
+    BookingTicketTypeOption,
+    BookingTripOption,
+    CreatedBookingPayload,
+} from '../models/public-booking/public-booking.types';
 
 const props = defineProps<{
     identifier: string;
@@ -240,42 +161,6 @@ type PublicProgram = {
     banner_url?: string | null;
 };
 
-type BookingTripOption = {
-    id: string;
-    scheduled_departure_at: string;
-    capacity: number;
-    remaining_capacity: number;
-    product_id: string;
-    product_name: string;
-    product_description: string | null;
-    product_banner_url: string | null;
-    boat_type_name: string | null;
-    water_route_name: string | null;
-    water_route_duration_minutes: number | null;
-};
-
-type BookingTicketTypeOption = {
-    id: string;
-    title: string;
-    price_cents: number | null;
-    is_pay_what_you_can: boolean;
-    min_per_purchase: number;
-    max_per_purchase: number | null;
-};
-
-type BookingOptionsPayload = {
-    trips: BookingTripOption[];
-    ticket_types: BookingTicketTypeOption[];
-};
-
-type CreatedBookingPayload = {
-    id: string;
-    trip_id: string;
-    total_tickets: number;
-    contact_name: string;
-    contact_email: string;
-};
-
 const { t, locale } = useI18n();
 
 const isLoading = ref(true);
@@ -286,6 +171,7 @@ const optionsError = ref('');
 const bookingOptionsData = ref<BookingOptionsPayload | null>(null);
 
 const step = ref(1);
+const tripStepResetKey = ref(0);
 const selectedTripId = ref('');
 const ticketQuantities = ref<Record<string, number>>({});
 const step2Error = ref('');
@@ -315,34 +201,6 @@ const hasBookingFlow = computed(
 const selectedTrip = computed((): BookingTripOption | undefined =>
     tripOptions.value.find((x) => String(x.id) === selectedTripId.value),
 );
-
-const canContinueFromTripStep = computed(() => selectedTripId.value.trim().length > 0);
-
-function formatTripOptionLabel(trip: BookingTripOption): string {
-    const when = formatDeparture(trip.scheduled_departure_at);
-    const seats = t('publicBooking.remainingSeats', { count: String(trip.remaining_capacity) });
-    const boat = trip.boat_type_name != null && trip.boat_type_name.length > 0 ? trip.boat_type_name : '—';
-    const route =
-        trip.water_route_name != null && trip.water_route_name.length > 0 ? trip.water_route_name : '—';
-    const meta = t('publicBooking.tripProductMeta', {
-        boat,
-        route,
-        capacity: String(trip.capacity),
-    });
-    return `${when} — ${trip.product_name} — ${meta} — ${seats}`;
-}
-
-function formatDeparture(iso: string): string {
-    try {
-        const d = new Date(iso);
-        return new Intl.DateTimeFormat(String(locale.value), {
-            dateStyle: 'medium',
-            timeStyle: 'short',
-        }).format(d);
-    } catch {
-        return iso;
-    }
-}
 
 function formatTicketTypePrice(tt: BookingTicketTypeOption): string {
     if (tt.is_pay_what_you_can) {
@@ -393,15 +251,14 @@ async function load(): Promise<void> {
     bookingOptionsData.value = null;
     createdBooking.value = null;
     step.value = 1;
+    tripStepResetKey.value += 1;
     selectedTripId.value = '';
     step2Error.value = '';
     submitError.value = '';
     resetForm();
 
-    const programPath = '/api/public/programs/' + encodeURIComponent(props.identifier);
-
     const [pRes, oRes] = await Promise.allSettled([
-        fetchPublicJson(programPath),
+        fetchPublicJson(show.url(props.identifier)),
         fetchPublicJson(bookingOptions.url(props.identifier)),
     ]);
 
@@ -436,7 +293,7 @@ async function load(): Promise<void> {
 
 function goToTicketsStep(): void {
     step2Error.value = '';
-    if (!canContinueFromTripStep.value) {
+    if (selectedTripId.value.trim().length === 0) {
         step2Error.value = t('publicBooking.selectTripFirst');
         return;
     }
@@ -535,6 +392,7 @@ const onContactSubmit = handleSubmit(async (values) => {
 function onBookAnother(): void {
     createdBooking.value = null;
     step.value = 1;
+    tripStepResetKey.value += 1;
     selectedTripId.value = '';
     step2Error.value = '';
     submitError.value = '';
@@ -553,6 +411,12 @@ watch(
     },
     { immediate: true },
 );
+
+watch(selectedTripId, (id) => {
+    if (id.trim().length === 0 && step.value > 1) {
+        step.value = 1;
+    }
+});
 </script>
 
 <style scoped>
