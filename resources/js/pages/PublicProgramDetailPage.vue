@@ -1,5 +1,5 @@
 <template>
-    <q-page class="q-pa-md q-pa-sm-md public-program-page" padding>
+    <q-page>
         <q-btn
             flat
             no-caps
@@ -420,9 +420,6 @@ watch(selectedTripId, (id) => {
 </script>
 
 <style scoped>
-.public-program-page {
-    padding-top: 2rem;
-}
 
 .program-surface {
     background: #ffffff;

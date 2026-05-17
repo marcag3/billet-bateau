@@ -1,14 +1,14 @@
 <template>
-    <div class="app-water-route-trace-preview relative-position rounded-borders overflow-hidden">
+    <div class="relative w-full overflow-hidden rounded-md">
         <div
             ref="mapContainerRef"
-            class="app-water-route-trace-preview__map"
+            class="block aspect-square min-h-[200px] w-full bg-neutral-300"
             aria-hidden="true"
         />
         <div
-            class="app-water-route-trace-preview__title absolute-top text-white q-pa-sm"
+            class="pointer-events-none absolute inset-x-0 top-0 z-[500] bg-black/40 p-2 text-white"
         >
-            <h3 class="app-water-route-trace-preview__title-text text-h6 text-shadow-1">
+            <h3 class="m-0 text-lg font-semibold [text-shadow:0_1px_3px_rgba(0,0,0,0.65)]">
                 {{ displayTitle }}
             </h3>
         </div>
@@ -72,8 +72,8 @@ function endpointDivIcon(kind: "start" | "finish"): ReturnType<
     const color = kind === "start" ? "#2e7d32" : "#000000";
     const glyph = kind === "start" ? "play_circle" : "flag";
     return leafletDivIcon({
-        className: "app-water-route-trace-preview__endpoint-marker",
-        html: `<span class="material-icons" style="font-size:${ENDPOINT_ICON_PX}px;color:${color};line-height:1;display:block;">${glyph}</span>`,
+        className: "",
+        html: `<span style="display:block;line-height:1;background:transparent;border:0;"><span class="material-icons" style="font-size:${ENDPOINT_ICON_PX}px;color:${color};line-height:1;display:block;">${glyph}</span></span>`,
         iconSize: [ENDPOINT_ICON_PX, ENDPOINT_ICON_PX],
         iconAnchor: [ENDPOINT_ICON_PX / 2, ENDPOINT_ICON_PX / 2],
     });
@@ -269,43 +269,3 @@ watch(
     },
 );
 </script>
-
-<style scoped>
-.app-water-route-trace-preview {
-    width: 100%;
-}
-
-.app-water-route-trace-preview__map {
-    display: block;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    min-height: 200px;
-    background: #e0e0e0;
-    font-family: inherit;
-}
-
-.app-water-route-trace-preview__map :deep(.leaflet-control-container) {
-    font-family: inherit;
-}
-
-.app-water-route-trace-preview__title {
-    width: 100%;
-    z-index: 500;
-    background: rgba(0, 0, 0, 0.42);
-    pointer-events: none;
-}
-
-.app-water-route-trace-preview__title-text {
-    margin: 0;
-}
-
-.text-shadow-1 {
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
-}
-
-:deep(.app-water-route-trace-preview__endpoint-marker) {
-    background: transparent;
-    border: none;
-}
-
-</style>

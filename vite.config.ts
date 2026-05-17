@@ -6,6 +6,7 @@ import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import vue from '@vitejs/plugin-vue';
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 import { VitePWA } from 'vite-plugin-pwa';
+import tailwindcss from '@tailwindcss/vite'
 
 const projectDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -38,6 +39,7 @@ export default defineConfig(({ mode }) => {
             exclude: ['@powersync/web', '@journeyapps/wa-sqlite'],
         },
         plugins: [
+            tailwindcss(),
             ...(wayfinderDisabled
                 ? []
                 : [
