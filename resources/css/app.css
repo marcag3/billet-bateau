@@ -1,4 +1,5 @@
 @import 'tokens.css';
+@import "tailwindcss";
 
 body {
     margin: 0;
@@ -12,22 +13,4 @@ body {
 
 #app-root {
     min-height: 100vh;
-}
-
-.page-wrap {
-    padding: 1.5rem;
-}
-
-.content-width {
-    width: min(70rem, 100%);
-    margin: 0 auto;
-}
-
-.q-list {
-    border-radius: 0.9rem;
-    border-color: hsla(226, 97%, 12%, 0.1);
-}
-
-.q-banner {
-    border-radius: 0.75rem;
 }

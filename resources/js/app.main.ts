@@ -8,7 +8,7 @@ import { QCalendarDay, QCalendarMonth } from "@quasar/quasar-ui-qcalendar";
 import "leaflet/dist/leaflet.css";
 import "quasar/src/css/index.sass";
 import "../css/tokens.css";
-import "../css/app.scss";
+import "../css/app.css";
 import AppLayout from "./layouts/AppLayout.vue";
 import router from "./router";
 import { useAuthStore } from "./store/auth.store";
