@@ -32,6 +32,8 @@ class ProgramControllerTest extends TestCase
             'theme_color' => '#aabbcc',
             'is_active' => true,
             'slug' => 'harbor-week',
+            'start_date' => '2026-06-01',
+            'end_date' => '2026-09-30',
             'address' => [
                 'line_1' => '1 Wharf',
                 'city' => 'Portville',
@@ -59,6 +61,8 @@ class ProgramControllerTest extends TestCase
             'slug' => 'harbor-week',
             'is_active' => true,
             'is_archived' => false,
+            'start_date' => '2026-06-01',
+            'end_date' => '2026-09-30',
         ]);
 
         $this->assertDatabaseHas('program_user', [
@@ -70,6 +74,9 @@ class ProgramControllerTest extends TestCase
         $response->assertJsonPath('data.user_ids.0', (string) $user->getAuthIdentifier());
 
         $response->assertJsonMissingPath('data.images');
+
+        $response->assertJsonPath('data.start_date', '2026-06-01');
+        $response->assertJsonPath('data.end_date', '2026-09-30');
 
         $program = Program::query()->findOrFail($id);
         $this->assertNull($program->getImageUrl('banner'));
@@ -88,5 +95,20 @@ class ProgramControllerTest extends TestCase
         $this->assertCount(2, $program->users);
         $this->assertTrue($program->users->contains('id', $owner->getKey()));
         $this->assertTrue($program->users->contains('id', $collaborator->getKey()));
+    }
+
+    public function test_store_rejects_end_date_before_start_date(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson('/api/programs', [
+            'name' => 'Bad range',
+            'description' => null,
+            'theme_color' => '#00AAFF',
+            'is_active' => true,
+            'slug' => 'bad-range',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-06-01',
+        ])->assertUnprocessable();
     }
 }

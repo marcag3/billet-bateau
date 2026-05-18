@@ -42,6 +42,8 @@ class Program extends Model
         'banner_size_bytes',
         'banner_etag',
         'banner_uploaded_at',
+        'start_date',
+        'end_date',
         'created_at',
         'updated_at',
     ];
@@ -52,6 +54,8 @@ class Program extends Model
             'is_active' => 'boolean',
             'is_archived' => 'boolean',
             'banner_uploaded_at' => 'datetime',
+            'start_date' => 'date',
+            'end_date' => 'date',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

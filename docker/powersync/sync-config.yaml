@@ -34,6 +34,8 @@ streams:
           is_active,
           is_archived,
           slug,
+          start_date,
+          end_date,
           line_1,
           line_2,
           city,

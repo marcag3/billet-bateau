@@ -6,6 +6,7 @@ use App\Data\PowerSync\Support\PowerSyncDisplayName;
 use App\Data\PowerSync\Support\PowerSyncOptional;
 use App\Data\PowerSync\Values\SlugNormalizer;
 use App\Models\Program;
+use Carbon\CarbonImmutable;
 use Spatie\LaravelData\Optional;
 
 /**
@@ -26,6 +27,8 @@ final class ProgramPutPayloadResolver
      *     city: ?string,
      *     postal_code: ?string,
      *     country: ?string,
+     *     start_date: string,
+     *     end_date: string,
      *     banner_object_key: ?string,
      *     banner_mime_type: ?string,
      *     banner_size_bytes: ?int,
@@ -71,6 +74,20 @@ final class ProgramPutPayloadResolver
         $postalCode = PowerSyncOptional::resolve($dto->postal_code, $existing?->postal_code);
         $country = PowerSyncOptional::resolve($dto->country, $existing?->country);
 
+        $defaultStart = CarbonImmutable::today()->toDateString();
+        $defaultEnd = CarbonImmutable::today()->addYear()->toDateString();
+        $existingStart = $existing?->start_date !== null
+            ? $existing->start_date->format('Y-m-d')
+            : null;
+        $existingEnd = $existing?->end_date !== null
+            ? $existing->end_date->format('Y-m-d')
+            : null;
+
+        $startDateRaw = PowerSyncOptional::resolve($dto->start_date, $existingStart, $defaultStart);
+        $endDateRaw = PowerSyncOptional::resolve($dto->end_date, $existingEnd, $defaultEnd);
+        $startDate = is_string($startDateRaw) && $startDateRaw !== '' ? $startDateRaw : $defaultStart;
+        $endDate = is_string($endDateRaw) && $endDateRaw !== '' ? $endDateRaw : $defaultEnd;
+
         $bannerObjectKeyRaw = PowerSyncOptional::resolve($dto->banner_object_key, $existing?->banner_object_key);
         $bannerObjectKey = is_string($bannerObjectKeyRaw) && $bannerObjectKeyRaw !== ''
             ? $bannerObjectKeyRaw
@@ -89,6 +106,8 @@ final class ProgramPutPayloadResolver
                 'city' => $city,
                 'postal_code' => $postalCode,
                 'country' => $country,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
                 'banner_object_key' => null,
                 'banner_mime_type' => null,
                 'banner_size_bytes' => null,
@@ -118,6 +137,8 @@ final class ProgramPutPayloadResolver
             'city' => $city,
             'postal_code' => $postalCode,
             'country' => $country,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
             'banner_object_key' => $bannerObjectKey,
             'banner_mime_type' => is_string($bannerMimeType) ? $bannerMimeType : null,
             'banner_size_bytes' => is_int($bannerSizeBytes) ? $bannerSizeBytes : null,

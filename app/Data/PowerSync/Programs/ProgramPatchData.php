@@ -32,6 +32,8 @@ final class ProgramPatchData extends Data
         public bool|int|string|Optional|null $is_archived = new Optional,
         #[WithCast(SlugInputCast::class)]
         public string|Optional|null $slug = new Optional,
+        public string|Optional|null $start_date = new Optional,
+        public string|Optional|null $end_date = new Optional,
         #[WithCast(TrimmedNullableStringCast::class)]
         public string|Optional|null $line_1 = new Optional,
         #[WithCast(TrimmedNullableStringCast::class)]
@@ -62,6 +64,8 @@ final class ProgramPatchData extends Data
             'is_active' => ['sometimes', 'nullable', 'boolean'],
             'is_archived' => ['sometimes', 'nullable', 'boolean'],
             'slug' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'start_date' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
+            'end_date' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
             'line_1' => ['sometimes', 'nullable', 'string', 'max:255'],
             'line_2' => ['sometimes', 'nullable', 'string', 'max:255'],
             'city' => ['sometimes', 'nullable', 'string', 'max:120'],

@@ -23,6 +23,16 @@ export const programSchema = z.object({
         .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be URL-safe (e.g. "my-program")')
         .nullable()
         .default(null),
+    start_date: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .nullable()
+        .default(null),
+    end_date: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .nullable()
+        .default(null),
     line_1: z.string().nullable().default(null),
     line_2: z.string().nullable().default(null),
     city: z.string().nullable().default(null),

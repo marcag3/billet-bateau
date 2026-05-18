@@ -16,6 +16,8 @@ final class ProgramStoreData extends Data
         public bool $is_active,
         public ?bool $is_archived,
         public string $slug,
+        public string $start_date,
+        public string $end_date,
         public ?AddressUpsertData $address,
     ) {}
 
@@ -32,6 +34,8 @@ final class ProgramStoreData extends Data
             'is_active' => ['required', 'boolean'],
             'is_archived' => ['sometimes', 'boolean'],
             'slug' => ['required', 'string', 'max:255', 'lowercase', 'regex:/^[a-z0-9]+(-[a-z0-9]+)*$/u'],
+            'start_date' => ['required', 'date_format:Y-m-d'],
+            'end_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:start_date'],
             'address' => ['nullable', 'array'],
             'address.line_1' => ['nullable', 'string', 'max:255'],
             'address.line_2' => ['nullable', 'string', 'max:255'],
