@@ -94,18 +94,25 @@ const productFilterOptions = computed((): PublicBookingProductFilterOption[] => 
             continue;
         }
         const name = String(trip.product_name ?? '').trim() || t('publicBooking.unknownProduct');
+        const description = String(trip.product_description ?? '').trim() || null;
         const bannerUrl = pickTripBannerUrl(trip);
         const existing = map.get(id);
         if (existing === undefined) {
             map.set(id, {
                 id,
                 name,
+                description,
                 bannerUrl,
             });
         } else if (existing.bannerUrl == null && bannerUrl != null) {
             map.set(id, {
                 ...existing,
                 bannerUrl,
+            });
+        } else if (existing.description == null && description != null) {
+            map.set(id, {
+                ...existing,
+                description,
             });
         }
     }

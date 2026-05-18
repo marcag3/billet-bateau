@@ -41,5 +41,6 @@ export type CreatedBookingPayload = {
 export type PublicBookingProductFilterOption = {
     id: string;
     name: string;
+    description: string | null;
     bannerUrl: string | null;
 };

@@ -49,6 +49,9 @@
                                         <p class="text-body1 q-mt-sm text-weight-medium">
                                             {{ opt.name }}
                                         </p>
+                                        <p v-if="hasDescription(opt)" class="text-body2 q-mt-xs q-mb-none">
+                                            {{ opt.description }}
+                                        </p>
                                     </div>
                                 </q-img>
                                 <div
@@ -59,6 +62,9 @@
                                         <q-icon name="image_not_supported" size="32px" color="grey-6" />
                                         <p class="text-body1 q-mt-sm text-weight-medium">
                                             {{ opt.name }}
+                                        </p>
+                                        <p v-if="hasDescription(opt)" class="text-body2 q-mt-xs q-mb-none text-grey-8">
+                                            {{ opt.description }}
                                         </p>
                                     </div>
                                 </div>
@@ -105,6 +111,10 @@ const triggerLabel = computed((): string => {
 
 function hasBanner(opt: PublicBookingProductFilterOption): boolean {
     return opt.bannerUrl != null && String(opt.bannerUrl).trim().length > 0;
+}
+
+function hasDescription(opt: PublicBookingProductFilterOption): boolean {
+    return opt.description != null && String(opt.description).trim().length > 0;
 }
 
 function onPick(id: string): void {
