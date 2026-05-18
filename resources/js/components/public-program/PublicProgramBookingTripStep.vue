@@ -1,95 +1,50 @@
 <template>
     <div>
-        <div v-if="tripOptions.length === 0" class="text-body1 text-grey-8">
+        <div v-if="bookableTripOptions.length === 0" class="text-body1 text-grey-8">
             {{ t('publicBooking.noTrips') }}
         </div>
         <template v-else>
             <div class="row items-center q-gutter-sm q-mb-md flex-wrap">
-                <PublicProgramProductFilterSelect
-                    v-model:selected-product-id="selectedProductId"
-                    :product-filter-options="productFilterOptions"
-                />
-
-                <PublicProgramBookingDateFilter
-                    v-model:selected-date-ymd="selectedDateYmd"
+                <PublicProgramBookingDateFilter v-model:selected-date-ymd="selectedDateYmd"
                     :daily-availability-by-date="dailyAvailabilityByDate"
-                />
+                    :program-start-date-ymd="props.programStartDateYmd"
+                    :program-end-date-ymd="props.programEndDateYmd" />
 
-                <q-btn
-                    v-if="hasActiveTripFilters"
-                    flat
-                    dense
-                    no-caps
-                    color="primary"
-                    class="text-weight-bold"
-                    :label="t('publicBooking.clearAllFilters')"
-                    @click="clearAllFilters"
-                />
+                <PublicProgramProductFilterSelect v-model:selected-product-id="selectedProductId"
+                    :product-filter-options="productFilterOptions" />
+
+                <q-btn v-if="hasActiveTripFilters" flat dense no-caps color="primary" class="text-weight-bold"
+                    :label="t('publicBooking.clearAllFilters')" @click="clearAllFilters" />
             </div>
 
-            <q-banner
-                v-if="filteredTripOptions.length === 0 && hasActiveTripFilters"
-                rounded
-                outline
-                class="text-grey-8 q-mb-md"
-            >
+            <q-banner v-if="filteredTripOptions.length === 0 && hasActiveTripFilters" rounded outline
+                class="text-grey-8 q-mb-md">
                 {{ t('publicBooking.noTripsForFilters') }}
             </q-banner>
 
-            <q-list
-                v-if="filteredTripOptions.length > 0"
-                bordered
-                separator
-                class="rounded-borders"
-            >
-                <q-item
-                    v-for="trip in filteredTripOptions"
-                    :key="String(trip.id)"
-                    v-ripple
-                    tag="label"
-                    clickable
-                    :active="String(selectedTripId) === String(trip.id)"
-                    active-class="bg-blue-1"
-                >
-                    <q-item-section side top class="q-pt-sm">
-                        <q-radio v-model="selectedTripId" :val="String(trip.id)" />
-                    </q-item-section>
-                    <q-item-section avatar top>
-                        <q-img
-                            v-if="
-                                trip.product_banner_url != null &&
-                                trip.product_banner_url.length > 0
-                            "
-                            :src="trip.product_banner_url"
-                            :alt="trip.product_name"
-                            class="public-trip-thumb rounded-borders"
-                            ratio="1"
-                            fit="cover"
-                        />
-                        <div
-                            v-else
-                            class="public-trip-thumb public-trip-thumb--placeholder rounded-borders"
-                        >
-                            <q-icon name="image_not_supported" size="22px" />
-                        </div>
-                    </q-item-section>
-                    <q-item-section>
-                        <q-item-label class="text-body1">{{
-                            formatTripOptionLabel(trip)
-                        }}</q-item-label>
-                    </q-item-section>
-                </q-item>
-            </q-list>
+            <q-virtual-scroll v-if="filteredTripOptions.length > 0" type="table" style="max-height: 70vh"
+                :virtual-scroll-item-size="48" :virtual-scroll-sticky-size-start="48"
+                :virtual-scroll-sticky-size-end="32" bordered separator="horizontal" class="h-100"
+                :items="filteredTripOptions">
+                <template v-slot:before>
+                    <thead class="thead-sticky text-left">
+                        <tr>
+                            <th>{{ t('publicBooking.departure') }}</th>
+                            <th>{{ t('publicBooking.productFilterButton') }}</th>
+                            <th>{{ t('publicBooking.tripAvailabilityColumn') }}</th>
+                        </tr>
+                    </thead>
+                </template>
+
+                <template v-slot="{ item: row }">
+                    <tr :key="row.id" class="cursor-pointer" @click="emit('continue', row.id)">
+                        <td class="whitespace-pre-line">{{ formatDeparture(row.scheduled_departure_at) }}</td>
+                        <td>{{ row.product_name }}</td>
+                        <td>{{ formatTripPlacesRatio(row) }}</td>
+                    </tr>
+                </template>
+            </q-virtual-scroll>
         </template>
-        <div class="row q-gutter-sm q-mt-md justify-end">
-            <q-btn
-                color="primary"
-                no-caps
-                :label="t('publicBooking.continue')"
-                :disable="!canContinueFromTripStep"
-                @click="emit('continue')"
-            />
-        </div>
     </div>
 </template>
 
@@ -99,22 +54,53 @@ import { useI18n } from 'vue-i18n';
 import PublicProgramProductFilterSelect from './PublicProgramProductFilter.vue';
 import PublicProgramBookingDateFilter from './PublicProgramBookingDateFilter.vue';
 import type { BookingTripOption, PublicBookingProductFilterOption } from '../../models/public-booking/public-booking.types';
-import { buildDailyAvailabilityMap, filterPublicBookingTrips } from '../../utilities/public-booking-filters';
+import {
+    buildDailyAvailabilityMap,
+    filterPublicBookingTrips,
+    publicBookingTripHasAvailability,
+} from '../../utilities/public-booking-filters';
 
 const props = defineProps<{
     tripOptions: BookingTripOption[];
+    /** Inclusive program bounds (`YYYY-MM-DD`) for the date filter. */
+    programStartDateYmd?: string;
+    programEndDateYmd?: string;
 }>();
 
 const emit = defineEmits<{
-    continue: [];
+    continue: [tripId: string];
 }>();
-
-const selectedTripId = defineModel<string>('selectedTripId', { required: true });
 
 const { t, locale } = useI18n();
 
+const bookableTripOptions = computed(() => props.tripOptions.filter(publicBookingTripHasAvailability));
+
 const selectedProductId = ref('');
 const selectedDateYmd = ref('');
+
+watch(
+    () =>
+        [
+            props.programStartDateYmd,
+            props.programEndDateYmd,
+            selectedDateYmd.value,
+        ] as const,
+    () => {
+        const d = selectedDateYmd.value.trim();
+        if (d.length === 0) {
+            return;
+        }
+        const s = String(props.programStartDateYmd ?? '').trim();
+        const e = String(props.programEndDateYmd ?? '').trim();
+        if (
+            /^\d{4}-\d{2}-\d{2}$/.test(s) &&
+            /^\d{4}-\d{2}-\d{2}$/.test(e) &&
+            (d < s || d > e)
+        ) {
+            selectedDateYmd.value = '';
+        }
+    },
+);
 
 function pickTripBannerUrl(trip: BookingTripOption): string | null {
     const product = trip.product_banner_url?.trim() ?? '';
@@ -131,7 +117,7 @@ function pickTripBannerUrl(trip: BookingTripOption): string | null {
 
 const productFilterOptions = computed((): PublicBookingProductFilterOption[] => {
     const map = new Map<string, PublicBookingProductFilterOption>();
-    for (const trip of props.tripOptions) {
+    for (const trip of bookableTripOptions.value) {
         const id = String(trip.product_id ?? '').trim();
         if (id.length === 0) {
             continue;
@@ -155,43 +141,31 @@ const productFilterOptions = computed((): PublicBookingProductFilterOption[] => 
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
 });
 
-const dailyAvailabilityByDate = computed(() => buildDailyAvailabilityMap(props.tripOptions));
+const dailyAvailabilityByDate = computed(() => buildDailyAvailabilityMap(bookableTripOptions.value));
 
 const filteredTripOptions = computed((): BookingTripOption[] => {
-    const filtered = filterPublicBookingTrips(props.tripOptions, {
+    const filtered = filterPublicBookingTrips(bookableTripOptions.value, {
         productId: selectedProductId.value,
         dateYmd: selectedDateYmd.value,
     });
     return filtered as BookingTripOption[];
 });
 
-const canContinueFromTripStep = computed(() => selectedTripId.value.trim().length > 0);
-
 const hasActiveTripFilters = computed(
     () => selectedProductId.value.trim().length > 0 || selectedDateYmd.value.trim().length > 0,
 );
 
-function formatTripOptionLabel(trip: BookingTripOption): string {
-    const when = formatDeparture(trip.scheduled_departure_at);
-    const seats = t('publicBooking.remainingSeats', { count: String(trip.remaining_capacity) });
-    const boat = trip.boat_type_name != null && trip.boat_type_name.length > 0 ? trip.boat_type_name : '—';
-    const route =
-        trip.water_route_name != null && trip.water_route_name.length > 0 ? trip.water_route_name : '—';
-    const metaLine = t('publicBooking.tripProductMeta', {
-        boat,
-        route,
-        capacity: String(trip.capacity),
-    });
-    return `${when} — ${trip.product_name} — ${metaLine} — ${seats}`;
+function formatTripPlacesRatio(trip: BookingTripOption): string {
+    return `${trip.remaining_capacity}/${trip.capacity}`;
 }
 
 function formatDeparture(iso: string): string {
     try {
         const d = new Date(iso);
-        return new Intl.DateTimeFormat(String(locale.value), {
-            dateStyle: 'medium',
-            timeStyle: 'short',
-        }).format(d);
+        const localeTag = String(locale.value);
+        const datePart = new Intl.DateTimeFormat(localeTag, { dateStyle: 'medium' }).format(d);
+        const timePart = new Intl.DateTimeFormat(localeTag, { timeStyle: 'short' }).format(d);
+        return `${datePart}\n${timePart}`;
     } catch {
         return iso;
     }
@@ -202,25 +176,27 @@ function clearAllFilters(): void {
     selectedDateYmd.value = '';
 }
 
-watch(filteredTripOptions, (filtered) => {
-    const selectedExists = filtered.some((trip) => String(trip.id) === selectedTripId.value);
-    if (!selectedExists) {
-        selectedTripId.value = '';
-    }
-});
 </script>
 
 <style scoped>
-.public-trip-thumb {
-    width: 64px;
-    height: 64px;
+:deep(.thead-sticky tr > *),
+:deep(.tfoot-sticky tr > *) {
+    position: sticky;
+    opacity: 1;
+    z-index: 2;
+    background-color: #fff;
 }
 
-.public-trip-thumb--placeholder {
-    background: #eceff1;
-    color: #546e7a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+:deep(.q-markup-table.q-dark .thead-sticky tr > *),
+:deep(.q-markup-table.q-dark .tfoot-sticky tr > *) {
+    background-color: var(--q-dark);
+}
+
+:deep(.thead-sticky tr:last-child > *) {
+    top: 0;
+}
+
+:deep(.tfoot-sticky tr:first-child > *) {
+    bottom: 0;
 }
 </style>

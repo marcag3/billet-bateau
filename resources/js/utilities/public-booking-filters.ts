@@ -31,10 +31,24 @@ export function qDateDayHashToIsoYmd(dayHash: string): string {
 export function isPublicBookingDayHashSelectable(
     dayHash: string,
     dailyAvailabilityByDate: Record<string, PublicBookingDailyAvailability>,
+    programMinYmd?: string,
+    programMaxYmd?: string,
 ): boolean {
     const ymd = qDateDayHashToIsoYmd(dayHash);
+    const min = programMinYmd?.trim();
+    const max = programMaxYmd?.trim();
+    if (min != null && min.length > 0 && ymd < min) {
+        return false;
+    }
+    if (max != null && max.length > 0 && ymd > max) {
+        return false;
+    }
 
     return dailyAvailabilityByDate[ymd] !== undefined;
+}
+
+export function publicBookingTripHasAvailability(trip: PublicBookingTripFilterInput): boolean {
+    return Math.max(0, Number(trip.remaining_capacity) || 0) > 0;
 }
 
 export function toBrowserLocalDateYmd(isoDatetime: string): string | null {
@@ -56,6 +70,10 @@ export function buildDailyAvailabilityMap(
     const aggregateByDate: Record<string, { totalCapacity: number; totalReserved: number }> = {};
 
     for (const trip of trips) {
+        if (!publicBookingTripHasAvailability(trip)) {
+            continue;
+        }
+
         const day = toBrowserLocalDateYmd(trip.scheduled_departure_at);
         if (day === null) {
             continue;
@@ -110,6 +128,10 @@ export function filterPublicBookingTrips(
     const selectedDateYmd = filterState.dateYmd.trim();
 
     return trips.filter((trip) => {
+        if (!publicBookingTripHasAvailability(trip)) {
+            return false;
+        }
+
         if (selectedProductId.length > 0 && String(trip.product_id ?? '') !== selectedProductId) {
             return false;
         }

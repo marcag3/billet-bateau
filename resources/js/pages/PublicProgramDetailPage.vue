@@ -1,13 +1,5 @@
 <template>
     <q-page>
-        <q-btn
-            flat
-            no-caps
-            color="primary"
-            :label="t('publicProgram.backToCatalog')"
-            :to="{ name: 'public.home' }"
-            class="q-mb-md"
-        />
 
         <q-banner v-if="errorMessage" class="bg-red-1 text-negative q-mb-md" rounded>
             {{ errorMessage }}
@@ -18,22 +10,26 @@
         </div>
 
         <template v-else-if="program">
-            <section class="program-surface q-mb-lg">
-                <h1 class="text-h4 q-mb-sm text-weight-bold">{{ program.name }}
-                     <q-avatar>
-                        <q-img
-                            v-if="program.banner_url"
-                            :src="program.banner_url"
-                            :ratio="1/1"
-                        />
-                     </q-avatar>
-                </h1>
-                <p v-if="program.description" class="text-body1 text-grey-8 program-description">
-                    {{ program.description }}
-                </p>
+            <section class="">
+                <q-img :src="programBannerSrc" height="300px">
+                    <div class="absolute-top">
+
+                        <h1 class="text-h4 q-mb-sm text-weight-bold">{{ program.name }} </h1>
+                    </div>
+                    <div class="absolute-bottom">
+
+                        <p v-if="program.description" class="text-subtitle2">
+
+
+                            {{ program.description }}
+                        </p>
+                    </div>
+                </q-img>
+
+
             </section>
 
-            <section v-if="createdBooking" class="program-surface">
+            <!-- <section v-if="createdBooking" class="program-surface">
                 <q-banner class="bg-green-1 text-positive q-mb-md" rounded>
                     <div class="text-h6 q-mb-xs">{{ t('publicBooking.successTitle') }}</div>
                     <div class="text-body2">
@@ -52,74 +48,50 @@
                     :label="t('publicBooking.bookAnother')"
                     @click="onBookAnother"
                 />
-            </section>
+            </section> -->
 
-            <section v-else class="program-surface">
-                <h2 class="text-h5 q-mb-md text-weight-bold">{{ t('publicBooking.bookTitle') }}</h2>
 
-                <q-banner v-if="optionsError" class="bg-red-1 text-negative q-mb-md" rounded>
-                    {{ optionsError }}
+            <q-banner v-if="optionsError" class="bg-red-1 text-negative q-mb-md" rounded>
+                {{ optionsError }}
+            </q-banner>
+
+            <q-banner v-else-if="step2Error" class="bg-orange-1 text-deep-orange-10 q-mb-md" rounded>
+                {{ step2Error }}
+            </q-banner>
+
+            <q-banner v-if="submitError" class="bg-red-1 text-negative q-mb-md" rounded>
+                {{ submitError }}
+            </q-banner>
+
+            <q-stepper v-if="hasBookingFlow" v-model="step" color="primary" animated flat bordered>
+                <q-step :name="1" :title="t('publicBooking.stepTrip')" :done="step > 1">
+                    <PublicProgramBookingTripStep :key="tripStepResetKey" :trip-options="tripOptions"
+                        :program-start-date-ymd="program?.start_date"
+                        :program-end-date-ymd="program?.end_date" @continue="goToTicketsStep" />
+                </q-step>
+
+                <q-step :name="2" :title="t('publicBooking.stepTickets')" :done="step > 2">
+                    <PublicProgramBookingTicketsStep v-model:ticket-quantities="ticketQuantities"
+                        :ticket-type-options="ticketTypeOptions" :format-ticket-type-price="formatTicketTypePrice"
+                        @back="step = 1" @continue="goToContactStep" />
+                </q-step>
+
+                <q-step :name="3" :title="t('publicBooking.stepContact')">
+                    <PublicProgramBookingContactStep v-model:contact-name="contactName"
+                        v-model:contact-email="contactEmail" :contact-name-props="contactNameProps"
+                        :contact-email-props="contactEmailProps" :is-submitting="isSubmitting" :can-submit="meta.valid"
+                        @back="step = 2" @submit="onContactSubmit" />
+                </q-step>
+            </q-stepper>
+
+            <div v-else class="column q-gutter-sm">
+                <q-banner v-if="tripOptions.length === 0" rounded outline class="text-grey-8">
+                    {{ t('publicBooking.noTrips') }}
                 </q-banner>
-
-                <q-banner v-else-if="step2Error" class="bg-orange-1 text-deep-orange-10 q-mb-md" rounded>
-                    {{ step2Error }}
+                <q-banner v-if="ticketTypeOptions.length === 0" rounded outline class="text-grey-8">
+                    {{ t('publicBooking.noTicketTypes') }}
                 </q-banner>
-
-                <q-banner v-if="submitError" class="bg-red-1 text-negative q-mb-md" rounded>
-                    {{ submitError }}
-                </q-banner>
-
-                <q-stepper
-                    v-if="hasBookingFlow"
-                    v-model="step"
-                    color="primary"
-                    animated
-                    flat
-                    bordered
-                    class="rounded-borders"
-                >
-                    <q-step :name="1" :title="t('publicBooking.stepTrip')" :done="step > 1">
-                        <PublicProgramBookingTripStep
-                            :key="tripStepResetKey"
-                            v-model:selected-trip-id="selectedTripId"
-                            :trip-options="tripOptions"
-                            @continue="goToTicketsStep"
-                        />
-                    </q-step>
-
-                    <q-step :name="2" :title="t('publicBooking.stepTickets')" :done="step > 2">
-                        <PublicProgramBookingTicketsStep
-                            v-model:ticket-quantities="ticketQuantities"
-                            :ticket-type-options="ticketTypeOptions"
-                            :format-ticket-type-price="formatTicketTypePrice"
-                            @back="step = 1"
-                            @continue="goToContactStep"
-                        />
-                    </q-step>
-
-                    <q-step :name="3" :title="t('publicBooking.stepContact')">
-                        <PublicProgramBookingContactStep
-                            v-model:contact-name="contactName"
-                            v-model:contact-email="contactEmail"
-                            :contact-name-props="contactNameProps"
-                            :contact-email-props="contactEmailProps"
-                            :is-submitting="isSubmitting"
-                            :can-submit="meta.valid"
-                            @back="step = 2"
-                            @submit="onContactSubmit"
-                        />
-                    </q-step>
-                </q-stepper>
-
-                <div v-else class="column q-gutter-sm">
-                    <q-banner v-if="tripOptions.length === 0" rounded outline class="text-grey-8">
-                        {{ t('publicBooking.noTrips') }}
-                    </q-banner>
-                    <q-banner v-if="ticketTypeOptions.length === 0" rounded outline class="text-grey-8">
-                        {{ t('publicBooking.noTicketTypes') }}
-                    </q-banner>
-                </div>
-            </section>
+            </div>
         </template>
     </q-page>
 </template>
@@ -159,6 +131,8 @@ type PublicProgram = {
     name?: string;
     description?: string;
     banner_url?: string | null;
+    start_date?: string;
+    end_date?: string;
 };
 
 const { t, locale } = useI18n();
@@ -193,6 +167,15 @@ const [contactEmail, contactEmailProps] = quasarField('contact_email');
 
 const tripOptions = computed((): BookingTripOption[] => bookingOptionsData.value?.trips ?? []);
 const ticketTypeOptions = computed((): BookingTicketTypeOption[] => bookingOptionsData.value?.ticket_types ?? []);
+const fallbackProgramBannerUrl = '/images/program-fallback.svg';
+const programBannerSrc = computed((): string => {
+    const bannerUrl = String(program.value?.banner_url ?? '').trim();
+    if (bannerUrl.length > 0) {
+        return bannerUrl;
+    }
+
+    return fallbackProgramBannerUrl;
+});
 
 const hasBookingFlow = computed(
     () => tripOptions.value.length > 0 && ticketTypeOptions.value.length > 0,
@@ -291,8 +274,12 @@ async function load(): Promise<void> {
     isLoading.value = false;
 }
 
-function goToTicketsStep(): void {
+function goToTicketsStep(tripId?: string): void {
     step2Error.value = '';
+    const fromClick = typeof tripId === 'string' ? tripId.trim() : '';
+    if (fromClick.length > 0) {
+        selectedTripId.value = fromClick;
+    }
     if (selectedTripId.value.trim().length === 0) {
         step2Error.value = t('publicBooking.selectTripFirst');
         return;
@@ -419,17 +406,3 @@ watch(selectedTripId, (id) => {
 });
 </script>
 
-<style scoped>
-
-.program-surface {
-    background: #ffffff;
-    border: 1px solid hsla(226, 97%, 12%, 0.12);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 14px 28px hsla(226, 97%, 12%, 0.08);
-}
-
-.program-description {
-    white-space: pre-wrap;
-}
-</style>

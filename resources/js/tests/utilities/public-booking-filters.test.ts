@@ -3,6 +3,7 @@ import {
     buildDailyAvailabilityMap,
     filterPublicBookingTrips,
     isPublicBookingDayHashSelectable,
+    publicBookingTripHasAvailability,
     qDateDayHashToIsoYmd,
     type PublicBookingDailyAvailability,
     type PublicBookingTripFilterInput,
@@ -41,6 +42,25 @@ describe('public-booking-filters', () => {
         expect(isPublicBookingDayHashSelectable('2026/06/06', availability)).toBe(false);
     });
 
+    it('isPublicBookingDayHashSelectable respects optional program bounds', () => {
+        const availability: Record<string, PublicBookingDailyAvailability> = {
+            '2026-06-05': {
+                dateYmd: '2026-06-05',
+                totalCapacity: 10,
+                totalReserved: 0,
+                remainingRatio: 1,
+                dotColor: 'green',
+            },
+        };
+
+        expect(
+            isPublicBookingDayHashSelectable('2026/06/05', availability, '2026-06-01', '2026-06-30'),
+        ).toBe(true);
+        expect(
+            isPublicBookingDayHashSelectable('2026/06/05', availability, '2026-06-10', '2026-06-30'),
+        ).toBe(false);
+    });
+
     it('buildDailyAvailabilityMap aggregates seats and reserved per local day', () => {
         const availability = buildDailyAvailabilityMap([
             makeTrip({ id: 'a', capacity: 10, remaining_capacity: 4 }),
@@ -57,7 +77,7 @@ describe('public-booking-filters', () => {
         expect(aggregate.dotColor).toBe('green');
     });
 
-    it('buildDailyAvailabilityMap returns red when no seats remain', () => {
+    it('buildDailyAvailabilityMap omits days where every trip is sold out', () => {
         const availability = buildDailyAvailabilityMap([
             makeTrip({
                 capacity: 12,
@@ -65,9 +85,29 @@ describe('public-booking-filters', () => {
             }),
         ]);
 
-        const day = availability[Object.keys(availability)[0]];
-        expect(day.dotColor).toBe('red');
-        expect(day.remainingRatio).toBe(0);
+        expect(Object.keys(availability)).toHaveLength(0);
+    });
+
+    it('buildDailyAvailabilityMap aggregates only trips that still have seats', () => {
+        const availability = buildDailyAvailabilityMap([
+            makeTrip({
+                id: 'sold',
+                capacity: 100,
+                remaining_capacity: 0,
+            }),
+            makeTrip({
+                id: 'open',
+                capacity: 10,
+                remaining_capacity: 3,
+            }),
+        ]);
+
+        const days = Object.keys(availability);
+        expect(days).toHaveLength(1);
+        const day = availability[days[0]];
+        expect(day.totalCapacity).toBe(10);
+        expect(day.totalReserved).toBe(7);
+        expect(day.dotColor).toBe('yellow');
     });
 
     it('buildDailyAvailabilityMap returns yellow below 40 percent remaining', () => {
@@ -109,5 +149,34 @@ describe('public-booking-filters', () => {
 
         expect(filtered).toHaveLength(1);
         expect(filtered[0].id).toBe('one');
+    });
+
+    it('filterPublicBookingTrips excludes sold-out trips', () => {
+        const trips: PublicBookingTripFilterInput[] = [
+            makeTrip({ id: 'open', remaining_capacity: 1 }),
+            makeTrip({ id: 'gone', remaining_capacity: 0 }),
+        ];
+
+        const filtered = filterPublicBookingTrips(trips, { productId: '', dateYmd: '' });
+
+        expect(filtered).toHaveLength(1);
+        expect(filtered[0].id).toBe('open');
+    });
+
+    it('publicBookingTripHasAvailability is false when remaining is zero', () => {
+        expect(
+            publicBookingTripHasAvailability(
+                makeTrip({
+                    remaining_capacity: 0,
+                }),
+            ),
+        ).toBe(false);
+        expect(
+            publicBookingTripHasAvailability(
+                makeTrip({
+                    remaining_capacity: 1,
+                }),
+            ),
+        ).toBe(true);
     });
 });
