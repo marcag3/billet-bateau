@@ -117,6 +117,26 @@
                     </div>
                 </div>
 
+                <AppTextRepeaterField
+                    v-model="bookingQuestionRows"
+                    :label="t('programsEdit.bookingQuestions')"
+                    :hint="t('programsEdit.bookingQuestionsHint')"
+                    :item-label-template="t('programsEdit.bookingQuestionLabel')"
+                    :add-label="t('programsEdit.addBookingQuestion')"
+                    :remove-label="t('programsEdit.removeBookingQuestion')"
+                    :disabled="isSubmitting"
+                >
+                    <template #fields="{ value, setValue, label, disabled }">
+                        <q-input
+                            :model-value="value"
+                            outlined
+                            :disable="disabled"
+                            :label="label"
+                            @update:model-value="setValue"
+                        />
+                    </template>
+                </AppTextRepeaterField>
+
                 <q-toggle
                     v-model="isActive"
                     v-bind="isActiveProps"
@@ -280,6 +300,7 @@ import { presignUpload } from "../actions/App/Http/Controllers/Api/PresignUpload
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
+import AppTextRepeaterField from "../components/ui/AppTextRepeaterField.vue";
 import AppImageUploadField from "../components/molecules/AppImageUploadField.vue";
 import {
     fetchInvitationEligibility,
@@ -372,6 +393,7 @@ const { handleSubmit, defineField, isSubmitting, meta, resetForm } =
             isArchived: false,
             startDate: "",
             endDate: "",
+            bookingQuestionsText: "",
             address: {
                 line_1: "",
                 line_2: "",
@@ -397,6 +419,7 @@ const [line2, line2Props] = quasarField("address.line_2");
 const [city, cityProps] = quasarField("address.city");
 const [postalCode, postalCodeProps] = quasarField("address.postal_code");
 const [country, countryProps] = quasarField("address.country");
+const bookingQuestionRows = ref<string[]>([""]);
 
 function programToFormValues(p: ProgramOutput): ProgramEditFormValues {
     return {
@@ -417,6 +440,7 @@ function programToFormValues(p: ProgramOutput): ProgramEditFormValues {
             typeof p.end_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.end_date)
                 ? p.end_date
                 : "",
+        bookingQuestionsText: parseProgramBookingQuestions(p.booking_questions).join("\n"),
         isActive: p.is_active ?? true,
         isArchived: p.is_archived ?? false,
         address: {
@@ -439,6 +463,7 @@ type ProgramDraftPatch = {
     is_archived: number;
     start_date: string;
     end_date: string;
+    booking_questions: string;
     line_1: string | null;
     line_2: string | null;
     city: string | null;
@@ -446,7 +471,34 @@ type ProgramDraftPatch = {
     country: string | null;
 };
 
-function toProgramDraftPatch(values: ProgramEditFormValues): ProgramDraftPatch {
+function parseProgramBookingQuestions(raw: unknown): string[] {
+    if (typeof raw !== "string" || raw.trim().length === 0) {
+        return [];
+    }
+    try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
+        return parsed
+            .map((question) => (typeof question === "string" ? question.trim() : ""))
+            .filter((question) => question.length > 0);
+    } catch {
+        return [];
+    }
+}
+
+function parseBookingQuestionsInput(raw: string[]): string[] {
+    return Array.from(
+        new Set(
+            raw
+                .map((line) => line.trim())
+                .filter((line) => line.length > 0),
+        ),
+    );
+}
+
+function toProgramDraftPatch(values: ProgramEditFormValues, bookingQuestions: string[]): ProgramDraftPatch {
     const addressFields = normalizeAddressRowFields({ ...values.address });
     return {
         name: values.name,
@@ -457,6 +509,7 @@ function toProgramDraftPatch(values: ProgramEditFormValues): ProgramDraftPatch {
         is_archived: values.isArchived ? 1 : 0,
         start_date: values.startDate,
         end_date: values.endDate,
+        booking_questions: JSON.stringify(bookingQuestions),
         line_1: addressFields.line_1,
         line_2: addressFields.line_2,
         city: addressFields.city,
@@ -517,6 +570,8 @@ watch(
         if (meta.value.dirty && !routeChanged) {
             return;
         }
+        const parsedBookingQuestions = parseProgramBookingQuestions(p.booking_questions);
+        bookingQuestionRows.value = parsedBookingQuestions.length > 0 ? parsedBookingQuestions : [""];
         resetForm({
             values: programToFormValues(p),
         });
@@ -572,7 +627,8 @@ const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
         if (!col) {
             throw new Error("Programs collection is not ready.");
         }
-        const patch = toProgramDraftPatch(values);
+        const bookingQuestions = parseBookingQuestionsInput(bookingQuestionRows.value);
+        const patch = toProgramDraftPatch(values, bookingQuestions);
 
         const uploadResult = await imageUploadField.value?.uploadIfNeeded();
 

@@ -43,6 +43,7 @@ class ProgramController extends Controller
                     'slug' => $data->slug,
                     'start_date' => $data->start_date,
                     'end_date' => $data->end_date,
+                    'booking_questions' => $data->booking_questions,
                 ],
                 $addressRow,
             ));

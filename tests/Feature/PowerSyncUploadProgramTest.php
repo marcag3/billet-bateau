@@ -281,4 +281,28 @@ class PowerSyncUploadProgramTest extends TestCase
             ],
         ])->assertUnprocessable();
     }
+
+    public function test_patch_program_accepts_booking_questions_json_string(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create([
+            'booking_questions' => [],
+        ]);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'programs',
+                    'id' => $program->getKey(),
+                    'data' => [
+                        'booking_questions' => json_encode(['First 3 characters of postal code'], JSON_THROW_ON_ERROR),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $program->refresh();
+        $this->assertSame(['First 3 characters of postal code'], $program->booking_questions);
+    }
 }

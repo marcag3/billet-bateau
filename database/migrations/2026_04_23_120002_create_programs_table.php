@@ -16,6 +16,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(false);
             $table->boolean('is_archived')->default(false);
             $table->string('slug', 255)->unique();
+            $table->jsonb('booking_questions')->default('[]');
             $table->string('line_1')->nullable();
             $table->string('line_2')->nullable();
             $table->string('city')->nullable();

@@ -32,6 +32,7 @@ class Program extends Model
         'is_active',
         'is_archived',
         'slug',
+        'booking_questions',
         'line_1',
         'line_2',
         'city',
@@ -56,6 +57,7 @@ class Program extends Model
             'banner_uploaded_at' => 'datetime',
             'start_date' => 'date',
             'end_date' => 'date',
+            'booking_questions' => 'array',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

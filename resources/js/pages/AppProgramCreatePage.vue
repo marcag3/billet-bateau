@@ -96,6 +96,26 @@
                     </div>
                 </div>
 
+                <AppTextRepeaterField
+                    v-model="bookingQuestionRows"
+                    :label="t('programsCreate.bookingQuestions')"
+                    :hint="t('programsCreate.bookingQuestionsHint')"
+                    :item-label-template="t('programsCreate.bookingQuestionLabel')"
+                    :add-label="t('programsCreate.addBookingQuestion')"
+                    :remove-label="t('programsCreate.removeBookingQuestion')"
+                    :disabled="isSubmitting"
+                >
+                    <template #fields="{ value, setValue, label, disabled }">
+                        <q-input
+                            :model-value="value"
+                            outlined
+                            :disable="disabled"
+                            :label="label"
+                            @update:model-value="setValue"
+                        />
+                    </template>
+                </AppTextRepeaterField>
+
                 <q-toggle
                     v-model="isActive"
                     v-bind="isActiveProps"
@@ -209,6 +229,7 @@ import { presignUpload } from "../actions/App/Http/Controllers/Api/PresignUpload
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
+import AppTextRepeaterField from "../components/ui/AppTextRepeaterField.vue";
 import AppImageUploadField from "../components/molecules/AppImageUploadField.vue";
 
 const { t } = useI18n();
@@ -233,6 +254,7 @@ const { handleSubmit, defineField, isSubmitting } =
             isActive: true,
             startDate: range.startDate,
             endDate: range.endDate,
+            bookingQuestionsText: "",
             address: {
                 line_1: "",
                 line_2: "",
@@ -256,6 +278,7 @@ const [line2, line2Props] = quasarField("address.line_2");
 const [city, cityProps] = quasarField("address.city");
 const [postalCode, postalCodeProps] = quasarField("address.postal_code");
 const [country, countryProps] = quasarField("address.country");
+const bookingQuestionRows = ref<string[]>([""]);
 
 async function ensureBootstrapped(): Promise<void> {
     if (!powersync.hasBootstrappedCollection.value) {
@@ -265,6 +288,16 @@ async function ensureBootstrapped(): Promise<void> {
 
 function goToProgramsList() {
     void router.push({ name: "programs.list" });
+}
+
+function parseBookingQuestionsInput(raw: string[]): string[] {
+    return Array.from(
+        new Set(
+            raw
+                .map((line) => line.trim())
+                .filter((line) => line.length > 0),
+        ),
+    );
 }
 
 const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
@@ -281,6 +314,7 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
         const id = ulid();
         const themeColor = normalizeThemeColor(values.themeColor);
         const addressFields = normalizeAddressRowFields({ ...values.address });
+        const bookingQuestions = parseBookingQuestionsInput(bookingQuestionRows.value);
 
         await col.insert({
             id,
@@ -295,6 +329,7 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
             slug: buildInitialProgramSlug(values.name, id),
             start_date: values.startDate,
             end_date: values.endDate,
+            booking_questions: JSON.stringify(bookingQuestions),
             line_1: addressFields.line_1,
             line_2: addressFields.line_2,
             city: addressFields.city,

@@ -66,6 +66,7 @@ function createProgramCreateZodSchema(t: Translator) {
             isActive: z.boolean(),
             startDate: isoYmd(t),
             endDate: isoYmd(t),
+            bookingQuestionsText: z.preprocess(coerceStringInput, z.string()),
             address: programAddressObjectSchema,
         }),
     );
@@ -103,6 +104,7 @@ export function createProgramEditZodSchema(t: Translator) {
             isArchived: z.boolean(),
             startDate: isoYmd(t),
             endDate: isoYmd(t),
+            bookingQuestionsText: z.preprocess(coerceStringInput, z.string()),
             address: programAddressObjectSchema,
         }),
     );

@@ -90,6 +90,7 @@ final class ApplyProgramPowerSyncCrudAction
             'city' => $resolved->city,
             'postal_code' => $resolved->postal_code,
             'country' => $resolved->country,
+            'booking_questions' => $resolved->booking_questions,
         ];
 
         $attributes = array_merge($attributes, $this->resolvedProgramBannerAttributes($resolved));
@@ -165,6 +166,10 @@ final class ApplyProgramPowerSyncCrudAction
 
         if (! ($patch->country instanceof Optional)) {
             $program->country = $patch->country;
+        }
+
+        if (! ($patch->booking_questions instanceof Optional)) {
+            $program->booking_questions = ProgramPutPayloadResolver::normalizeBookingQuestions($patch->booking_questions);
         }
 
         if (! ($patch->start_date instanceof Optional) && $patch->start_date !== null && $patch->start_date !== '') {

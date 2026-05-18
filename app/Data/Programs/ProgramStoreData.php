@@ -4,6 +4,7 @@ namespace App\Data\Programs;
 
 use Spatie\LaravelData\Attributes\MergeValidationRules;
 use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Support\Validation\ValidationContext;
 
 #[MergeValidationRules]
 final class ProgramStoreData extends Data
@@ -18,13 +19,15 @@ final class ProgramStoreData extends Data
         public string $slug,
         public string $start_date,
         public string $end_date,
-        public ?AddressUpsertData $address,
+        public ?AddressUpsertData $address = null,
+        /** @var list<string> */
+        public array $booking_questions = [],
     ) {}
 
     /**
      * @return array<string, list<string>>
      */
-    public static function rules(): array
+    public static function rules(?ValidationContext $context = null): array
     {
         return [
             'id' => ['nullable', 'ulid'],
@@ -36,6 +39,8 @@ final class ProgramStoreData extends Data
             'slug' => ['required', 'string', 'max:255', 'lowercase', 'regex:/^[a-z0-9]+(-[a-z0-9]+)*$/u'],
             'start_date' => ['required', 'date_format:Y-m-d'],
             'end_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:start_date'],
+            'booking_questions' => ['sometimes', 'array', 'max:20'],
+            'booking_questions.*' => ['string', 'min:1', 'max:255'],
             'address' => ['nullable', 'array'],
             'address.line_1' => ['nullable', 'string', 'max:255'],
             'address.line_2' => ['nullable', 'string', 'max:255'],

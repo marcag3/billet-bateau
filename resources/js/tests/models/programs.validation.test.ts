@@ -13,6 +13,9 @@ describe('Program edit schema normalization', () => {
             slug: '  Bôat  Program  ',
             isActive: true,
             isArchived: false,
+            startDate: '2026-06-01',
+            endDate: '2026-06-30',
+            bookingQuestionsText: '  First 3 characters of postal code  ',
             address: {
                 line_1: '  123 Pier Road  ',
                 line_2: '  ',
@@ -26,6 +29,7 @@ describe('Program edit schema normalization', () => {
         expect(parsed.description).toBe('Optional description');
         expect(parsed.themeColor).toBe('#A1B2C3');
         expect(parsed.slug).toBe('boat-program');
+        expect(parsed.bookingQuestionsText).toBe('  First 3 characters of postal code  ');
         expect(parsed.address).toEqual({
             line_1: '123 Pier Road',
             line_2: '',

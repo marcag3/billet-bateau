@@ -44,6 +44,8 @@ final class ProgramPatchData extends Data
         public string|Optional|null $postal_code = new Optional,
         #[WithCast(TrimmedNullableStringCast::class)]
         public string|Optional|null $country = new Optional,
+        /** @var list<string>|string|Optional|null */
+        public array|string|Optional|null $booking_questions = new Optional,
         #[WithCast(TrimmedNullableStringCast::class)]
         public string|Optional|null $banner_object_key = new Optional,
         public string|Optional|null $banner_mime_type = new Optional,
@@ -71,6 +73,7 @@ final class ProgramPatchData extends Data
             'city' => ['sometimes', 'nullable', 'string', 'max:120'],
             'postal_code' => ['sometimes', 'nullable', 'string', 'max:32'],
             'country' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'booking_questions' => ['sometimes'],
             'banner_object_key' => [
                 'sometimes',
                 'nullable',

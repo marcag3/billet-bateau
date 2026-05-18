@@ -6,6 +6,7 @@ use App\Support\Media\ImageUpload;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Support\Validation\ValidationContext;
 
 /**
  * Fully validated merged shape for PowerSync programs PUT before persistence.
@@ -31,12 +32,14 @@ final class ProgramResolvedPutData extends Data
         public ?int $banner_size_bytes,
         public ?string $banner_etag,
         public ?string $banner_uploaded_at,
+        /** @var list<string> */
+        public array $booking_questions = [],
     ) {}
 
     /**
      * @return array<string, list<string|ValidationRule>>
      */
-    public static function rules(): array
+    public static function rules(?ValidationContext $context = null): array
     {
         return [
             'name' => ['required', 'string', 'max:255'],
@@ -52,6 +55,8 @@ final class ProgramResolvedPutData extends Data
             'city' => ['nullable', 'string', 'max:120'],
             'postal_code' => ['nullable', 'string', 'max:32'],
             'country' => ['nullable', 'string', 'max:120'],
+            'booking_questions' => ['sometimes', 'array', 'max:20'],
+            'booking_questions.*' => ['string', 'min:1', 'max:255'],
             'banner_object_key' => [
                 'nullable',
                 'string',

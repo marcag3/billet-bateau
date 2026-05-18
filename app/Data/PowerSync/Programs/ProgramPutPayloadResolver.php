@@ -7,6 +7,7 @@ use App\Data\PowerSync\Support\PowerSyncOptional;
 use App\Data\PowerSync\Values\SlugNormalizer;
 use App\Models\Program;
 use Carbon\CarbonImmutable;
+use Illuminate\Validation\ValidationException;
 use Spatie\LaravelData\Optional;
 
 /**
@@ -27,6 +28,7 @@ final class ProgramPutPayloadResolver
      *     city: ?string,
      *     postal_code: ?string,
      *     country: ?string,
+     *     booking_questions: list<string>,
      *     start_date: string,
      *     end_date: string,
      *     banner_object_key: ?string,
@@ -73,6 +75,9 @@ final class ProgramPutPayloadResolver
         $city = PowerSyncOptional::resolve($dto->city, $existing?->city);
         $postalCode = PowerSyncOptional::resolve($dto->postal_code, $existing?->postal_code);
         $country = PowerSyncOptional::resolve($dto->country, $existing?->country);
+        $bookingQuestions = $dto->booking_questions instanceof Optional
+            ? self::normalizeBookingQuestions($existing?->booking_questions)
+            : self::normalizeBookingQuestions($dto->booking_questions);
 
         $defaultStart = CarbonImmutable::today()->toDateString();
         $defaultEnd = CarbonImmutable::today()->addYear()->toDateString();
@@ -106,6 +111,7 @@ final class ProgramPutPayloadResolver
                 'city' => $city,
                 'postal_code' => $postalCode,
                 'country' => $country,
+                'booking_questions' => $bookingQuestions,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
                 'banner_object_key' => null,
@@ -137,6 +143,7 @@ final class ProgramPutPayloadResolver
             'city' => $city,
             'postal_code' => $postalCode,
             'country' => $country,
+            'booking_questions' => $bookingQuestions,
             'start_date' => $startDate,
             'end_date' => $endDate,
             'banner_object_key' => $bannerObjectKey,
@@ -145,5 +152,36 @@ final class ProgramPutPayloadResolver
             'banner_etag' => is_string($bannerEtag) ? $bannerEtag : null,
             'banner_uploaded_at' => is_string($bannerUploadedAt) ? $bannerUploadedAt : null,
         ];
+    }
+
+    /**
+     * @param  list<string>|string|array<array-key, mixed>|null  $rawQuestions
+     * @return list<string>
+     */
+    public static function normalizeBookingQuestions(array|string|null $rawQuestions): array
+    {
+        if ($rawQuestions === null || $rawQuestions === '') {
+            return [];
+        }
+
+        $decoded = $rawQuestions;
+        if (is_string($rawQuestions)) {
+            $decoded = json_decode($rawQuestions, true);
+            if (! is_array($decoded)) {
+                throw ValidationException::withMessages([
+                    'data.booking_questions' => 'Booking questions must be a valid JSON array.',
+                ]);
+            }
+        }
+
+        $normalized = collect($decoded)
+            ->map(static fn (mixed $question): string => trim((string) $question))
+            ->filter(static fn (string $question): bool => $question !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        /** @var list<string> $normalized */
+        return $normalized;
     }
 }
