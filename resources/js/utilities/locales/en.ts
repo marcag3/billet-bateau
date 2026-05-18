@@ -202,6 +202,7 @@ export default {
         successTitle: "Booking confirmed",
         successBody:
             "We received your booking for {total} ticket(s). A confirmation has been recorded under booking reference {id}.",
+        checkEmailConfirmation: "Check your email for booking confirmation.",
         bookAnother: "Book another trip",
         payWhatYouCan: "Pay what you can",
         priceFromCents: "{amount}",

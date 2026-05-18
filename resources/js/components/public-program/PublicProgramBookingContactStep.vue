@@ -1,5 +1,8 @@
 <template>
     <q-form class="column q-gutter-md" @submit="emit('submit', $event)">
+        <q-banner v-if="submitError.length > 0" rounded class="bg-red-1 text-negative">
+            {{ submitError }}
+        </q-banner>
         <q-input
             v-model="contactName"
             v-bind="contactNameProps"
@@ -38,6 +41,7 @@ type QuasarVeeFieldProps = BaseFieldProps & { error: boolean; errorMessage: stri
 defineProps<{
     contactNameProps: QuasarVeeFieldProps;
     contactEmailProps: QuasarVeeFieldProps;
+    submitError: string;
     isSubmitting: boolean;
     canSubmit: boolean;
 }>();

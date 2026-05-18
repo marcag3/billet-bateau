@@ -211,6 +211,7 @@ export default {
         successTitle: "Reservation confirmee",
         successBody:
             "Nous avons bien recu votre reservation pour {total} billet(s). La reference est {id}.",
+        checkEmailConfirmation: "Verifiez votre courriel pour la confirmation de reservation.",
         bookAnother: "Reserver une autre sortie",
         payWhatYouCan: "Prix libre",
         priceFromCents: "{amount}",

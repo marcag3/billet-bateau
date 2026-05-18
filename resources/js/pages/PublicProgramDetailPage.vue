@@ -29,56 +29,46 @@
 
             </section>
 
-            <!-- <section v-if="createdBooking" class="program-surface">
-                <q-banner class="bg-green-1 text-positive q-mb-md" rounded>
-                    <div class="text-h6 q-mb-xs">{{ t('publicBooking.successTitle') }}</div>
-                    <div class="text-body2">
-                        {{
-                            t('publicBooking.successBody', {
-                                total: String(createdBooking.total_tickets),
-                                id: createdBooking.id,
-                            })
-                        }}
-                    </div>
-                </q-banner>
-                <q-btn
-                    color="primary"
-                    no-caps
-                    outline
-                    :label="t('publicBooking.bookAnother')"
-                    @click="onBookAnother"
-                />
-            </section> -->
+            <section v-if="createdBooking" class="row justify-center q-py-xl">
+                <q-card class="full-width" style="max-width: 560px;" flat bordered>
+                    <q-card-section class="column items-center text-center q-gutter-sm">
+                        <q-icon name="check_circle" color="positive" size="52px" />
+                        <div class="text-h5 text-weight-bold">{{ t('publicBooking.successTitle') }}</div>
+                        <p class="text-body1 text-grey-8 q-mb-sm">
+                            {{ t('publicBooking.checkEmailConfirmation') }}
+                        </p>
+                        <q-btn
+                            color="primary"
+                            no-caps
+                            :label="t('publicBooking.bookAnother')"
+                            @click="onBookAnother"
+                        />
+                    </q-card-section>
+                </q-card>
+            </section>
 
-
-            <q-banner v-if="optionsError" class="bg-red-1 text-negative q-mb-md" rounded>
-                {{ optionsError }}
-            </q-banner>
-
-            <q-banner v-else-if="step2Error" class="bg-orange-1 text-deep-orange-10 q-mb-md" rounded>
-                {{ step2Error }}
-            </q-banner>
-
-            <q-banner v-if="submitError" class="bg-red-1 text-negative q-mb-md" rounded>
-                {{ submitError }}
-            </q-banner>
-
-            <q-stepper v-if="hasBookingFlow" v-model="step" color="primary" animated flat bordered>
+            <q-stepper v-else-if="hasBookingFlow" v-model="step" color="primary" animated flat bordered>
                 <q-step :name="1" :title="t('publicBooking.stepTrip')" :done="step > 1">
                     <PublicProgramBookingTripStep :key="tripStepResetKey" :trip-options="tripOptions"
+                        v-model:selected-product-id="selectedTripProductId"
+                        v-model:selected-date-ymd="selectedTripDateYmd"
                         @continue="goToTicketsStep" />
                 </q-step>
 
-                <q-step :name="2" :title="t('publicBooking.stepTickets')" :done="step > 2">
+                <q-step :name="2" :title="t('publicBooking.stepTickets')" :done="step > 2" :disable="!canAccessStep2"
+                    :header-nav="canAccessStep2">
                     <PublicProgramBookingTicketsStep v-model:ticket-quantities="ticketQuantities"
+                        :ticket-errors="step2TicketErrors" :can-continue="canAccessStep3"
                         :ticket-type-options="ticketTypeOptions" :format-ticket-type-price="formatTicketTypePrice"
                         @back="step = 1" @continue="goToContactStep" />
                 </q-step>
 
-                <q-step :name="3" :title="t('publicBooking.stepContact')">
+                <q-step :name="3" :title="t('publicBooking.stepContact')" :disable="!canAccessStep3"
+                    :header-nav="canAccessStep3">
                     <PublicProgramBookingContactStep v-model:contact-name="contactName"
                         v-model:contact-email="contactEmail" :contact-name-props="contactNameProps"
-                        :contact-email-props="contactEmailProps" :is-submitting="isSubmitting" :can-submit="meta.valid"
+                        :contact-email-props="contactEmailProps" :submit-error="submitError"
+                        :is-submitting="isSubmitting" :can-submit="meta.valid"
                         @back="step = 2" @submit="onContactSubmit" />
                 </q-step>
             </q-stepper>
@@ -109,6 +99,7 @@ import {
     fetchPublicJson,
     postPublicJson,
 } from '../services/publicApi';
+import { validatePublicBookingTickets } from '../utilities/public-booking-validation';
 import {
     createPublicBookingContactFormSchema,
     type PublicBookingContactFormValues,
@@ -138,14 +129,14 @@ const isLoading = ref(true);
 const errorMessage = ref('');
 const program = ref<PublicProgram | null>(null);
 
-const optionsError = ref('');
 const bookingOptionsData = ref<BookingOptionsPayload | null>(null);
 
 const step = ref(1);
 const tripStepResetKey = ref(0);
 const selectedTripId = ref('');
+const selectedTripProductId = ref('');
+const selectedTripDateYmd = ref('');
 const ticketQuantities = ref<Record<string, number>>({});
-const step2Error = ref('');
 const submitError = ref('');
 const createdBooking = ref<CreatedBookingPayload | null>(null);
 
@@ -173,6 +164,20 @@ const selectedTrip = computed((): BookingTripOption | undefined =>
     tripOptions.value.find((x) => String(x.id) === selectedTripId.value),
 );
 
+const ticketValidationState = computed(() =>
+    validatePublicBookingTickets({
+        ticketTypeOptions: ticketTypeOptions.value,
+        ticketQuantities: ticketQuantities.value,
+        selectedTrip: selectedTrip.value,
+        t,
+    }),
+);
+
+const step2TicketErrors = computed(() => ticketValidationState.value.errors);
+
+const canAccessStep2 = computed(() => selectedTrip.value !== undefined);
+const canAccessStep3 = computed(() => canAccessStep2.value && ticketValidationState.value.canContinue);
+
 function formatTicketTypePrice(tt: BookingTicketTypeOption): string {
     if (tt.is_pay_what_you_can) {
         return t('publicBooking.payWhatYouCan');
@@ -196,7 +201,6 @@ function initTicketQuantities(types: BookingTicketTypeOption[]): void {
 }
 
 async function loadBookingOptionsOnly(): Promise<void> {
-    optionsError.value = '';
     try {
         const path = bookingOptions.url(props.identifier);
         const j = await fetchPublicJson(path);
@@ -206,25 +210,23 @@ async function loadBookingOptionsOnly(): Promise<void> {
             initTicketQuantities(d.ticket_types);
         } else {
             bookingOptionsData.value = null;
-            optionsError.value = t('publicBooking.loadOptionsError');
         }
     } catch {
         bookingOptionsData.value = null;
-        optionsError.value = t('publicBooking.loadOptionsError');
     }
 }
 
 async function load(): Promise<void> {
     isLoading.value = true;
     errorMessage.value = '';
-    optionsError.value = '';
     program.value = null;
     bookingOptionsData.value = null;
     createdBooking.value = null;
     step.value = 1;
     tripStepResetKey.value += 1;
     selectedTripId.value = '';
-    step2Error.value = '';
+    selectedTripProductId.value = '';
+    selectedTripDateYmd.value = '';
     submitError.value = '';
     resetForm();
 
@@ -252,72 +254,25 @@ async function load(): Promise<void> {
             const d = (j as { data: BookingOptionsPayload }).data;
             bookingOptionsData.value = d;
             initTicketQuantities(d.ticket_types);
-        } else if (program.value !== null) {
-            optionsError.value = t('publicBooking.loadOptionsError');
         }
-    } else if (program.value !== null) {
-        optionsError.value = t('publicBooking.loadOptionsError');
     }
 
     isLoading.value = false;
 }
 
 function goToTicketsStep(tripId: string): void {
-    step2Error.value = '';
     const id = tripId.trim();
     if (id.length === 0) {
-        step2Error.value = t('publicBooking.selectTripFirst');
         return;
     }
     selectedTripId.value = id;
     step.value = 2;
 }
 
-function countTotalSelectedTickets(): number {
-    let n = 0;
-    for (const tt of ticketTypeOptions.value) {
-        const raw = ticketQuantities.value[String(tt.id)];
-        const q = typeof raw === 'number' && !Number.isNaN(raw) ? Math.max(0, Math.floor(raw)) : 0;
-        n += q;
-    }
-    return n;
-}
-
 function goToContactStep(): void {
-    step2Error.value = '';
     submitError.value = '';
-
-    const trip = selectedTrip.value;
-    if (trip === undefined) {
-        step2Error.value = t('publicBooking.selectTripFirst');
-        return;
-    }
-
-    let anySelected = false;
-    for (const tt of ticketTypeOptions.value) {
-        const raw = ticketQuantities.value[String(tt.id)];
-        const q = typeof raw === 'number' && !Number.isNaN(raw) ? Math.max(0, Math.floor(raw)) : 0;
-        if (q > 0) {
-            anySelected = true;
-            if (q < tt.min_per_purchase) {
-                step2Error.value = t('publicBooking.minPerType', { min: String(tt.min_per_purchase) });
-                return;
-            }
-            if (tt.max_per_purchase !== null && q > tt.max_per_purchase) {
-                step2Error.value = t('publicBooking.maxPerType', { max: String(tt.max_per_purchase) });
-                return;
-            }
-        }
-    }
-
-    if (!anySelected) {
-        step2Error.value = t('publicBooking.selectAtLeastOneTicket');
-        return;
-    }
-
-    const total = countTotalSelectedTickets();
-    if (total > trip.remaining_capacity) {
-        step2Error.value = t('publicBooking.totalExceedsTrip');
+    if (!canAccessStep3.value) {
+        step.value = canAccessStep2.value ? 2 : 1;
         return;
     }
 
@@ -367,7 +322,8 @@ function onBookAnother(): void {
     step.value = 1;
     tripStepResetKey.value += 1;
     selectedTripId.value = '';
-    step2Error.value = '';
+    selectedTripProductId.value = '';
+    selectedTripDateYmd.value = '';
     submitError.value = '';
     resetForm();
     if (bookingOptionsData.value !== null) {
@@ -387,6 +343,17 @@ watch(
 
 watch(selectedTripId, (id) => {
     if (id.trim().length === 0 && step.value > 1) {
+        step.value = 1;
+    }
+});
+
+watch(step, (nextStep) => {
+    if (nextStep >= 3 && !canAccessStep3.value) {
+        step.value = canAccessStep2.value ? 2 : 1;
+        return;
+    }
+
+    if (nextStep >= 2 && !canAccessStep2.value) {
         step.value = 1;
     }
 });
