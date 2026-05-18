@@ -31,11 +31,12 @@
                             type="number"
                             min="0"
                             :model-value="getTicketQuantity(tt.id)"
-                            :error="Boolean(props.ticketErrors[String(tt.id)])"
-                            :error-message="props.ticketErrors[String(tt.id)]"
+                            :error="Boolean(getTicketErrorMessage(tt.id))"
+                            :error-message="getTicketErrorMessage(tt.id)"
                             input-class="text-center"
                             style="width: 170px"
                             @update:model-value="setTicketQuantity(tt.id, $event)"
+                            @blur="markTicketTouched(tt.id)"
                         />
                         <q-btn
                             round
@@ -63,6 +64,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { BookingTicketTypeOption } from '../../models/public-booking/public-booking.types';
 
@@ -84,6 +86,21 @@ const emit = defineEmits<{
 }>();
 
 const ticketQuantities = defineModel<Record<string, number>>('ticketQuantities', { required: true });
+const touchedTicketTypes = ref<Record<string, boolean>>({});
+
+const markTicketTouched = (ticketTypeId: BookingTicketTypeOption['id']): void => {
+    const key = String(ticketTypeId);
+    touchedTicketTypes.value[key] = true;
+};
+
+const getTicketErrorMessage = (ticketTypeId: BookingTicketTypeOption['id']): string => {
+    const key = String(ticketTypeId);
+    if (touchedTicketTypes.value[key] !== true) {
+        return '';
+    }
+
+    return props.ticketErrors[key] ?? '';
+};
 
 const getTicketQuantity = (ticketTypeId: BookingTicketTypeOption['id']): number => {
     const key = String(ticketTypeId);
@@ -106,11 +123,13 @@ const getTicketQuantity = (ticketTypeId: BookingTicketTypeOption['id']): number 
 const incrementTicketQuantity = (ticketTypeId: BookingTicketTypeOption['id']): void => {
     const key = String(ticketTypeId);
     ticketQuantities.value[key] = getTicketQuantity(ticketTypeId) + 1;
+    markTicketTouched(ticketTypeId);
 };
 
 const decrementTicketQuantity = (ticketTypeId: BookingTicketTypeOption['id']): void => {
     const key = String(ticketTypeId);
     ticketQuantities.value[key] = Math.max(0, getTicketQuantity(ticketTypeId) - 1);
+    markTicketTouched(ticketTypeId);
 };
 
 const setTicketQuantity = (ticketTypeId: BookingTicketTypeOption['id'], value: number | string | null): void => {
