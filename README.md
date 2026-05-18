@@ -33,19 +33,18 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 - Ticket types: per-program fields (title, `price_cents`, PWYC, min/max) + PowerSync downlink/uplink (`PUT` / `PATCH` / `DELETE` on `POST /api/powersync/upload`; idempotent no-op when the row is missing; delete returns **422** if `booking_tickets` still reference the type) + `PowerSyncUploadTicketTypeBookingTicketTest` — **no** admin screens wired (models/sync only)
 - Booking **line items**: `booking_tickets` … requires a pre-existing `bookings` row; parent `bookings` includes optional `trip_id` (concrete sortie) and is **downlinked** to the admin client (no `bookings` uplink yet)
 - Public **read-only** catalog: `GET /api/public/programs`, `GET /api/public/programs/{slug}`, public home + program detail pages (`PublicHomePage`, `PublicProgramDetailPage`)
+- Public guest booking flow (no payment): create `bookings` + `booking_tickets` from checkout with contact validation, ticket min/max checks, and trip capacity enforcement
+- Public booking options now include richer **product/trip context**: `product_name`, `product_banner_url`, boat type banner, and water route trace GeoJSON for trip cards
+- Public checkout now supports **program custom questions** end-to-end: `booking_questions` in booking options, required `custom_answers` at booking time, and persisted mapped answers in `booking_tickets.custom_fields`
 - PHPUnit: PostGIS geometry + relations (`OnWaterDataModelTest`); PowerSync upload coverage (programs, boats, trips/water routes, template stack, ticket types / booking tickets); `PublicProgramApiTest`
 
 ### Public booking
 
-- Shareable program link / slug — **view catalog without login** (API + public SPA)
-- Guest booking flow: pick trip / date / quantities; **v1: no payment** — reserve/hold or confirm-only (UI + backend writes for anonymous users)
 - Laravel policies for **guest writes** to bookings when the product opens public checkout (`POST /api/powersync/upload` remains **staff-authenticated** today)
 
 ### Checkout
 
-- Baseline fields on `**booking_tickets*`*: name, email, country, optional `**waiver_confirmation_id**`, and `**custom_fields**` JSON (schema + PowerSync validation)
-- Product flow that **creates `bookings`** (parent rows) from checkout — API or PowerSync `bookings` type + local sync table for offline staff workflows
-- Admin-defined questions per trip/program beyond generic JSON — authoring UI and validation rules
+- Extend custom questions from current **program-level JSON questions** to richer admin authoring (program/trip scope) and stricter validation rules
 
 ### Ticket types
 
