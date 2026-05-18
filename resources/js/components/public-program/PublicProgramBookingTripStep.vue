@@ -5,14 +5,9 @@
         </div>
         <template v-else>
             <div class="row items-center q-gutter-sm q-mb-md flex-wrap">
-                <PublicProgramBoatTypeFilterSelect
-                    v-model:selected-boat-type-id="selectedBoatTypeId"
-                    :boat-type-filter-options="boatTypeFilterOptions"
-                />
-
-                <PublicProgramWaterRouteFilterSelect
-                    v-model:selected-water-route-id="selectedWaterRouteId"
-                    :water-route-filter-options="waterRouteFilterOptions"
+                <PublicProgramProductFilterSelect
+                    v-model:selected-product-id="selectedProductId"
+                    :product-filter-options="productFilterOptions"
                 />
 
                 <PublicProgramBookingDateFilter
@@ -101,14 +96,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import PublicProgramBoatTypeFilterSelect from './PublicProgramBoatTypeFilter.vue';
-import PublicProgramWaterRouteFilterSelect from './PublicProgramWaterRouteFilter.vue';
+import PublicProgramProductFilterSelect from './PublicProgramProductFilter.vue';
 import PublicProgramBookingDateFilter from './PublicProgramBookingDateFilter.vue';
-import type {
-    BookingTripOption,
-    PublicBookingBoatTypeFilterOption,
-    PublicBookingWaterRouteFilterOption,
-} from '../../models/public-booking/public-booking.types';
+import type { BookingTripOption, PublicBookingProductFilterOption } from '../../models/public-booking/public-booking.types';
 import { buildDailyAvailabilityMap, filterPublicBookingTrips } from '../../utilities/public-booking-filters';
 
 const props = defineProps<{
@@ -123,25 +113,8 @@ const selectedTripId = defineModel<string>('selectedTripId', { required: true })
 
 const { t, locale } = useI18n();
 
-const selectedBoatTypeId = ref('');
-const selectedWaterRouteId = ref('');
+const selectedProductId = ref('');
 const selectedDateYmd = ref('');
-
-const boatTypeFilterOptions = computed((): PublicBookingBoatTypeFilterOption[] => {
-    const map = new Map<string, PublicBookingBoatTypeFilterOption>();
-    for (const trip of props.tripOptions) {
-        const id = String(trip.boat_type_id ?? '').trim();
-        if (id.length === 0 || map.has(id)) {
-            continue;
-        }
-        map.set(id, {
-            id,
-            name: String(trip.boat_type_name ?? '').trim() || t('publicBooking.unknownBoatType'),
-            bannerUrl: trip.boat_type_banner_url,
-        });
-    }
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-});
 
 function pickTripBannerUrl(trip: BookingTripOption): string | null {
     const product = trip.product_banner_url?.trim() ?? '';
@@ -156,22 +129,20 @@ function pickTripBannerUrl(trip: BookingTripOption): string | null {
     return null;
 }
 
-const waterRouteFilterOptions = computed((): PublicBookingWaterRouteFilterOption[] => {
-    const map = new Map<string, PublicBookingWaterRouteFilterOption>();
+const productFilterOptions = computed((): PublicBookingProductFilterOption[] => {
+    const map = new Map<string, PublicBookingProductFilterOption>();
     for (const trip of props.tripOptions) {
-        const id = String(trip.water_route_id ?? '').trim();
+        const id = String(trip.product_id ?? '').trim();
         if (id.length === 0) {
             continue;
         }
-        const name = String(trip.water_route_name ?? '').trim() || t('publicBooking.unknownWaterRoute');
+        const name = String(trip.product_name ?? '').trim() || t('publicBooking.unknownProduct');
         const bannerUrl = pickTripBannerUrl(trip);
         const existing = map.get(id);
         if (existing === undefined) {
             map.set(id, {
                 id,
                 name,
-                durationMinutes: trip.water_route_duration_minutes,
-                traceGeoJson: trip.water_route_trace_geojson,
                 bannerUrl,
             });
         } else if (existing.bannerUrl == null && bannerUrl != null) {
@@ -188,8 +159,7 @@ const dailyAvailabilityByDate = computed(() => buildDailyAvailabilityMap(props.t
 
 const filteredTripOptions = computed((): BookingTripOption[] => {
     const filtered = filterPublicBookingTrips(props.tripOptions, {
-        boatTypeId: selectedBoatTypeId.value,
-        waterRouteId: selectedWaterRouteId.value,
+        productId: selectedProductId.value,
         dateYmd: selectedDateYmd.value,
     });
     return filtered as BookingTripOption[];
@@ -198,10 +168,7 @@ const filteredTripOptions = computed((): BookingTripOption[] => {
 const canContinueFromTripStep = computed(() => selectedTripId.value.trim().length > 0);
 
 const hasActiveTripFilters = computed(
-    () =>
-        selectedBoatTypeId.value.trim().length > 0 ||
-        selectedWaterRouteId.value.trim().length > 0 ||
-        selectedDateYmd.value.trim().length > 0,
+    () => selectedProductId.value.trim().length > 0 || selectedDateYmd.value.trim().length > 0,
 );
 
 function formatTripOptionLabel(trip: BookingTripOption): string {
@@ -231,8 +198,7 @@ function formatDeparture(iso: string): string {
 }
 
 function clearAllFilters(): void {
-    selectedBoatTypeId.value = '';
-    selectedWaterRouteId.value = '';
+    selectedProductId.value = '';
     selectedDateYmd.value = '';
 }
 

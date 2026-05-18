@@ -3,8 +3,7 @@ export type PublicBookingTripFilterInput = {
     scheduled_departure_at: string;
     capacity: number;
     remaining_capacity: number;
-    boat_type_id: string | null;
-    water_route_id: string | null;
+    product_id: string;
 };
 
 export type PublicBookingAvailabilityDotColor = 'red' | 'yellow' | 'green';
@@ -18,8 +17,7 @@ export type PublicBookingDailyAvailability = {
 };
 
 export type PublicBookingTripFilterState = {
-    boatTypeId: string;
-    waterRouteId: string;
+    productId: string;
     dateYmd: string;
 };
 
@@ -108,15 +106,11 @@ export function filterPublicBookingTrips(
     trips: PublicBookingTripFilterInput[],
     filterState: PublicBookingTripFilterState,
 ): PublicBookingTripFilterInput[] {
-    const selectedBoatTypeId = filterState.boatTypeId.trim();
-    const selectedWaterRouteId = filterState.waterRouteId.trim();
+    const selectedProductId = filterState.productId.trim();
     const selectedDateYmd = filterState.dateYmd.trim();
 
     return trips.filter((trip) => {
-        if (selectedBoatTypeId.length > 0 && String(trip.boat_type_id ?? '') !== selectedBoatTypeId) {
-            return false;
-        }
-        if (selectedWaterRouteId.length > 0 && String(trip.water_route_id ?? '') !== selectedWaterRouteId) {
+        if (selectedProductId.length > 0 && String(trip.product_id ?? '') !== selectedProductId) {
             return false;
         }
         if (selectedDateYmd.length > 0) {

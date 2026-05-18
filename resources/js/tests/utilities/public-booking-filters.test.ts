@@ -16,8 +16,7 @@ function makeTrip(
         scheduled_departure_at: '2026-06-01T13:00:00Z',
         capacity: 10,
         remaining_capacity: 10,
-        boat_type_id: null,
-        water_route_id: null,
+        product_id: 'product-1',
         ...overrides,
     };
 }
@@ -84,31 +83,27 @@ describe('public-booking-filters', () => {
         expect(day.remainingRatio).toBeCloseTo(0.3, 5);
     });
 
-    it('filterPublicBookingTrips applies combined boat route and date filters', () => {
+    it('filterPublicBookingTrips applies combined product and date filters', () => {
         const trips: PublicBookingTripFilterInput[] = [
             makeTrip({
                 id: 'one',
-                boat_type_id: 'boat-a',
-                water_route_id: 'route-a',
+                product_id: 'product-a',
                 scheduled_departure_at: '2026-06-05T12:00:00Z',
             }),
             makeTrip({
                 id: 'two',
-                boat_type_id: 'boat-a',
-                water_route_id: 'route-b',
+                product_id: 'product-b',
                 scheduled_departure_at: '2026-06-05T14:00:00Z',
             }),
             makeTrip({
                 id: 'three',
-                boat_type_id: 'boat-b',
-                water_route_id: 'route-a',
+                product_id: 'product-a',
                 scheduled_departure_at: '2026-06-06T12:00:00Z',
             }),
         ];
 
         const filtered = filterPublicBookingTrips(trips, {
-            boatTypeId: 'boat-a',
-            waterRouteId: 'route-a',
+            productId: 'product-a',
             dateYmd: '2026-06-05',
         });
 

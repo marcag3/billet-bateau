@@ -38,16 +38,8 @@ export type CreatedBookingPayload = {
     contact_email: string;
 };
 
-export type PublicBookingBoatTypeFilterOption = {
+export type PublicBookingProductFilterOption = {
     id: string;
     name: string;
-    bannerUrl: string | null;
-};
-
-export type PublicBookingWaterRouteFilterOption = {
-    id: string;
-    name: string;
-    durationMinutes: number | null;
-    traceGeoJson: string | null;
     bannerUrl: string | null;
 };
