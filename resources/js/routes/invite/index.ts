@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\Auth\ProgramInvitationAcceptController::show
 * @see app/Http/Controllers/Auth/ProgramInvitationAcceptController.php:24
@@ -113,6 +113,9 @@ accept.post = (args: { token: string | number } | [token: string | number ] | st
     method: 'post',
 })
 
-const ProgramInvitationAcceptController = { show, accept }
+const invite = {
+    show: Object.assign(show, show),
+    accept: Object.assign(accept, accept),
+}
 
-export default ProgramInvitationAcceptController
+export default invite

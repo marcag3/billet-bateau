@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
-* @see routes/web.php:32
+* @see routes/web.php:48
 * @route '/{fallbackPlaceholder}'
 */
 export const spa = (args: { fallbackPlaceholder: string | number } | [fallbackPlaceholder: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ spa.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:32
+* @see routes/web.php:48
 * @route '/{fallbackPlaceholder}'
 */
 spa.url = (args: { fallbackPlaceholder: string | number } | [fallbackPlaceholder: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -40,7 +40,7 @@ spa.url = (args: { fallbackPlaceholder: string | number } | [fallbackPlaceholder
 }
 
 /**
-* @see routes/web.php:32
+* @see routes/web.php:48
 * @route '/{fallbackPlaceholder}'
 */
 spa.get = (args: { fallbackPlaceholder: string | number } | [fallbackPlaceholder: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -49,7 +49,7 @@ spa.get = (args: { fallbackPlaceholder: string | number } | [fallbackPlaceholder
 })
 
 /**
-* @see routes/web.php:32
+* @see routes/web.php:48
 * @route '/{fallbackPlaceholder}'
 */
 spa.head = (args: { fallbackPlaceholder: string | number } | [fallbackPlaceholder: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({

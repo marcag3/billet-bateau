@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\ProgramInvitationController::eligibility
 * @see app/Http/Controllers/Api/ProgramInvitationController.php:20
@@ -113,6 +113,9 @@ store.post = (args: { programId: string | number } | [programId: string | number
     method: 'post',
 })
 
-const ProgramInvitationController = { eligibility, store }
+const invitations = {
+    eligibility: Object.assign(eligibility, eligibility),
+    store: Object.assign(store, store),
+}
 
-export default ProgramInvitationController
+export default invitations

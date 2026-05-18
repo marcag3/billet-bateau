@@ -1,4 +1,5 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
+import invitations from './invitations'
 /**
 * @see \App\Http\Controllers\Api\ProgramController::store
 * @see app/Http/Controllers/Api/ProgramController.php:17
@@ -35,6 +36,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 const programs = {
     store: Object.assign(store, store),
+    invitations: Object.assign(invitations, invitations),
 }
 
 export default programs

@@ -1,14 +1,11 @@
 import SessionController from './SessionController'
-import InstallController from './InstallController'
 import ProgramInvitationAcceptController from './ProgramInvitationAcceptController'
+import InstallController from './InstallController'
 
 const Auth = {
     SessionController: Object.assign(SessionController, SessionController),
+    ProgramInvitationAcceptController: Object.assign(ProgramInvitationAcceptController, ProgramInvitationAcceptController),
     InstallController: Object.assign(InstallController, InstallController),
-    ProgramInvitationAcceptController: Object.assign(
-        ProgramInvitationAcceptController,
-        ProgramInvitationAcceptController,
-    ),
 }
 
 export default Auth
