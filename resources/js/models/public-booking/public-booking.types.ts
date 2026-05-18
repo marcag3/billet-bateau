@@ -28,6 +28,7 @@ export type BookingTicketTypeOption = {
 export type BookingOptionsPayload = {
     trips: BookingTripOption[];
     ticket_types: BookingTicketTypeOption[];
+    booking_questions: string[];
 };
 
 export type CreatedBookingPayload = {

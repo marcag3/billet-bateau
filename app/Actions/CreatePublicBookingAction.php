@@ -112,6 +112,34 @@ final class CreatePublicBookingAction
                 }
             }
 
+            $configuredQuestions = collect($program->booking_questions ?? [])
+                ->map(static fn ($question): string => trim((string) $question))
+                ->filter(static fn (string $question): bool => $question !== '')
+                ->values()
+                ->all();
+
+            $providedAnswers = collect($data->custom_answers)
+                ->map(static fn ($answer): string => trim((string) $answer))
+                ->values()
+                ->all();
+
+            if (count($providedAnswers) !== count($configuredQuestions)) {
+                throw ValidationException::withMessages([
+                    'custom_answers' => [__('Answers are required for all configured booking questions.')],
+                ]);
+            }
+
+            $customFieldMap = [];
+            foreach ($configuredQuestions as $index => $question) {
+                $answer = $providedAnswers[$index] ?? '';
+                if ($answer === '') {
+                    throw ValidationException::withMessages([
+                        'custom_answers' => [__('Answers are required for all configured booking questions.')],
+                    ]);
+                }
+                $customFieldMap[$question] = $answer;
+            }
+
             $usedSeats = BookingTicket::query()
                 ->whereHas('booking', static function ($query) use ($trip): void {
                     $query->where('trip_id', $trip->getKey());
@@ -143,7 +171,7 @@ final class CreatePublicBookingAction
                         'name' => $data->contact_name,
                         'email' => $data->contact_email,
                         'country' => '',
-                        'custom_fields' => [],
+                        'custom_fields' => $customFieldMap,
                         'waiver_confirmation_id' => null,
                     ]);
                 }

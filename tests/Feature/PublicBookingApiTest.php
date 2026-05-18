@@ -269,4 +269,68 @@ class PublicBookingApiTest extends TestCase
             'contact_email' => 'not-an-email',
         ])->assertUnprocessable()->assertJsonValidationErrors(['contact_email']);
     }
+
+    public function test_booking_options_includes_program_booking_questions(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'is_active' => true,
+            'slug' => 'questions-prog',
+            'booking_questions' => [
+                'First 3 characters of postal code',
+            ],
+        ]);
+
+        Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addDays(2),
+        ]);
+        TicketType::factory()->forProgram($program)->create();
+
+        $this->getJson('/api/public/programs/questions-prog/booking-options')
+            ->assertOk()
+            ->assertJsonPath('data.booking_questions.0', 'First 3 characters of postal code');
+    }
+
+    public function test_store_requires_answers_for_configured_booking_questions_and_persists_custom_fields(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'slug' => 'with-questions',
+            'booking_questions' => [
+                'First 3 characters of postal code',
+            ],
+        ]);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+        $type = TicketType::factory()->forProgram($program)->create([
+            'min_per_purchase' => 1,
+            'max_per_purchase' => 10,
+        ]);
+
+        $this->postJson('/api/public/programs/with-questions/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+            'custom_answers' => [],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['custom_answers']);
+
+        $response = $this->postJson('/api/public/programs/with-questions/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+            'custom_answers' => ['H2X'],
+        ])->assertCreated();
+
+        $bookingId = (string) $response->json('data.id');
+        /** @var BookingTicket $ticket */
+        $ticket = BookingTicket::query()->where('booking_id', $bookingId)->firstOrFail();
+        $this->assertSame(
+            ['First 3 characters of postal code' => 'H2X'],
+            $ticket->custom_fields,
+        );
+    }
 }

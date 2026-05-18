@@ -72,6 +72,12 @@ export default {
             "Current program banner. Choose a new file above to replace it.",
         startDate: "Program start date",
         endDate: "Program end date",
+        bookingQuestions: "Additional booking questions",
+        bookingQuestionsHint:
+            "One question per line. These are shown during public booking.",
+        bookingQuestionLabel: "Question {index}",
+        addBookingQuestion: "Add question",
+        removeBookingQuestion: "Remove question",
     },
     programsInvite: {
         editSectionTitle: "Invite administrators",
@@ -122,6 +128,12 @@ export default {
         themeColor: "Theme color",
         startDate: "Program start date",
         endDate: "Program end date",
+        bookingQuestions: "Additional booking questions",
+        bookingQuestionsHint:
+            "One question per line. These are shown during public booking.",
+        bookingQuestionLabel: "Question {index}",
+        addBookingQuestion: "Add question",
+        removeBookingQuestion: "Remove question",
         addressOptional: "Address (optional)",
         line1: "Address line 1",
         line2: "Address line 2",
@@ -186,6 +198,7 @@ export default {
         contactNameRequired: "Contact name is required.",
         contactEmailRequired: "Email is required.",
         contactEmailInvalid: "Enter a valid email address.",
+        customAnswerRequired: "This answer is required.",
         submitBook: "Complete booking",
         submitting: "Booking…",
         productFilterButton: "Product",

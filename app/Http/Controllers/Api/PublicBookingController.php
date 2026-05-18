@@ -67,6 +67,11 @@ class PublicBookingController extends Controller
         $payload = new PublicBookingOptionsData(
             trips: $tripOptions,
             ticket_types: $ticketTypeOptions,
+            booking_questions: collect($program->booking_questions ?? [])
+                ->map(static fn ($question): string => trim((string) $question))
+                ->filter(static fn (string $question): bool => $question !== '')
+                ->values()
+                ->all(),
         );
 
         return response()->json([

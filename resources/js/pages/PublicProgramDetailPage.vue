@@ -70,7 +70,10 @@
                     <PublicProgramBookingContactStep v-model:contact-name="contactName"
                         v-model:contact-email="contactEmail" :contact-name-props="contactNameProps"
                         :contact-email-props="contactEmailProps" :submit-error="submitError"
-                        :is-submitting="isSubmitting" :can-submit="meta.valid"
+                        v-model:custom-answers="customAnswers"
+                        :custom-questions="customQuestions"
+                        :custom-answer-errors="customAnswerErrors"
+                        :is-submitting="isSubmitting" :can-submit="canSubmitContactStep"
                         @back="step = 2" @submit="onContactSubmit" />
                 </q-step>
             </q-stepper>
@@ -143,6 +146,8 @@ const selectedTripDateYmd = ref('');
 const ticketQuantities = ref<Record<string, number>>({});
 const submitError = ref('');
 const createdBooking = ref<CreatedBookingPayload | null>(null);
+const customAnswers = ref<string[]>([]);
+const customAnswerErrors = ref<Record<number, string>>({});
 
 const contactSchema = createPublicBookingContactFormSchema(t);
 const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm<PublicBookingContactFormValues>({
@@ -159,6 +164,7 @@ const [contactEmail, contactEmailProps] = quasarField('contact_email');
 
 const tripOptions = computed((): BookingTripOption[] => bookingOptionsData.value?.trips ?? []);
 const ticketTypeOptions = computed((): BookingTicketTypeOption[] => bookingOptionsData.value?.ticket_types ?? []);
+const customQuestions = computed((): string[] => bookingOptionsData.value?.booking_questions ?? []);
 const fallbackProgramBannerUrl = '/images/program-fallback.svg';
 const programBannerSrc = computed((): string => {
     const bannerUrl = String(program.value?.banner_url ?? '').trim();
@@ -190,6 +196,16 @@ const step2TicketErrors = computed(() => ticketValidationState.value.errors);
 
 const canAccessStep2 = computed(() => selectedTrip.value !== undefined);
 const canAccessStep3 = computed(() => canAccessStep2.value && ticketValidationState.value.canContinue);
+const canSubmitContactStep = computed(() => {
+    if (!meta.value.valid) {
+        return false;
+    }
+
+    return customQuestions.value.every((_, index) => {
+        const answer = customAnswers.value[index];
+        return typeof answer === 'string' && answer.trim().length > 0;
+    });
+});
 
 function formatTicketTypePrice(tt: BookingTicketTypeOption): string {
     if (tt.is_pay_what_you_can) {
@@ -221,11 +237,18 @@ async function loadBookingOptionsOnly(): Promise<void> {
             const d = (j as { data: BookingOptionsPayload }).data;
             bookingOptionsData.value = d;
             initTicketQuantities(d.ticket_types);
+            const questions = Array.isArray(d.booking_questions) ? d.booking_questions : [];
+            customAnswers.value = questions.map(() => '');
+            customAnswerErrors.value = {};
         } else {
             bookingOptionsData.value = null;
+            customAnswers.value = [];
+            customAnswerErrors.value = {};
         }
     } catch {
         bookingOptionsData.value = null;
+        customAnswers.value = [];
+        customAnswerErrors.value = {};
     }
 }
 
@@ -267,6 +290,9 @@ async function load(): Promise<void> {
             const d = (j as { data: BookingOptionsPayload }).data;
             bookingOptionsData.value = d;
             initTicketQuantities(d.ticket_types);
+            const questions = Array.isArray(d.booking_questions) ? d.booking_questions : [];
+            customAnswers.value = questions.map(() => '');
+            customAnswerErrors.value = {};
         }
     }
 
@@ -312,7 +338,22 @@ const onContactSubmit = handleSubmit(async (values) => {
         ticket_quantities: quantities,
         contact_name: String(values.contact_name).trim(),
         contact_email: String(values.contact_email).trim(),
+        custom_answers: [] as string[],
     };
+
+    const answerErrors: Record<number, string> = {};
+    payload.custom_answers = customQuestions.value.map((question, index) => {
+        const answer = String(customAnswers.value[index] ?? '').trim();
+        if (answer.length === 0) {
+            answerErrors[index] = t('publicBooking.customAnswerRequired', { question });
+        }
+
+        return answer;
+    });
+    customAnswerErrors.value = answerErrors;
+    if (Object.keys(answerErrors).length > 0) {
+        return;
+    }
 
     try {
         const j = await postPublicJson(store.url(props.identifier), payload);
@@ -338,9 +379,11 @@ function onBookAnother(): void {
     selectedTripProductId.value = '';
     selectedTripDateYmd.value = '';
     submitError.value = '';
+    customAnswerErrors.value = {};
     resetForm();
     if (bookingOptionsData.value !== null) {
         initTicketQuantities(bookingOptionsData.value.ticket_types);
+        customAnswers.value = customQuestions.value.map(() => '');
     } else {
         void loadBookingOptionsOnly();
     }

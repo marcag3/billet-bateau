@@ -75,6 +75,12 @@ export default {
             "Banniere actuelle du programme. Choisissez un nouveau fichier ci-dessus pour la remplacer.",
         startDate: "Date de debut du programme",
         endDate: "Date de fin du programme",
+        bookingQuestions: "Questions supplementaires de reservation",
+        bookingQuestionsHint:
+            "Une question par ligne. Elles sont affichees pendant la reservation publique.",
+        bookingQuestionLabel: "Question {index}",
+        addBookingQuestion: "Ajouter une question",
+        removeBookingQuestion: "Retirer la question",
     },
     programsInvite: {
         editSectionTitle: "Inviter des administrateurs",
@@ -127,6 +133,12 @@ export default {
         themeColor: "Couleur du theme",
         startDate: "Date de debut du programme",
         endDate: "Date de fin du programme",
+        bookingQuestions: "Questions supplementaires de reservation",
+        bookingQuestionsHint:
+            "Une question par ligne. Elles sont affichees pendant la reservation publique.",
+        bookingQuestionLabel: "Question {index}",
+        addBookingQuestion: "Ajouter une question",
+        removeBookingQuestion: "Retirer la question",
         addressOptional: "Adresse (optionnelle)",
         line1: "Ligne 1",
         line2: "Ligne 2",
@@ -195,6 +207,7 @@ export default {
         contactNameRequired: "Le nom du contact est requis.",
         contactEmailRequired: "Le courriel est requis.",
         contactEmailInvalid: "Entrez une adresse courriel valide.",
+        customAnswerRequired: "Cette reponse est requise.",
         submitBook: "Confirmer la réservation",
         submitting: "Réservation…",
         productFilterButton: "Produit",
