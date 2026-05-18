@@ -63,6 +63,39 @@
                     </template>
                 </q-input>
 
+                <div class="row q-col-gutter-md">
+                    <div class="col-12 col-sm-6">
+                        <q-input
+                            v-model="startDate"
+                            v-bind="startDateProps"
+                            type="date"
+                            outlined
+                            label-slot
+                            :disable="isSubmitting"
+                        >
+                            <template #label>
+                                {{ t("programsCreate.startDate") }}
+                                <span class="text-negative" aria-hidden="true">*</span>
+                            </template>
+                        </q-input>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <q-input
+                            v-model="endDate"
+                            v-bind="endDateProps"
+                            type="date"
+                            outlined
+                            label-slot
+                            :disable="isSubmitting"
+                        >
+                            <template #label>
+                                {{ t("programsCreate.endDate") }}
+                                <span class="text-negative" aria-hidden="true">*</span>
+                            </template>
+                        </q-input>
+                    </div>
+                </div>
+
                 <q-toggle
                     v-model="isActive"
                     v-bind="isActiveProps"
@@ -170,6 +203,7 @@ import {
     normalizeThemeColor,
     buildInitialProgramSlug,
     normalizeAddressRowFields,
+    defaultProgramDateRange,
 } from "../utilities/program-helpers";
 import { presignUpload } from "../actions/App/Http/Controllers/Api/PresignUploadController";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
@@ -188,6 +222,7 @@ const imageUploadField = ref<InstanceType<typeof AppImageUploadField> | null>(
 );
 
 const programCreateSchema = createProgramCreateFormSchema(t);
+const range = defaultProgramDateRange();
 const { handleSubmit, defineField, isSubmitting } =
     useForm<ProgramCreateFormValues>({
         validationSchema: programCreateSchema,
@@ -196,6 +231,8 @@ const { handleSubmit, defineField, isSubmitting } =
             description: "",
             themeColor: "#08758A",
             isActive: true,
+            startDate: range.startDate,
+            endDate: range.endDate,
             address: {
                 line_1: "",
                 line_2: "",
@@ -211,6 +248,8 @@ const quasarField = createQuasarFieldBinder(defineField);
 const [name, nameProps] = quasarField("name");
 const [description, descriptionProps] = quasarField("description");
 const [themeColor, themeColorProps] = quasarField("themeColor");
+const [startDate, startDateProps] = quasarField("startDate");
+const [endDate, endDateProps] = quasarField("endDate");
 const [isActive, isActiveProps] = quasarField("isActive");
 const [line1, line1Props] = quasarField("address.line_1");
 const [line2, line2Props] = quasarField("address.line_2");
@@ -254,6 +293,8 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
             is_active: values.isActive ? 1 : 0,
             is_archived: 0,
             slug: buildInitialProgramSlug(values.name, id),
+            start_date: values.startDate,
+            end_date: values.endDate,
             line_1: addressFields.line_1,
             line_2: addressFields.line_2,
             city: addressFields.city,

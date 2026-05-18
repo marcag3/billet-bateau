@@ -42,6 +42,25 @@ describe('public-booking-filters', () => {
         expect(isPublicBookingDayHashSelectable('2026/06/06', availability)).toBe(false);
     });
 
+    it('isPublicBookingDayHashSelectable respects optional program bounds', () => {
+        const availability: Record<string, PublicBookingDailyAvailability> = {
+            '2026-06-05': {
+                dateYmd: '2026-06-05',
+                totalCapacity: 10,
+                totalReserved: 0,
+                remainingRatio: 1,
+                dotColor: 'green',
+            },
+        };
+
+        expect(
+            isPublicBookingDayHashSelectable('2026/06/05', availability, '2026-06-01', '2026-06-30'),
+        ).toBe(true);
+        expect(
+            isPublicBookingDayHashSelectable('2026/06/05', availability, '2026-06-10', '2026-06-30'),
+        ).toBe(false);
+    });
+
     it('buildDailyAvailabilityMap aggregates seats and reserved per local day', () => {
         const availability = buildDailyAvailabilityMap([
             makeTrip({ id: 'a', capacity: 10, remaining_capacity: 4 }),

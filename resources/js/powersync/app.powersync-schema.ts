@@ -8,6 +8,8 @@ const programsTable = new Table({
     is_active: column.integer,
     is_archived: column.integer,
     slug: column.text,
+    start_date: column.text,
+    end_date: column.text,
     line_1: column.text,
     line_2: column.text,
     city: column.text,

@@ -24,6 +24,7 @@
                     dense
                     icon="chevron_left"
                     :aria-label="t('tripsCalendar.prev')"
+                    :disable="!canCalendarPrev"
                     @click="calendarPrev"
                 />
                 <q-btn
@@ -39,6 +40,7 @@
                     dense
                     icon="chevron_right"
                     :aria-label="t('tripsCalendar.next')"
+                    :disable="!canCalendarNext"
                     @click="calendarNext"
                 />
                 <div
@@ -219,6 +221,7 @@ import { QCalendarDay, QCalendarMonth, today } from "@quasar/quasar-ui-qcalendar
 import { useQuasar } from "quasar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import { joinTripsWithRelations } from "../powersync/joined-queries";
+import type { ProgramOutput } from "../powersync/programs.collection";
 import { mediaObjectPublicUrl } from "../utilities/media-url";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import type { TemplateDaySlotOutput } from "../powersync/template-day-slots.collection";
@@ -260,6 +263,29 @@ const waterRoutesCollection = powersync.collections.water_routes;
 const bookingsCollection = powersync.collections.bookings;
 const templateDaysCollection = powersync.collections.template_days;
 const templateDaySlotsCollection = powersync.collections.template_day_slots;
+const programsCollection = powersync.collections.programs;
+
+const { data: programRowsRaw } = useLiveQuery(
+    (queryBuilder) => {
+        const col = programsCollection.value;
+        const pid = powersync.activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) {
+            return undefined;
+        }
+        return queryBuilder.from({ p: col }).where(({ p }) => eq(p.id, pid));
+    },
+    [programsCollection, powersync.activeProgramIdRef],
+);
+
+const programDateBounds = computed((): { startYmd: string; endYmd: string } => {
+    const row = (programRowsRaw.value ?? [])[0] as ProgramOutput | undefined;
+    const s = row != null ? String(row.start_date ?? "").trim() : "";
+    const e = row != null ? String(row.end_date ?? "").trim() : "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s) && /^\d{4}-\d{2}-\d{2}$/.test(e)) {
+        return { startYmd: s, endYmd: e };
+    }
+    return { startYmd: "1970-01-01", endYmd: "9999-12-31" };
+});
 
 const { data: bookingsRows } = useLiveQuery(
     (queryBuilder) => {
@@ -444,7 +470,22 @@ interface DayBodyScope {
     timeDurationHeight: (minutes: number) => number;
 }
 
-const trips = computed(() => (tripsRaw.value ?? []) as TripCalendarRow[]);
+const trips = computed(() => {
+    const rows = (tripsRaw.value ?? []) as TripCalendarRow[];
+    const { startYmd, endYmd } = programDateBounds.value;
+    return rows.filter((tr) => {
+        const raw = tr.scheduled_departure_at;
+        if (raw == null || String(raw).trim() === "") {
+            return true;
+        }
+        const d = new Date(String(raw));
+        if (Number.isNaN(d.getTime())) {
+            return true;
+        }
+        const y = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        return y >= startYmd && y <= endYmd;
+    });
+});
 const programProducts = computed(
     () => (productsRaw.value ?? []) as ProductLookupRow[],
 );
@@ -547,7 +588,25 @@ watch(
     { immediate: true },
 );
 
-const selectedDateStr = ref(today());
+function clampProgramYmd(ymd: string): string {
+    const { startYmd, endYmd } = programDateBounds.value;
+    if (ymd < startYmd) {
+        return startYmd;
+    }
+    if (ymd > endYmd) {
+        return endYmd;
+    }
+    return ymd;
+}
+
+const selectedDateStr = ref(clampProgramYmd(today()));
+
+watch(
+    () => [programDateBounds.value.startYmd, programDateBounds.value.endYmd] as const,
+    () => {
+        selectedDateStr.value = clampProgramYmd(selectedDateStr.value);
+    },
+);
 
 interface QCalendarNavExpose {
     prev: (amount?: number) => void;
@@ -612,30 +671,6 @@ const calendarTitle = computed(() => {
     }).format(d);
 });
 
-function calendarPrev(): void {
-    if (tripsViewMode.value === "month") {
-        monthCalendarRef.value?.prev();
-    } else {
-        dayCalendarRef.value?.prev();
-    }
-}
-
-function calendarNext(): void {
-    if (tripsViewMode.value === "month") {
-        monthCalendarRef.value?.next();
-    } else {
-        dayCalendarRef.value?.next();
-    }
-}
-
-function calendarToday(): void {
-    if (tripsViewMode.value === "month") {
-        monthCalendarRef.value?.moveToToday();
-    } else {
-        dayCalendarRef.value?.moveToToday();
-    }
-}
-
 function formatDeparture(tr: { scheduled_departure_at?: unknown }): string {
     const raw = tr.scheduled_departure_at;
     if (raw == null || String(raw) === "") {
@@ -673,6 +708,64 @@ function toHHmm(d: Date): string {
     const h = String(d.getHours()).padStart(2, "0");
     const mm = String(d.getMinutes()).padStart(2, "0");
     return `${h}:${mm}`;
+}
+
+function addMonthsClampYmd(ymd: string, delta: number): string {
+    const d = parseYmd(ymd);
+    d.setMonth(d.getMonth() + delta);
+    return clampProgramYmd(toYmd(d));
+}
+
+function stepProgramCalendar(direction: -1 | 1): string {
+    const mode = tripsViewMode.value;
+    if (mode === "list") {
+        return selectedDateStr.value;
+    }
+    const cur = selectedDateStr.value;
+    if (mode === "day") {
+        const d = parseYmd(cur);
+        d.setDate(d.getDate() + direction);
+        return clampProgramYmd(toYmd(d));
+    }
+    if (mode === "week") {
+        const d = parseYmd(cur);
+        d.setDate(d.getDate() + 7 * direction);
+        return clampProgramYmd(toYmd(d));
+    }
+    return addMonthsClampYmd(cur, direction);
+}
+
+const canCalendarPrev = computed(
+    () =>
+        tripsViewMode.value !== "list" &&
+        stepProgramCalendar(-1) !== selectedDateStr.value,
+);
+
+const canCalendarNext = computed(
+    () =>
+        tripsViewMode.value !== "list" &&
+        stepProgramCalendar(1) !== selectedDateStr.value,
+);
+
+function calendarPrev(): void {
+    if (tripsViewMode.value === "list") {
+        return;
+    }
+    selectedDateStr.value = stepProgramCalendar(-1);
+}
+
+function calendarNext(): void {
+    if (tripsViewMode.value === "list") {
+        return;
+    }
+    selectedDateStr.value = stepProgramCalendar(1);
+}
+
+function calendarToday(): void {
+    if (tripsViewMode.value === "list") {
+        return;
+    }
+    selectedDateStr.value = clampProgramYmd(today());
 }
 
 const tripEvents = computed<TripCalendarEventBase[]>(() => {
@@ -719,7 +812,12 @@ function isValidServiceDateYmd(raw: unknown): boolean {
     if (raw == null || typeof raw !== "string") {
         return false;
     }
-    return isValidCalendarDateYmd(raw.trim());
+    const trimmed = raw.trim();
+    if (!isValidCalendarDateYmd(trimmed)) {
+        return false;
+    }
+    const { startYmd, endYmd } = programDateBounds.value;
+    return trimmed >= startYmd && trimmed <= endYmd;
 }
 
 function slotDepartureTimeToHm(raw: unknown): string {
@@ -789,6 +887,10 @@ function onApplyTemplateDay(
     const serviceDate =
         typeof serviceDateRaw === "string" ? serviceDateRaw.trim() : "";
     if (!isValidCalendarDateYmd(serviceDate)) {
+        return;
+    }
+    const { startYmd, endYmd } = programDateBounds.value;
+    if (serviceDate < startYmd || serviceDate > endYmd) {
         return;
     }
     void applyTemplateDayFromSlots(templateDayId, serviceDate);
@@ -1080,6 +1182,10 @@ function onDayCalendarClickTime(payload: CalendarClickTimePayload): void {
     if (parts == null) {
         return;
     }
+    const { startYmd, endYmd } = programDateBounds.value;
+    if (parts.date < startYmd || parts.date > endYmd) {
+        return;
+    }
     const pid = programId.value;
     if (pid.length === 0) {
         return;
@@ -1106,7 +1212,7 @@ function onMonthCalendarClickDay(payload: MonthClickDayPayload): void {
     if (!isValidCalendarDateYmd(dateRaw)) {
         return;
     }
-    selectedDateStr.value = dateRaw;
+    selectedDateStr.value = clampProgramYmd(dateRaw);
     tripsViewMode.value = "day";
 }
 </script>

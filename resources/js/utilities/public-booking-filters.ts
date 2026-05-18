@@ -31,8 +31,18 @@ export function qDateDayHashToIsoYmd(dayHash: string): string {
 export function isPublicBookingDayHashSelectable(
     dayHash: string,
     dailyAvailabilityByDate: Record<string, PublicBookingDailyAvailability>,
+    programMinYmd?: string,
+    programMaxYmd?: string,
 ): boolean {
     const ymd = qDateDayHashToIsoYmd(dayHash);
+    const min = programMinYmd?.trim();
+    const max = programMaxYmd?.trim();
+    if (min != null && min.length > 0 && ymd < min) {
+        return false;
+    }
+    if (max != null && max.length > 0 && ymd > max) {
+        return false;
+    }
 
     return dailyAvailabilityByDate[ymd] !== undefined;
 }

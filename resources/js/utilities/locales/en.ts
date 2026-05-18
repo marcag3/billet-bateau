@@ -70,6 +70,8 @@ export default {
         isArchived: "Archived (hidden from Active tab)",
         currentBannerCaption:
             "Current program banner. Choose a new file above to replace it.",
+        startDate: "Program start date",
+        endDate: "Program end date",
     },
     programsInvite: {
         editSectionTitle: "Invite administrators",
@@ -118,6 +120,8 @@ export default {
         name: "Name",
         description: "Description",
         themeColor: "Theme color",
+        startDate: "Program start date",
+        endDate: "Program end date",
         addressOptional: "Address (optional)",
         line1: "Address line 1",
         line2: "Address line 2",
@@ -129,6 +133,8 @@ export default {
         success: "Program created.",
         validationRequired: "This field is required.",
         validationHex: "Use a hex color like #RRGGBB.",
+        validationDateYmd: "Use a calendar date YYYY-MM-DD.",
+        validationEndBeforeStart: "End date must be on or after the start date.",
     },
     sync: {
         syncRequestFailed: "Sync request failed.",

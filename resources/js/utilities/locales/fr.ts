@@ -73,6 +73,8 @@ export default {
         isArchived: "Archive (absent de l’onglet Actifs)",
         currentBannerCaption:
             "Banniere actuelle du programme. Choisissez un nouveau fichier ci-dessus pour la remplacer.",
+        startDate: "Date de debut du programme",
+        endDate: "Date de fin du programme",
     },
     programsInvite: {
         editSectionTitle: "Inviter des administrateurs",
@@ -123,6 +125,8 @@ export default {
         name: "Nom",
         description: "Description",
         themeColor: "Couleur du theme",
+        startDate: "Date de debut du programme",
+        endDate: "Date de fin du programme",
         addressOptional: "Adresse (optionnelle)",
         line1: "Ligne 1",
         line2: "Ligne 2",
@@ -134,6 +138,9 @@ export default {
         success: "Programme cree.",
         validationRequired: "Ce champ est requis.",
         validationHex: "Utilisez une couleur hexadecimale #RRGGBB.",
+        validationDateYmd: "Utilisez une date au format AAAA-MM-JJ.",
+        validationEndBeforeStart:
+            "La date de fin doit etre le meme jour ou apres la date de debut.",
     },
     sync: {
         syncRequestFailed: "La requete de synchronisation a echoue.",
@@ -173,7 +180,6 @@ export default {
         stepTickets: "Billets",
         stepContact: "Contact",
         departure: "Depart",
-        tripPlacesAvailability: "{remaining}/{total} places disponibles",
         tripAvailabilityColumn: "Places disponibles",
         continue: "Continuer",
         back: "Retour",

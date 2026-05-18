@@ -41,6 +41,30 @@ export function buildInitialProgramSlug(name: string, id: string): string {
 }
 
 /**
+ * Format a local calendar date as `YYYY-MM-DD`.
+ */
+export function formatLocalDateYmd(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+/**
+ * Default program season: first day of current month through last day of the month six months ahead (matches server-side factory intent).
+ */
+export function defaultProgramDateRange(): { startDate: string; endDate: string } {
+    const ref = new Date();
+    const start = new Date(ref.getFullYear(), ref.getMonth(), 1);
+    const endCursor = new Date(ref.getFullYear(), ref.getMonth() + 6, 1);
+    const end = new Date(endCursor.getFullYear(), endCursor.getMonth() + 1, 0);
+    return {
+        startDate: formatLocalDateYmd(start),
+        endDate: formatLocalDateYmd(end),
+    };
+}
+
+/**
  * @param {Record<string, string | undefined | null>} address
  * @returns {Record<string, string | null>}
  */

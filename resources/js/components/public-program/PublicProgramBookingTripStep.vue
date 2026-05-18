@@ -6,11 +6,12 @@
         <template v-else>
             <div class="row items-center q-gutter-sm q-mb-md flex-wrap">
                 <PublicProgramBookingDateFilter v-model:selected-date-ymd="selectedDateYmd"
-                    :daily-availability-by-date="dailyAvailabilityByDate" />
+                    :daily-availability-by-date="dailyAvailabilityByDate"
+                    :program-start-date-ymd="props.programStartDateYmd"
+                    :program-end-date-ymd="props.programEndDateYmd" />
 
                 <PublicProgramProductFilterSelect v-model:selected-product-id="selectedProductId"
                     :product-filter-options="productFilterOptions" />
-
                 <q-btn v-if="hasActiveTripFilters" flat dense no-caps color="primary" class="text-weight-bold"
                     :label="t('publicBooking.clearAllFilters')" @click="clearAllFilters" />
             </div>
@@ -47,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PublicProgramProductFilterSelect from './PublicProgramProductFilter.vue';
 import PublicProgramBookingDateFilter from './PublicProgramBookingDateFilter.vue';
@@ -60,6 +61,9 @@ import {
 
 const props = defineProps<{
     tripOptions: BookingTripOption[];
+    /** Inclusive program bounds (`YYYY-MM-DD`) for the date filter. */
+    programStartDateYmd?: string;
+    programEndDateYmd?: string;
 }>();
 
 const emit = defineEmits<{
@@ -72,6 +76,30 @@ const bookableTripOptions = computed(() => props.tripOptions.filter(publicBookin
 
 const selectedProductId = defineModel<string>('selectedProductId', { required: true });
 const selectedDateYmd = defineModel<string>('selectedDateYmd', { required: true });
+
+watch(
+    () =>
+        [
+            props.programStartDateYmd,
+            props.programEndDateYmd,
+            selectedDateYmd.value,
+        ] as const,
+    () => {
+        const d = selectedDateYmd.value.trim();
+        if (d.length === 0) {
+            return;
+        }
+        const s = String(props.programStartDateYmd ?? '').trim();
+        const e = String(props.programEndDateYmd ?? '').trim();
+        if (
+            /^\d{4}-\d{2}-\d{2}$/.test(s) &&
+            /^\d{4}-\d{2}-\d{2}$/.test(e) &&
+            (d < s || d > e)
+        ) {
+            selectedDateYmd.value = '';
+        }
+    },
+);
 
 function pickTripBannerUrl(trip: BookingTripOption): string | null {
     const product = trip.product_banner_url?.trim() ?? '';

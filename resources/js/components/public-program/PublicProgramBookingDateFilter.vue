@@ -62,6 +62,9 @@ import {
 
 const props = defineProps<{
     dailyAvailabilityByDate: Record<string, PublicBookingDailyAvailability>;
+    /** Inclusive program bounds (`YYYY-MM-DD`); when set, month navigation is clamped. */
+    programStartDateYmd?: string;
+    programEndDateYmd?: string;
 }>();
 
 const selectedDateYmd = defineModel<string>('selectedDateYmd', { required: true });
@@ -113,6 +116,9 @@ function ymdToYearMonth(ymd: string): string | null {
     return `${y}/${m}`;
 }
 
+const programStartYmd = computed(() => String(props.programStartDateYmd ?? "").trim());
+const programEndYmd = computed(() => String(props.programEndDateYmd ?? "").trim());
+
 const defaultYearMonth = computed((): string => {
     const fromSelected = ymdToYearMonth(selectedDateYmd.value);
     if (fromSelected != null) {
@@ -123,22 +129,39 @@ const defaultYearMonth = computed((): string => {
     if (fromFirst != null) {
         return fromFirst;
     }
+    const ps = programStartYmd.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(ps)) {
+        return ymdToYearMonth(ps) ?? `${ps.slice(0, 4)}/${ps.slice(5, 7)}`;
+    }
     const now = new Date();
     return `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
 });
 
 const navigationMinYearMonth = computed((): string | undefined => {
+    const fromProgram = programStartYmd.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fromProgram)) {
+        return ymdToYearMonth(fromProgram) ?? undefined;
+    }
     const first = sortedAvailabilityYmd.value[0];
     return first != null ? ymdToYearMonth(first) ?? undefined : undefined;
 });
 
 const navigationMaxYearMonth = computed((): string | undefined => {
+    const fromProgram = programEndYmd.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fromProgram)) {
+        return ymdToYearMonth(fromProgram) ?? undefined;
+    }
     const last = sortedAvailabilityYmd.value.at(-1);
     return last != null ? ymdToYearMonth(last) ?? undefined : undefined;
 });
 
 function isDaySelectable(dayHash: string): boolean {
-    return isPublicBookingDayHashSelectable(dayHash, props.dailyAvailabilityByDate);
+    return isPublicBookingDayHashSelectable(
+        dayHash,
+        props.dailyAvailabilityByDate,
+        programStartYmd.value.length > 0 ? programStartYmd.value : undefined,
+        programEndYmd.value.length > 0 ? programEndYmd.value : undefined,
+    );
 }
 
 function hasAvailabilityEvent(dayHash: string): boolean {

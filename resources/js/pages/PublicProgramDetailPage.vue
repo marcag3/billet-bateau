@@ -11,7 +11,7 @@
 
         <template v-else-if="program">
             <section class="">
-                <q-img v-if="program.banner_url" :src="program.banner_url" height="300px">
+                <q-img :src="programBannerSrc" height="300px">
                     <div class="absolute-top">
 
                         <h1 class="text-h4 q-mb-sm text-weight-bold">{{ program.name }} </h1>
@@ -52,6 +52,8 @@
                     <PublicProgramBookingTripStep :key="tripStepResetKey" :trip-options="tripOptions"
                         v-model:selected-product-id="selectedTripProductId"
                         v-model:selected-date-ymd="selectedTripDateYmd"
+                        :program-start-date-ymd="program?.start_date"
+                        :program-end-date-ymd="program?.end_date"
                         @continue="goToTicketsStep" />
                 </q-step>
 
@@ -121,6 +123,8 @@ type PublicProgram = {
     name?: string;
     description?: string;
     banner_url?: string | null;
+    start_date?: string;
+    end_date?: string;
 };
 
 const { t, locale } = useI18n();
@@ -155,6 +159,15 @@ const [contactEmail, contactEmailProps] = quasarField('contact_email');
 
 const tripOptions = computed((): BookingTripOption[] => bookingOptionsData.value?.trips ?? []);
 const ticketTypeOptions = computed((): BookingTicketTypeOption[] => bookingOptionsData.value?.ticket_types ?? []);
+const fallbackProgramBannerUrl = '/images/program-fallback.svg';
+const programBannerSrc = computed((): string => {
+    const bannerUrl = String(program.value?.banner_url ?? '').trim();
+    if (bannerUrl.length > 0) {
+        return bannerUrl;
+    }
+
+    return fallbackProgramBannerUrl;
+});
 
 const hasBookingFlow = computed(
     () => tripOptions.value.length > 0 && ticketTypeOptions.value.length > 0,

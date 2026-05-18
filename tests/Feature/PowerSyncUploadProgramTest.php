@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Program;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -32,6 +33,9 @@ class PowerSyncUploadProgramTest extends TestCase
             ],
         ])->assertOk();
 
+        $start = CarbonImmutable::today()->toDateString();
+        $end = CarbonImmutable::today()->addYear()->toDateString();
+
         $this->assertDatabaseHas('programs', [
             'id' => $id,
             'name' => 'Dockside',
@@ -39,6 +43,8 @@ class PowerSyncUploadProgramTest extends TestCase
             'is_active' => 0,
             'is_archived' => 0,
             'slug' => 'dockside',
+            'start_date' => $start,
+            'end_date' => $end,
         ]);
 
         $this->assertDatabaseHas('program_user', [
@@ -67,9 +73,14 @@ class PowerSyncUploadProgramTest extends TestCase
             ],
         ])->assertOk();
 
+        $start = CarbonImmutable::today()->toDateString();
+        $end = CarbonImmutable::today()->addYear()->toDateString();
+
         $this->assertDatabaseHas('programs', [
             'id' => $id,
             'slug' => 'ete-riviera',
+            'start_date' => $start,
+            'end_date' => $end,
         ]);
     }
 
@@ -94,11 +105,16 @@ class PowerSyncUploadProgramTest extends TestCase
             ],
         ])->assertOk();
 
+        $start = CarbonImmutable::today()->toDateString();
+        $end = CarbonImmutable::today()->addYear()->toDateString();
+
         $this->assertDatabaseHas('programs', [
             'id' => $programId,
             'line_1' => 'Pier 2',
             'city' => 'Seaside',
             'slug' => 'with-address',
+            'start_date' => $start,
+            'end_date' => $end,
         ]);
 
         $this->assertDatabaseHas('program_user', [
@@ -208,13 +224,20 @@ class PowerSyncUploadProgramTest extends TestCase
             ],
         ])->assertOk();
 
+        $start = CarbonImmutable::today()->toDateString();
+        $end = CarbonImmutable::today()->addYear()->toDateString();
+
         $this->assertDatabaseHas('programs', [
             'id' => $id1,
             'slug' => 'shared-slug',
+            'start_date' => $start,
+            'end_date' => $end,
         ]);
         $this->assertDatabaseHas('programs', [
             'id' => $id2,
             'slug' => 'shared-slug-2',
+            'start_date' => $start,
+            'end_date' => $end,
         ]);
     }
 

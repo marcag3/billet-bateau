@@ -13,6 +13,7 @@ use App\Models\Program;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Spatie\LaravelData\Optional;
 
@@ -82,6 +83,8 @@ final class ApplyProgramPowerSyncCrudAction
             'is_active' => $resolved->is_active,
             'is_archived' => $resolved->is_archived,
             'slug' => $this->assignUniqueSlug((string) $id, $resolved->base_slug),
+            'start_date' => $resolved->start_date,
+            'end_date' => $resolved->end_date,
             'line_1' => $resolved->line_1,
             'line_2' => $resolved->line_2,
             'city' => $resolved->city,
@@ -162,6 +165,20 @@ final class ApplyProgramPowerSyncCrudAction
 
         if (! ($patch->country instanceof Optional)) {
             $program->country = $patch->country;
+        }
+
+        if (! ($patch->start_date instanceof Optional) && $patch->start_date !== null && $patch->start_date !== '') {
+            $program->start_date = CarbonImmutable::parse($patch->start_date)->toDateString();
+        }
+
+        if (! ($patch->end_date instanceof Optional) && $patch->end_date !== null && $patch->end_date !== '') {
+            $program->end_date = CarbonImmutable::parse($patch->end_date)->toDateString();
+        }
+
+        if ($program->start_date->gt($program->end_date)) {
+            throw ValidationException::withMessages([
+                'end_date' => ['The end date must be on or after the start date.'],
+            ]);
         }
 
         if (! ($patch->banner_object_key instanceof Optional)) {

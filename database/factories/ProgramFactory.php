@@ -38,6 +38,8 @@ class ProgramFactory extends Factory
 
                 return 'p-'.Str::lower(substr(str_replace('-', '', $id), 0, 16));
             },
+            'start_date' => now()->startOfMonth()->toDateString(),
+            'end_date' => now()->addMonths(6)->endOfMonth()->toDateString(),
         ];
     }
 
