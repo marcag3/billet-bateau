@@ -73,6 +73,8 @@ export default {
         isArchived: "Archive (absent de l’onglet Actifs)",
         currentBannerCaption:
             "Banniere actuelle du programme. Choisissez un nouveau fichier ci-dessus pour la remplacer.",
+        startDate: "Date de debut du programme",
+        endDate: "Date de fin du programme",
     },
     notFoundPage: {
         title: "Page introuvable",
@@ -87,6 +89,8 @@ export default {
         name: "Nom",
         description: "Description",
         themeColor: "Couleur du theme",
+        startDate: "Date de debut du programme",
+        endDate: "Date de fin du programme",
         addressOptional: "Adresse (optionnelle)",
         line1: "Ligne 1",
         line2: "Ligne 2",
@@ -98,6 +102,9 @@ export default {
         success: "Programme cree.",
         validationRequired: "Ce champ est requis.",
         validationHex: "Utilisez une couleur hexadecimale #RRGGBB.",
+        validationDateYmd: "Utilisez une date au format AAAA-MM-JJ.",
+        validationEndBeforeStart:
+            "La date de fin doit etre le meme jour ou apres la date de debut.",
     },
     sync: {
         syncRequestFailed: "La requete de synchronisation a echoue.",
@@ -129,7 +136,6 @@ export default {
         backToCatalog: "Retour au catalogue",
     },
     publicBooking: {
-        bookTitle: "Reserver une sortie",
         loadOptionsError:
             "Impossible de charger les options de reservation. Reessayez plus tard.",
         noTrips: "Aucune sortie a venir n’est disponible pour le moment.",
@@ -138,8 +144,7 @@ export default {
         stepTickets: "Billets",
         stepContact: "Contact",
         departure: "Depart",
-        remainingSeats: "{count} places restantes",
-        tripProductMeta: "{boat} · {route} · jusqu’a {capacity} passagers",
+        tripAvailabilityColumn: "places disponible",
         continue: "Continuer",
         back: "Retour",
         ticketQuantityLabel: "{title}",

@@ -11,6 +11,11 @@ import { foldUnicodeForProgramSlug } from '../../utilities/program-slug';
 
 export type Translator = (key: string) => string;
 
+const isoYmd = (t: Translator) =>
+    z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/, t('programsCreate.validationDateYmd'));
+
 /**
  * Program list slug field (list UI) — trim, require, lowercase.
  */
@@ -30,14 +35,40 @@ const programAddressObjectSchema = z.object({
     country: z.preprocess(coerceStringInput, z.string().trim()),
 });
 
-function createProgramCreateZodSchema(t: Translator) {
-    return z.object({
-        name: zRequiredTrimmedString(t('programsCreate.validationRequired')),
-        description: z.string(),
-        themeColor: zHexColorSix(t('programsCreate.validationHex')),
-        isActive: z.boolean(),
-        address: programAddressObjectSchema,
+function withProgramDateOrder<T extends z.ZodRawShape>(t: Translator, base: z.ZodObject<T>) {
+    return base.superRefine((data, ctx) => {
+        const rec = data as { startDate?: string; endDate?: string };
+        const start = rec.startDate;
+        const end = rec.endDate;
+        if (
+            typeof start === 'string' &&
+            typeof end === 'string' &&
+            /^\d{4}-\d{2}-\d{2}$/.test(start) &&
+            /^\d{4}-\d{2}-\d{2}$/.test(end) &&
+            end < start
+        ) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: t('programsCreate.validationEndBeforeStart'),
+                path: ['endDate'],
+            });
+        }
     });
+}
+
+function createProgramCreateZodSchema(t: Translator) {
+    return withProgramDateOrder(
+        t,
+        z.object({
+            name: zRequiredTrimmedString(t('programsCreate.validationRequired')),
+            description: z.string(),
+            themeColor: zHexColorSix(t('programsCreate.validationHex')),
+            isActive: z.boolean(),
+            startDate: isoYmd(t),
+            endDate: isoYmd(t),
+            address: programAddressObjectSchema,
+        }),
+    );
 }
 
 export type ProgramCreateFormValues = z.infer<ReturnType<typeof createProgramCreateZodSchema>>;
@@ -50,26 +81,31 @@ export function createProgramCreateFormSchema(t: Translator) {
 }
 
 export function createProgramEditZodSchema(t: Translator) {
-    return z.object({
-        name: zRequiredTrimmedString(t('programsCreate.validationRequired')),
-        description: z.preprocess(coerceStringInput, z.string().trim()),
-        themeColor: z.preprocess(
-            coerceStringInput,
-            zHexColorSix(t('programsCreate.validationHex')).transform((hex) =>
-                normalizeThemeColor(hex),
+    return withProgramDateOrder(
+        t,
+        z.object({
+            name: zRequiredTrimmedString(t('programsCreate.validationRequired')),
+            description: z.preprocess(coerceStringInput, z.string().trim()),
+            themeColor: z.preprocess(
+                coerceStringInput,
+                zHexColorSix(t('programsCreate.validationHex')).transform((hex) =>
+                    normalizeThemeColor(hex),
+                ),
             ),
-        ),
-        slug: z.preprocess((raw) => {
-            const s = coerceStringInput(raw);
-            const folded = foldUnicodeForProgramSlug(s).toLowerCase();
-            return folded
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/(^-|-$)/g, '');
-        }, programSlugSchema(t)),
-        isActive: z.boolean(),
-        isArchived: z.boolean(),
-        address: programAddressObjectSchema,
-    });
+            slug: z.preprocess((raw) => {
+                const s = coerceStringInput(raw);
+                const folded = foldUnicodeForProgramSlug(s).toLowerCase();
+                return folded
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)/g, '');
+            }, programSlugSchema(t)),
+            isActive: z.boolean(),
+            isArchived: z.boolean(),
+            startDate: isoYmd(t),
+            endDate: isoYmd(t),
+            address: programAddressObjectSchema,
+        }),
+    );
 }
 
 export type ProgramEditFormValues = z.infer<ReturnType<typeof createProgramEditZodSchema>>;

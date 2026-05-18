@@ -84,6 +84,39 @@
                     :disable="isSubmitting"
                 />
 
+                <div class="row q-col-gutter-md">
+                    <div class="col-12 col-sm-6">
+                        <q-input
+                            v-model="startDate"
+                            v-bind="startDateProps"
+                            type="date"
+                            outlined
+                            label-slot
+                            :disable="isSubmitting"
+                        >
+                            <template #label>
+                                {{ t("programsEdit.startDate") }}
+                                <span class="text-negative" aria-hidden="true">*</span>
+                            </template>
+                        </q-input>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <q-input
+                            v-model="endDate"
+                            v-bind="endDateProps"
+                            type="date"
+                            outlined
+                            label-slot
+                            :disable="isSubmitting"
+                        >
+                            <template #label>
+                                {{ t("programsEdit.endDate") }}
+                                <span class="text-negative" aria-hidden="true">*</span>
+                            </template>
+                        </q-input>
+                    </div>
+                </div>
+
                 <q-toggle
                     v-model="isActive"
                     v-bind="isActiveProps"
@@ -283,6 +316,8 @@ const { handleSubmit, defineField, isSubmitting, meta, resetForm } =
             slug: "",
             isActive: true,
             isArchived: false,
+            startDate: "",
+            endDate: "",
             address: {
                 line_1: "",
                 line_2: "",
@@ -299,6 +334,8 @@ const [name, nameProps] = quasarField("name");
 const [description, descriptionProps] = quasarField("description");
 const [themeColor, themeColorProps] = quasarField("themeColor");
 const [slug, slugProps] = quasarField("slug");
+const [startDate, startDateProps] = quasarField("startDate");
+const [endDate, endDateProps] = quasarField("endDate");
 const [isActive, isActiveProps] = quasarField("isActive");
 const [isArchived, isArchivedProps] = quasarField("isArchived");
 const [line1, line1Props] = quasarField("address.line_1");
@@ -318,6 +355,14 @@ function programToFormValues(p: ProgramOutput): ProgramEditFormValues {
         slug: String(p.slug ?? "")
             .trim()
             .toLowerCase(),
+        startDate:
+            typeof p.start_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.start_date)
+                ? p.start_date
+                : "",
+        endDate:
+            typeof p.end_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.end_date)
+                ? p.end_date
+                : "",
         isActive: p.is_active ?? true,
         isArchived: p.is_archived ?? false,
         address: {
@@ -338,6 +383,8 @@ type ProgramDraftPatch = {
     slug: string;
     is_active: number;
     is_archived: number;
+    start_date: string;
+    end_date: string;
     line_1: string | null;
     line_2: string | null;
     city: string | null;
@@ -354,6 +401,8 @@ function toProgramDraftPatch(values: ProgramEditFormValues): ProgramDraftPatch {
         slug: values.slug,
         is_active: values.isActive ? 1 : 0,
         is_archived: values.isArchived ? 1 : 0,
+        start_date: values.startDate,
+        end_date: values.endDate,
         line_1: addressFields.line_1,
         line_2: addressFields.line_2,
         city: addressFields.city,

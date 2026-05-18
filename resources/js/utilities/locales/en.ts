@@ -70,6 +70,8 @@ export default {
         isArchived: "Archived (hidden from Active tab)",
         currentBannerCaption:
             "Current program banner. Choose a new file above to replace it.",
+        startDate: "Program start date",
+        endDate: "Program end date",
     },
     notFoundPage: {
         title: "Page not found",
@@ -84,6 +86,8 @@ export default {
         name: "Name",
         description: "Description",
         themeColor: "Theme color",
+        startDate: "Program start date",
+        endDate: "Program end date",
         addressOptional: "Address (optional)",
         line1: "Address line 1",
         line2: "Address line 2",
@@ -95,6 +99,8 @@ export default {
         success: "Program created.",
         validationRequired: "This field is required.",
         validationHex: "Use a hex color like #RRGGBB.",
+        validationDateYmd: "Use a calendar date YYYY-MM-DD.",
+        validationEndBeforeStart: "End date must be on or after the start date.",
     },
     sync: {
         syncRequestFailed: "Sync request failed.",
@@ -125,7 +131,6 @@ export default {
         backToCatalog: "Back to catalog",
     },
     publicBooking: {
-        bookTitle: "Book a trip",
         loadOptionsError: "Unable to load booking options. Please try again later.",
         noTrips: "No upcoming trips are available for booking yet.",
         noTicketTypes: "No ticket types are available for this program.",
@@ -133,8 +138,7 @@ export default {
         stepTickets: "Tickets",
         stepContact: "Contact",
         departure: "Departure",
-        remainingSeats: "{count} seats left",
-        tripProductMeta: "{boat} · {route} · up to {capacity} passengers",
+        tripAvailabilityColumn: "Places available",
         continue: "Continue",
         back: "Back",
         ticketQuantityLabel: "{title}",
