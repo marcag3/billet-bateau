@@ -174,6 +174,7 @@ export default {
         stepContact: "Contact",
         departure: "Depart",
         tripPlacesAvailability: "{remaining}/{total} places disponibles",
+        tripAvailabilityColumn: "Places disponibles",
         continue: "Continuer",
         back: "Retour",
         ticketQuantityLabel: "{title}",
