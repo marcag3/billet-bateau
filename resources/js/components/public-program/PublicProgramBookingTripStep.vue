@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PublicProgramProductFilterSelect from './PublicProgramProductFilter.vue';
 import PublicProgramBookingDateFilter from './PublicProgramBookingDateFilter.vue';
@@ -70,8 +70,8 @@ const { t, locale } = useI18n();
 
 const bookableTripOptions = computed(() => props.tripOptions.filter(publicBookingTripHasAvailability));
 
-const selectedProductId = ref('');
-const selectedDateYmd = ref('');
+const selectedProductId = defineModel<string>('selectedProductId', { required: true });
+const selectedDateYmd = defineModel<string>('selectedDateYmd', { required: true });
 
 function pickTripBannerUrl(trip: BookingTripOption): string | null {
     const product = trip.product_banner_url?.trim() ?? '';
