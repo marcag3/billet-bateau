@@ -14,7 +14,7 @@ class PublicProgramController extends Controller
     {
         $programs = Program::query()
             ->active()
-            ->where('is_archived', false)
+            ->whereDate('end_date', '>=', now()->toDateString())
             ->orderBy('name')
             ->get();
 

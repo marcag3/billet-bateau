@@ -12,7 +12,6 @@ describe('Program edit schema normalization', () => {
             themeColor: '#a1b2c3',
             slug: '  Bôat  Program  ',
             isActive: true,
-            isArchived: false,
             startDate: '2026-06-01',
             endDate: '2026-06-30',
             bookingQuestionsText: '  First 3 characters of postal code  ',

@@ -51,6 +51,17 @@ export function formatLocalDateYmd(d: Date): string {
 }
 
 /**
+ * Program is archived when its season end date is strictly before today (local calendar).
+ */
+export function isProgramArchivedByEndDateYmd(endDate: string | null | undefined): boolean {
+    if (typeof endDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+        return false;
+    }
+    const today = formatLocalDateYmd(new Date());
+    return endDate < today;
+}
+
+/**
  * Default program season: first day of current month through last day of the month six months ahead (matches server-side factory intent).
  */
 export function defaultProgramDateRange(): { startDate: string; endDate: string } {

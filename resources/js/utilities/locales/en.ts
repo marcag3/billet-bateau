@@ -61,13 +61,12 @@ export default {
     programsEdit: {
         title: "Edit program",
         subtitle:
-            "Update details, URL slug, public visibility, and archive state. Changes sync through PowerSync; new images upload to the server.",
+            "Update details, URL slug, dates, and public visibility. The Archived tab lists programs whose end date is before today. Changes sync through PowerSync; new images upload to the server.",
         submit: "Save changes",
         success: "Program updated.",
         notFound:
             "This program could not be loaded. It may have been removed or you may not have access.",
         backToList: "Back to programs",
-        isArchived: "Archived (hidden from Active tab)",
         currentBannerCaption:
             "Current program banner. Choose a new file above to replace it.",
         startDate: "Program start date",

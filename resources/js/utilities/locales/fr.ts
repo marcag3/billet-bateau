@@ -64,13 +64,12 @@ export default {
     programsEdit: {
         title: "Modifier le programme",
         subtitle:
-            "Mettez a jour les details, l’identifiant d’URL, la visibilite publique et l’archivage. Les changements se synchronisent via PowerSync ; les nouvelles images sont envoyees au serveur.",
+            "Mettez a jour les details, l’identifiant d’URL, les dates et la visibilite publique. L’onglet Archive liste les programmes dont la date de fin est avant aujourd’hui. Les changements se synchronisent via PowerSync ; les nouvelles images sont envoyees au serveur.",
         submit: "Enregistrer",
         success: "Programme mis a jour.",
         notFound:
             "Impossible de charger ce programme. Il a peut-etre ete supprime ou vous n’y avez pas acces.",
         backToList: "Retour aux programmes",
-        isArchived: "Archive (absent de l’onglet Actifs)",
         currentBannerCaption:
             "Banniere actuelle du programme. Choisissez un nouveau fichier ci-dessus pour la remplacer.",
         startDate: "Date de debut du programme",

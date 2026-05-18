@@ -325,7 +325,6 @@ const onFormSubmit = handleSubmit(async (values: ProgramCreateFormValues) => {
                     : null,
             theme_color: themeColor,
             is_active: values.isActive ? 1 : 0,
-            is_archived: 0,
             slug: buildInitialProgramSlug(values.name, id),
             start_date: values.startDate,
             end_date: values.endDate,

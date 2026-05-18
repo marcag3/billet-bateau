@@ -54,14 +54,16 @@ class PublicProgramApiTest extends TestCase
 
         $listed = Program::factory()->withOwner($u)->create([
             'is_active' => true,
-            'is_archived' => false,
             'name' => 'Listed',
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addMonth()->toDateString(),
         ]);
 
         Program::factory()->withOwner($u)->create([
             'is_active' => true,
-            'is_archived' => true,
-            'name' => 'Archived only',
+            'name' => 'Past season',
+            'start_date' => now()->subMonths(6)->toDateString(),
+            'end_date' => now()->subDay()->toDateString(),
         ]);
 
         $r = $this->getJson('/api/public/programs');
@@ -75,9 +77,10 @@ class PublicProgramApiTest extends TestCase
         $u = User::factory()->create();
         Program::factory()->withOwner($u)->create([
             'is_active' => true,
-            'is_archived' => true,
             'name' => 'Gone',
             'slug' => 'archived-slug',
+            'start_date' => now()->subMonths(6)->toDateString(),
+            'end_date' => now()->subDay()->toDateString(),
         ]);
 
         $this->getJson('/api/public/programs/archived-slug')

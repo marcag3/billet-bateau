@@ -101,7 +101,6 @@ export function createProgramEditZodSchema(t: Translator) {
                     .replace(/(^-|-$)/g, '');
             }, programSlugSchema(t)),
             isActive: z.boolean(),
-            isArchived: z.boolean(),
             startDate: isoYmd(t),
             endDate: isoYmd(t),
             bookingQuestionsText: z.preprocess(coerceStringInput, z.string()),

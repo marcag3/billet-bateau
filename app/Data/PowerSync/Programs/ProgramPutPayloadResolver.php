@@ -21,7 +21,6 @@ final class ProgramPutPayloadResolver
      *     description: ?string,
      *     theme_color: string,
      *     is_active: bool,
-     *     is_archived: bool,
      *     base_slug: string,
      *     line_1: ?string,
      *     line_2: ?string,
@@ -58,7 +57,6 @@ final class ProgramPutPayloadResolver
         }
 
         $isActive = (bool) PowerSyncOptional::resolve($dto->is_active, $existing?->is_active ?? false, false);
-        $isArchived = (bool) PowerSyncOptional::resolve($dto->is_archived, $existing?->is_archived ?? false, false);
 
         $displayName = PowerSyncDisplayName::resolve($nameMerged, $existingName);
 
@@ -104,7 +102,6 @@ final class ProgramPutPayloadResolver
                 'description' => $description,
                 'theme_color' => $themeColor,
                 'is_active' => $isActive,
-                'is_archived' => $isArchived,
                 'base_slug' => $baseSlug,
                 'line_1' => $line1,
                 'line_2' => $line2,
@@ -136,7 +133,6 @@ final class ProgramPutPayloadResolver
             'description' => $description,
             'theme_color' => $themeColor,
             'is_active' => $isActive,
-            'is_archived' => $isArchived,
             'base_slug' => $baseSlug,
             'line_1' => $line1,
             'line_2' => $line2,

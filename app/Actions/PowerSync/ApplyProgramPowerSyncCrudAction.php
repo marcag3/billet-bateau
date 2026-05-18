@@ -81,7 +81,6 @@ final class ApplyProgramPowerSyncCrudAction
             'description' => $resolved->description,
             'theme_color' => $resolved->theme_color,
             'is_active' => $resolved->is_active,
-            'is_archived' => $resolved->is_archived,
             'slug' => $this->assignUniqueSlug((string) $id, $resolved->base_slug),
             'start_date' => $resolved->start_date,
             'end_date' => $resolved->end_date,
@@ -136,10 +135,6 @@ final class ApplyProgramPowerSyncCrudAction
 
         if (! ($patch->is_active instanceof Optional) && $patch->is_active !== null) {
             $program->is_active = (bool) $patch->is_active;
-        }
-
-        if (! ($patch->is_archived instanceof Optional) && $patch->is_archived !== null) {
-            $program->is_archived = (bool) $patch->is_archived;
         }
 
         if (! ($patch->slug instanceof Optional) && $patch->slug !== null) {

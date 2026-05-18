@@ -32,7 +32,6 @@ streams:
           description,
           theme_color,
           is_active,
-          is_archived,
           slug,
           booking_questions::text AS booking_questions,
           start_date,

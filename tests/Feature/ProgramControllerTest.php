@@ -60,7 +60,6 @@ class ProgramControllerTest extends TestCase
             'theme_color' => '#AABBCC',
             'slug' => 'harbor-week',
             'is_active' => true,
-            'is_archived' => false,
             'start_date' => '2026-06-01',
             'end_date' => '2026-09-30',
         ]);

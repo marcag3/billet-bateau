@@ -41,7 +41,6 @@ class PowerSyncUploadProgramTest extends TestCase
             'name' => 'Dockside',
             'theme_color' => '#FF00AA',
             'is_active' => 0,
-            'is_archived' => 0,
             'slug' => 'dockside',
             'start_date' => $start,
             'end_date' => $end,

@@ -18,7 +18,6 @@ export const programSchema = z.object({
         .nullable()
         .default(null),
     is_active: z.number().int().transform((v) => v === 1).nullable().default(true),
-    is_archived: z.number().int().transform((v) => v === 1).nullable().default(false),
     slug: z.string()
         .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be URL-safe (e.g. "my-program")')
         .nullable()

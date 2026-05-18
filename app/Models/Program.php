@@ -30,7 +30,6 @@ class Program extends Model
         'description',
         'theme_color',
         'is_active',
-        'is_archived',
         'slug',
         'booking_questions',
         'line_1',
@@ -53,7 +52,6 @@ class Program extends Model
     {
         return [
             'is_active' => 'boolean',
-            'is_archived' => 'boolean',
             'banner_uploaded_at' => 'datetime',
             'start_date' => 'date',
             'end_date' => 'date',
@@ -163,7 +161,7 @@ class Program extends Model
 
         return static::query()
             ->where($field, $value)
-            ->where('is_archived', false)
+            ->whereDate('end_date', '>=', now()->toDateString())
             ->first();
     }
 

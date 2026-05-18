@@ -30,8 +30,6 @@ final class ProgramPutData extends Data
         public string|Optional|null $theme_color = new Optional,
         #[WithCast(LooseBooleanCast::class)]
         public bool|int|string|Optional|null $is_active = new Optional,
-        #[WithCast(LooseBooleanCast::class)]
-        public bool|int|string|Optional|null $is_archived = new Optional,
         #[WithCast(SlugInputCast::class)]
         public string|Optional|null $slug = new Optional,
         public string|Optional|null $start_date = new Optional,
@@ -66,7 +64,6 @@ final class ProgramPutData extends Data
             'description' => ['sometimes', 'nullable', 'string'],
             'theme_color' => ['sometimes', 'nullable', 'string', 'regex:/^#([0-9a-fA-F]{6})$/'],
             'is_active' => ['sometimes', 'nullable', 'boolean'],
-            'is_archived' => ['sometimes', 'nullable', 'boolean'],
             'slug' => ['sometimes', 'nullable', 'string', 'max:255'],
             'start_date' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
             'end_date' => ['sometimes', 'nullable', 'date_format:Y-m-d'],

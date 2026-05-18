@@ -144,13 +144,6 @@
                     :disable="isSubmitting"
                 />
 
-                <q-toggle
-                    v-model="isArchived"
-                    v-bind="isArchivedProps"
-                    :label="t('programsEdit.isArchived')"
-                    :disable="isSubmitting"
-                />
-
                 <q-expansion-item
                     :label="t('programsCreate.addressOptional')"
                     icon="place"
@@ -390,7 +383,6 @@ const { handleSubmit, defineField, isSubmitting, meta, resetForm } =
             themeColor: "#08758A",
             slug: "",
             isActive: true,
-            isArchived: false,
             startDate: "",
             endDate: "",
             bookingQuestionsText: "",
@@ -413,7 +405,6 @@ const [slug, slugProps] = quasarField("slug");
 const [startDate, startDateProps] = quasarField("startDate");
 const [endDate, endDateProps] = quasarField("endDate");
 const [isActive, isActiveProps] = quasarField("isActive");
-const [isArchived, isArchivedProps] = quasarField("isArchived");
 const [line1, line1Props] = quasarField("address.line_1");
 const [line2, line2Props] = quasarField("address.line_2");
 const [city, cityProps] = quasarField("address.city");
@@ -442,7 +433,6 @@ function programToFormValues(p: ProgramOutput): ProgramEditFormValues {
                 : "",
         bookingQuestionsText: parseProgramBookingQuestions(p.booking_questions).join("\n"),
         isActive: p.is_active ?? true,
-        isArchived: p.is_archived ?? false,
         address: {
             line_1: typeof p.line_1 === "string" ? String(p.line_1) : "",
             line_2: typeof p.line_2 === "string" ? String(p.line_2) : "",
@@ -460,7 +450,6 @@ type ProgramDraftPatch = {
     theme_color: string;
     slug: string;
     is_active: number;
-    is_archived: number;
     start_date: string;
     end_date: string;
     booking_questions: string;
@@ -506,7 +495,6 @@ function toProgramDraftPatch(values: ProgramEditFormValues, bookingQuestions: st
         theme_color: values.themeColor,
         slug: values.slug,
         is_active: values.isActive ? 1 : 0,
-        is_archived: values.isArchived ? 1 : 0,
         start_date: values.startDate,
         end_date: values.endDate,
         booking_questions: JSON.stringify(bookingQuestions),

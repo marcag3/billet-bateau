@@ -39,7 +39,6 @@ class ProgramController extends Controller
                     'description' => $data->description,
                     'theme_color' => $themeColor,
                     'is_active' => $data->is_active,
-                    'is_archived' => (bool) ($data->is_archived ?? false),
                     'slug' => $data->slug,
                     'start_date' => $data->start_date,
                     'end_date' => $data->end_date,

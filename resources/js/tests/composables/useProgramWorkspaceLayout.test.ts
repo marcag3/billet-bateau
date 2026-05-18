@@ -125,7 +125,7 @@ describe("useProgramWorkspaceLayout redirect guard", () => {
             {
                 id: "other-program-456",
                 name: "Other Program",
-                is_archived: false,
+                end_date: "2099-01-01",
             },
         ];
 
@@ -140,7 +140,7 @@ describe("useProgramWorkspaceLayout redirect guard", () => {
         mockProgramsStatus.value = "ready";
         mockProgramsLoading.value = false;
         mockProgramsData.value = [
-            { id: "test-program-123", name: "My Program", is_archived: false },
+            { id: "test-program-123", name: "My Program", end_date: "2099-01-01" },
         ];
 
         callComposable();
@@ -155,7 +155,7 @@ describe("useProgramWorkspaceLayout redirect guard", () => {
         mockProgramsLoading.value = false;
         mockRoute.params = { programId: "test-program-123" };
         mockProgramsData.value = [
-            { id: "test-program-123", name: "Archived", is_archived: true },
+            { id: "test-program-123", name: "Archived", end_date: "2000-01-01" },
         ];
 
         callComposable();
@@ -170,7 +170,7 @@ describe("useProgramWorkspaceLayout redirect guard", () => {
         mockProgramsLoading.value = false;
         mockRoute.params = { programId: "test-program-abc" };
         mockProgramsData.value = [
-            { id: "TEST-PROGRAM-ABC", name: "My Program", is_archived: false },
+            { id: "TEST-PROGRAM-ABC", name: "My Program", end_date: "2099-01-01" },
         ];
 
         callComposable();
@@ -187,7 +187,7 @@ describe("useProgramWorkspaceLayout redirect guard", () => {
             {
                 id: "other-program-456",
                 name: "Other Program",
-                is_archived: false,
+                end_date: "2099-01-01",
             },
         ];
 

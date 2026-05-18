@@ -165,6 +165,7 @@ import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 const powersync = getAppPowerSyncContext();
 import type { ProgramOutput } from "../powersync/programs.collection";
 import { mediaObjectPublicUrl } from "../utilities/media-url";
+import { isProgramArchivedByEndDateYmd } from "../utilities/program-helpers";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
@@ -202,11 +203,19 @@ const filteredPrograms = computed((): ProgramOutput[] => {
     const list = programs.value ?? [];
     if (programTab.value === "active") {
         return list.filter(
-            (p) => p != null && !p.is_archived,
+            (p) =>
+                p != null &&
+                !isProgramArchivedByEndDateYmd(
+                    typeof p.end_date === "string" ? p.end_date : undefined,
+                ),
         ) as unknown as ProgramOutput[];
     }
     return list.filter(
-        (p) => p != null && p.is_archived,
+        (p) =>
+            p != null &&
+            isProgramArchivedByEndDateYmd(
+                typeof p.end_date === "string" ? p.end_date : undefined,
+            ),
     ) as unknown as ProgramOutput[];
 });
 
