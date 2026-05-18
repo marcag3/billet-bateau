@@ -211,6 +211,14 @@ const routes: RouteRecordRaw[] = [
         },
     },
     {
+        path: "/invite/:token",
+        name: "programs.inviteAccept",
+        component: () => import("../pages/AppProgramInviteAcceptPage.vue"),
+        meta: {
+            requiresAuth: false,
+        },
+    },
+    {
         path: "/:pathMatch(.*)*",
         name: "not-found",
         component: () => import("../pages/AppNotFoundPage.vue"),

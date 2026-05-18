@@ -132,6 +132,14 @@ class Program extends Model
         return $this->hasMany(Booking::class, 'program_id');
     }
 
+    /**
+     * @return HasMany<ProgramInvitation, $this>
+     */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(ProgramInvitation::class, 'program_id');
+    }
+
     public function ticketTypes(): HasMany
     {
         return $this->hasMany(TicketType::class, 'program_id');

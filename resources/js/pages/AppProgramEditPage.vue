@@ -178,6 +178,47 @@
                 </div>
             </q-form>
         </AppCardSection>
+
+        <AppCardSection
+            v-if="eligibilityLoaded && canInviteAdmins && !showNotFound"
+            :label="t('programsInvite.editSectionTitle')"
+            class="q-mt-lg"
+        >
+            <p class="text-body2 text-grey-8">
+                {{ t("programsInvite.editSectionSubtitle") }}
+            </p>
+            <q-form class="q-gutter-md" @submit.prevent="onInviteSubmit">
+                <AppAlertBanner v-if="inviteError.length > 0" variant="error">
+                    {{ inviteError }}
+                </AppAlertBanner>
+                <AppAlertBanner v-if="inviteSuccess" variant="info">
+                    {{ t("programsInvite.inviteSent") }}
+                </AppAlertBanner>
+                <q-input
+                    v-model="inviteEmail"
+                    type="email"
+                    outlined
+                    :label="t('programsInvite.emailLabel')"
+                    :disable="inviteSubmitting"
+                    autocomplete="off"
+                />
+                <q-btn
+                    color="primary"
+                    type="submit"
+                    :loading="inviteSubmitting"
+                    :disable="inviteSubmitting"
+                    :label="t('programsInvite.sendInvite')"
+                />
+            </q-form>
+        </AppCardSection>
+
+        <AppAlertBanner
+            v-else-if="eligibilityLoaded && !canInviteAdmins && !showNotFound"
+            variant="info"
+            class="q-mt-lg"
+        >
+            {{ t("programsInvite.notOwner") }}
+        </AppAlertBanner>
     </q-page>
 </template>
 
@@ -207,11 +248,17 @@ import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppImageUploadField from "../components/molecules/AppImageUploadField.vue";
+import {
+    fetchInvitationEligibility,
+    sendProgramAdminInvitation,
+} from "../models/programs/program-invitations.api";
+import { useAuthStore } from "../store/auth.store";
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const $q = useQuasar();
+const authStore = useAuthStore();
 const programsCollection = powersync.collections.programs;
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
@@ -226,6 +273,13 @@ const { data: programs } = useLiveQuery(
 );
 
 const errorMessage = ref("");
+
+const eligibilityLoaded = ref(false);
+const canInviteAdmins = ref(false);
+const inviteEmail = ref("");
+const inviteSubmitting = ref(false);
+const inviteError = ref("");
+const inviteSuccess = ref(false);
 
 const imageUploadField = ref<InstanceType<typeof AppImageUploadField> | null>(
     null,
@@ -363,6 +417,42 @@ function toProgramDraftPatch(values: ProgramEditFormValues): ProgramDraftPatch {
 }
 
 watch(
+    [
+        programId,
+        currentProgram,
+        hasBootstrapped,
+        () => authStore.isAuthenticated,
+    ],
+    async () => {
+        eligibilityLoaded.value = false;
+        canInviteAdmins.value = false;
+        inviteSuccess.value = false;
+        inviteError.value = "";
+
+        const id = programId.value;
+        if (
+            !authStore.isAuthenticated ||
+            id.length === 0 ||
+            !hasBootstrapped.value ||
+            currentProgram.value === null
+        ) {
+            eligibilityLoaded.value = true;
+            return;
+        }
+
+        try {
+            const eligibility = await fetchInvitationEligibility(id);
+            canInviteAdmins.value = eligibility.can_invite_admins;
+        } catch {
+            canInviteAdmins.value = false;
+        } finally {
+            eligibilityLoaded.value = true;
+        }
+    },
+    { immediate: true },
+);
+
+watch(
     [programId, currentProgram],
     async ([id, p], previousTuple) => {
         if (id.length === 0) {
@@ -390,6 +480,35 @@ watch(
 
 function goToProgramsList() {
     void router.push({ name: "programs.list" });
+}
+
+async function onInviteSubmit() {
+    inviteError.value = "";
+    inviteSuccess.value = false;
+
+    const id = programId.value;
+    const email = inviteEmail.value.trim();
+    if (id.length === 0) {
+        return;
+    }
+    if (email.length === 0) {
+        inviteError.value = t("programsInvite.invalidEmail");
+        return;
+    }
+
+    inviteSubmitting.value = true;
+    try {
+        await sendProgramAdminInvitation(id, email);
+        inviteSuccess.value = true;
+        inviteEmail.value = "";
+    } catch (error) {
+        inviteError.value =
+            error instanceof Error
+                ? error.message
+                : t("programsInvite.sendFailed");
+    } finally {
+        inviteSubmitting.value = false;
+    }
 }
 
 const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {

@@ -74,6 +74,42 @@ export default {
         currentBannerCaption:
             "Banniere actuelle du programme. Choisissez un nouveau fichier ci-dessus pour la remplacer.",
     },
+    programsInvite: {
+        editSectionTitle: "Inviter des administrateurs",
+        editSectionSubtitle:
+            "Seul le proprietaire du programme peut envoyer des invitations. Les personnes invitees deviennent administratrices du programme.",
+        emailLabel: "Adresse courriel",
+        sendInvite: "Envoyer l'invitation",
+        inviteSent: "Invitation envoyee.",
+        notOwner: "Seul le proprietaire du programme peut envoyer des invitations.",
+        loadEligibilityFailed:
+            "Impossible de charger les permissions d'invitation.",
+        invalidEmail: "Entrez une adresse courriel valide.",
+        acceptTitle: "Invitation au programme",
+        acceptSubtitle:
+            "Vous avez ete invite a aider a gerer un programme.",
+        programLabel: "Programme",
+        invitedEmailLabel: "Courriel invite",
+        expiresLabel: "Expire le",
+        invalidInvite: "Ce lien d'invitation n'est pas valide.",
+        expiredInvite: "Cette invitation a expire.",
+        revokedInvite: "Cette invitation n'est plus valide.",
+        acceptedInvite: "Cette invitation a deja ete acceptee.",
+        wrongAccount:
+            "Vous etes connecte avec un autre compte. Deconnectez-vous, puis connectez-vous avec le courriel invite ou creez un compte depuis cette page.",
+        signOut: "Se deconnecter",
+        goToSignIn: "Se connecter",
+        createAccountTitle: "Creer votre compte",
+        yourName: "Votre nom",
+        password: "Mot de passe",
+        confirmPassword: "Confirmer le mot de passe",
+        acceptButton: "Accepter l'invitation",
+        accepting: "Acceptation…",
+        loadFailed: "Impossible de charger les details de l'invitation.",
+        acceptFailed: "Impossible d'accepter l'invitation.",
+        sendFailed: "Impossible d'envoyer l'invitation.",
+        fieldRequired: "Ce champ est requis.",
+    },
     notFoundPage: {
         title: "Page introuvable",
         description: "Cette page n'existe pas ou le lien est incorrect.",
@@ -129,7 +165,6 @@ export default {
         backToCatalog: "Retour au catalogue",
     },
     publicBooking: {
-        bookTitle: "Reserver une sortie",
         loadOptionsError:
             "Impossible de charger les options de reservation. Reessayez plus tard.",
         noTrips: "Aucune sortie a venir n’est disponible pour le moment.",
@@ -138,8 +173,7 @@ export default {
         stepTickets: "Billets",
         stepContact: "Contact",
         departure: "Depart",
-        remainingSeats: "{count} places restantes",
-        tripProductMeta: "{boat} · {route} · jusqu’a {capacity} passagers",
+        tripPlacesAvailability: "{remaining}/{total} places disponibles",
         continue: "Continuer",
         back: "Retour",
         ticketQuantityLabel: "{title}",
