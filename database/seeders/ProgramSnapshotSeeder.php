@@ -53,7 +53,7 @@ class ProgramSnapshotSeeder extends Seeder
                 'city' => null,
                 'postal_code' => null,
                 'country' => null,
-                'banner_object_key' => 'uploads/01KR9ZTZ1Y35EPSZYE2A92S7HW.png',
+                'banner_object_key' => 'uploads/01KRWSMB1KCBBKMGK04R0NDWFB.webp',
                 'banner_mime_type' => 'image/png',
                 'banner_size_bytes' => 12988,
                 'banner_etag' => '48b7bdb004b320901826699f0d030161',
