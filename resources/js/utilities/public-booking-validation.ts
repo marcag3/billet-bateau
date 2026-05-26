@@ -27,9 +27,14 @@ export function validatePublicBookingTickets(input: {
     let anySelected = false;
     let totalSelected = 0;
 
+    const quantityByTicketTypeId = new Map<string, number>();
+    const ticketTypeById = new Map<string, BookingTicketTypeOption>();
+
     for (const ticketTypeOption of ticketTypeOptions) {
         const ticketTypeId = String(ticketTypeOption.id);
+        ticketTypeById.set(ticketTypeId, ticketTypeOption);
         const quantity = normalizePublicBookingTicketQuantity(ticketQuantities[ticketTypeId]);
+        quantityByTicketTypeId.set(ticketTypeId, quantity);
         totalSelected += quantity;
 
         if (quantity <= 0) {
@@ -67,6 +72,53 @@ export function validatePublicBookingTickets(input: {
             totalSelected,
             canContinue: false,
         };
+    }
+
+    for (const ticketTypeOption of ticketTypeOptions) {
+        const dependsOnTicketTypeId = ticketTypeOption.depends_on_ticket_type_id;
+        const maxPerReferenceTicket = ticketTypeOption.max_per_reference_ticket;
+
+        if (dependsOnTicketTypeId === null || maxPerReferenceTicket === null) {
+            continue;
+        }
+
+        const dependentTicketTypeId = String(ticketTypeOption.id);
+        const dependentQuantity = quantityByTicketTypeId.get(dependentTicketTypeId) ?? 0;
+
+        if (dependentQuantity <= 0) {
+            continue;
+        }
+
+        const referenceTicketType = ticketTypeById.get(String(dependsOnTicketTypeId));
+        const referenceQuantity = quantityByTicketTypeId.get(String(dependsOnTicketTypeId)) ?? 0;
+        const referenceTitle = referenceTicketType?.title ?? String(dependsOnTicketTypeId);
+
+        if (referenceQuantity <= 0) {
+            errors[dependentTicketTypeId] = t('publicBooking.dependencyRequiresReference', {
+                reference: referenceTitle,
+                dependent: ticketTypeOption.title,
+            });
+            return {
+                errors,
+                totalSelected,
+                canContinue: false,
+            };
+        }
+
+        const allowedDependentQuantity = referenceQuantity * maxPerReferenceTicket;
+
+        if (dependentQuantity > allowedDependentQuantity) {
+            errors[dependentTicketTypeId] = t('publicBooking.dependencyExceedsMax', {
+                max: String(maxPerReferenceTicket),
+                dependent: ticketTypeOption.title,
+                reference: referenceTitle,
+            });
+            return {
+                errors,
+                totalSelected,
+                canContinue: false,
+            };
+        }
     }
 
     if (selectedTrip === undefined) {

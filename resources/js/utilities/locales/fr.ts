@@ -200,6 +200,8 @@ export default {
         totalExceedsTrip:
             "Vous avez sélectionné plus de billets qu’il ne reste de places sur cette sortie.",
         selectAtLeastOneTicket: "Sélectionnez au moins un billet.",
+        dependencyRequiresReference: "Selectionnez au moins un billet {reference} avant d'ajouter des billets {dependent}.",
+        dependencyExceedsMax: "Vous pouvez selectionner au maximum {max} billet(s) {dependent} par billet {reference}.",
         selectTripFirst: "Choisissez une sortie pour continuer.",
         contactName: "Nom du contact",
         contactEmail: "Courriel du contact",
@@ -457,6 +459,10 @@ export default {
         payWhatYouCan: "Prix libre",
         minPerPurchase: "Minimum par achat",
         maxPerPurchase: "Maximum par achat (optionnel)",
+        dependsOnTicketType: "Depend de type de billet (optionnel)",
+        dependsOnTicketTypeHint: "Limite ce type de billet en fonction d’un autre type dans la reservation.",
+        maxPerReferenceTicket: "Max par billet de reference (optionnel)",
+        maxPerReferenceTicketHint: "Maximum de ce type de billet autorise par billet de reference selectionne.",
         empty: "Aucun type de billet. Ajoutez-en un pour les sorties.",
         created: "Type de billet enregistre.",
         changesSaved: "Type de billet mis a jour.",
@@ -469,10 +475,15 @@ export default {
         validationTitleRequired: "Le titre est obligatoire.",
         validationMaxGteMin:
             "Le maximum doit etre superieur ou egal au minimum.",
+        validationDependencyPairRequired:
+            "Selectionnez un type de billet de reference et un maximum par reference, ou laissez les deux vides.",
+        validationDependencySelfReference:
+            "Un type de billet ne peut pas dependre de lui-meme.",
         summaryPwyc: "Prix libre",
         summaryPrice: "{price}",
         summaryMinMax: "Min {min} · Max {max}",
         summaryMinMaxUnlimited: "Min {min} · Max illimite",
+        summaryDependency: "Max {max} par {reference}",
     },
     boatTypesList: {
         title: "Types de bateau",

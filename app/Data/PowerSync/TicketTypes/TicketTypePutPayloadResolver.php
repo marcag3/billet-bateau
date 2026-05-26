@@ -16,7 +16,9 @@ use Spatie\LaravelData\Optional;
  *     price_cents: int|null,
  *     is_pay_what_you_can: bool,
  *     min_per_purchase: int,
- *     max_per_purchase: int|null
+ *     max_per_purchase: int|null,
+ *     depends_on_ticket_type_id: string|null,
+ *     max_per_reference_ticket: int|null
  * }
  */
 final class TicketTypePutPayloadResolver
@@ -61,6 +63,12 @@ final class TicketTypePutPayloadResolver
             : (bool) $dto->is_pay_what_you_can;
         $minPerPurchase = $dto->min_per_purchase instanceof Optional ? ($existing?->min_per_purchase ?? 0) : $dto->min_per_purchase;
         $maxPerPurchase = $dto->max_per_purchase instanceof Optional ? $existing?->max_per_purchase : $dto->max_per_purchase;
+        $dependsOnTicketTypeId = $dto->depends_on_ticket_type_id instanceof Optional
+            ? $existing?->depends_on_ticket_type_id
+            : $dto->depends_on_ticket_type_id;
+        $maxPerReferenceTicket = $dto->max_per_reference_ticket instanceof Optional
+            ? $existing?->max_per_reference_ticket
+            : $dto->max_per_reference_ticket;
 
         if ($minPerPurchase === null) {
             $minPerPurchase = 0;
@@ -73,6 +81,10 @@ final class TicketTypePutPayloadResolver
             'is_pay_what_you_can' => $isPayWhatYouCan,
             'min_per_purchase' => (int) $minPerPurchase,
             'max_per_purchase' => $maxPerPurchase,
+            'depends_on_ticket_type_id' => $dependsOnTicketTypeId !== null && $dependsOnTicketTypeId !== ''
+                ? (string) $dependsOnTicketTypeId
+                : null,
+            'max_per_reference_ticket' => $maxPerReferenceTicket !== null ? (int) $maxPerReferenceTicket : null,
         ];
     }
 }

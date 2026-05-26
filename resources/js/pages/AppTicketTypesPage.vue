@@ -136,6 +136,21 @@ function summaryLine(row: TicketTypeOutput): string {
             }),
         );
     }
+
+    const dependsOnId = String(row.depends_on_ticket_type_id ?? "").trim();
+    const maxPerReference = row.max_per_reference_ticket;
+    if (dependsOnId.length > 0 && maxPerReference != null) {
+        const referenceTitle = (ticketTypes.value ?? [])
+            .find((candidate) => String(candidate.id ?? "") === dependsOnId)
+            ?.title;
+        parts.push(
+            t("ticketTypesList.summaryDependency", {
+                max: String(maxPerReference),
+                reference: String(referenceTitle ?? dependsOnId),
+            }),
+        );
+    }
+
     return parts.join(" · ");
 }
 

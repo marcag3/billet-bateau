@@ -24,6 +24,8 @@ class TicketType extends Model
         'is_pay_what_you_can',
         'min_per_purchase',
         'max_per_purchase',
+        'depends_on_ticket_type_id',
+        'max_per_reference_ticket',
         'created_at',
         'updated_at',
     ];
@@ -35,6 +37,7 @@ class TicketType extends Model
             'is_pay_what_you_can' => 'boolean',
             'min_per_purchase' => 'integer',
             'max_per_purchase' => 'integer',
+            'max_per_reference_ticket' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -43,6 +46,11 @@ class TicketType extends Model
     public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class, 'program_id');
+    }
+
+    public function dependsOnTicketType(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'depends_on_ticket_type_id');
     }
 
     public function bookingTickets(): HasMany

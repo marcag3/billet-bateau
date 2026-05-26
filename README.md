@@ -30,7 +30,7 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 - Water routes (*Parcours*): CRUD + sync; trace capture via **GeoJSON textarea** in admin (not an interactive map editor yet)
 - Trips (*Sorties*): concrete bookable rows (`boat_type_id`, `water_route_id`, `scheduled_departure_at`, `capacity`, optional `template_day_slot_id` for provenance only — **not** synced from template edits). PowerSync + admin list / create / edit / calendar
 - Template days / slots / dates: authoring helpers to speed up trip creation; **no** automatic updates to existing trips when templates change
-- Ticket types: per-program fields (title, `price_cents`, PWYC, min/max) + PowerSync downlink/uplink (`PUT` / `PATCH` / `DELETE` on `POST /api/powersync/upload`; idempotent no-op when the row is missing; delete returns **422** if `booking_tickets` still reference the type) + `PowerSyncUploadTicketTypeBookingTicketTest` — **no** admin screens wired (models/sync only)
+- Ticket types: per-program fields (title, `price_cents`, PWYC, min/max, optional `depends_on_ticket_type_id` + `max_per_reference_ticket`) + PowerSync downlink/uplink (`PUT` / `PATCH` / `DELETE` on `POST /api/powersync/upload`; pair-required validation on PUT; idempotent no-op when the row is missing; delete returns **422** if `booking_tickets` still reference the type) + `PowerSyncUploadTicketTypeBookingTicketTest`
 - Booking **line items**: `booking_tickets` … requires a pre-existing `bookings` row; parent `bookings` includes optional `trip_id` (concrete sortie) and is **downlinked** to the admin client (no `bookings` uplink yet)
 - Public **read-only** catalog: `GET /api/public/programs`, `GET /api/public/programs/{slug}`, public home + program detail pages (`PublicHomePage`, `PublicProgramDetailPage`)
 - Public guest booking flow (no payment): create `bookings` + `booking_tickets` from checkout with contact validation, ticket min/max checks, and trip capacity enforcement
@@ -48,15 +48,15 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 
 ### Ticket types
 
-- Backend + sync: title, price, PWYC, min/max per purchase
-- Admin UI (Quasar) to manage ticket types for the selected program
-- Server-side enforcement: trip capacity and per-ticket-type min/max per purchase on public booking
+- Backend + sync: title, price, PWYC, min/max per purchase, optional dependency (`depends_on_ticket_type_id`, `max_per_reference_ticket`)
+- Admin UI (Quasar) to manage ticket types for the selected program (including dependency pair)
+- Server-side enforcement: trip capacity, per-ticket-type min/max, and dependency ratio on public booking
 
-### Companion / ratio rules
+### Ticket dependency (ratio) rules
 
-- Data model: anchor + dependent ticket types; `numerator` / `denominator` (per program or template)
-- Admin UI: pick two types + ratio (no hard-coded adult/child labels)
-- Cart/checkout validation and **server** re-validation (start with same-order + same-date if simpler)
+- Data model + sync + public booking options payload: `depends_on_ticket_type_id`, `max_per_reference_ticket` on `ticket_types` (pair must be set together; PowerSync PUT validates)
+- Admin UI: reference ticket type + max-per-reference on ticket type form
+- Cart/checkout: `validatePublicBookingTickets` (frontend) + `CreatePublicBookingAction` (server) enforce `dependent_qty <= reference_qty × max_per_reference`
 
 ### Trips and calendar
 
@@ -152,31 +152,47 @@ UI, marketing, and support copy are **French-first**. **Models, PHP, SQL tables,
 
 ---
 
-## Ticket types & ratio (boat trips)
+## Ticket types & dependency ratio (boat trips)
 
-“at least one adult with a child” is a **1:1 companion** rule. For rabaska / boat trips you often need a **configurable ratio**.
+Companion rules (e.g. “at most **2 children per 1 adult**”) are configured **per ticket type** on `ticket_types`, not with hard-coded adult/child labels or title guessing.
 
-**Suggested rule model (per program or per template):**
+### Configuration (admin / PowerSync)
 
-- **Anchor** ticket type (e.g. adult) and **dependent** ticket type (e.g. child).
-- Store two positive integers `numerator` and `denominator` meaning:  
-`**anchor_qty × denominator ≥ dependent_qty × numerator`**
+Each ticket type may optionally depend on another type in the **same program**:
 
-Examples:
+| Column | Meaning |
+| ------ | ------- |
+| `depends_on_ticket_type_id` | Reference (anchor) ticket type ULID, or `null` if no dependency |
+| `max_per_reference_ticket` | Max **dependent** tickets allowed per **one** reference ticket in the cart |
 
+**Invariants when authoring:**
 
-| Meaning                                    | `numerator` / `denominator` |
-| ------------------------------------------ | --------------------------- |
-| At least **1 adult per 1 child** (pairing) | 1 / 1                       |
-| At least **1 adult per 2 children**        | 1 / 2                       |
-| At least **2 adults per 3 children**       | 2 / 3                       |
+- Both fields are set together, or both are `null`.
+- A type cannot depend on itself.
+- When set, `max_per_reference_ticket >= 1`.
+- Reference options are other types in the same program (admin UI excludes the current type in edit mode).
 
+Example: configure **Child** with `depends_on_ticket_type_id` → Adult id and `max_per_reference_ticket` = `2` → up to 2 child tickets per 1 adult in one booking.
 
-**Checkout validation:** for each line item (or for the whole cart for that date), if `child = dependent_qty` and `adult = anchor_qty`, reject unless the inequality holds. Re-validate on the server.
+### Checkout validation (public booking)
 
-Optional UX: “Require companion tickets in the same order only” (stricter) vs “ratio across the booking” (e.g. family of 4 buying 2+2) — start with same-order, same-date if simpler.
+Quantities are validated on the **whole booking** for the selected trip (same order, same date). Build a quantity map from `ticket_quantities` and each selected type’s options (including dependency fields from `GET` booking options).
 
-This keeps the admin UI to: pick two types + set ratio, without hard-coding “adult/child” labels.
+For every ticket type with dependency fields set:
+
+1. Let `reference_qty` = quantity of `depends_on_ticket_type_id` (0 if not in cart).
+2. Let `dependent_qty` = quantity of the dependent type.
+3. If `reference_qty === 0`, then `dependent_qty` must be `0`.
+4. Otherwise: **`dependent_qty <= reference_qty × max_per_reference_ticket`**.
+
+Reject with a clear error on `ticket_quantities.{dependent_type_id}` when the rule fails.
+
+**Enforcement layers:**
+
+- **Frontend:** `resources/js/utilities/public-booking-validation.ts` (`validatePublicBookingTickets`) — pre-submit, mirrors the rules above.
+- **Backend:** `app/Actions/CreatePublicBookingAction.php` — authoritative re-check on `POST` public booking.
+
+No separate `numerator` / `denominator` columns; ratios are expressed only through reference type + max-per-reference.
 
 ---
 
@@ -243,7 +259,7 @@ This keeps the admin UI to: pick two types + set ratio, without hard-coding “a
 
 - `**trips`** must expose `**boat_type_id**`, `**water_route_id**`, `**scheduled_departure_at**` before `**voyages.trip_id**` links are meaningful; every `**voyages**` row still needs `**water_route_id**` (UI may default to `trips.water_route_id`; ops may change). `**trip_id**` null: supply `**scheduled_departure_at**` + `**water_route_id**` on `**voyages**` for ETA.
 - **Check-in** model depends on **bookings** existing (even without payment) — at least a booking + line items; **pax on board** comes from `**passengers`** rows.
-- **Ratio rules** and displayed PAX should share the same notion of “adult/child” (or ticket-type buckets), aligned **per `passengers` row** when types exist.
+- **Ticket dependency ratio** (configured on `ticket_types`) and displayed PAX should use the same ticket-type buckets, aligned **per `passengers` row** when types exist.
 - **Water routes** (PostGIS) and **Voyage** CRUD can proceed in parallel with a minimal booking stub, then connect end-to-end.
 
 

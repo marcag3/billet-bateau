@@ -76,6 +76,12 @@ final class ApplyTicketTypePowerSyncCrudAction
         $resolved = TicketTypeResolvedPutData::validateAndCreate($merged);
 
         $this->assertProgramManaged($resolved->program_id, $userId);
+        $this->assertDependencyConfiguration(
+            ticketTypeId: $id,
+            programId: $resolved->program_id,
+            dependsOnTicketTypeId: $resolved->depends_on_ticket_type_id,
+            maxPerReferenceTicket: $resolved->max_per_reference_ticket,
+        );
 
         TicketType::query()->updateOrCreate(
             ['id' => $id],
@@ -86,6 +92,8 @@ final class ApplyTicketTypePowerSyncCrudAction
                 'is_pay_what_you_can' => $resolved->is_pay_what_you_can,
                 'min_per_purchase' => $resolved->min_per_purchase,
                 'max_per_purchase' => $resolved->max_per_purchase,
+                'depends_on_ticket_type_id' => $resolved->depends_on_ticket_type_id,
+                'max_per_reference_ticket' => $resolved->max_per_reference_ticket,
             ],
         );
     }
@@ -131,11 +139,28 @@ final class ApplyTicketTypePowerSyncCrudAction
             $ticketType->max_per_purchase = $dto->max_per_purchase;
         }
 
+        if (! ($dto->depends_on_ticket_type_id instanceof Optional)) {
+            $ticketType->depends_on_ticket_type_id = $dto->depends_on_ticket_type_id !== null && $dto->depends_on_ticket_type_id !== ''
+                ? (string) $dto->depends_on_ticket_type_id
+                : null;
+        }
+
+        if (! ($dto->max_per_reference_ticket instanceof Optional)) {
+            $ticketType->max_per_reference_ticket = $dto->max_per_reference_ticket;
+        }
+
         if ($ticketType->max_per_purchase !== null && $ticketType->max_per_purchase < $ticketType->min_per_purchase) {
             throw ValidationException::withMessages([
                 'data.max_per_purchase' => 'Max per purchase must be greater than or equal to min per purchase.',
             ]);
         }
+
+        $this->assertDependencyConfiguration(
+            ticketTypeId: (string) $ticketType->getKey(),
+            programId: (string) $ticketType->program_id,
+            dependsOnTicketTypeId: $ticketType->depends_on_ticket_type_id,
+            maxPerReferenceTicket: $ticketType->max_per_reference_ticket,
+        );
 
         $ticketType->save();
     }
@@ -146,6 +171,43 @@ final class ApplyTicketTypePowerSyncCrudAction
 
         if ($program === null || ! $program->userCanManage($userId)) {
             throw new AuthorizationException;
+        }
+    }
+
+    private function assertDependencyConfiguration(
+        string $ticketTypeId,
+        string $programId,
+        ?string $dependsOnTicketTypeId,
+        ?int $maxPerReferenceTicket,
+    ): void {
+        $hasDependsOn = $dependsOnTicketTypeId !== null && $dependsOnTicketTypeId !== '';
+        $hasMaxPerReference = $maxPerReferenceTicket !== null;
+
+        if ($hasDependsOn !== $hasMaxPerReference) {
+            throw ValidationException::withMessages([
+                'data.depends_on_ticket_type_id' => 'Reference ticket type and max per reference must both be set or both be empty.',
+            ]);
+        }
+
+        if (! $hasDependsOn) {
+            return;
+        }
+
+        if ($dependsOnTicketTypeId === $ticketTypeId) {
+            throw ValidationException::withMessages([
+                'data.depends_on_ticket_type_id' => 'A ticket type cannot depend on itself.',
+            ]);
+        }
+
+        $referenceTicketType = TicketType::query()
+            ->whereKey($dependsOnTicketTypeId)
+            ->where('program_id', $programId)
+            ->first();
+
+        if ($referenceTicketType === null) {
+            throw ValidationException::withMessages([
+                'data.depends_on_ticket_type_id' => 'The selected reference ticket type is not valid for this program.',
+            ]);
         }
     }
 }

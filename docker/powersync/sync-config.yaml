@@ -104,7 +104,9 @@ streams:
           price_cents,
           is_pay_what_you_can,
           min_per_purchase,
-          max_per_purchase
+          max_per_purchase,
+          depends_on_ticket_type_id,
+          max_per_reference_ticket
         FROM ticket_types
         WHERE ticket_types.program_id = subscription.parameter('program_id')
           AND ticket_types.program_id IN accessible_program_ids

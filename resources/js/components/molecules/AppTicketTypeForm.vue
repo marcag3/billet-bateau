@@ -50,6 +50,38 @@
                     />
                 </div>
             </AppFormRow>
+            <AppFormRow>
+                <div class="col-12 col-sm-6">
+                    <q-select
+                        v-model="dependsOnTicketTypeId"
+                        v-bind="dependsOnTicketTypeIdProps"
+                        outlined
+                        dense
+                        emit-value
+                        map-options
+                        clearable
+                        :options="referenceTicketTypeOptions"
+                        option-value="id"
+                        option-label="title"
+                        :label="t('ticketTypesList.dependsOnTicketType')"
+                        :hint="t('ticketTypesList.dependsOnTicketTypeHint')"
+                        :disable="fieldsDisabled"
+                    />
+                </div>
+                <div class="col-12 col-sm-6">
+                    <q-input
+                        :model-value="maxPerReferenceTicketDisplay"
+                        v-bind="maxPerReferenceTicketProps"
+                        outlined
+                        dense
+                        type="number"
+                        :label="t('ticketTypesList.maxPerReferenceTicket')"
+                        :hint="t('ticketTypesList.maxPerReferenceTicketHint')"
+                        :disable="fieldsDisabled"
+                        @update:model-value="onMaxPerReferenceTicketInput"
+                    />
+                </div>
+            </AppFormRow>
             <slot
                 name="actions"
                 :meta="meta"
@@ -81,17 +113,27 @@ const props = defineProps<{
     seed: Partial<TicketTypeFormValues> | null;
     /** Disables fields while submitting or external busy state. */
     disabled?: boolean;
+    /** Ticket types available as dependency references (same program). */
+    referenceTicketTypeOptions?: Array<{ id: string; title: string }>;
+    /** Current ticket type id when editing (excluded from reference options). */
+    editingTicketTypeId?: string;
     submitFn: (values: TicketTypeFormValues) => Promise<void>;
 }>();
 
 const { t } = useI18n();
 
-const ticketTypeFormSchema = createTicketTypeFormSchema(t);
+const ticketTypeFormSchema = computed(() =>
+    createTicketTypeFormSchema(t, {
+        editingTicketTypeId: props.editingTicketTypeId ?? null,
+    }),
+);
 const { handleSubmit, defineField, meta, isSubmitting, resetForm, setFieldValue } =
     useForm<TicketTypeFormValues>({
         validationSchema: ticketTypeFormSchema,
         initialValues: createEmptyTicketTypeFormValues(),
     });
+
+const referenceTicketTypeOptions = computed(() => props.referenceTicketTypeOptions ?? []);
 
 const quasarField = createQuasarFieldBinder(defineField);
 const [title, titleProps] = quasarField("title");
@@ -99,6 +141,8 @@ const [priceCents, priceCentsProps] = quasarField("priceCents");
 const [isPayWhatYouCan] = quasarField("isPayWhatYouCan");
 const [minPerPurchase, minPerPurchaseProps] = quasarField("minPerPurchase");
 const [maxPerPurchase, maxPerPurchaseProps] = quasarField("maxPerPurchase");
+const [dependsOnTicketTypeId, dependsOnTicketTypeIdProps] = quasarField("dependsOnTicketTypeId");
+const [maxPerReferenceTicket, maxPerReferenceTicketProps] = quasarField("maxPerReferenceTicket");
 
 const fieldsDisabled = computed(
     () => Boolean(props.disabled) || isSubmitting.value,
@@ -106,6 +150,14 @@ const fieldsDisabled = computed(
 
 const maxPerPurchaseDisplay = computed(() => {
     const v = maxPerPurchase.value;
+    if (v === null || v === undefined) {
+        return "";
+    }
+    return v;
+});
+
+const maxPerReferenceTicketDisplay = computed(() => {
+    const v = maxPerReferenceTicket.value;
     if (v === null || v === undefined) {
         return "";
     }
@@ -154,6 +206,24 @@ function onMaxPerPurchaseInput(value: unknown): void {
         return;
     }
     setFieldValue("maxPerPurchase", n);
+}
+
+/**
+ * @param {unknown} value
+ * @returns {void}
+ */
+function onMaxPerReferenceTicketInput(value: unknown): void {
+    if (value === "" || value === null || value === undefined) {
+        setFieldValue("maxPerReferenceTicket", null);
+        return;
+    }
+    const n =
+        typeof value === "number" ? value : Number.parseInt(String(value), 10);
+    if (!Number.isFinite(n)) {
+        setFieldValue("maxPerReferenceTicket", null);
+        return;
+    }
+    setFieldValue("maxPerReferenceTicket", n);
 }
 
 watch(

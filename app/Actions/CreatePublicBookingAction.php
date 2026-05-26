@@ -112,6 +112,8 @@ final class CreatePublicBookingAction
                 }
             }
 
+            $this->assertTicketDependencyConstraints($normalizedQuantities, $ticketTypes);
+
             $configuredQuestions = collect($program->booking_questions ?? [])
                 ->map(static fn ($question): string => trim((string) $question))
                 ->filter(static fn (string $question): bool => $question !== '')
@@ -185,5 +187,62 @@ final class CreatePublicBookingAction
                 contact_email: $data->contact_email,
             );
         });
+    }
+
+    /**
+     * @param  array<string, int>  $quantities
+     * @param  Collection<string, TicketType>  $ticketTypes
+     *
+     * @throws ValidationException
+     */
+    private function assertTicketDependencyConstraints(array $quantities, Collection $ticketTypes): void
+    {
+        foreach ($ticketTypes as $ticketType) {
+            $dependsOnTicketTypeId = $ticketType->depends_on_ticket_type_id;
+            $maxPerReferenceTicket = $ticketType->max_per_reference_ticket;
+
+            if ($dependsOnTicketTypeId === null || $maxPerReferenceTicket === null) {
+                continue;
+            }
+
+            $dependentTicketTypeId = (string) $ticketType->getKey();
+            $dependentQuantity = (int) ($quantities[$dependentTicketTypeId] ?? 0);
+
+            if ($dependentQuantity <= 0) {
+                continue;
+            }
+
+            $referenceTicketType = $ticketTypes->get((string) $dependsOnTicketTypeId)
+                ?? TicketType::query()->whereKey($dependsOnTicketTypeId)->first();
+
+            if ($referenceTicketType === null) {
+                throw ValidationException::withMessages([
+                    "ticket_quantities.{$dependentTicketTypeId}" => [__('Invalid ticket dependency configuration.')],
+                ]);
+            }
+
+            $referenceQuantity = (int) ($quantities[(string) $dependsOnTicketTypeId] ?? 0);
+
+            if ($referenceQuantity <= 0) {
+                throw ValidationException::withMessages([
+                    "ticket_quantities.{$dependentTicketTypeId}" => [__('Select at least one :reference ticket before adding :dependent tickets.', [
+                        'reference' => $referenceTicketType->title,
+                        'dependent' => $ticketType->title,
+                    ])],
+                ]);
+            }
+
+            $allowedDependentQuantity = $referenceQuantity * (int) $maxPerReferenceTicket;
+
+            if ($dependentQuantity > $allowedDependentQuantity) {
+                throw ValidationException::withMessages([
+                    "ticket_quantities.{$dependentTicketTypeId}" => [__('You may select at most :max :dependent ticket(s) per :reference ticket.', [
+                        'max' => $maxPerReferenceTicket,
+                        'dependent' => $ticketType->title,
+                        'reference' => $referenceTicketType->title,
+                    ])],
+                ]);
+            }
+        }
     }
 }

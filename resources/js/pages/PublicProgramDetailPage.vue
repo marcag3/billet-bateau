@@ -1,5 +1,5 @@
 <template>
-    <q-page>
+    <q-page class="max-w-[600px] mx-auto">
 
         <q-banner v-if="errorMessage" class="bg-red-1 text-negative q-mb-md" rounded>
             {{ errorMessage }}
@@ -37,12 +37,7 @@
                         <p class="text-body1 text-grey-8 q-mb-sm">
                             {{ t('publicBooking.checkEmailConfirmation') }}
                         </p>
-                        <q-btn
-                            color="primary"
-                            no-caps
-                            :label="t('publicBooking.bookAnother')"
-                            @click="onBookAnother"
-                        />
+                        <q-btn color="primary" no-caps :label="t('publicBooking.bookAnother')" @click="onBookAnother" />
                     </q-card-section>
                 </q-card>
             </section>
@@ -51,10 +46,8 @@
                 <q-step :name="1" :title="t('publicBooking.stepTrip')" :done="step > 1">
                     <PublicProgramBookingTripStep :key="tripStepResetKey" :trip-options="tripOptions"
                         v-model:selected-product-id="selectedTripProductId"
-                        v-model:selected-date-ymd="selectedTripDateYmd"
-                        :program-start-date-ymd="program?.start_date"
-                        :program-end-date-ymd="program?.end_date"
-                        @continue="goToTicketsStep" />
+                        v-model:selected-date-ymd="selectedTripDateYmd" :program-start-date-ymd="program?.start_date"
+                        :program-end-date-ymd="program?.end_date" @continue="goToTicketsStep" />
                 </q-step>
 
                 <q-step :name="2" :title="t('publicBooking.stepTickets')" :done="step > 2" :disable="!canAccessStep2"
@@ -70,11 +63,9 @@
                     <PublicProgramBookingContactStep v-model:contact-name="contactName"
                         v-model:contact-email="contactEmail" :contact-name-props="contactNameProps"
                         :contact-email-props="contactEmailProps" :submit-error="submitError"
-                        v-model:custom-answers="customAnswers"
-                        :custom-questions="customQuestions"
-                        :custom-answer-errors="customAnswerErrors"
-                        :is-submitting="isSubmitting" :can-submit="canSubmitContactStep"
-                        @back="step = 2" @submit="onContactSubmit" />
+                        v-model:custom-answers="customAnswers" :custom-questions="customQuestions"
+                        :custom-answer-errors="customAnswerErrors" :is-submitting="isSubmitting"
+                        :can-submit="canSubmitContactStep" @back="step = 2" @submit="onContactSubmit" />
                 </q-step>
             </q-stepper>
 
@@ -414,4 +405,3 @@ watch(step, (nextStep) => {
     }
 });
 </script>
-

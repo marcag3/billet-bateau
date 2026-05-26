@@ -23,6 +23,8 @@ export type BookingTicketTypeOption = {
     is_pay_what_you_can: boolean;
     min_per_purchase: number;
     max_per_purchase: number | null;
+    depends_on_ticket_type_id: string | null;
+    max_per_reference_ticket: number | null;
 };
 
 export type BookingOptionsPayload = {

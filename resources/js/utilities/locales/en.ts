@@ -191,6 +191,8 @@ export default {
         maxPerType: "Maximum {max} for this ticket type.",
         totalExceedsTrip: "You selected more tickets than remain on this trip.",
         selectAtLeastOneTicket: "Select at least one ticket.",
+        dependencyRequiresReference: "Select at least one {reference} ticket before adding {dependent} tickets.",
+        dependencyExceedsMax: "You may select at most {max} {dependent} ticket(s) per {reference} ticket.",
         selectTripFirst: "Choose a trip to continue.",
         contactName: "Contact name",
         contactEmail: "Contact email",
@@ -437,6 +439,10 @@ export default {
         payWhatYouCan: "Pay what you can",
         minPerPurchase: "Minimum per purchase",
         maxPerPurchase: "Maximum per purchase (optional)",
+        dependsOnTicketType: "Depends on ticket type (optional)",
+        dependsOnTicketTypeHint: "Limit this ticket type based on another ticket type in the booking.",
+        maxPerReferenceTicket: "Max per reference ticket (optional)",
+        maxPerReferenceTicketHint: "Maximum of this ticket type allowed per selected reference ticket.",
         empty: "No ticket types yet. Add one to sell on sorties.",
         created: "Ticket type saved.",
         changesSaved: "Ticket type updated.",
@@ -449,10 +455,15 @@ export default {
         validationTitleRequired: "Title is required.",
         validationMaxGteMin:
             "Maximum must be greater than or equal to minimum.",
+        validationDependencyPairRequired:
+            "Select a reference ticket type and max per reference together, or leave both empty.",
+        validationDependencySelfReference:
+            "A ticket type cannot depend on itself.",
         summaryPwyc: "Pay what you can",
         summaryPrice: "{price}",
         summaryMinMax: "Min {min} · Max {max}",
         summaryMinMaxUnlimited: "Min {min} · Max unlimited",
+        summaryDependency: "Max {max} per {reference}",
     },
     boatTypesList: {
         title: "Boat types",

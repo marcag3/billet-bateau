@@ -4,7 +4,13 @@ import { parseOptionalNonNegativeInt, zRequiredTrimmedString } from '../../valid
 
 export type Translator = (key: string) => string;
 
-function createTicketTypeFormZodSchema(t: Translator) {
+type TicketTypeFormSchemaOptions = {
+    editingTicketTypeId?: string | null;
+};
+
+function createTicketTypeFormZodSchema(t: Translator, options: TicketTypeFormSchemaOptions = {}) {
+    const editingTicketTypeId = String(options.editingTicketTypeId ?? '').trim();
+
     return z
         .object({
             title: zRequiredTrimmedString(t('ticketTypesList.validationTitleRequired')),
@@ -21,6 +27,20 @@ function createTicketTypeFormZodSchema(t: Translator) {
                 (v) => parseOptionalNonNegativeInt(v),
                 z.union([z.number().int().min(0), z.null()]),
             ),
+            dependsOnTicketTypeId: z.preprocess((v) => {
+                if (v === null || v === undefined) {
+                    return null;
+                }
+                const trimmed = String(v).trim();
+                return trimmed.length > 0 ? trimmed : null;
+            }, z.union([z.string().min(1), z.null()])),
+            maxPerReferenceTicket: z.preprocess((v) => {
+                if (v === '' || v === null || v === undefined) {
+                    return null;
+                }
+                const n = parseOptionalNonNegativeInt(v);
+                return n === null ? null : n;
+            }, z.union([z.number().int().min(1), z.null()])),
         })
         .superRefine((data, ctx) => {
             if (data.maxPerPurchase !== null && data.maxPerPurchase < data.minPerPurchase) {
@@ -30,13 +50,39 @@ function createTicketTypeFormZodSchema(t: Translator) {
                     path: ['maxPerPurchase'],
                 });
             }
+
+            const hasReference = data.dependsOnTicketTypeId !== null;
+            const hasMaxPerReference = data.maxPerReferenceTicket !== null;
+
+            if (hasReference !== hasMaxPerReference) {
+                ctx.addIssue({
+                    code: 'custom',
+                    message: t('ticketTypesList.validationDependencyPairRequired'),
+                    path: hasReference ? ['maxPerReferenceTicket'] : ['dependsOnTicketTypeId'],
+                });
+            }
+
+            if (
+                hasReference
+                && editingTicketTypeId.length > 0
+                && data.dependsOnTicketTypeId === editingTicketTypeId
+            ) {
+                ctx.addIssue({
+                    code: 'custom',
+                    message: t('ticketTypesList.validationDependencySelfReference'),
+                    path: ['dependsOnTicketTypeId'],
+                });
+            }
         });
 }
 
 export type TicketTypeFormValues = z.infer<ReturnType<typeof createTicketTypeFormZodSchema>>;
 
-export function createTicketTypeFormSchema(t: Translator) {
-    return toTypedSchema(createTicketTypeFormZodSchema(t));
+export function createTicketTypeFormSchema(
+    t: Translator,
+    options: TicketTypeFormSchemaOptions = {},
+) {
+    return toTypedSchema(createTicketTypeFormZodSchema(t, options));
 }
 
 /**
@@ -49,5 +95,7 @@ export function createEmptyTicketTypeFormValues(): TicketTypeFormValues {
         isPayWhatYouCan: false,
         minPerPurchase: 0,
         maxPerPurchase: null,
+        dependsOnTicketTypeId: null,
+        maxPerReferenceTicket: null,
     };
 }

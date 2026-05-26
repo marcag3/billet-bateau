@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\BoatType;
 use App\Models\Booking;
 use App\Models\BookingTicket;
-use App\Models\BoatType;
 use App\Models\Program;
 use App\Models\TicketType;
 use App\Models\Trip;
@@ -50,6 +50,8 @@ class PublicBookingApiTest extends TestCase
         $r->assertJsonPath('data.trips.0.water_route_trace_geojson', null);
         $r->assertJsonPath('data.ticket_types.0.id', $type->getKey());
         $r->assertJsonPath('data.ticket_types.0.title', 'Adult');
+        $r->assertJsonPath('data.ticket_types.0.depends_on_ticket_type_id', null);
+        $r->assertJsonPath('data.ticket_types.0.max_per_reference_ticket', null);
     }
 
     public function test_booking_options_includes_product_banner_url_when_set(): void
@@ -332,5 +334,98 @@ class PublicBookingApiTest extends TestCase
             ['First 3 characters of postal code' => 'H2X'],
             $ticket->custom_fields,
         );
+    }
+
+    public function test_store_rejects_dependent_tickets_without_reference_tickets(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['slug' => 'dep-no-ref']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+
+        $adult = TicketType::factory()->forProgram($program)->create([
+            'title' => 'Adult',
+            'min_per_purchase' => 0,
+        ]);
+        $child = TicketType::factory()->forProgram($program)->create([
+            'title' => 'Child',
+            'min_per_purchase' => 0,
+            'depends_on_ticket_type_id' => $adult->getKey(),
+            'max_per_reference_ticket' => 2,
+        ]);
+
+        $this->postJson('/api/public/programs/dep-no-ref/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [
+                (string) $adult->getKey() => 0,
+                (string) $child->getKey() => 1,
+            ],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+        ])->assertUnprocessable()->assertJsonValidationErrors(["ticket_quantities.{$child->getKey()}"]);
+    }
+
+    public function test_store_rejects_dependent_tickets_exceeding_max_per_reference(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['slug' => 'dep-over-max']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+
+        $adult = TicketType::factory()->forProgram($program)->create([
+            'title' => 'Adult',
+            'min_per_purchase' => 0,
+        ]);
+        $child = TicketType::factory()->forProgram($program)->create([
+            'title' => 'Child',
+            'min_per_purchase' => 0,
+            'depends_on_ticket_type_id' => $adult->getKey(),
+            'max_per_reference_ticket' => 2,
+        ]);
+
+        $this->postJson('/api/public/programs/dep-over-max/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [
+                (string) $adult->getKey() => 1,
+                (string) $child->getKey() => 3,
+            ],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+        ])->assertUnprocessable()->assertJsonValidationErrors(["ticket_quantities.{$child->getKey()}"]);
+    }
+
+    public function test_store_accepts_dependent_tickets_within_max_per_reference(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['slug' => 'dep-valid']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+
+        $adult = TicketType::factory()->forProgram($program)->create([
+            'title' => 'Adult',
+            'min_per_purchase' => 0,
+        ]);
+        $child = TicketType::factory()->forProgram($program)->create([
+            'title' => 'Child',
+            'min_per_purchase' => 0,
+            'depends_on_ticket_type_id' => $adult->getKey(),
+            'max_per_reference_ticket' => 2,
+        ]);
+
+        $this->postJson('/api/public/programs/dep-valid/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [
+                (string) $adult->getKey() => 2,
+                (string) $child->getKey() => 4,
+            ],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+        ])->assertCreated()->assertJsonPath('data.total_tickets', 6);
     }
 }

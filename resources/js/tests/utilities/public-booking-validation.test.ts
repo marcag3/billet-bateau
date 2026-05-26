@@ -10,6 +10,8 @@ const ticketTypes: BookingTicketTypeOption[] = [
         is_pay_what_you_can: false,
         min_per_purchase: 2,
         max_per_purchase: 5,
+        depends_on_ticket_type_id: null,
+        max_per_reference_ticket: null,
     },
     {
         id: 'child',
@@ -18,6 +20,8 @@ const ticketTypes: BookingTicketTypeOption[] = [
         is_pay_what_you_can: false,
         min_per_purchase: 1,
         max_per_purchase: null,
+        depends_on_ticket_type_id: 'adult',
+        max_per_reference_ticket: 2,
     },
 ];
 
@@ -143,6 +147,61 @@ describe('validatePublicBookingTickets', () => {
         });
 
         expect(result.canContinue).toBe(false);
+        expect(result.errors).toEqual({});
+    });
+
+    it('blocks continue when dependent tickets are selected without reference tickets', () => {
+        const result = validatePublicBookingTickets({
+            ticketTypeOptions: ticketTypes,
+            ticketQuantities: {
+                adult: 0,
+                child: 1,
+            },
+            selectedTrip: trip,
+            t,
+        });
+
+        expect(result.canContinue).toBe(false);
+        expect(result.errors).toEqual({
+            child: 'publicBooking.dependencyRequiresReference:{"reference":"Adult","dependent":"Child"}',
+        });
+    });
+
+    it('blocks continue when dependent tickets exceed max per reference ticket', () => {
+        const result = validatePublicBookingTickets({
+            ticketTypeOptions: ticketTypes,
+            ticketQuantities: {
+                adult: 2,
+                child: 5,
+            },
+            selectedTrip: {
+                ...trip,
+                remaining_capacity: 10,
+            },
+            t,
+        });
+
+        expect(result.canContinue).toBe(false);
+        expect(result.errors).toEqual({
+            child: 'publicBooking.dependencyExceedsMax:{"max":"2","dependent":"Child","reference":"Adult"}',
+        });
+    });
+
+    it('allows continue when dependent tickets are within max per reference ticket', () => {
+        const result = validatePublicBookingTickets({
+            ticketTypeOptions: ticketTypes,
+            ticketQuantities: {
+                adult: 2,
+                child: 4,
+            },
+            selectedTrip: {
+                ...trip,
+                remaining_capacity: 10,
+            },
+            t,
+        });
+
+        expect(result.canContinue).toBe(true);
         expect(result.errors).toEqual({});
     });
 });

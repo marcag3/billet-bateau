@@ -22,6 +22,8 @@ final class TicketTypePutData extends Data
         public bool|Optional|null $is_pay_what_you_can = new Optional,
         public int|Optional|null $min_per_purchase = new Optional,
         public int|Optional|null $max_per_purchase = new Optional,
+        public string|Optional|null $depends_on_ticket_type_id = new Optional,
+        public int|Optional|null $max_per_reference_ticket = new Optional,
     ) {}
 
     /**
@@ -36,6 +38,8 @@ final class TicketTypePutData extends Data
             'is_pay_what_you_can' => ['sometimes', 'nullable', 'boolean'],
             'min_per_purchase' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'max_per_purchase' => ['sometimes', 'nullable', 'integer', 'min:0', 'gte:min_per_purchase'],
+            'depends_on_ticket_type_id' => ['sometimes', 'nullable', 'ulid', 'exists:ticket_types,id'],
+            'max_per_reference_ticket' => ['sometimes', 'nullable', 'integer', 'min:1'],
         ];
     }
 }

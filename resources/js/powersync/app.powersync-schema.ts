@@ -72,6 +72,8 @@ const ticketTypesTable = new Table({
     is_pay_what_you_can: column.integer,
     min_per_purchase: column.integer,
     max_per_purchase: column.integer,
+    depends_on_ticket_type_id: column.text,
+    max_per_reference_ticket: column.integer,
 });
 
 const bookingTicketsTable = new Table({

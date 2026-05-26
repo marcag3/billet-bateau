@@ -19,6 +19,8 @@ final class TicketTypeResolvedPutData extends Data
         public bool $is_pay_what_you_can,
         public int $min_per_purchase,
         public ?int $max_per_purchase,
+        public ?string $depends_on_ticket_type_id,
+        public ?int $max_per_reference_ticket,
     ) {}
 
     /**
@@ -33,6 +35,8 @@ final class TicketTypeResolvedPutData extends Data
             'is_pay_what_you_can' => ['required', 'boolean'],
             'min_per_purchase' => ['required', 'integer', 'min:0'],
             'max_per_purchase' => ['nullable', 'integer', 'min:0'],
+            'depends_on_ticket_type_id' => ['nullable', 'ulid', 'exists:ticket_types,id'],
+            'max_per_reference_ticket' => ['nullable', 'integer', 'min:1'],
         ];
     }
 
@@ -46,6 +50,18 @@ final class TicketTypeResolvedPutData extends Data
                 $validator->errors()->add(
                     'max_per_purchase',
                     'Max per purchase must be greater than or equal to min per purchase.',
+                );
+            }
+
+            $dependsOn = $data['depends_on_ticket_type_id'] ?? null;
+            $maxPerReference = $data['max_per_reference_ticket'] ?? null;
+            $hasDependsOn = $dependsOn !== null && $dependsOn !== '';
+            $hasMaxPerReference = $maxPerReference !== null;
+
+            if ($hasDependsOn !== $hasMaxPerReference) {
+                $validator->errors()->add(
+                    'depends_on_ticket_type_id',
+                    'Reference ticket type and max per reference must both be set or both be empty.',
                 );
             }
         });
