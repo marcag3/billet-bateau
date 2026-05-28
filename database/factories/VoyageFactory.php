@@ -19,6 +19,21 @@ class VoyageFactory extends Factory
 {
     protected $model = Voyage::class;
 
+    public function configure(): static
+    {
+        return $this->afterMaking(function (Voyage $voyage): void {
+            if ($voyage->trip_id !== null) {
+                return;
+            }
+
+            $route = WaterRoute::query()->whereKey($voyage->water_route_id)->first();
+
+            if ($route !== null) {
+                $voyage->program_id = $route->program_id;
+            }
+        });
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -26,6 +41,7 @@ class VoyageFactory extends Factory
     {
         return [
             'id' => (string) Str::ulid(),
+            'program_id' => Program::factory(),
             'user_id' => User::factory(),
             'trip_id' => null,
             'water_route_id' => WaterRoute::factory(),
@@ -56,6 +72,7 @@ class VoyageFactory extends Factory
             }
 
             return [
+                'program_id' => $trip->program_id,
                 'user_id' => $programUserId,
                 'trip_id' => $trip->getKey(),
                 'water_route_id' => $route->getKey(),
@@ -67,6 +84,7 @@ class VoyageFactory extends Factory
     public function adHoc(User $user, WaterRoute $waterRoute): static
     {
         return $this->state(fn (): array => [
+            'program_id' => $waterRoute->program_id,
             'user_id' => $user->getKey(),
             'trip_id' => null,
             'water_route_id' => $waterRoute->getKey(),

@@ -12,9 +12,14 @@ import type { createBookingTicketsCollection } from "./booking-tickets.collectio
 import type { createTemplateDaysCollection } from "./template-days.collection";
 import type { createTemplateDaySlotsCollection } from "./template-day-slots.collection";
 import type { createTemplateDayDatesCollection } from "./template-day-dates.collection";
+import type { createGuidesCollection } from "./guides.collection";
+import type { createVoyagesCollection } from "./voyages.collection";
+import type { createPassengersCollection } from "./passengers.collection";
+import type { createVoyageBoatCollection } from "./voyage-boat.collection";
+import type { createVoyageGuideCollection } from "./voyage-guide.collection";
 import { translate } from "../utilities/i18n";
 
-export const DB_FILENAME = "billbateau-app-v21.db";
+export const DB_FILENAME = "billbateau-app-v23.db";
 
 export const loadFailedMessage = translate("sync.unableLoadSync");
 export const persistenceLimitedMessage = translate("sync.persistenceLimited");
@@ -31,7 +36,12 @@ export type PowerSyncCollectionKey =
     | "water_routes"
     | "template_days"
     | "template_day_slots"
-    | "template_day_dates";
+    | "template_day_dates"
+    | "guides"
+    | "voyages"
+    | "passengers"
+    | "voyage_boat"
+    | "voyage_guide";
 
 export type PowerSyncCollectionRefs = {
     [K in PowerSyncCollectionKey]: ShallowRef<PowerSyncCollectionInstance<K> | null>;
@@ -50,6 +60,11 @@ type PowerSyncCollectionInstanceMap = {
     template_days: ReturnType<typeof createTemplateDaysCollection>;
     template_day_slots: ReturnType<typeof createTemplateDaySlotsCollection>;
     template_day_dates: ReturnType<typeof createTemplateDayDatesCollection>;
+    guides: ReturnType<typeof createGuidesCollection>;
+    voyages: ReturnType<typeof createVoyagesCollection>;
+    passengers: ReturnType<typeof createPassengersCollection>;
+    voyage_boat: ReturnType<typeof createVoyageBoatCollection>;
+    voyage_guide: ReturnType<typeof createVoyageGuideCollection>;
 };
 
 type PowerSyncCollectionInstance<K extends PowerSyncCollectionKey> =
@@ -82,6 +97,17 @@ export const collectionRefs: PowerSyncCollectionRefs = {
     template_day_dates: shallowRef<
         PowerSyncCollectionInstance<"template_day_dates"> | null
     >(null),
+    guides: shallowRef<PowerSyncCollectionInstance<"guides"> | null>(null),
+    voyages: shallowRef<PowerSyncCollectionInstance<"voyages"> | null>(null),
+    passengers: shallowRef<PowerSyncCollectionInstance<"passengers"> | null>(
+        null,
+    ),
+    voyage_boat: shallowRef<PowerSyncCollectionInstance<"voyage_boat"> | null>(
+        null,
+    ),
+    voyage_guide: shallowRef<PowerSyncCollectionInstance<"voyage_guide"> | null>(
+        null,
+    ),
 };
 
 export const isLoading = ref(true);

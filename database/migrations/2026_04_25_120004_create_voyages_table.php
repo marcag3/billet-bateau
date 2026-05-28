@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('voyages', function (Blueprint $table): void {
             $table->ulid('id')->primary();
+            $table->foreignUlid('program_id')->constrained('programs')->cascadeOnDelete();
             $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignUlid('trip_id')->nullable()->constrained('trips')->nullOnDelete();
             $table->foreignUlid('water_route_id')->constrained('water_routes')->restrictOnDelete();
@@ -20,7 +21,6 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['user_id', 'updated_at']);
-            $table->index(['trip_id']);
             $table->index(['status']);
         });
     }

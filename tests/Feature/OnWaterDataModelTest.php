@@ -14,6 +14,8 @@ use App\Models\WaterRoute;
 use Clickbar\Magellan\Data\Geometries\LineString;
 use Clickbar\Magellan\Data\Geometries\Point;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -123,8 +125,20 @@ class OnWaterDataModelTest extends TestCase
         $boat = Boat::factory()->create();
         $guide = Guide::factory()->create();
 
-        $voyage->boats()->attach($boat->getKey());
-        $voyage->guides()->attach($guide->getKey());
+        DB::table('voyage_boat')->insert([
+            'id' => (string) Str::ulid(),
+            'voyage_id' => $voyage->getKey(),
+            'boat_id' => $boat->getKey(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('voyage_guide')->insert([
+            'id' => (string) Str::ulid(),
+            'voyage_id' => $voyage->getKey(),
+            'guide_id' => $guide->getKey(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $voyage->load(['boats', 'guides']);
 

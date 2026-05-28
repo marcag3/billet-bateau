@@ -11,6 +11,11 @@ import { createBookingsCollection } from "./bookings.collection";
 import { createTemplateDaysCollection } from "./template-days.collection";
 import { createTemplateDaySlotsCollection } from "./template-day-slots.collection";
 import { createTemplateDayDatesCollection } from "./template-day-dates.collection";
+import { createGuidesCollection } from "./guides.collection";
+import { createVoyagesCollection } from "./voyages.collection";
+import { createPassengersCollection } from "./passengers.collection";
+import { createVoyageBoatCollection } from "./voyage-boat.collection";
+import { createVoyageGuideCollection } from "./voyage-guide.collection";
 import {
     collectionRefs,
     errorMessage,
@@ -60,6 +65,14 @@ const collectionFactories: {
         createTemplateDaySlotsCollection(db, onError, onLoad),
     template_day_dates: (db, onError, onLoad) =>
         createTemplateDayDatesCollection(db, onError, onLoad),
+    guides: (db, onError, onLoad) => createGuidesCollection(db, onError, onLoad),
+    voyages: (db, onError, onLoad) => createVoyagesCollection(db, onError, onLoad),
+    passengers: (db, onError, onLoad) =>
+        createPassengersCollection(db, onError, onLoad),
+    voyage_boat: (db, onError, onLoad) =>
+        createVoyageBoatCollection(db, onError, onLoad),
+    voyage_guide: (db, onError, onLoad) =>
+        createVoyageGuideCollection(db, onError, onLoad),
 };
 
 export function wirePowerSyncCollections(db: PowerSyncDatabase): void {

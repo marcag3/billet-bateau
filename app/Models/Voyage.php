@@ -20,6 +20,7 @@ class Voyage extends Model
 
     protected $fillable = [
         'id',
+        'program_id',
         'user_id',
         'trip_id',
         'water_route_id',
@@ -41,6 +42,14 @@ class Voyage extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Program, $this>
+     */
+    public function program(): BelongsTo
+    {
+        return $this->belongsTo(Program::class, 'program_id');
     }
 
     public function user(): BelongsTo

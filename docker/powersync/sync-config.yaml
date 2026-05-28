@@ -48,6 +48,9 @@ streams:
           banner_uploaded_at
         FROM programs
         WHERE id IN accessible_program_ids
+      - |
+        SELECT id, name, staff_user_id
+        FROM guides
 
   program_scope:
     priority: 2
@@ -169,3 +172,47 @@ streams:
         FROM template_day_dates
         WHERE template_day_dates.program_id = subscription.parameter('program_id')
           AND template_day_dates.program_id IN accessible_program_ids
+      - |
+        SELECT
+          voyages.id,
+          voyages.program_id,
+          voyages.user_id,
+          voyages.trip_id,
+          voyages.water_route_id,
+          voyages.scheduled_departure_at,
+          voyages.started_at,
+          voyages.arrived_at,
+          voyages.status
+        FROM voyages
+        WHERE voyages.program_id = subscription.parameter('program_id')
+          AND voyages.program_id IN accessible_program_ids
+      - |
+        SELECT
+          passengers.id,
+          passengers.voyage_id,
+          passengers.name,
+          passengers.booking_id,
+          passengers.check_in_id,
+          passengers.notes
+        FROM passengers
+        INNER JOIN voyages ON voyages.id = passengers.voyage_id
+        WHERE voyages.program_id = subscription.parameter('program_id')
+          AND voyages.program_id IN accessible_program_ids
+      - |
+        SELECT
+          voyage_boat.id,
+          voyage_boat.voyage_id,
+          voyage_boat.boat_id
+        FROM voyage_boat
+        INNER JOIN voyages ON voyages.id = voyage_boat.voyage_id
+        WHERE voyages.program_id = subscription.parameter('program_id')
+          AND voyages.program_id IN accessible_program_ids
+      - |
+        SELECT
+          voyage_guide.id,
+          voyage_guide.voyage_id,
+          voyage_guide.guide_id
+        FROM voyage_guide
+        INNER JOIN voyages ON voyages.id = voyage_guide.voyage_id
+        WHERE voyages.program_id = subscription.parameter('program_id')
+          AND voyages.program_id IN accessible_program_ids

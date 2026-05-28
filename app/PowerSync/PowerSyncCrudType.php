@@ -28,4 +28,12 @@ enum PowerSyncCrudType: string
     case TicketTypes = 'ticket_types';
 
     case BookingTickets = 'booking_tickets';
+
+    case Voyages = 'voyages';
+
+    case Passengers = 'passengers';
+
+    case VoyageBoat = 'voyage_boat';
+
+    case VoyageGuide = 'voyage_guide';
 }

@@ -128,6 +128,45 @@ const templateDayDatesTable = new Table({
     service_date: column.text,
 });
 
+const guidesTable = new Table({
+    id: column.text,
+    name: column.text,
+    staff_user_id: column.text,
+});
+
+const voyagesTable = new Table({
+    id: column.text,
+    program_id: column.text,
+    user_id: column.text,
+    trip_id: column.text,
+    water_route_id: column.text,
+    scheduled_departure_at: column.text,
+    started_at: column.text,
+    arrived_at: column.text,
+    status: column.text,
+});
+
+const passengersTable = new Table({
+    id: column.text,
+    voyage_id: column.text,
+    name: column.text,
+    booking_id: column.text,
+    check_in_id: column.text,
+    notes: column.text,
+});
+
+const voyageBoatTable = new Table({
+    id: column.text,
+    voyage_id: column.text,
+    boat_id: column.text,
+});
+
+const voyageGuideTable = new Table({
+    id: column.text,
+    voyage_id: column.text,
+    guide_id: column.text,
+});
+
 export const appPowerSyncSchema = new Schema({
     programs: programsTable,
     boat_types: boatTypesTable,
@@ -141,6 +180,11 @@ export const appPowerSyncSchema = new Schema({
     template_days: templateDaysTable,
     template_day_slots: templateDaySlotsTable,
     template_day_dates: templateDayDatesTable,
+    guides: guidesTable,
+    voyages: voyagesTable,
+    passengers: passengersTable,
+    voyage_boat: voyageBoatTable,
+    voyage_guide: voyageGuideTable,
 });
 
 /** @type {import('@powersync/web').Table} */
@@ -178,3 +222,18 @@ export const appTemplateDaySlotsPowerSyncTable = appPowerSyncSchema.props.templa
 
 /** @type {import('@powersync/web').Table} */
 export const appTemplateDayDatesPowerSyncTable = appPowerSyncSchema.props.template_day_dates;
+
+/** @type {import('@powersync/web').Table} */
+export const appGuidesPowerSyncTable = appPowerSyncSchema.props.guides;
+
+/** @type {import('@powersync/web').Table} */
+export const appVoyagesPowerSyncTable = appPowerSyncSchema.props.voyages;
+
+/** @type {import('@powersync/web').Table} */
+export const appPassengersPowerSyncTable = appPowerSyncSchema.props.passengers;
+
+/** @type {import('@powersync/web').Table} */
+export const appVoyageBoatPowerSyncTable = appPowerSyncSchema.props.voyage_boat;
+
+/** @type {import('@powersync/web').Table} */
+export const appVoyageGuidePowerSyncTable = appPowerSyncSchema.props.voyage_guide;
