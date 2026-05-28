@@ -108,7 +108,7 @@ class ConfigureStorageCommand extends Command
         $clientConfig = [
             'version' => 'latest',
             'region' => (string) ($diskConfig['region'] ?? 'us-east-1'),
-            'use_path_style_endpoint' => (bool) ($diskConfig['use_path_style_endpoint'] ?? false),
+            'use_path_style_endpoint' => $this->usePathStyleEndpoint($diskConfig),
         ];
 
         $endpoint = (string) ($diskConfig['endpoint'] ?? '');
@@ -126,5 +126,21 @@ class ConfigureStorageCommand extends Command
         }
 
         return new S3Client($clientConfig);
+    }
+
+    /**
+     * Garage/MinIO custom endpoints require path-style URLs for bucket admin APIs.
+     * Virtual-hosted style resolves to hosts like `app.garage`, which do not exist on Docker networks.
+     *
+     * @param  array<string, mixed>  $diskConfig
+     */
+    private function usePathStyleEndpoint(array $diskConfig): bool
+    {
+        $endpoint = (string) ($diskConfig['endpoint'] ?? '');
+        if ($endpoint !== '') {
+            return true;
+        }
+
+        return (bool) ($diskConfig['use_path_style_endpoint'] ?? false);
     }
 }

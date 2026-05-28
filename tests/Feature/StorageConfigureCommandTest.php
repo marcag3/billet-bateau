@@ -2,10 +2,29 @@
 
 namespace Tests\Feature;
 
+use App\Console\Commands\ConfigureStorageCommand;
+use ReflectionMethod;
 use Tests\TestCase;
 
 class StorageConfigureCommandTest extends TestCase
 {
+    public function test_use_path_style_endpoint_when_custom_s3_endpoint_is_configured(): void
+    {
+        $command = new ConfigureStorageCommand;
+        $method = new ReflectionMethod(ConfigureStorageCommand::class, 'usePathStyleEndpoint');
+        $method->setAccessible(true);
+
+        $this->assertTrue($method->invoke($command, [
+            'endpoint' => 'http://garage:3900',
+            'use_path_style_endpoint' => false,
+        ]));
+
+        $this->assertFalse($method->invoke($command, [
+            'endpoint' => '',
+            'use_path_style_endpoint' => false,
+        ]));
+    }
+
     public function test_storage_configure_dry_run_reports_garage_bucket_website_command(): void
     {
         config([

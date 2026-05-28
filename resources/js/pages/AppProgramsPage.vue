@@ -71,8 +71,7 @@
                     >
                         <q-card>
                             <q-img
-                                :src="primaryImageFor(program)"
-                                :style="placeholderStyle(program)"
+                                :src="programBannerUrlFromObjectKey(program.banner_object_key)"
                                 :ratio="16 / 9"
                             >
                                 <div class="absolute-bottom">
@@ -164,7 +163,7 @@ import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 
 const powersync = getAppPowerSyncContext();
 import type { ProgramOutput } from "../powersync/programs.collection";
-import { mediaObjectPublicUrl } from "../utilities/media-url";
+import { programBannerUrlFromObjectKey } from "../utilities/program-banner-url";
 import { isProgramArchivedByEndDateYmd } from "../utilities/program-helpers";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
@@ -280,20 +279,6 @@ function addressDisplayLines(p: ProgramOutput): string[] {
     return lines;
 }
 
-function primaryImageFor(p: ProgramOutput): string | undefined {
-    const fromKey = mediaObjectPublicUrl(p.banner_object_key);
-    if (fromKey.length > 0) {
-        return fromKey;
-    }
-
-    return undefined;
-}
-
-function placeholderStyle(p: ProgramOutput) {
-    const hex =
-        typeof p.theme_color === "string" ? p.theme_color.trim() : "#e0e0e0";
-    return { background: hex || "#e0e0e0" };
-}
 </script>
 
 <style scoped></style>

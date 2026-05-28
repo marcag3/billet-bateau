@@ -95,6 +95,7 @@ import {
     fetchPublicJson,
     postPublicJson,
 } from '../services/publicApi';
+import { programBannerUrlFromUrl } from '../utilities/program-banner-url';
 import { validatePublicBookingTickets } from '../utilities/public-booking-validation';
 import {
     createPublicBookingContactFormSchema,
@@ -156,15 +157,9 @@ const [contactEmail, contactEmailProps] = quasarField('contact_email');
 const tripOptions = computed((): BookingTripOption[] => bookingOptionsData.value?.trips ?? []);
 const ticketTypeOptions = computed((): BookingTicketTypeOption[] => bookingOptionsData.value?.ticket_types ?? []);
 const customQuestions = computed((): string[] => bookingOptionsData.value?.booking_questions ?? []);
-const fallbackProgramBannerUrl = '/images/program-fallback.svg';
-const programBannerSrc = computed((): string => {
-    const bannerUrl = String(program.value?.banner_url ?? '').trim();
-    if (bannerUrl.length > 0) {
-        return bannerUrl;
-    }
-
-    return fallbackProgramBannerUrl;
-});
+const programBannerSrc = computed((): string =>
+    programBannerUrlFromUrl(program.value?.banner_url),
+);
 
 const hasBookingFlow = computed(
     () => tripOptions.value.length > 0 && ticketTypeOptions.value.length > 0,

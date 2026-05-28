@@ -33,6 +33,7 @@ services:
         # Sync Streams (sync-config.yaml edition: 3) require PowerSync Service v1.20.0+.
         image: "journeyapps/powersync-service:latest"
         restart: unless-stopped
+        entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
         command: ["start", "-r", "unified"]
         volumes:
             - "./docker/powersync:/config:ro"
@@ -42,7 +43,7 @@ services:
             PS_PORT: "8080"
             PS_DATA_SOURCE_URI: "${POWERSYNC_DATA_SOURCE_URI:-postgresql://powersync:password@pgsql:5432/${DB_DATABASE}?sslmode=disable}"
             PS_STORAGE_SOURCE_URI: "${POWERSYNC_STORAGE_SOURCE_URI:-postgresql://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/powersync_storage?sslmode=disable}"
-            PS_JWT_SECRET_B64URL: "${POWERSYNC_JWT_SECRET_B64URL}"
+            PS_JWT_SECRET: "${POWERSYNC_JWT_SECRET:-powersync-local-poc-secret-32_bytes!}"
         depends_on:
             pgsql:
                 condition: service_healthy

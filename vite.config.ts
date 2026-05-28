@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => {
     const objectStorageOrigins = (
         env.VITE_OBJECT_STORAGE_ORIGINS
         ?? env.VITE_MEDIA_PUBLIC_BASE_URL
+        ?? env.AWS_URL
         ?? 'http://localhost:9000'
     )
         .split(',')
@@ -45,10 +46,16 @@ export default defineConfig(({ mode }) => {
                 : [
                       wayfinder(),
                   ]),
-            laravel({
-                input: ['resources/js/public.main.ts', 'resources/js/app.main.ts'],
-                refresh: true,
-            }),
+            // laravel-vite-plugin deletes public/hot on process exit; skip during Vitest so
+            // `npm run test` does not remove the hot file while `npm run dev` is running.
+            ...(isVitest
+                ? []
+                : [
+                      laravel({
+                          input: ['resources/js/public.main.ts', 'resources/js/app.main.ts'],
+                          refresh: true,
+                      }),
+                  ]),
             vue({
                 template: { transformAssetUrls },
             }),

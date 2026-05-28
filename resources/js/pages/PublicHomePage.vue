@@ -26,7 +26,7 @@
                         @click="goProgram(program)"
                     >
                         <q-img
-                            :src="program.image_url"
+                            :src="programBannerUrlFromUrl(program.image_url)"
                             :alt="program.name"
                             :ratio="1/1"
                         >
@@ -72,6 +72,7 @@ import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { fetchPublicJson } from '../services/publicApi';
+import { programBannerUrlFromUrl } from '../utilities/program-banner-url';
 
 type PublicProgramCard = {
     id?: string | number;

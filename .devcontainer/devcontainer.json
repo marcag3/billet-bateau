@@ -1,10 +1,28 @@
-// https://aka.ms/devcontainer.json
-// Node version: Docker build arg NODE_VERSION in compose.dev.yaml (default 24); see Dockerfile devtools stage.
 {
-    "name": "Docker",
+    "name": "Billet Bateau",
     "dockerComposeFile": ["../compose.yaml", "../compose.dev.yaml"],
     "service": "laravel.test",
     "workspaceFolder": "/var/www/html",
+    "remoteUser": "sail",
+    "runServices": [
+        "pgsql",
+        "redis",
+        "powersync",
+        "garage",
+        "mailpit",
+        "gotenberg",
+        "laravel.test"
+    ],
+    "forwardPorts": [80, 5173, 5432, 6080, 8025],
+    "portsAttributes": {
+        "80": { "label": "Laravel" },
+        "5173": { "label": "Vite" },
+        "5432": { "label": "PostgreSQL" },
+        "6080": { "label": "PowerSync" },
+        "8025": { "label": "Mailpit" }
+    },
+    "postCreateCommand": "bash .devcontainer/post-create.sh",
+    "postStartCommand": "php artisan migrate --force --no-interaction && php artisan storage:configure --no-interaction",
     "customizations": {
         "vscode": {
             "extensions": [
@@ -29,17 +47,7 @@
             "settings": {}
         }
     },
-    "remoteUser": "sail",
-    "postCreateCommand": "chown -R 1000:1000 /var/www/html && npm ci",
-    "forwardPorts": [5173],
-    // "runServices": [],
-    // "shutdownAction": "none",
-    // "containerEnv": {
-    //     "SSH_AUTH_SOCK": "/tmp/bitwarden-ssh-agent.sock"
-    // },
     "mounts": [
-    //     "source=${localEnv:HOME}/.ssh,target=/home/sail/.ssh,type=bind,consistency=cached",
-        "source=${localEnv:HOME}/.gitconfig,target=/home/sail/.gitconfig,type=bind,consistency=cached",
-        // "source=${localEnv:SSH_AUTH_SOCK},target=/tmp/host-ssh-auth.sock,type=bind,consistency=cached"
+        "source=${localEnv:HOME}/.gitconfig,target=/home/sail/.gitconfig,type=bind,consistency=cached"
     ]
 }
