@@ -55,8 +55,7 @@ class BookingConfirmationNotification extends Notification
 
         $message
             ->line(__('Départ : :departure', ['departure' => $departureLabel]))
-            ->line(__('Billets : :summary', ['summary' => $ticketSummary]))
-            ->line(__('Un fichier calendrier est joint à ce message.'));
+            ->line(__('Billets : :summary', ['summary' => $ticketSummary]));
 
         $ics = app(BookingIcsGenerator::class)->generate($this->booking);
         if ($ics !== null) {

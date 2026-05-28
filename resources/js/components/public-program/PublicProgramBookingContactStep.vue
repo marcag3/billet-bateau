@@ -7,7 +7,7 @@
             :label="t('publicBooking.contactName')" />
         <q-input v-model="contactEmail" v-bind="contactEmailProps" outlined type="email" :disable="isSubmitting"
             :label="t('publicBooking.contactEmail')" />
-        <div v-if="customQuestions.length > 0" class="column q-gutter-sm">
+        <div v-if="customQuestions.length > 0" >
             <q-input v-for="(question, index) in customQuestions" :key="`${index}-${question}`"
                 v-model="customAnswers[index]" outlined :disable="isSubmitting" :label="question"
                 :error="customAnswerErrors[index] !== undefined" :error-message="customAnswerErrors[index] ?? ''" />
