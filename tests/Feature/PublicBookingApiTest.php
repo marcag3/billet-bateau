@@ -10,7 +10,9 @@ use App\Models\TicketType;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\WaterRoute;
+use App\Notifications\BookingConfirmationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -143,6 +145,66 @@ class PublicBookingApiTest extends TestCase
             ->assertJsonCount(0, 'data.trips');
     }
 
+    public function test_booking_options_returns_404_for_inactive_program(): void
+    {
+        $u = User::factory()->create();
+        Program::factory()->withOwner($u)->create([
+            'is_active' => false,
+            'slug' => 'inactive-prog',
+        ]);
+
+        $this->getJson('/api/public/programs/inactive-prog/booking-options')
+            ->assertNotFound();
+    }
+
+    public function test_booking_options_returns_404_for_past_end_date_program(): void
+    {
+        $u = User::factory()->create();
+        Program::factory()->withOwner($u)->create([
+            'is_active' => true,
+            'slug' => 'past-season',
+            'start_date' => now()->subMonths(6)->toDateString(),
+            'end_date' => now()->subDay()->toDateString(),
+        ]);
+
+        $this->getJson('/api/public/programs/past-season/booking-options')
+            ->assertNotFound();
+    }
+
+    public function test_store_returns_404_for_inactive_program(): void
+    {
+        $u = User::factory()->create();
+        Program::factory()->withOwner($u)->create([
+            'is_active' => false,
+            'slug' => 'inactive-store',
+        ]);
+
+        $this->postJson('/api/public/programs/inactive-store/bookings', [
+            'trip_id' => (string) Str::ulid(),
+            'ticket_quantities' => [],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+        ])->assertNotFound();
+    }
+
+    public function test_store_returns_404_for_past_end_date_program(): void
+    {
+        $u = User::factory()->create();
+        Program::factory()->withOwner($u)->create([
+            'is_active' => true,
+            'slug' => 'past-store',
+            'start_date' => now()->subMonths(6)->toDateString(),
+            'end_date' => now()->subDay()->toDateString(),
+        ]);
+
+        $this->postJson('/api/public/programs/past-store/bookings', [
+            'trip_id' => (string) Str::ulid(),
+            'ticket_quantities' => [],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+        ])->assertNotFound();
+    }
+
     public function test_store_creates_booking_and_booking_tickets(): void
     {
         $u = User::factory()->create();
@@ -182,6 +244,115 @@ class PublicBookingApiTest extends TestCase
             'contact_email' => 'alex@example.com',
         ]);
         $this->assertSame(2, BookingTicket::query()->where('booking_id', $bookingId)->count());
+    }
+
+    public function test_store_sends_booking_confirmation_notification(): void
+    {
+        Notification::fake();
+
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'slug' => 'notify-me',
+            'name' => 'Harbor Tours',
+        ]);
+
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10, 'name' => 'Sunset run'])->save();
+
+        $type = TicketType::factory()->forProgram($program)->create([
+            'title' => 'Adult',
+            'min_per_purchase' => 1,
+            'max_per_purchase' => 10,
+        ]);
+
+        $this->postJson('/api/public/programs/notify-me/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 2],
+            'contact_name' => 'Alex River',
+            'contact_email' => 'alex@example.com',
+        ])->assertCreated();
+
+        Notification::assertSentOnDemand(
+            BookingConfirmationNotification::class,
+            function (BookingConfirmationNotification $notification, array $channels, object $notifiable): bool {
+                return ($notifiable->routes['mail'] ?? null) === 'alex@example.com'
+                    && $notification->booking->contact_email === 'alex@example.com';
+            },
+        );
+
+        Notification::assertCount(1);
+    }
+
+    public function test_booking_confirmation_notification_mail_renders_with_ticket_summary(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['name' => 'Harbor Tours']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['name' => 'Sunset run'])->save();
+        $type = TicketType::factory()->forProgram($program)->create(['title' => 'Adult']);
+
+        $booking = Booking::query()->create([
+            'program_id' => $program->getKey(),
+            'trip_id' => $trip->getKey(),
+            'contact_name' => 'Alex River',
+            'contact_email' => 'alex@example.com',
+        ]);
+
+        BookingTicket::query()->create([
+            'booking_id' => $booking->getKey(),
+            'ticket_type_id' => $type->getKey(),
+            'name' => 'Alex River',
+            'email' => 'alex@example.com',
+            'country' => '',
+            'custom_fields' => [],
+        ]);
+
+        $mail = (new BookingConfirmationNotification($booking))->toMail(
+            Notification::route('mail', 'alex@example.com'),
+        );
+
+        $this->assertStringContainsString('Harbor Tours', (string) $mail->subject);
+        $this->assertTrue(
+            collect($mail->introLines)->contains(
+                static fn (string $line): bool => str_contains($line, '2 × Adult') || str_contains($line, 'Adult'),
+            ),
+        );
+
+        $this->assertCount(1, $mail->rawAttachments);
+        $attachment = $mail->rawAttachments[0];
+        $this->assertSame('reservation.ics', $attachment['name']);
+        $this->assertSame('text/calendar', $attachment['options']['mime']);
+        $ics = $attachment['data'];
+        $this->assertStringContainsString('BEGIN:VCALENDAR', $ics);
+        $this->assertStringContainsString('BEGIN:VEVENT', $ics);
+        $this->assertStringContainsString((string) $booking->getKey(), $ics);
+        $this->assertStringContainsString('Harbor Tours', $ics);
+    }
+
+    public function test_store_does_not_send_notification_when_validation_fails(): void
+    {
+        Notification::fake();
+
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['slug' => 'notify-fail']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+        $type = TicketType::factory()->forProgram($program)->create();
+
+        $this->postJson('/api/public/programs/notify-fail/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 0],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+        ])->assertUnprocessable();
+
+        Notification::assertNothingSent();
     }
 
     public function test_store_rejects_trip_from_other_program(): void
@@ -410,10 +581,12 @@ class PublicBookingApiTest extends TestCase
         $adult = TicketType::factory()->forProgram($program)->create([
             'title' => 'Adult',
             'min_per_purchase' => 0,
+            'max_per_purchase' => 10,
         ]);
         $child = TicketType::factory()->forProgram($program)->create([
             'title' => 'Child',
             'min_per_purchase' => 0,
+            'max_per_purchase' => 10,
             'depends_on_ticket_type_id' => $adult->getKey(),
             'max_per_reference_ticket' => 2,
         ]);

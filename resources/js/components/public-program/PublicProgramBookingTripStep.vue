@@ -22,25 +22,24 @@
             </q-banner>
 
             <q-virtual-scroll v-if="filteredTripOptions.length > 0" type="table" style="max-height: 70vh"
-                :virtual-scroll-item-size="48" :virtual-scroll-sticky-size-start="48"
+                :virtual-scroll-item-size="64" :virtual-scroll-sticky-size-start="48"
                 :virtual-scroll-sticky-size-end="32" bordered separator="horizontal" class="h-100"
                 :items="filteredTripOptions">
                 <template v-slot:before>
                     <thead class="thead-sticky text-left">
                         <tr>
+                            <th class="text-center" style="width: 3.5rem" />
                             <th>{{ t('publicBooking.departure') }}</th>
-                            <th>{{ t('publicBooking.productFilterButton') }}</th>
+                            <th>{{ t('publicBooking.tripColumn') }}</th>
                             <th>{{ t('publicBooking.tripAvailabilityColumn') }}</th>
                         </tr>
                     </thead>
                 </template>
 
                 <template v-slot="{ item: row }">
-                    <tr :key="row.id" class="cursor-pointer" @click="emit('continue', row.id)">
-                        <td class="whitespace-pre-line">{{ formatDeparture(row.scheduled_departure_at) }}</td>
-                        <td>{{ row.product_name }}</td>
-                        <td>{{ formatTripPlacesRatio(row) }}</td>
-                    </tr>
+                    <PublicProgramBookingTripListRow :key="row.id" :trip="row"
+                        :departure-label="formatDeparture(row.scheduled_departure_at)"
+                        :availability-label="formatTripPlacesRatio(row)" @select="emit('continue', row.id)" />
                 </template>
             </q-virtual-scroll>
         </template>
@@ -52,12 +51,14 @@ import { computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PublicProgramProductFilterSelect from './PublicProgramProductFilter.vue';
 import PublicProgramBookingDateFilter from './PublicProgramBookingDateFilter.vue';
+import PublicProgramBookingTripListRow from './PublicProgramBookingTripListRow.vue';
 import type { BookingTripOption, PublicBookingProductFilterOption } from '../../models/public-booking/public-booking.types';
 import {
     buildDailyAvailabilityMap,
     filterPublicBookingTrips,
     publicBookingTripHasAvailability,
 } from '../../utilities/public-booking-filters';
+import { pickTripBannerUrl } from '../../utilities/public-booking-trip-display';
 
 const props = defineProps<{
     tripOptions: BookingTripOption[];
@@ -100,19 +101,6 @@ watch(
         }
     },
 );
-
-function pickTripBannerUrl(trip: BookingTripOption): string | null {
-    const product = trip.product_banner_url?.trim() ?? '';
-    if (product.length > 0) {
-        return trip.product_banner_url;
-    }
-    const boat = trip.boat_type_banner_url?.trim() ?? '';
-    if (boat.length > 0) {
-        return trip.boat_type_banner_url;
-    }
-
-    return null;
-}
 
 const productFilterOptions = computed((): PublicBookingProductFilterOption[] => {
     const map = new Map<string, PublicBookingProductFilterOption>();

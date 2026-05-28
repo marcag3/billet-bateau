@@ -35,28 +35,15 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 - Public **read-only** catalog: `GET /api/public/programs`, `GET /api/public/programs/{slug}`, public home + program detail pages (`PublicHomePage`, `PublicProgramDetailPage`)
 - Public guest booking flow (no payment): create `bookings` + `booking_tickets` from checkout with contact validation, ticket min/max checks, and trip capacity enforcement
 - Public booking options now include richer **product/trip context**: `product_name`, `product_banner_url`, boat type banner, and water route trace GeoJSON for trip cards
+- Public checkout **trip step**: thumbnails (product/boat banner), product name, departure, availability, and water route name/duration when present
 - Public checkout now supports **program custom questions** end-to-end: `booking_questions` in booking options, required `custom_answers` at booking time, and persisted mapped answers in `booking_tickets.custom_fields`
-- PHPUnit: PostGIS geometry + relations (`OnWaterDataModelTest`); PowerSync upload coverage (programs, boats, trips/water routes, template stack, ticket types / booking tickets); `PublicProgramApiTest`
-
-### Public booking
-
-- Laravel policies for **guest writes** to bookings when the product opens public checkout (`POST /api/powersync/upload` remains **staff-authenticated** today)
+- Public booking **confirmation email** (French copy) sent to `contact_email` after successful `POST …/bookings` (`BookingConfirmationNotification`)
+- Public program routes require **`is_active`** and in-season `end_date` (slug show + booking endpoints); guest `store` authorized via `BookingPolicy::createPublic`
+- PHPUnit: PostGIS geometry + relations (`OnWaterDataModelTest`); PowerSync upload coverage (programs, boats, trips/water routes, template stack, ticket types / booking tickets); `PublicProgramApiTest`, `PublicBookingApiTest`, `BookingPolicyTest`
 
 ### Checkout
 
 - Extend custom questions from current **program-level JSON questions** to richer admin authoring (program/trip scope) and stricter validation rules
-
-### Ticket types
-
-- Backend + sync: title, price, PWYC, min/max per purchase, optional dependency (`depends_on_ticket_type_id`, `max_per_reference_ticket`)
-- Admin UI (Quasar) to manage ticket types for the selected program (including dependency pair)
-- Server-side enforcement: trip capacity, per-ticket-type min/max, and dependency ratio on public booking
-
-### Ticket dependency (ratio) rules
-
-- Data model + sync + public booking options payload: `depends_on_ticket_type_id`, `max_per_reference_ticket` on `ticket_types` (pair must be set together; PowerSync PUT validates)
-- Admin UI: reference ticket type + max-per-reference on ticket type form
-- Cart/checkout: `validatePublicBookingTickets` (frontend) + `CreatePublicBookingAction` (server) enforce `dependent_qty <= reference_qty × max_per_reference`
 
 ### Trips and calendar
 

@@ -9,8 +9,10 @@ use App\Models\BookingTicket;
 use App\Models\Program;
 use App\Models\TicketType;
 use App\Models\Trip;
+use App\Notifications\BookingConfirmationNotification;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -21,7 +23,7 @@ final class CreatePublicBookingAction
      */
     public function handle(Program $program, PublicBookingStoreData $data): PublicBookingCreatedData
     {
-        return DB::transaction(function () use ($program, $data): PublicBookingCreatedData {
+        $created = DB::transaction(function () use ($program, $data): PublicBookingCreatedData {
             /** @var array<string, int> $normalizedQuantities */
             $normalizedQuantities = [];
             foreach ($data->ticket_quantities as $typeId => $quantity) {
@@ -187,6 +189,13 @@ final class CreatePublicBookingAction
                 contact_email: $data->contact_email,
             );
         });
+
+        $booking = Booking::query()->findOrFail($created->id);
+
+        Notification::route('mail', $created->contact_email)
+            ->notify(new BookingConfirmationNotification($booking));
+
+        return $created;
     }
 
     /**

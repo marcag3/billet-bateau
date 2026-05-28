@@ -14,8 +14,11 @@ vi.mock('vue-i18n', () => ({
     useI18n: () => ({
         locale: { value: 'en-US' },
         t: (key: string, params?: Record<string, string>) => {
-            if (key === 'publicBooking.checkEmailConfirmation') {
-                return 'Check your email for booking confirmation.';
+            if (key === 'publicBooking.successBody') {
+                return `Booking ${params?.id} for ${params?.total} ticket(s).`;
+            }
+            if (key === 'publicBooking.successEmailSent') {
+                return `Confirmation sent to ${params?.email}.`;
             }
             if (key === 'publicBooking.bookAnother') {
                 return 'Book another trip';
@@ -135,7 +138,8 @@ describe('PublicProgramDetailPage', () => {
         };
         await wrapper.vm.$nextTick();
 
-        expect(wrapper.text()).toContain('Check your email for booking confirmation.');
+        expect(wrapper.text()).toContain('Booking booking-1 for 2 ticket(s).');
+        expect(wrapper.text()).toContain('Confirmation sent to jane@example.com.');
         expect(wrapper.text()).toContain('Book another trip');
     });
 

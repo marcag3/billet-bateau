@@ -8,6 +8,7 @@ use App\Data\Programs\PublicBookingStoreData;
 use App\Data\Programs\PublicBookingTicketTypeOptionData;
 use App\Data\Programs\PublicBookingTripOptionData;
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\BookingTicket;
 use App\Models\Program;
 use App\Models\Trip;
@@ -81,6 +82,8 @@ class PublicBookingController extends Controller
 
     public function store(Program $program, PublicBookingStoreData $data, CreatePublicBookingAction $createPublicBooking): JsonResponse
     {
+        $this->authorize('createPublic', [Booking::class, $program]);
+
         $created = $createPublicBooking->handle($program, $data);
 
         return response()->json([

@@ -161,6 +161,7 @@ class Program extends Model
 
         return static::query()
             ->where($field, $value)
+            ->active()
             ->whereDate('end_date', '>=', now()->toDateString())
             ->first();
     }

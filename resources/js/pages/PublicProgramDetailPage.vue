@@ -35,7 +35,19 @@
                         <q-icon name="check_circle" color="positive" size="52px" />
                         <div class="text-h5 text-weight-bold">{{ t('publicBooking.successTitle') }}</div>
                         <p class="text-body1 text-grey-8 q-mb-sm">
-                            {{ t('publicBooking.checkEmailConfirmation') }}
+                            {{
+                                t('publicBooking.successBody', {
+                                    id: createdBooking.id,
+                                    total: String(createdBooking.total_tickets),
+                                })
+                            }}
+                        </p>
+                        <p v-if="createdBooking.contact_email" class="text-body2 text-grey-7">
+                            {{
+                                t('publicBooking.successEmailSent', {
+                                    email: createdBooking.contact_email,
+                                })
+                            }}
                         </p>
                         <q-btn color="primary" no-caps :label="t('publicBooking.bookAnother')" @click="onBookAnother" />
                     </q-card-section>

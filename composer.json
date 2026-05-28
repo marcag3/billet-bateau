@@ -19,6 +19,7 @@
         "laravel/wayfinder": "^0.1.16",
         "league/flysystem-aws-s3-v3": "^3.0",
         "lorisleiva/laravel-actions": "^2.10",
+        "spatie/icalendar-generator": "^3.3",
         "spatie/laravel-data": "^4.22",
         "spatie/typescript-transformer": "^3.1",
         "timokoerber/laravel-one-time-operations": "^1.4"

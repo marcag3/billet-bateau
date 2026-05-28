@@ -87,14 +87,13 @@ class PublicProgramApiTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_show_resolves_by_slug_and_does_not_require_is_active(): void
+    public function test_show_returns_404_for_inactive_program(): void
     {
         $u = User::factory()->create();
-        $p = Program::factory()->withOwner($u)->create(['is_active' => false, 'name' => 'Off', 'slug' => 'summer-2025']);
+        Program::factory()->withOwner($u)->create(['is_active' => false, 'name' => 'Off', 'slug' => 'summer-2025']);
 
         $this->getJson('/api/public/programs/summer-2025')
-            ->assertOk()
-            ->assertJsonPath('data.name', 'Off');
+            ->assertNotFound();
     }
 
     public function test_show_404_for_slug_with_wrong_case(): void
