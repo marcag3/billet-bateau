@@ -1,4 +1,4 @@
-import { BasicIndex, createCollection } from "@tanstack/db";
+import { createAppPowerSyncCollection } from "./collection-defaults";
 import { powerSyncCollectionOptions } from "@tanstack/powersync-db-collection";
 import { z } from "zod";
 import { appProductsPowerSyncTable } from "./app.powersync-schema";
@@ -26,8 +26,7 @@ export function createProductsCollection(
     onError: (error: unknown) => void,
     onLoad?: () => void | (() => void) | Promise<void | (() => void)>,
 ) {
-    const collection = createCollection({
-        defaultIndexType: BasicIndex,
+    const collection = createAppPowerSyncCollection('products', {
         ...powerSyncCollectionOptions({
             database,
             table: appProductsPowerSyncTable,
@@ -40,6 +39,9 @@ export function createProductsCollection(
     });
 
     collection.createIndex((row) => row.id);
+    collection.createIndex((row) => row.program_id);
+    collection.createIndex((row) => row.boat_type_id);
+    collection.createIndex((row) => row.water_route_id);
 
     return collection;
 }

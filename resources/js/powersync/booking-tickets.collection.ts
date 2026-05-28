@@ -1,4 +1,4 @@
-import { BasicIndex, createCollection } from "@tanstack/db";
+import { createAppPowerSyncCollection } from "./collection-defaults";
 import { powerSyncCollectionOptions } from "@tanstack/powersync-db-collection";
 import { z } from "zod";
 import { appBookingTicketsPowerSyncTable } from "./app.powersync-schema";
@@ -26,8 +26,7 @@ export function createBookingTicketsCollection(
     onError: (error: unknown) => void,
     onLoad?: () => void | (() => void) | Promise<void | (() => void)>,
 ) {
-    const collection = createCollection({
-        defaultIndexType: BasicIndex,
+    const collection = createAppPowerSyncCollection('booking_tickets', {
         ...powerSyncCollectionOptions({
             database,
             table: appBookingTicketsPowerSyncTable,
@@ -40,6 +39,7 @@ export function createBookingTicketsCollection(
     });
 
     collection.createIndex((row) => row.id);
+    collection.createIndex((row) => row.booking_id);
 
     return collection;
 }

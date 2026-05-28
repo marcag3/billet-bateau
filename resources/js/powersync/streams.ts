@@ -8,17 +8,29 @@ import {
 
 let programScopeUnsubscribe: null | (() => void) = null;
 
+let programScopeAttachSeq = 0;
+
 let userScopeUnsubscribe: null | (() => void) = null;
 
-function detachUserScopeStream(): void {
-    if (userScopeUnsubscribe) {
-        try {
-            userScopeUnsubscribe();
-        } catch (error) {
-            console.warn("PowerSync user_scope unsubscribe failed:", error);
-        }
-        userScopeUnsubscribe = null;
+function runStreamUnsubscribe(
+    unsubscribe: (() => void) | null,
+    label: string,
+): void {
+    if (!unsubscribe) {
+        return;
     }
+
+    try {
+        unsubscribe();
+    } catch (error) {
+        console.warn(`PowerSync ${label} unsubscribe failed:`, error);
+    }
+}
+
+function detachUserScopeStream(): void {
+    const unsubscribe = userScopeUnsubscribe;
+    userScopeUnsubscribe = null;
+    runStreamUnsubscribe(unsubscribe, "user_scope");
 }
 
 /**
@@ -43,14 +55,9 @@ export function attachProgramScopeStreamSubscription(): void {
         return;
     }
 
-    if (programScopeUnsubscribe) {
-        try {
-            programScopeUnsubscribe();
-        } catch (error) {
-            console.warn("PowerSync program_scope unsubscribe failed:", error);
-        }
-        programScopeUnsubscribe = null;
-    }
+    const unsubscribe = programScopeUnsubscribe;
+    programScopeUnsubscribe = null;
+    runStreamUnsubscribe(unsubscribe, "program_scope");
 
     const db = powerSyncDbRef.value;
     const newPid = activeProgramIdRef.value.trim();
@@ -58,10 +65,17 @@ export function attachProgramScopeStreamSubscription(): void {
         return;
     }
 
+    const attachSeq = ++programScopeAttachSeq;
+
     void db
         .syncStream("program_scope", { program_id: newPid })
         .subscribe()
         .then((sub) => {
+            if (attachSeq !== programScopeAttachSeq) {
+                sub.unsubscribe();
+                return;
+            }
+
             programScopeUnsubscribe = () => {
                 sub.unsubscribe();
             };
@@ -72,17 +86,9 @@ export function attachProgramScopeStreamSubscription(): void {
 }
 
 export function detachAllPowerSyncStreams(): void {
-    if (programScopeUnsubscribe) {
-        try {
-            programScopeUnsubscribe();
-        } catch (error) {
-            console.warn(
-                "PowerSync program_scope unsubscribe failed during detach:",
-                error,
-            );
-        }
-        programScopeUnsubscribe = null;
-    }
+    const programUnsubscribe = programScopeUnsubscribe;
+    programScopeUnsubscribe = null;
+    runStreamUnsubscribe(programUnsubscribe, "program_scope");
     detachUserScopeStream();
 }
 

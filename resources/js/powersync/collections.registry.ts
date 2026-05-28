@@ -23,7 +23,6 @@ import {
     programsDeserializationError,
     type PowerSyncCollectionKey,
 } from "./powersync-runtime-state";
-
 const noopOnLoad = async (): Promise<void> => {
     // `user_scope` / `program_scope` are attached in `streams.ts` + `bootstrap.ts`
     // after `db.connect()` so replication ordering stays correct.

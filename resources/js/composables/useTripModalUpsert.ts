@@ -156,7 +156,7 @@ export function useTripModalUpsert(
                 return undefined;
             }
             return joinTripsWithRelations(queryBuilder, col, pCol, btCol, wrCol)
-                .where(({ t }) => eq(t.program_id, pid));
+                .where(({ trip }) => eq(trip.program_id, pid));
         },
         [
             tripsCollection,

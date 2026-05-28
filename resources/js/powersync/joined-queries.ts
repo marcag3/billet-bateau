@@ -104,8 +104,8 @@ export interface TripWithRelationsRow {
  *   const wrCol = waterRoutesCollection.value
  *   if (!col || !pCol || !btCol || !wrCol || pid.length === 0) return undefined
  *   return joinTripsWithRelations(qb, col, pCol, btCol, wrCol)
- *     .where(({ t }) => t.program_id, "=", pid)
- *     .orderBy(({ t }) => t.scheduled_departure_at, "desc")
+ *     .where(({ trip }) => trip.program_id, "=", pid)
+ *     .orderBy(({ trip }) => trip.scheduled_departure_at, "desc")
  * })
  * ```
  */
@@ -122,28 +122,28 @@ export function joinTripsWithRelations<
     waterRoutesCollection: WR,
 ) {
     return qb
-        .from({ t: tripsCollection })
-        .innerJoin({ p: productsCollection }, ({ t, p }) =>
-            eq(t.product_id, p.id),
+        .from({ trip: tripsCollection })
+        .innerJoin({ product: productsCollection }, ({ trip, product }) =>
+            eq(trip.product_id, product.id),
         )
-        .leftJoin({ bt: boatTypesCollection }, ({ p, bt }) =>
-            eq(p.boat_type_id, bt.id),
+        .leftJoin({ boatType: boatTypesCollection }, ({ product, boatType }) =>
+            eq(product.boat_type_id, boatType.id),
         )
-        .leftJoin({ wr: waterRoutesCollection }, ({ p, wr }) =>
-            eq(p.water_route_id, wr.id),
+        .leftJoin({ waterRoute: waterRoutesCollection }, ({ product, waterRoute }) =>
+            eq(product.water_route_id, waterRoute.id),
         )
-        .select(({ t, p, bt, wr }) => ({
-            id: t.id,
-            program_id: t.program_id,
-            product_id: t.product_id,
-            product_name: p.name,
-            scheduled_departure_at: t.scheduled_departure_at,
-            boat_type_id: p.boat_type_id,
-            water_route_id: p.water_route_id,
-            capacity: p.capacity,
-            boatTypeName: bt.name,
-            waterRouteName: wr.name,
-            waterRouteDurationMinutes: wr.duration_minutes,
-            productBannerObjectKey: p.banner_object_key,
+        .select(({ trip, product, boatType, waterRoute }) => ({
+            id: trip.id,
+            program_id: trip.program_id,
+            product_id: trip.product_id,
+            product_name: product.name,
+            scheduled_departure_at: trip.scheduled_departure_at,
+            boat_type_id: product.boat_type_id,
+            water_route_id: product.water_route_id,
+            capacity: product.capacity,
+            boatTypeName: boatType.name,
+            waterRouteName: waterRoute.name,
+            waterRouteDurationMinutes: waterRoute.duration_minutes,
+            productBannerObjectKey: product.banner_object_key,
         }));
 }

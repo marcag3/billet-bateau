@@ -335,17 +335,16 @@ const { data: tripsRaw } = useLiveQuery(
         const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || !pCol || !btCol || !wrCol || pid.length === 0) return undefined;
         return joinTripsWithRelations(queryBuilder, col, pCol, btCol, wrCol)
-            .where(({ t: trip }: Record<string, Record<string, unknown>>) =>
+            .where(({ trip }: Record<string, Record<string, unknown>>) =>
                 eq(trip.program_id, pid),
             )
             .orderBy(
-                ({ t: trip }: Record<string, Record<string, unknown>>) =>
+                ({ trip }: Record<string, Record<string, unknown>>) =>
                     trip.scheduled_departure_at,
                 "desc",
             )
             .orderBy(
-                ({ t: trip }: Record<string, Record<string, unknown>>) =>
-                    trip.id,
+                ({ trip }: Record<string, Record<string, unknown>>) => trip.id,
                 "desc",
             );
     },

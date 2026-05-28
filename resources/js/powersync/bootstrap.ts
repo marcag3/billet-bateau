@@ -124,15 +124,19 @@ export async function bootstrapAppPowerSync(): Promise<void> {
 
             runtimeState.powerSyncStatusUnsubscribe?.();
             runtimeState.setPowerSyncStatusUnsubscribe(null);
-            try {
-                await runtimeState.powerSyncDbRef.value?.close();
-            } catch (closeError) {
-                console.error(
-                    "PowerSync close failed during bootstrap recovery:",
-                    closeError,
-                );
-            }
+
+            const dbToClose = runtimeState.powerSyncDbRef.value;
             runtimeState.powerSyncDbRef.value = null;
+            if (dbToClose) {
+                try {
+                    await dbToClose.close();
+                } catch (closeError) {
+                    console.error(
+                        "PowerSync close failed during bootstrap recovery:",
+                        closeError,
+                    );
+                }
+            }
             for (const ref of Object.values(runtimeState.collectionRefs)) {
                 ref.value = null;
             }
