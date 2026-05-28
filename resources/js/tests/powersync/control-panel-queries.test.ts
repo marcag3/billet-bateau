@@ -4,6 +4,7 @@ import {
     buildControlPanelDayStatsQuery,
     buildControlPanelTripCardsQuery,
     buildTripsForProgramDayQuery,
+    mapControlPanelTripCardRow,
     passengerOnReturnedVoyageForDateYmd,
     reduceDayStatsRows,
     tripDepartureMatchesLocalDateYmd,
@@ -143,5 +144,25 @@ describe('control-panel-queries', () => {
         expect(qb.from).toHaveBeenCalled();
         expect(qb.orderBy).toHaveBeenCalled();
         expect(qb.select).toHaveBeenCalled();
+    });
+
+    it('mapControlPanelTripCardRow maps pivot and entity ids for depart modal', () => {
+        const mapped = mapControlPanelTripCardRow({
+            id: 'trip-1',
+            program_id: 'prog-1',
+            voyage: null,
+            passengers: [],
+            bookingTickets: [],
+            voyageBoatPivotIds: [
+                { id: 'vb-1', boat_id: 'boat-a' },
+                { id: 'vb-2', boat_id: 'boat-b' },
+            ],
+            voyageGuidePivotIds: [{ id: 'vg-1', guide_id: 'guide-x' }],
+        } as never);
+
+        expect(mapped.voyageBoatPivotIds).toEqual(['vb-1', 'vb-2']);
+        expect(mapped.voyageGuidePivotIds).toEqual(['vg-1']);
+        expect(mapped.initialBoatIds).toEqual(['boat-a', 'boat-b']);
+        expect(mapped.initialGuideIds).toEqual(['guide-x']);
     });
 });

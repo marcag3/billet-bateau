@@ -33,8 +33,8 @@
             v-model:open="departModalOpen"
             :boat-options="boatOptions"
             :guide-options="guideOptions"
-            :initial-boat-ids="departInitialBoatIds"
-            :initial-guide-ids="departInitialGuideIds"
+            :initial-boat-ids="departCard?.initialBoatIds ?? []"
+            :initial-guide-ids="departCard?.initialGuideIds ?? []"
             :submitting="departSubmitting"
             @confirm="onConfirmDepart"
         />
@@ -76,8 +76,6 @@ const { startDeparture, markArrival, addPassenger, removePassenger } =
 
 const boatsCollection = powersync.collections.boats;
 const guidesCollection = powersync.collections.guides;
-const voyageBoatCollection = powersync.collections.voyage_boat;
-const voyageGuideCollection = powersync.collections.voyage_guide;
 
 const { data: boatsRaw } = useLiveQuery(
     (queryBuilder) => {
@@ -102,28 +100,6 @@ const { data: guidesRaw } = useLiveQuery(
     [guidesCollection],
 );
 
-const { data: voyageBoatRaw } = useLiveQuery(
-    (queryBuilder) => {
-        const col = voyageBoatCollection.value;
-        if (!col) {
-            return undefined;
-        }
-        return queryBuilder.from({ vb: col });
-    },
-    [voyageBoatCollection],
-);
-
-const { data: voyageGuideRaw } = useLiveQuery(
-    (queryBuilder) => {
-        const col = voyageGuideCollection.value;
-        if (!col) {
-            return undefined;
-        }
-        return queryBuilder.from({ vg: col });
-    },
-    [voyageGuideCollection],
-);
-
 const boatOptions = computed((): ControlPanelSelectOption[] => {
     return ((boatsRaw.value ?? []) as Record<string, unknown>[]).map((b) => {
         const cap = b.capacity != null ? ` (${b.capacity} pax)` : '';
@@ -144,34 +120,6 @@ const guideOptions = computed((): ControlPanelSelectOption[] => {
 const departModalOpen = ref(false);
 const departSubmitting = ref(false);
 const departCard = ref<ControlPanelTripCardModel | null>(null);
-
-const departInitialBoatIds = computed((): string[] => {
-    const card = departCard.value;
-    if (card == null) {
-        return [];
-    }
-    const voyageId = card.voyage?.id != null ? String(card.voyage.id) : '';
-    if (voyageId.length === 0) {
-        return [];
-    }
-    return ((voyageBoatRaw.value ?? []) as { id: string; voyage_id: string; boat_id: string }[])
-        .filter((row) => String(row.voyage_id) === voyageId)
-        .map((row) => String(row.boat_id));
-});
-
-const departInitialGuideIds = computed((): string[] => {
-    const card = departCard.value;
-    if (card == null) {
-        return [];
-    }
-    const voyageId = card.voyage?.id != null ? String(card.voyage.id) : '';
-    if (voyageId.length === 0) {
-        return [];
-    }
-    return ((voyageGuideRaw.value ?? []) as { id: string; voyage_id: string; guide_id: string }[])
-        .filter((row) => String(row.voyage_id) === voyageId)
-        .map((row) => String(row.guide_id));
-});
 
 function openDepartModal(card: ControlPanelTripCardModel): void {
     departCard.value = card;

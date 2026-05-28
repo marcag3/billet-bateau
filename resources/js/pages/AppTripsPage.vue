@@ -221,6 +221,10 @@ import { QCalendarDay, QCalendarMonth, today } from "@quasar/quasar-ui-qcalendar
 import { useQuasar } from "quasar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import { joinTripsWithRelations } from "../powersync/joined-queries";
+import {
+    buildProgramBookedTripIdsQuery,
+    reduceBookedTripIds,
+} from "../powersync/trips-queries";
 import type { ProgramOutput } from "../powersync/programs.collection";
 import { mediaObjectPublicUrl } from "../utilities/media-url";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
@@ -287,14 +291,14 @@ const programDateBounds = computed((): { startYmd: string; endYmd: string } => {
     return { startYmd: "1970-01-01", endYmd: "9999-12-31" };
 });
 
-const { data: bookingsRows } = useLiveQuery(
+const { data: bookedTripIdRows } = useLiveQuery(
     (queryBuilder) => {
         const col = bookingsCollection.value;
         const pid = powersync.activeProgramIdRef.value.trim();
-        if (!col || pid.length === 0) return undefined;
-        return queryBuilder
-            .from({ b: col })
-            .where(({ b }) => eq(b.program_id, pid));
+        if (!col || pid.length === 0) {
+            return undefined;
+        }
+        return buildProgramBookedTripIdsQuery(queryBuilder, col, pid);
     },
     [bookingsCollection, powersync.activeProgramIdRef],
 );
@@ -314,16 +318,9 @@ const { data: productsRaw } = useLiveQuery(
     [productsCollection, powersync.activeProgramIdRef],
 );
 
-const bookedTripIds = computed(() => {
-    const set = new Set<string>();
-    for (const row of bookingsRows.value ?? []) {
-        const tid = row.trip_id;
-        if (tid != null && String(tid).trim() !== "") {
-            set.add(String(tid));
-        }
-    }
-    return set;
-});
+const bookedTripIds = computed(() =>
+    reduceBookedTripIds(bookedTripIdRows.value ?? []),
+);
 
 const { data: tripsRaw } = useLiveQuery(
     (queryBuilder) => {

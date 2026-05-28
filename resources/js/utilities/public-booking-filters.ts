@@ -64,6 +64,10 @@ export function toBrowserLocalDateYmd(isoDatetime: string): string | null {
     return `${year}-${month}-${day}`;
 }
 
+/**
+ * Aggregates public booking calendar dots from API trip options (not PowerSync).
+ * Staff/offline TanStack live-query refactors use powersync/*-queries.ts instead.
+ */
 export function buildDailyAvailabilityMap(
     trips: PublicBookingTripFilterInput[],
 ): Record<string, PublicBookingDailyAvailability> {

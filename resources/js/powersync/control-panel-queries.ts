@@ -35,7 +35,8 @@ export type ControlPanelDayStatsRow = {
     value: number;
 };
 
-type PivotIdRow = { id: string };
+type VoyageBoatPivotRow = { id: string; boat_id: string };
+type VoyageGuidePivotRow = { id: string; guide_id: string };
 
 const DAY_STATS_METRICS = ['booked', 'manifestCount', 'returned'] as const;
 
@@ -43,8 +44,8 @@ export type ControlPanelTripCardQueryRow = TripWithRelationsRow & {
     voyage: VoyageOutput | undefined;
     passengers: PassengerOutput[];
     bookingTickets: BookingTicketOutput[];
-    voyageBoatPivotIds: PivotIdRow[];
-    voyageGuidePivotIds: PivotIdRow[];
+    voyageBoatPivotIds: VoyageBoatPivotRow[];
+    voyageGuidePivotIds: VoyageGuidePivotRow[];
 };
 
 export function tripDepartureMatchesLocalDateYmd(
@@ -258,7 +259,10 @@ export function buildControlPanelTripCardsQuery(
                         eq(voyageBoat.voyage_id, voyage.id),
                     )
                     .where(({ voyage }) => eq(voyage.trip_id, trip.id))
-                    .select(({ voyageBoat }) => ({ id: voyageBoat.id })),
+                    .select(({ voyageBoat }) => ({
+                        id: voyageBoat.id,
+                        boat_id: voyageBoat.boat_id,
+                    })),
             ),
             voyageGuidePivotIds: toArray(
                 qb
@@ -267,7 +271,10 @@ export function buildControlPanelTripCardsQuery(
                         eq(voyageGuide.voyage_id, voyage.id),
                     )
                     .where(({ voyage }) => eq(voyage.trip_id, trip.id))
-                    .select(({ voyageGuide }) => ({ id: voyageGuide.id })),
+                    .select(({ voyageGuide }) => ({
+                        id: voyageGuide.id,
+                        guide_id: voyageGuide.guide_id,
+                    })),
             ),
         }));
 }
@@ -297,6 +304,8 @@ export function mapControlPanelTripCardRow(
     bookingTickets: { id: string; name: string; booking_id: string }[];
     voyageBoatPivotIds: string[];
     voyageGuidePivotIds: string[];
+    initialBoatIds: string[];
+    initialGuideIds: string[];
 } {
     const tickets = Array.isArray(row.bookingTickets)
         ? row.bookingTickets
@@ -328,9 +337,32 @@ export function mapControlPanelTripCardRow(
             name: String(bt.name ?? '').trim(),
             booking_id: String(bt.booking_id),
         })),
-        voyageBoatPivotIds: (row.voyageBoatPivotIds ?? []).map((p) => String(p.id)),
-        voyageGuidePivotIds: (row.voyageGuidePivotIds ?? []).map((p) => String(p.id)),
+        voyageBoatPivotIds: normalizePivotRows(row.voyageBoatPivotIds).map((p) =>
+            String(p.id),
+        ),
+        voyageGuidePivotIds: normalizePivotRows(row.voyageGuidePivotIds).map((p) =>
+            String(p.id),
+        ),
+        initialBoatIds: normalizePivotRows(row.voyageBoatPivotIds)
+            .map((p) => String(p.boat_id ?? '').trim())
+            .filter((id) => id.length > 0),
+        initialGuideIds: normalizePivotRows(row.voyageGuidePivotIds)
+            .map((p) => String(p.guide_id ?? '').trim())
+            .filter((id) => id.length > 0),
     };
+}
+
+function normalizePivotRows<T>(value: T | T[] | { toArray: T[] } | null | undefined): T[] {
+    if (value == null) {
+        return [];
+    }
+    if (Array.isArray(value)) {
+        return value;
+    }
+    if (typeof value === 'object' && 'toArray' in value) {
+        return (value as { toArray: T[] }).toArray;
+    }
+    return [value];
 }
 
 function isLiveQueryCollectionReady(
