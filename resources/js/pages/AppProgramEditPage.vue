@@ -23,7 +23,8 @@
                 {{ errorMessage }}
             </AppAlertBanner>
 
-            <q-form class="q-gutter-md" @submit.prevent="onFormSubmit">
+            <q-form @submit.prevent="onFormSubmit">
+                <AppFormStack>
                 <q-input
                     v-model="name"
                     v-bind="nameProps"
@@ -84,7 +85,7 @@
                     :disable="isSubmitting"
                 />
 
-                <div class="row q-col-gutter-md">
+                <AppFormRow>
                     <div class="col-12 col-sm-6">
                         <q-input
                             v-model="startDate"
@@ -115,7 +116,7 @@
                             </template>
                         </q-input>
                     </div>
-                </div>
+                </AppFormRow>
 
                 <AppTextRepeaterField
                     v-model="bookingQuestionRows"
@@ -166,7 +167,7 @@
                             :label="t('programsCreate.line2')"
                             :disable="isSubmitting"
                         />
-                        <div class="row q-col-gutter-sm">
+                        <AppFormRow gutter="sm">
                             <div class="col-12 col-sm-6">
                                 <q-input
                                     v-model="city"
@@ -185,7 +186,7 @@
                                     :disable="isSubmitting"
                                 />
                             </div>
-                        </div>
+                        </AppFormRow>
                         <q-input
                             v-model="country"
                             v-bind="countryProps"
@@ -222,6 +223,7 @@
                         @click="goToProgramsList"
                     />
                 </div>
+                </AppFormStack>
             </q-form>
         </AppCardSection>
 
@@ -293,6 +295,8 @@ import { presignUpload } from "../actions/App/Http/Controllers/Api/PresignUpload
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
+import AppFormRow from "../components/ui/AppFormRow.vue";
+import AppFormStack from "../components/ui/AppFormStack.vue";
 import AppTextRepeaterField from "../components/ui/AppTextRepeaterField.vue";
 import AppImageUploadField from "../components/molecules/AppImageUploadField.vue";
 import {

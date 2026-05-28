@@ -17,5 +17,7 @@ const props = withDefaults(
     { gutter: 'md', items: 'start' },
 );
 
-const rootClass = computed(() => `row q-col-gutter-${props.gutter} items-${props.items}`);
+const rootClass = computed(
+    () => `row q-col-gutter-x-${props.gutter} items-${props.items}`,
+);
 </script>
