@@ -1,7 +1,11 @@
 import { isValid } from "ulid";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
-import { parsePositiveInt, zRequiredTrimmedString } from "../../validation/zod-fields";
+import {
+    coerceStringInput,
+    parsePositiveInt,
+    zRequiredTrimmedString,
+} from "../../validation/zod-fields";
 
 export type Translator = (key: string) => string;
 
@@ -13,6 +17,7 @@ const optionalUlidRefSchema = z.preprocess(
 function createProductUpsertFormZodSchema(t: Translator) {
     return z.object({
         name: zRequiredTrimmedString(t("productsList.nameRequired")),
+        description: z.preprocess(coerceStringInput, z.string().trim()),
         capacity: z
             .preprocess(
                 (v) => parsePositiveInt(v),
@@ -33,6 +38,7 @@ export type ProductUpsertFormValues = z.infer<
 export function createEmptyProductUpsertFormValues(): ProductUpsertFormValues {
     return {
         name: "",
+        description: "",
         capacity: null,
         boatTypeId: null,
         waterRouteId: null,

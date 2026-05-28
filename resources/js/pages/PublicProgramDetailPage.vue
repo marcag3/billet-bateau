@@ -67,7 +67,7 @@
                     <PublicProgramBookingTicketsStep v-model:ticket-quantities="ticketQuantities"
                         :ticket-errors="step2TicketErrors" :can-continue="canAccessStep3"
                         :ticket-type-options="ticketTypeOptions" :format-ticket-type-price="formatTicketTypePrice"
-                        @back="step = 1" @continue="goToContactStep" />
+                        :selected-trip="selectedTrip" @back="step = 1" @continue="goToContactStep" />
                 </q-step>
 
                 <q-step :name="3" :title="t('publicBooking.stepContact')" :disable="!canAccessStep3"

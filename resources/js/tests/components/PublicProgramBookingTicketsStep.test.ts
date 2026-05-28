@@ -42,6 +42,41 @@ describe('PublicProgramBookingTicketsStep', () => {
         });
     }
 
+    it('shows selected trip product description', () => {
+        const wrapper = mount(PublicProgramBookingTicketsStep, {
+            props: {
+                ticketTypeOptions,
+                formatTicketTypePrice: () => '$25.00',
+                canContinue: false,
+                ticketQuantities: { adult: 0 },
+                'onUpdate:ticketQuantities': () => { },
+                selectedTrip: {
+                    id: 'trip-1',
+                    scheduled_departure_at: '2026-06-01T10:00:00Z',
+                    capacity: 10,
+                    remaining_capacity: 5,
+                    product_id: 'prod-1',
+                    product_name: 'Sunset cruise',
+                    product_description: 'A relaxing evening on the water.',
+                    product_banner_url: null,
+                    boat_type_id: null,
+                    boat_type_name: null,
+                    boat_type_banner_url: null,
+                    water_route_id: null,
+                    water_route_name: null,
+                    water_route_duration_minutes: null,
+                    water_route_trace_geojson: null,
+                },
+            },
+            global: {
+                plugins: [[Quasar, { lang }]],
+            },
+        });
+
+        expect(wrapper.text()).toContain('Sunset cruise');
+        expect(wrapper.text()).toContain('A relaxing evening on the water.');
+    });
+
     it('shows ticket error only after blur or plus-minus interaction', async () => {
         const wrapper = mountStep();
         const qInput = wrapper.findComponent({ name: 'QInput' });

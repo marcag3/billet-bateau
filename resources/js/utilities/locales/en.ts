@@ -370,6 +370,9 @@ export default {
         save: "Save",
         name: "Name",
         nameRequired: "Name is required.",
+        productDescription: "Description",
+        productDescriptionHint:
+            "Optional. Shown to guests on the public booking flow when set.",
         capacity: "Capacity",
         capacityHint: "Positive integer passenger capacity (required).",
         capacityRequired: "Capacity is required.",

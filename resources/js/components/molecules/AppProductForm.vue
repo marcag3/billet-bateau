@@ -9,6 +9,16 @@
                 :disable="fieldsDisabled"
             />
             <q-input
+                v-model="description"
+                v-bind="descriptionProps"
+                type="textarea"
+                outlined
+                autogrow
+                :label="t('productsList.productDescription')"
+                :hint="t('productsList.productDescriptionHint')"
+                :disable="fieldsDisabled"
+            />
+            <q-input
                 v-model.number="capacity"
                 v-bind="capacityProps"
                 outlined
@@ -119,6 +129,7 @@ const { handleSubmit, defineField, meta, isSubmitting, setValues, resetForm } =
 
 const quasarField = createQuasarFieldBinder(defineField);
 const [name, nameProps] = quasarField("name");
+const [description, descriptionProps] = quasarField("description");
 const [capacity, capacityProps] = quasarField("capacity");
 const [boatTypeId, boatTypeIdProps] = quasarField("boatTypeId");
 const [waterRouteId, waterRouteIdProps] = quasarField("waterRouteId");

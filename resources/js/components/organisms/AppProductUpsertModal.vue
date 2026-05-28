@@ -83,9 +83,19 @@ const formSeed = ref<Partial<ProductUpsertFormValues> | null>(null);
 
 const activeProgramId = computed(() => powersync.activeProgramIdRef.value.trim());
 
+function normalizeDescription(value: unknown): string {
+    return String(value ?? "").trim();
+}
+
+function descriptionForPersistence(value: string): string | null {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+}
+
 function rowToFormValues(row: ProductOutput): ProductUpsertFormValues {
     return {
         name: String(row.name ?? ""),
+        description: normalizeDescription(row.description),
         capacity:
             row.capacity === null || row.capacity === undefined
                 ? null
@@ -155,6 +165,9 @@ async function onSubmitProduct(values: ProductUpsertFormValues): Promise<string>
             if (wasEditing) {
                 col.update(idSnapshot, (draft) => {
                     draft.name = name;
+                    draft.description = descriptionForPersistence(
+                        values.description,
+                    );
                     draft.capacity = values.capacity;
                     draft.boat_type_id = values.boatTypeId;
                     draft.water_route_id = values.waterRouteId;
@@ -176,7 +189,7 @@ async function onSubmitProduct(values: ProductUpsertFormValues): Promise<string>
                     id,
                     program_id: programId,
                     name,
-                    description: null,
+                    description: descriptionForPersistence(values.description),
                     capacity: values.capacity,
                     boat_type_id: values.boatTypeId,
                     water_route_id: values.waterRouteId,

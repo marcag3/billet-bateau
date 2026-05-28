@@ -386,6 +386,9 @@ export default {
         save: "Enregistrer",
         name: "Nom",
         nameRequired: "Le nom est obligatoire.",
+        productDescription: "Description",
+        productDescriptionHint:
+            "Optionnel. Affichee aux visiteurs sur la reservation publique lorsqu'elle est renseignee.",
         capacity: "Capacite",
         capacityHint:
             "Capacite passagers en entier strictement positif (obligatoire).",
