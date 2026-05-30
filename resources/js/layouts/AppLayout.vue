@@ -109,11 +109,10 @@
         </q-drawer>
 
         <q-page-container class="app-page-container">
-            <q-banner
+            <AppAlertBanner
                 v-if="authStore.requiresReauthentication"
-                class="bg-amber-1 text-warning q-ma-md"
-                rounded
-                dense
+                variant="warning"
+                class="q-ma-md"
             >
                 {{
                     authStore.authErrorMessage ||
@@ -122,12 +121,12 @@
                 <template #action>
                     <q-btn
                         flat
-                        color="warning"
+                        color="primary"
                         :label="t('common.reauthenticate')"
                         @click="goToLogin"
                     />
                 </template>
-            </q-banner>
+            </AppAlertBanner>
 
             <router-view />
         </q-page-container>
@@ -145,6 +144,7 @@ import { useProgramWorkspaceLayout } from "../composables/useProgramWorkspaceLay
 import { APP_PROGRAM_MAIN_NAV_TELEPORT_ID } from "../utilities/app-layout-nav";
 import AppOutboxToolbarMenu from "../components/AppOutboxToolbarMenu.vue";
 import AppLanguageSwitcher from "../components/AppLanguageSwitcher.vue";
+import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 
 const router = useRouter();
 const $q = useQuasar();

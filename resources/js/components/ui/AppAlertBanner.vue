@@ -6,15 +6,12 @@
     >
         <slot />
         <template
-            v-if="dismissible"
+            v-if="dismissible || $slots.action"
             #action
         >
-            <slot
-                v-if="$slots.action"
-                name="action"
-            />
+            <slot name="action" />
             <q-btn
-                v-else
+                v-if="dismissible && !$slots.action"
                 flat
                 color="primary"
                 :label="dismissLabel"
