@@ -13,8 +13,6 @@
 
 import { eq, type Collection, type InitialQueryBuilder } from "@tanstack/db";
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- TanStack Collection generics */
-
 // ---------------------------------------------------------------------------
 // Boats + BoatType join
 // ---------------------------------------------------------------------------
@@ -49,8 +47,8 @@ export interface BoatWithBoatTypeRow {
  * ```
  */
 export function joinBoatsWithBoatTypes<
-    B extends Collection<any, any>,
-    BT extends Collection<any, any>,
+    B extends Collection<object, string | number>,
+    BT extends Collection<object, string | number>,
 >(qb: InitialQueryBuilder, boatsCollection: B, boatTypesCollection: BT) {
     return qb
         .from({ b: boatsCollection })
@@ -110,10 +108,10 @@ export interface TripWithRelationsRow {
  * ```
  */
 export function joinTripsWithRelations<
-    T extends Collection<any, any>,
-    P extends Collection<any, any>,
-    BT extends Collection<any, any>,
-    WR extends Collection<any, any>,
+    T extends Collection<object, string | number>,
+    P extends Collection<object, string | number>,
+    BT extends Collection<object, string | number>,
+    WR extends Collection<object, string | number>,
 >(
     qb: InitialQueryBuilder,
     tripsCollection: T,

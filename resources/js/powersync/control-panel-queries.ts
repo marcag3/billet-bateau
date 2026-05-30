@@ -7,43 +7,35 @@
  * @see https://tanstack.com/db/latest/docs/guides/live-queries
  */
 
-import { count, eq, toArray, type Collection, type InitialQueryBuilder } from '@tanstack/db';
+import {
+    count,
+    eq,
+    toArray,
+    type InitialQueryBuilder,
+    type QueryResult,
+} from '@tanstack/db';
 import { joinTripsWithRelations, type TripWithRelationsRow } from './joined-queries';
+import type { ControlPanelQueryCollections } from './control-panel-collection-types';
 import { toBrowserLocalDateYmd } from '../utilities/public-booking-filters';
 import { voyageArrivedOnDateYmd } from '../utilities/control-panel-day-board';
 import type { VoyageOutput } from './voyages.collection';
 import type { PassengerOutput } from './passengers.collection';
 import type { BookingTicketOutput } from './booking-tickets.collection';
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- TanStack Collection generics */
-
-export type ControlPanelQueryCollections = {
-    trips: Collection<any, any>;
-    products: Collection<any, any>;
-    boat_types: Collection<any, any>;
-    water_routes: Collection<any, any>;
-    voyages: Collection<any, any>;
-    passengers: Collection<any, any>;
-    bookings: Collection<any, any>;
-    booking_tickets: Collection<any, any>;
-    voyage_boat: Collection<any, any>;
-    voyage_guide: Collection<any, any>;
-};
+export type { ControlPanelQueryCollections } from './control-panel-collection-types';
 
 export type ControlPanelDayStatsRow = {
     metric: 'booked' | 'manifestCount' | 'returned';
     value: number;
 };
 
-type VoyageBoatPivotRow = { id: string; boat_id: string };
-type VoyageGuidePivotRow = { id: string; guide_id: string };
-
 const DAY_STATS_METRICS = ['booked', 'manifestCount', 'returned'] as const;
 
-export type ControlPanelTripCardQueryRow = TripWithRelationsRow & {
-    voyage: VoyageOutput | undefined;
+type VoyageBoatPivotRow = { id: string; boat_id: string | null };
+type VoyageGuidePivotRow = { id: string; guide_id: string | null };
+
+type VoyageIncludeRow = VoyageOutput & {
     passengers: PassengerOutput[];
-    bookingTickets: BookingTicketOutput[];
     voyageBoatPivotIds: VoyageBoatPivotRow[];
     voyageGuidePivotIds: VoyageGuidePivotRow[];
 };
@@ -99,7 +91,7 @@ export function buildTripsForProgramDayQuery(
     )
         .where(programTripWhere(programId))
         .fn.where((row) => {
-            const tripRow = row as TripWithRelationsRow & {
+            const tripRow = row as unknown as TripWithRelationsRow & {
                 trip?: { scheduled_departure_at?: unknown };
             };
             const dep =
@@ -156,7 +148,7 @@ export function buildControlPanelDayStatsQuery(
         )
         .fn.where((row) =>
             passengerOnReturnedVoyageForDateYmd(
-                row.returnedVoyage as VoyageOutput,
+                row.returnedVoyage as unknown as VoyageOutput,
                 ymd,
             ),
         )
@@ -187,7 +179,7 @@ export function reduceDayStatsRows(
 }
 
 /**
- * Day trips with nested voyage, passengers, tickets, and voyage pivots (includes).
+ * Day trips with nested voyage (passengers + pivots), and trip-level booking tickets.
  */
 export function buildControlPanelTripCardsQuery(
     qb: InitialQueryBuilder,
@@ -213,27 +205,6 @@ export function buildControlPanelTripCardsQuery(
             waterRouteName: trip.waterRouteName,
             waterRouteDurationMinutes: trip.waterRouteDurationMinutes,
             productBannerObjectKey: trip.productBannerObjectKey,
-            voyage: qb
-                .from({ voyage: cols.voyages })
-                .where(({ voyage }) => eq(voyage.trip_id, trip.id))
-                .orderBy(({ voyage }) => voyage.id, 'asc')
-                .findOne(),
-            passengers: toArray(
-                qb
-                    .from({ passenger: cols.passengers })
-                    .join({ voyage: cols.voyages }, ({ passenger, voyage }) =>
-                        eq(passenger.voyage_id, voyage.id),
-                    )
-                    .where(({ voyage }) => eq(voyage.trip_id, trip.id))
-                    .select(({ passenger }) => ({
-                        id: passenger.id,
-                        voyage_id: passenger.voyage_id,
-                        name: passenger.name,
-                        booking_id: passenger.booking_id,
-                        check_in_id: passenger.check_in_id,
-                        notes: passenger.notes,
-                    })),
-            ),
             bookingTickets: toArray(
                 qb
                     .from({ ticket: cols.booking_tickets })
@@ -252,30 +223,53 @@ export function buildControlPanelTripCardsQuery(
                         waiver_confirmation_id: ticket.waiver_confirmation_id,
                     })),
             ),
-            voyageBoatPivotIds: toArray(
-                qb
-                    .from({ voyageBoat: cols.voyage_boat })
-                    .join({ voyage: cols.voyages }, ({ voyageBoat, voyage }) =>
-                        eq(voyageBoat.voyage_id, voyage.id),
-                    )
-                    .where(({ voyage }) => eq(voyage.trip_id, trip.id))
-                    .select(({ voyageBoat }) => ({
-                        id: voyageBoat.id,
-                        boat_id: voyageBoat.boat_id,
-                    })),
-            ),
-            voyageGuidePivotIds: toArray(
-                qb
-                    .from({ voyageGuide: cols.voyage_guide })
-                    .join({ voyage: cols.voyages }, ({ voyageGuide, voyage }) =>
-                        eq(voyageGuide.voyage_id, voyage.id),
-                    )
-                    .where(({ voyage }) => eq(voyage.trip_id, trip.id))
-                    .select(({ voyageGuide }) => ({
-                        id: voyageGuide.id,
-                        guide_id: voyageGuide.guide_id,
-                    })),
-            ),
+            voyage: qb
+                .from({ voyage: cols.voyages })
+                .where(({ voyage }) => eq(voyage.trip_id, trip.id))
+                .orderBy(({ voyage }) => voyage.id, 'asc')
+                .select(({ voyage }) => ({
+                    id: voyage.id,
+                    program_id: voyage.program_id,
+                    user_id: voyage.user_id,
+                    trip_id: voyage.trip_id,
+                    water_route_id: voyage.water_route_id,
+                    scheduled_departure_at: voyage.scheduled_departure_at,
+                    started_at: voyage.started_at,
+                    arrived_at: voyage.arrived_at,
+                    status: voyage.status,
+                    passengers: toArray(
+                        qb
+                            .from({ passenger: cols.passengers })
+                            .where(({ passenger }) => eq(passenger.voyage_id, voyage.id))
+                            .select(({ passenger }) => ({
+                                id: passenger.id,
+                                voyage_id: passenger.voyage_id,
+                                name: passenger.name,
+                                booking_id: passenger.booking_id,
+                                check_in_id: passenger.check_in_id,
+                                notes: passenger.notes,
+                            })),
+                    ),
+                    voyageBoatPivotIds: toArray(
+                        qb
+                            .from({ voyageBoat: cols.voyage_boat })
+                            .where(({ voyageBoat }) => eq(voyageBoat.voyage_id, voyage.id))
+                            .select(({ voyageBoat }) => ({
+                                id: voyageBoat.id,
+                                boat_id: voyageBoat.boat_id,
+                            })),
+                    ),
+                    voyageGuidePivotIds: toArray(
+                        qb
+                            .from({ voyageGuide: cols.voyage_guide })
+                            .where(({ voyageGuide }) => eq(voyageGuide.voyage_id, voyage.id))
+                            .select(({ voyageGuide }) => ({
+                                id: voyageGuide.id,
+                                guide_id: voyageGuide.guide_id,
+                            })),
+                    ),
+                }))
+                .findOne(),
         }));
 }
 
@@ -293,6 +287,37 @@ function firstRowOrValue<T>(value: T | T[] | { toArray: T[] } | null | undefined
     return value;
 }
 
+function asArray<T>(value: T[] | { toArray?: T[] } | null | undefined): T[] {
+    if (value == null) {
+        return [];
+    }
+    if (Array.isArray(value)) {
+        return value;
+    }
+    return value.toArray ?? [];
+}
+
+function extractVoyageInclude(voyage: ControlPanelTripCardQueryRow['voyage']): VoyageIncludeRow | null {
+    return firstRowOrValue(
+        voyage as unknown as
+            | VoyageIncludeRow
+            | VoyageIncludeRow[]
+            | { toArray: VoyageIncludeRow[] }
+            | null
+            | undefined,
+    );
+}
+
+function stripVoyageInclude(voyageInclude: VoyageIncludeRow): VoyageOutput {
+    const {
+        passengers: _passengers,
+        voyageBoatPivotIds: _voyageBoatPivotIds,
+        voyageGuidePivotIds: _voyageGuidePivotIds,
+        ...voyage
+    } = voyageInclude;
+    return voyage;
+}
+
 export function mapControlPanelTripCardRow(
     row: ControlPanelTripCardQueryRow,
 ): {
@@ -307,10 +332,7 @@ export function mapControlPanelTripCardRow(
     initialBoatIds: string[];
     initialGuideIds: string[];
 } {
-    const tickets = Array.isArray(row.bookingTickets)
-        ? row.bookingTickets
-        : ((row.bookingTickets as { toArray?: BookingTicketOutput[] } | undefined)
-              ?.toArray ?? []);
+    const tickets = asArray(row.bookingTickets);
     const names: string[] = [];
     for (const bt of tickets) {
         const name = String(bt.name ?? '').trim();
@@ -319,17 +341,18 @@ export function mapControlPanelTripCardRow(
         }
     }
 
-    const voyage = firstRowOrValue(
-        row.voyage as VoyageOutput | VoyageOutput[] | { toArray: VoyageOutput[] } | undefined,
-    );
+    const voyageInclude = extractVoyageInclude(row.voyage);
+    const voyage: VoyageOutput | null = voyageInclude
+        ? stripVoyageInclude(voyageInclude)
+        : null;
+    const passengers = asArray(voyageInclude?.passengers);
+    const voyageBoatPivots = asArray(voyageInclude?.voyageBoatPivotIds);
+    const voyageGuidePivots = asArray(voyageInclude?.voyageGuidePivotIds);
 
     return {
         trip: row,
         voyage,
-        passengers: Array.isArray(row.passengers)
-            ? row.passengers
-            : ((row.passengers as { toArray?: PassengerOutput[] } | undefined)?.toArray ??
-              []),
+        passengers,
         bookedTicketNames: names,
         bookedCount: tickets.length,
         bookingTickets: tickets.map((bt) => ({
@@ -337,32 +360,15 @@ export function mapControlPanelTripCardRow(
             name: String(bt.name ?? '').trim(),
             booking_id: String(bt.booking_id),
         })),
-        voyageBoatPivotIds: normalizePivotRows(row.voyageBoatPivotIds).map((p) =>
-            String(p.id),
-        ),
-        voyageGuidePivotIds: normalizePivotRows(row.voyageGuidePivotIds).map((p) =>
-            String(p.id),
-        ),
-        initialBoatIds: normalizePivotRows(row.voyageBoatPivotIds)
+        voyageBoatPivotIds: voyageBoatPivots.map((p) => String(p.id)),
+        voyageGuidePivotIds: voyageGuidePivots.map((p) => String(p.id)),
+        initialBoatIds: voyageBoatPivots
             .map((p) => String(p.boat_id ?? '').trim())
             .filter((id) => id.length > 0),
-        initialGuideIds: normalizePivotRows(row.voyageGuidePivotIds)
+        initialGuideIds: voyageGuidePivots
             .map((p) => String(p.guide_id ?? '').trim())
             .filter((id) => id.length > 0),
     };
-}
-
-function normalizePivotRows<T>(value: T | T[] | { toArray: T[] } | null | undefined): T[] {
-    if (value == null) {
-        return [];
-    }
-    if (Array.isArray(value)) {
-        return value;
-    }
-    if (typeof value === 'object' && 'toArray' in value) {
-        return (value as { toArray: T[] }).toArray;
-    }
-    return [value];
 }
 
 function isLiveQueryCollectionReady(
@@ -392,3 +398,14 @@ export function areControlPanelQueryCollectionsReady(
         isLiveQueryCollectionReady(cols.voyage_guide)
     );
 }
+
+function __controlPanelTripCardsQueryForTypes(
+    qb: InitialQueryBuilder,
+    cols: ControlPanelQueryCollections,
+) {
+    return buildControlPanelTripCardsQuery(qb, cols, '', '');
+}
+
+export type ControlPanelTripCardQueryRow = QueryResult<
+    ReturnType<typeof __controlPanelTripCardsQueryForTypes>
+>;

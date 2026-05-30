@@ -8,8 +8,6 @@ import {
     buildControlPanelTripCardsQuery,
     mapControlPanelTripCardRow,
     reduceDayStatsRows,
-    type ControlPanelDayStatsRow,
-    type ControlPanelTripCardQueryRow,
 } from '../powersync/control-panel-queries';
 import {
     addDaysToYmd,
@@ -133,16 +131,12 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
         [...liveQueryDeps],
     );
 
-    const tripCards = computed((): ControlPanelTripCardModel[] => {
-        return ((tripCardsRaw.value ?? []) as unknown as ControlPanelTripCardQueryRow[]).map(
-            mapControlPanelTripCardRow,
-        );
-    });
+    const tripCards = computed((): ControlPanelTripCardModel[] =>
+        (tripCardsRaw.value ?? []).map(mapControlPanelTripCardRow),
+    );
 
     const dayStats = computed((): ControlPanelDayStats => {
-        const totals = reduceDayStatsRows(
-            (dayStatsRaw.value ?? []) as ControlPanelDayStatsRow[],
-        );
+        const totals = reduceDayStatsRows(dayStatsRaw.value ?? []);
         const manifestCount = totals.manifestCount;
         const booked = totals.booked;
         return {

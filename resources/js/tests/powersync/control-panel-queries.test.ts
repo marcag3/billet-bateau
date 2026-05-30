@@ -92,17 +92,20 @@ describe('control-panel-queries', () => {
     });
 
     it('areControlPanelQueryCollectionsReady requires program id and collections', () => {
-        expect(areControlPanelQueryCollectionsReady(allCollections, 'prog-1')).toBe(true);
-        expect(areControlPanelQueryCollectionsReady(allCollections, '   ')).toBe(false);
+        expect(areControlPanelQueryCollectionsReady(allCollections as never, 'prog-1')).toBe(true);
+        expect(areControlPanelQueryCollectionsReady(allCollections as never, '   ')).toBe(false);
         expect(
             areControlPanelQueryCollectionsReady(
-                { ...allCollections, trips: undefined },
+                { ...allCollections, trips: undefined } as never,
                 'prog-1',
             ),
         ).toBe(false);
         expect(
             areControlPanelQueryCollectionsReady(
-                { ...allCollections, voyages: { table: 'voyages', isReady: () => false } },
+                {
+                    ...allCollections,
+                    voyages: { table: 'voyages', isReady: () => false },
+                } as never,
                 'prog-1',
             ),
         ).toBe(false);
@@ -133,7 +136,7 @@ describe('control-panel-queries', () => {
         expect(qb.unionAll.mock.calls[0]).toHaveLength(3);
     });
 
-    it('buildControlPanelTripCardsQuery orders day trips and selects includes', () => {
+    it('buildControlPanelTripCardsQuery orders day trips with nested voyage includes', () => {
         const qb = mockQueryBuilder();
         buildControlPanelTripCardsQuery(
             qb as never,
@@ -144,25 +147,63 @@ describe('control-panel-queries', () => {
         expect(qb.from).toHaveBeenCalled();
         expect(qb.orderBy).toHaveBeenCalled();
         expect(qb.select).toHaveBeenCalled();
+
+        type TopSelectFn = (ctx: { trip: { id: string } }) => Record<string, unknown>;
+        const topSelect = (qb.select.mock.calls.at(-1) as unknown as [TopSelectFn] | undefined)?.[0];
+        expect(topSelect).toEqual(expect.any(Function));
+        const topProjection = topSelect!({ trip: { id: 'trip-1' } });
+        expect(topProjection).toHaveProperty('bookingTickets');
+        expect(topProjection).toHaveProperty('voyage');
+        expect(topProjection).not.toHaveProperty('passengers');
+        expect(topProjection).not.toHaveProperty('voyageBoatPivotIds');
+        expect(topProjection).not.toHaveProperty('voyageGuidePivotIds');
+        expect(qb.findOne).toHaveBeenCalled();
     });
 
-    it('mapControlPanelTripCardRow maps pivot and entity ids for depart modal', () => {
+    it('mapControlPanelTripCardRow maps nested voyage pivots for depart modal', () => {
         const mapped = mapControlPanelTripCardRow({
             id: 'trip-1',
             program_id: 'prog-1',
-            voyage: null,
-            passengers: [],
+            voyage: {
+                id: 'v1',
+                program_id: 'prog-1',
+                user_id: null,
+                trip_id: 'trip-1',
+                water_route_id: 'wr-1',
+                scheduled_departure_at: null,
+                started_at: null,
+                arrived_at: null,
+                status: null,
+                passengers: [],
+                voyageBoatPivotIds: [
+                    { id: 'vb-1', boat_id: 'boat-a' },
+                    { id: 'vb-2', boat_id: 'boat-b' },
+                ],
+                voyageGuidePivotIds: [{ id: 'vg-1', guide_id: 'guide-x' }],
+            },
             bookingTickets: [],
-            voyageBoatPivotIds: [
-                { id: 'vb-1', boat_id: 'boat-a' },
-                { id: 'vb-2', boat_id: 'boat-b' },
-            ],
-            voyageGuidePivotIds: [{ id: 'vg-1', guide_id: 'guide-x' }],
         } as never);
 
+        expect(mapped.voyage?.id).toBe('v1');
         expect(mapped.voyageBoatPivotIds).toEqual(['vb-1', 'vb-2']);
         expect(mapped.voyageGuidePivotIds).toEqual(['vg-1']);
         expect(mapped.initialBoatIds).toEqual(['boat-a', 'boat-b']);
         expect(mapped.initialGuideIds).toEqual(['guide-x']);
+    });
+
+    it('mapControlPanelTripCardRow handles null voyage', () => {
+        const mapped = mapControlPanelTripCardRow({
+            id: 'trip-1',
+            program_id: 'prog-1',
+            voyage: null,
+            bookingTickets: [],
+        } as never);
+
+        expect(mapped.voyage).toBeNull();
+        expect(mapped.passengers).toEqual([]);
+        expect(mapped.voyageBoatPivotIds).toEqual([]);
+        expect(mapped.voyageGuidePivotIds).toEqual([]);
+        expect(mapped.initialBoatIds).toEqual([]);
+        expect(mapped.initialGuideIds).toEqual([]);
     });
 });
