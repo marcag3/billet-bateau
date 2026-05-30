@@ -8,6 +8,9 @@
         <AppControlPanelDayToolbar
             v-model:selected-date-ymd="selectedDateYmd"
             :stats="dayStats"
+            :trip-date-ymds="tripDateYmds"
+            :program-start-date-ymd="programDateBounds.startYmd"
+            :program-end-date-ymd="programDateBounds.endYmd"
             @prev-day="shiftSelectedDay(-1)"
             @next-day="shiftSelectedDay(1)"
             @go-today="goToToday"
@@ -68,7 +71,7 @@ usePageLayout({ documentTitleKey: 'programsControl.title' });
 
 const programId = computed(() => String(route.params.programId ?? '').trim());
 
-const { selectedDateYmd, tripCards, dayStats, shiftSelectedDay, goToToday } =
+const { selectedDateYmd, tripCards, dayStats, tripDateYmds, programDateBounds, shiftSelectedDay, goToToday } =
     useControlPanelDayBoard(programId);
 
 const { startDeparture, markArrival, addPassenger, removePassenger } =

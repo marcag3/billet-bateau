@@ -3,12 +3,15 @@ import {
     areControlPanelQueryCollectionsReady,
     buildControlPanelDayStatsQuery,
     buildControlPanelTripCardsQuery,
+    buildProgramTripDepartureRowsQuery,
+    buildProgramTripsJoinedSubquery,
     buildTripsForProgramDayQuery,
     mapControlPanelTripCardRow,
     passengerOnReturnedVoyageForDateYmd,
     reduceDayStatsRows,
     tripDepartureMatchesLocalDateYmd,
 } from '../../powersync/control-panel-queries';
+import { reduceTripDepartureDateYmds } from '../../utilities/control-panel-day-board';
 
 function mockCollection(name: string): { table: string; isReady: () => boolean } {
     return { table: name, isReady: () => true };
@@ -108,10 +111,18 @@ describe('control-panel-queries', () => {
                 } as never,
                 'prog-1',
             ),
-        ).toBe(false);
+        ).toBe(true);
     });
 
-    it('buildTripsForProgramDayQuery chains join, where, and fn.where', () => {
+    it('buildProgramTripsJoinedSubquery chains join and program filter', () => {
+        const qb = mockQueryBuilder();
+        buildProgramTripsJoinedSubquery(qb as never, allCollections as never, 'prog-1');
+        expect(qb.from).toHaveBeenCalled();
+        expect(qb.where).toHaveBeenCalled();
+        expect(qb.fn.where).not.toHaveBeenCalled();
+    });
+
+    it('buildTripsForProgramDayQuery adds fn.where date filter', () => {
         const qb = mockQueryBuilder();
         buildTripsForProgramDayQuery(
             qb as never,
@@ -119,8 +130,6 @@ describe('control-panel-queries', () => {
             'prog-1',
             '2026-06-05',
         );
-        expect(qb.from).toHaveBeenCalled();
-        expect(qb.where).toHaveBeenCalled();
         expect(qb.fn.where).toHaveBeenCalled();
     });
 
@@ -136,14 +145,32 @@ describe('control-panel-queries', () => {
         expect(qb.unionAll.mock.calls[0]).toHaveLength(3);
     });
 
+    it('buildProgramTripDepartureRowsQuery selects departure timestamps for program', () => {
+        const qb = mockQueryBuilder();
+        buildProgramTripDepartureRowsQuery(
+            qb as never,
+            allCollections.trips as never,
+            'prog-1',
+        );
+        expect(qb.from).toHaveBeenCalled();
+        expect(qb.where).toHaveBeenCalled();
+        expect(qb.select).toHaveBeenCalled();
+    });
+
+    it('reduceTripDepartureDateYmds collects unique local calendar days', () => {
+        expect(
+            reduceTripDepartureDateYmds([
+                { scheduled_departure_at: '2026-06-05T12:00:00.000Z' },
+                { scheduled_departure_at: '2026-06-05T18:00:00.000Z' },
+                { scheduled_departure_at: '2026-06-06T12:00:00.000Z' },
+                { scheduled_departure_at: null },
+            ]),
+        ).toEqual(['2026-06-05', '2026-06-06']);
+    });
+
     it('buildControlPanelTripCardsQuery orders day trips with nested voyage includes', () => {
         const qb = mockQueryBuilder();
-        buildControlPanelTripCardsQuery(
-            qb as never,
-            allCollections as never,
-            'prog-1',
-            '2026-06-05',
-        );
+        buildControlPanelTripCardsQuery(qb as never, allCollections as never, 'prog-1');
         expect(qb.from).toHaveBeenCalled();
         expect(qb.orderBy).toHaveBeenCalled();
         expect(qb.select).toHaveBeenCalled();

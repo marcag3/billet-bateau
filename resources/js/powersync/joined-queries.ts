@@ -92,22 +92,17 @@ export interface TripWithRelationsRow {
 
 /**
  * Build a query fragment that joins trips -> products -> boat_types / water_routes.
+ * Chain `.where()` on the returned builder **before** calling `.select(...)`.
  *
  * @example
  * ```ts
- * const { data: trips } = useLiveQuery((qb) => {
- *   const col = tripsCollection.value
- *   const pCol = productsCollection.value
- *   const btCol = boatTypesCollection.value
- *   const wrCol = waterRoutesCollection.value
- *   if (!col || !pCol || !btCol || !wrCol || pid.length === 0) return undefined
- *   return joinTripsWithRelations(qb, col, pCol, btCol, wrCol)
- *     .where(({ trip }) => trip.program_id, "=", pid)
- *     .orderBy(({ trip }) => trip.scheduled_departure_at, "desc")
- * })
+ * return joinTripsWithRelationsFrom(qb, col, pCol, btCol, wrCol)
+ *   .where(({ trip }) => eq(trip.program_id, pid))
+ *   .select(selectTripWithRelationsProjection)
+ *   .orderBy(({ scheduled_departure_at }) => scheduled_departure_at, "desc")
  * ```
  */
-export function joinTripsWithRelations<
+export function joinTripsWithRelationsFrom<
     T extends Collection<object, string | number>,
     P extends Collection<object, string | number>,
     BT extends Collection<object, string | number>,
@@ -129,19 +124,40 @@ export function joinTripsWithRelations<
         )
         .leftJoin({ waterRoute: waterRoutesCollection }, ({ product, waterRoute }) =>
             eq(product.water_route_id, waterRoute.id),
-        )
-        .select(({ trip, product, boatType, waterRoute }) => ({
-            id: trip.id,
-            program_id: trip.program_id,
-            product_id: trip.product_id,
-            product_name: product.name,
-            scheduled_departure_at: trip.scheduled_departure_at,
-            boat_type_id: product.boat_type_id,
-            water_route_id: product.water_route_id,
-            capacity: product.capacity,
-            boatTypeName: boatType.name,
-            waterRouteName: waterRoute.name,
-            waterRouteDurationMinutes: waterRoute.duration_minutes,
-            productBannerObjectKey: product.banner_object_key,
-        }));
+        );
+}
+
+/** Join + select in one step (no further table-alias filters). */
+export function joinTripsWithRelations<
+    T extends Collection<object, string | number>,
+    P extends Collection<object, string | number>,
+    BT extends Collection<object, string | number>,
+    WR extends Collection<object, string | number>,
+>(
+    qb: InitialQueryBuilder,
+    tripsCollection: T,
+    productsCollection: P,
+    boatTypesCollection: BT,
+    waterRoutesCollection: WR,
+) {
+    return joinTripsWithRelationsFrom(
+        qb,
+        tripsCollection,
+        productsCollection,
+        boatTypesCollection,
+        waterRoutesCollection,
+    ).select(({ trip, product, boatType, waterRoute }) => ({
+        id: trip.id,
+        program_id: trip.program_id,
+        product_id: trip.product_id,
+        product_name: product.name,
+        scheduled_departure_at: trip.scheduled_departure_at,
+        boat_type_id: product.boat_type_id,
+        water_route_id: product.water_route_id,
+        capacity: product.capacity,
+        boatTypeName: boatType.name,
+        waterRouteName: waterRoute.name,
+        waterRouteDurationMinutes: waterRoute.duration_minutes,
+        productBannerObjectKey: product.banner_object_key,
+    }));
 }

@@ -126,6 +126,7 @@ const programScopeChildren: RouteRecordRaw[] = [
                 redirect: (to) => ({
                     name: "programs.control",
                     params: { programId: String(to.params.programId ?? "") },
+                    query: to.query,
                 }),
             },
             {

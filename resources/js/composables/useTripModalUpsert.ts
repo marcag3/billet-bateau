@@ -14,7 +14,7 @@ import {
 } from "../utilities/datetime-input";
 import { parseTripCreateDepartureQuery } from "../utilities/trip-departure-query";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
-import { joinTripsWithRelations, type TripWithRelationsRow } from "../powersync/joined-queries";
+import { joinTripsWithRelationsFrom, type TripWithRelationsRow } from "../powersync/joined-queries";
 import { useConfirmDialog } from "./useConfirmDialog";
 import { useNotifyAsyncAction } from "./useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "./useNotifyErrorFromCatch";
@@ -155,8 +155,22 @@ export function useTripModalUpsert(
             if (!col || !pCol || !btCol || !wrCol || pid.length === 0) {
                 return undefined;
             }
-            return joinTripsWithRelations(queryBuilder, col, pCol, btCol, wrCol)
-                .where(({ trip }) => eq(trip.program_id, pid));
+            return joinTripsWithRelationsFrom(queryBuilder, col, pCol, btCol, wrCol)
+                .where(({ trip }) => eq(trip.program_id, pid))
+                .select(({ trip, product, boatType, waterRoute }) => ({
+                    id: trip.id,
+                    program_id: trip.program_id,
+                    product_id: trip.product_id,
+                    product_name: product.name,
+                    scheduled_departure_at: trip.scheduled_departure_at,
+                    boat_type_id: product.boat_type_id,
+                    water_route_id: product.water_route_id,
+                    capacity: product.capacity,
+                    boatTypeName: boatType.name,
+                    waterRouteName: waterRoute.name,
+                    waterRouteDurationMinutes: waterRoute.duration_minutes,
+                    productBannerObjectKey: product.banner_object_key,
+                }));
         },
         [
             tripsCollection,

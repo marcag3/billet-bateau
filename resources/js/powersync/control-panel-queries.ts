@@ -14,7 +14,7 @@ import {
     type InitialQueryBuilder,
     type QueryResult,
 } from '@tanstack/db';
-import { joinTripsWithRelations, type TripWithRelationsRow } from './joined-queries';
+import { joinTripsWithRelationsFrom, type TripWithRelationsRow } from './joined-queries';
 import type { ControlPanelQueryCollections } from './control-panel-collection-types';
 import { toBrowserLocalDateYmd } from '../utilities/public-booking-filters';
 import { voyageArrivedOnDateYmd } from '../utilities/control-panel-day-board';
@@ -73,16 +73,16 @@ function programTripWhere(
 }
 
 /**
- * Subquery: program trips whose local departure date matches `dateYmd`.
+ * Subquery: all program trips with product / boat type / water route relations.
+ * Day filtering is applied in Vue (see `useControlPanelDayBoard`) so results stay
+ * live when PowerSync collections finish syncing after the query is first built.
  */
-export function buildTripsForProgramDayQuery(
+export function buildProgramTripsJoinedSubquery(
     qb: InitialQueryBuilder,
     cols: ControlPanelQueryCollections,
     programId: string,
-    dateYmd: string,
 ) {
-    const ymd = dateYmd.trim();
-    return joinTripsWithRelations(
+    return joinTripsWithRelationsFrom(
         qb,
         cols.trips,
         cols.products,
@@ -90,14 +90,38 @@ export function buildTripsForProgramDayQuery(
         cols.water_routes,
     )
         .where(programTripWhere(programId))
-        .fn.where((row) => {
-            const tripRow = row as unknown as TripWithRelationsRow & {
-                trip?: { scheduled_departure_at?: unknown };
-            };
-            const dep =
-                tripRow.trip?.scheduled_departure_at ?? tripRow.scheduled_departure_at;
-            return tripDepartureMatchesLocalDateYmd(dep, ymd);
-        });
+        .select(({ trip, product, boatType, waterRoute }) => ({
+            id: trip.id,
+            program_id: trip.program_id,
+            product_id: trip.product_id,
+            product_name: product.name,
+            scheduled_departure_at: trip.scheduled_departure_at,
+            boat_type_id: product.boat_type_id,
+            water_route_id: product.water_route_id,
+            capacity: product.capacity,
+            boatTypeName: boatType.name,
+            waterRouteName: waterRoute.name,
+            waterRouteDurationMinutes: waterRoute.duration_minutes,
+            productBannerObjectKey: product.banner_object_key,
+        }));
+}
+
+/** Used by day-stats union query only; trip cards filter by date in Vue. */
+export function buildTripsForProgramDayQuery(
+    qb: InitialQueryBuilder,
+    cols: ControlPanelQueryCollections,
+    programId: string,
+    dateYmd: string,
+) {
+    const ymd = dateYmd.trim();
+    return buildProgramTripsJoinedSubquery(qb, cols, programId).fn.where((row) => {
+        const tripRow = row as unknown as TripWithRelationsRow & {
+            trip?: { scheduled_departure_at?: unknown };
+        };
+        const dep =
+            tripRow.trip?.scheduled_departure_at ?? tripRow.scheduled_departure_at;
+        return tripDepartureMatchesLocalDateYmd(dep, ymd);
+    });
 }
 
 /**
@@ -185,12 +209,11 @@ export function buildControlPanelTripCardsQuery(
     qb: InitialQueryBuilder,
     cols: ControlPanelQueryCollections,
     programId: string,
-    dateYmd: string,
 ) {
-    const tripsForDay = buildTripsForProgramDayQuery(qb, cols, programId, dateYmd);
+    const programTrips = buildProgramTripsJoinedSubquery(qb, cols, programId);
 
     return qb
-        .from({ trip: tripsForDay })
+        .from({ trip: programTrips })
         .orderBy(({ trip }) => trip.scheduled_departure_at, 'asc')
         .select(({ trip }) => ({
             id: trip.id,
@@ -371,10 +394,35 @@ export function mapControlPanelTripCardRow(
     };
 }
 
-function isLiveQueryCollectionReady(
+function isLiveQueryCollectionPresent(
     col: ControlPanelQueryCollections[keyof ControlPanelQueryCollections] | null | undefined,
 ): boolean {
-    return col != null && col.isReady();
+    return col != null;
+}
+
+export type TripDepartureAtRow = {
+    scheduled_departure_at: string | null;
+};
+
+/**
+ * All trip departure timestamps for a program (for calendar day markers).
+ */
+export function buildProgramTripDepartureRowsQuery(
+    qb: InitialQueryBuilder,
+    tripsCollection: ControlPanelQueryCollections['trips'],
+    programId: string,
+) {
+    const pid = programId.trim();
+    if (pid.length === 0) {
+        return undefined;
+    }
+
+    return qb
+        .from({ trip: tripsCollection })
+        .where(({ trip }) => eq(trip.program_id, pid))
+        .select(({ trip }) => ({
+            scheduled_departure_at: trip.scheduled_departure_at,
+        }));
 }
 
 export function areControlPanelQueryCollectionsReady(
@@ -386,16 +434,16 @@ export function areControlPanelQueryCollectionsReady(
         return false;
     }
     return (
-        isLiveQueryCollectionReady(cols.trips) &&
-        isLiveQueryCollectionReady(cols.products) &&
-        isLiveQueryCollectionReady(cols.boat_types) &&
-        isLiveQueryCollectionReady(cols.water_routes) &&
-        isLiveQueryCollectionReady(cols.voyages) &&
-        isLiveQueryCollectionReady(cols.passengers) &&
-        isLiveQueryCollectionReady(cols.bookings) &&
-        isLiveQueryCollectionReady(cols.booking_tickets) &&
-        isLiveQueryCollectionReady(cols.voyage_boat) &&
-        isLiveQueryCollectionReady(cols.voyage_guide)
+        isLiveQueryCollectionPresent(cols.trips) &&
+        isLiveQueryCollectionPresent(cols.products) &&
+        isLiveQueryCollectionPresent(cols.boat_types) &&
+        isLiveQueryCollectionPresent(cols.water_routes) &&
+        isLiveQueryCollectionPresent(cols.voyages) &&
+        isLiveQueryCollectionPresent(cols.passengers) &&
+        isLiveQueryCollectionPresent(cols.bookings) &&
+        isLiveQueryCollectionPresent(cols.booking_tickets) &&
+        isLiveQueryCollectionPresent(cols.voyage_boat) &&
+        isLiveQueryCollectionPresent(cols.voyage_guide)
     );
 }
 
@@ -403,7 +451,7 @@ function __controlPanelTripCardsQueryForTypes(
     qb: InitialQueryBuilder,
     cols: ControlPanelQueryCollections,
 ) {
-    return buildControlPanelTripCardsQuery(qb, cols, '', '');
+    return buildControlPanelTripCardsQuery(qb, cols, '');
 }
 
 export type ControlPanelTripCardQueryRow = QueryResult<

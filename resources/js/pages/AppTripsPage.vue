@@ -220,7 +220,7 @@ import { ulid } from "ulid";
 import { QCalendarDay, QCalendarMonth, today } from "@quasar/quasar-ui-qcalendar";
 import { useQuasar } from "quasar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
-import { joinTripsWithRelations } from "../powersync/joined-queries";
+import { joinTripsWithRelationsFrom } from "../powersync/joined-queries";
 import {
     buildProgramBookedTripIdsQuery,
     reduceBookedTripIds,
@@ -331,19 +331,30 @@ const { data: tripsRaw } = useLiveQuery(
 
         const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || !pCol || !btCol || !wrCol || pid.length === 0) return undefined;
-        return joinTripsWithRelations(queryBuilder, col, pCol, btCol, wrCol)
+        return joinTripsWithRelationsFrom(queryBuilder, col, pCol, btCol, wrCol)
             .where(({ trip }: Record<string, Record<string, unknown>>) =>
                 eq(trip.program_id, pid),
             )
+            .select(({ trip, product, boatType, waterRoute }) => ({
+                id: trip.id,
+                program_id: trip.program_id,
+                product_id: trip.product_id,
+                product_name: product.name,
+                scheduled_departure_at: trip.scheduled_departure_at,
+                boat_type_id: product.boat_type_id,
+                water_route_id: product.water_route_id,
+                capacity: product.capacity,
+                boatTypeName: boatType.name,
+                waterRouteName: waterRoute.name,
+                waterRouteDurationMinutes: waterRoute.duration_minutes,
+                productBannerObjectKey: product.banner_object_key,
+            }))
             .orderBy(
-                ({ trip }: Record<string, Record<string, unknown>>) =>
-                    trip.scheduled_departure_at,
+                ({ scheduled_departure_at }: Record<string, unknown>) =>
+                    scheduled_departure_at,
                 "desc",
             )
-            .orderBy(
-                ({ trip }: Record<string, Record<string, unknown>>) => trip.id,
-                "desc",
-            );
+            .orderBy(({ id }: Record<string, unknown>) => id, "desc");
     },
     [
         tripsCollection,

@@ -34,6 +34,12 @@
                         <q-date
                             v-model="qDateModel"
                             mask="YYYY-MM-DD"
+                            :default-year-month="defaultYearMonth"
+                            :events="hasTripOnDay"
+                            event-color="primary"
+                            :options="isDaySelectable"
+                            :navigation-min-year-month="navigationMinYearMonth"
+                            :navigation-max-year-month="navigationMaxYearMonth"
                             @update:model-value="onDatePicked"
                         />
                     </q-card-section>
@@ -60,10 +66,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { ControlPanelDayStats } from '../../utilities/control-panel-day-board';
+import {
+    normalizeCalendarYmd,
+    type ControlPanelDayStats,
+} from '../../utilities/control-panel-day-board';
+import { qDateDayHashToIsoYmd } from '../../utilities/public-booking-filters';
 
-defineProps<{
+const props = defineProps<{
     stats: ControlPanelDayStats;
+    tripDateYmds: readonly string[];
+    programStartDateYmd?: string;
+    programEndDateYmd?: string;
 }>();
 
 const selectedDateYmd = defineModel<string>('selectedDateYmd', { required: true });
@@ -76,6 +89,8 @@ const emit = defineEmits<{
 
 const { t, locale } = useI18n();
 const dateDialogOpen = ref(false);
+
+const tripDateYmdSet = computed(() => new Set(props.tripDateYmds));
 
 const dateLabel = computed((): string => {
     const ymd = selectedDateYmd.value.trim();
@@ -97,13 +112,94 @@ const qDateModel = computed<string | null>({
         return selectedDateYmd.value.trim() === '' ? null : selectedDateYmd.value.trim();
     },
     set(value: string | null): void {
-        selectedDateYmd.value = value?.trim() ?? '';
+        const ymd = normalizeCalendarYmd(value);
+        if (ymd == null) {
+            return;
+        }
+        selectedDateYmd.value = ymd;
     },
 });
 
-function onDatePicked(value: string | null): void {
-    if (value != null && String(value).trim().length > 0) {
-        dateDialogOpen.value = false;
+function ymdToYearMonth(ymd: string): string | null {
+    const trimmed = ymd.trim();
+    if (trimmed.length < 7) {
+        return null;
     }
+    const y = trimmed.slice(0, 4);
+    const m = trimmed.slice(5, 7);
+    if (!/^\d{4}$/.test(y) || !/^\d{2}$/.test(m)) {
+        return null;
+    }
+    return `${y}/${m}`;
+}
+
+const programStartYmd = computed(() => String(props.programStartDateYmd ?? '').trim());
+const programEndYmd = computed(() => String(props.programEndDateYmd ?? '').trim());
+
+const defaultYearMonth = computed((): string => {
+    const fromSelected = ymdToYearMonth(selectedDateYmd.value);
+    if (fromSelected != null) {
+        return fromSelected;
+    }
+    const first = props.tripDateYmds[0];
+    const fromFirst = first != null ? ymdToYearMonth(first) : null;
+    if (fromFirst != null) {
+        return fromFirst;
+    }
+    const ps = programStartYmd.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(ps)) {
+        return ymdToYearMonth(ps) ?? `${ps.slice(0, 4)}/${ps.slice(5, 7)}`;
+    }
+    const now = new Date();
+    return `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
+});
+
+const navigationMinYearMonth = computed((): string | undefined => {
+    const fromProgram = programStartYmd.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fromProgram)) {
+        return ymdToYearMonth(fromProgram) ?? undefined;
+    }
+    const first = props.tripDateYmds[0];
+    return first != null ? ymdToYearMonth(first) ?? undefined : undefined;
+});
+
+const navigationMaxYearMonth = computed((): string | undefined => {
+    const fromProgram = programEndYmd.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fromProgram)) {
+        return ymdToYearMonth(fromProgram) ?? undefined;
+    }
+    const last = props.tripDateYmds.at(-1);
+    return last != null ? ymdToYearMonth(last) ?? undefined : undefined;
+});
+
+function isDayWithinProgramBounds(ymd: string): boolean {
+    const min = programStartYmd.value;
+    const max = programEndYmd.value;
+    if (min.length > 0 && ymd < min) {
+        return false;
+    }
+    if (max.length > 0 && ymd > max) {
+        return false;
+    }
+    return true;
+}
+
+function isDaySelectable(dayHash: string): boolean {
+    const ymd = qDateDayHashToIsoYmd(dayHash);
+    return isDayWithinProgramBounds(ymd);
+}
+
+function hasTripOnDay(dayHash: string): boolean {
+    const ymd = qDateDayHashToIsoYmd(dayHash);
+    return tripDateYmdSet.value.has(ymd);
+}
+
+function onDatePicked(value: string | null): void {
+    const ymd = normalizeCalendarYmd(value);
+    if (ymd == null) {
+        return;
+    }
+    selectedDateYmd.value = ymd;
+    dateDialogOpen.value = false;
 }
 </script>
