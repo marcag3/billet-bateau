@@ -1,10 +1,7 @@
 <template>
-    <q-page class="q-pa-xl">
-        <AppPageHeader
-            :title="t('programsCheckin.title')"
-            :description="t('programsCheckin.placeholderDescription')"
-            description-size="body2"
-        />
+    <q-page class="q-pa-md">
+        <AppPageHeader :title="t('programsCheckin.title')" :description="t('programsCheckin.placeholderDescription')"
+            description-size="body2" />
     </q-page>
 </template>
 

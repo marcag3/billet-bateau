@@ -1,11 +1,11 @@
 <template>
-    <q-page >
+    <q-page>
 
         <h1 class="text-h3 q-mb-sm text-weight-bold">{{ t('common.welcome') }}</h1>
         <p class="text-body1 text-grey-8 q-mb-lg">{{ t('publicHome.description') }}</p>
 
 
-        <div v-if="isLoading" class="row justify-center q-pa-xl">
+        <div v-if="isLoading" class="row justify-center q-pa-md">
             <q-spinner color="primary" size="48px" />
         </div>
 
@@ -14,51 +14,26 @@
                 {{ t('publicHome.noPrograms') }}
             </p>
             <div v-else class="row q-col-gutter-md">
-                <div
-                    v-for="program in items"
-                    :key="program.id"
-                    class="col-12 col-sm-6 col-md-4 col-lg-3"
-                >
-                    <q-card
-                        v-ripple
-                        class="public-program-card cursor-pointer"
-
-                        @click="goProgram(program)"
-                    >
-                        <q-img
-                            :src="programBannerUrlFromUrl(program.image_url)"
-                            :alt="program.name"
-                            :ratio="1/1"
-                        >
-                        <div class="absolute-bottom">
-                            <div class="text-h6">{{ program.name }}</div>
-                            <p
-                                v-if="program.description"
-                                class="text-subtitle2"
-                            >
-                                {{ program.description }}
-                            </p>
-                            <div
-                                    v-if="addressDisplayLines(program).length"
-                                    class="row no-wrap items-start text-body2 text-grey-7 q-gutter-sm"
-                                >
-                                    <q-icon
-                                        name="place"
-                                        size="sm"
-                                        class="q-pt-xs"
-                                    />
+                <div v-for="program in items" :key="program.id" class="col-12 col-sm-6 col-md-4 col-lg-3">
+                    <q-card v-ripple class="public-program-card cursor-pointer" @click="goProgram(program)">
+                        <q-img :src="programBannerUrlFromUrl(program.image_url)" :alt="program.name" :ratio="1 / 1">
+                            <div class="absolute-bottom">
+                                <div class="text-h6">{{ program.name }}</div>
+                                <p v-if="program.description" class="text-subtitle2">
+                                    {{ program.description }}
+                                </p>
+                                <div v-if="addressDisplayLines(program).length"
+                                    class="row no-wrap items-start text-body2 text-grey-7 q-gutter-sm">
+                                    <q-icon name="place" size="sm" class="q-pt-xs" />
                                     <div>
-                                        <div
-                                            v-for="(line, i) in addressDisplayLines(
-                                                program,
-                                            )"
-                                            :key="`addr-${String(program.id)}-${i}`"
-                                        >
+                                        <div v-for="(line, i) in addressDisplayLines(
+                                            program,
+                                        )" :key="`addr-${String(program.id)}-${i}`">
                                             {{ line }}
                                         </div>
                                     </div>
                                 </div>
-                        </div>
+                            </div>
                         </q-img>
                     </q-card>
                 </div>
@@ -157,6 +132,7 @@ onMounted(() => {
     line-clamp: 3;
     overflow: hidden;
 }
+
 .public-program-card {
     transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }

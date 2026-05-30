@@ -1,78 +1,68 @@
 <template>
-    <q-page class="q-pa-md column">
-        <AppPageHeader
-            :title="t('programsControl.title')"
-            class="q-mb-sm"
-        />
+    <q-page class="q-pa-md">
+        <AppPageHeader :title="t('programsControl.title')" class="q-mb-sm" />
 
-        <AppControlPanelDayToolbar
-            v-model:selected-date-ymd="selectedDateYmd"
-            :stats="dayStats"
-            :trip-date-ymds="tripDateYmds"
-            :program-start-date-ymd="programDateBounds.startYmd"
-            :program-end-date-ymd="programDateBounds.endYmd"
-            @prev-day="shiftSelectedDay(-1)"
-            @next-day="shiftSelectedDay(1)"
-            @go-today="goToToday"
-        />
+        <AppControlPanelDayToolbar v-model:selected-date-ymd="selectedDateYmd" :stats="dayStats"
+            :trip-date-ymds="tripDateYmds" :program-start-date-ymd="programDateBounds.startYmd"
+            :program-end-date-ymd="programDateBounds.endYmd" @prev-day="shiftSelectedDay(-1)"
+            @next-day="shiftSelectedDay(1)" @go-today="goToToday" />
 
         <p v-if="tripCards.length === 0" class="text-body1 text-grey-7">
-            {{ t('programsControl.emptyDay') }}
+            {{ t("programsControl.emptyDay") }}
         </p>
 
-        <AppControlPanelTripStrip v-else class="col">
-            <AppControlPanelTripCard
-                v-for="card in tripCards"
-                :key="String(card.trip.id)"
-                :card="card"
-                @open-depart="openDepartModal(card)"
-                @arrive="confirmArrive(card)"
-                @add-passenger="(name) => onAddPassenger(card, name)"
-                @remove-passenger="(id) => removePassenger(id)"
-            />
-        </AppControlPanelTripStrip>
+        <q-virtual-scroll v-else :items="tripCards" virtual-scroll-horizontal v-slot="{ item, index }"
+            class="snap-x snap-mandatory">
+            <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" @open-depart="openDepartModal(item)"
+                @arrive="confirmArrive(item)" @add-passenger="(name) => onAddPassenger(item, name)"
+                @remove-passenger="(id) => removePassenger(id)" />
+        </q-virtual-scroll>
 
-        <AppControlPanelStartVoyageModal
-            v-model:open="departModalOpen"
-            :boat-options="boatOptions"
-            :guide-options="guideOptions"
-            :initial-boat-ids="departCard?.initialBoatIds ?? []"
-            :initial-guide-ids="departCard?.initialGuideIds ?? []"
-            :submitting="departSubmitting"
-            @confirm="onConfirmDepart"
-        />
+        <AppControlPanelStartVoyageModal v-model:open="departModalOpen" :boat-options="boatOptions"
+            :guide-options="guideOptions" :initial-boat-ids="departCard?.initialBoatIds ?? []"
+            :initial-guide-ids="departCard?.initialGuideIds ?? []" :submitting="departSubmitting"
+            @confirm="onConfirmDepart" />
     </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useRoute } from 'vue-router';
-import { useLiveQuery } from '@tanstack/vue-db';
-import { eq } from '@tanstack/db';
-import { usePageLayout } from '../composables/usePageLayout';
-import { useControlPanelDayBoard, type ControlPanelTripCardModel } from '../composables/useControlPanelDayBoard';
-import { useControlPanelVoyageOps } from '../composables/useControlPanelVoyageOps';
-import { useConfirmDialog } from '../composables/useConfirmDialog';
-import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
-import AppPageHeader from '../components/ui/AppPageHeader.vue';
-import AppControlPanelDayToolbar from '../components/control-panel/AppControlPanelDayToolbar.vue';
-import AppControlPanelTripStrip from '../components/control-panel/AppControlPanelTripStrip.vue';
-import AppControlPanelTripCard from '../components/control-panel/AppControlPanelTripCard.vue';
-import AppControlPanelStartVoyageModal from '../components/control-panel/AppControlPanelStartVoyageModal.vue';
-import type { ControlPanelSelectOption } from '../components/control-panel/AppControlPanelStartVoyageModal.vue';
+import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
+import { useLiveQuery } from "@tanstack/vue-db";
+import { eq } from "@tanstack/db";
+import { usePageLayout } from "../composables/usePageLayout";
+import {
+    useControlPanelDayBoard,
+    type ControlPanelTripCardModel,
+} from "../composables/useControlPanelDayBoard";
+import { useControlPanelVoyageOps } from "../composables/useControlPanelVoyageOps";
+import { useConfirmDialog } from "../composables/useConfirmDialog";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+import AppPageHeader from "../components/ui/AppPageHeader.vue";
+import AppControlPanelDayToolbar from "../components/control-panel/AppControlPanelDayToolbar.vue";
+import AppControlPanelTripCard from "../components/control-panel/AppControlPanelTripCard.vue";
+import AppControlPanelStartVoyageModal from "../components/control-panel/AppControlPanelStartVoyageModal.vue";
+import type { ControlPanelSelectOption } from "../components/control-panel/AppControlPanelStartVoyageModal.vue";
 
 const { t } = useI18n();
 const route = useRoute();
 const { confirm } = useConfirmDialog();
 const powersync = getAppPowerSyncContext();
 
-usePageLayout({ documentTitleKey: 'programsControl.title' });
+usePageLayout({ documentTitleKey: "programsControl.title" });
 
-const programId = computed(() => String(route.params.programId ?? '').trim());
+const programId = computed(() => String(route.params.programId ?? "").trim());
 
-const { selectedDateYmd, tripCards, dayStats, tripDateYmds, programDateBounds, shiftSelectedDay, goToToday } =
-    useControlPanelDayBoard(programId);
+const {
+    selectedDateYmd,
+    tripCards,
+    dayStats,
+    tripDateYmds,
+    programDateBounds,
+    shiftSelectedDay,
+    goToToday,
+} = useControlPanelDayBoard(programId);
 
 const { startDeparture, markArrival, addPassenger, removePassenger } =
     useControlPanelVoyageOps();
@@ -87,7 +77,9 @@ const { data: boatsRaw } = useLiveQuery(
         if (!col || pid.length === 0) {
             return undefined;
         }
-        return queryBuilder.from({ b: col }).where(({ b }) => eq(b.program_id, pid));
+        return queryBuilder
+            .from({ b: col })
+            .where(({ b }) => eq(b.program_id, pid));
     },
     [boatsCollection, programId],
 );
@@ -105,10 +97,10 @@ const { data: guidesRaw } = useLiveQuery(
 
 const boatOptions = computed((): ControlPanelSelectOption[] => {
     return ((boatsRaw.value ?? []) as Record<string, unknown>[]).map((b) => {
-        const cap = b.capacity != null ? ` (${b.capacity} pax)` : '';
+        const cap = b.capacity != null ? ` (${b.capacity} pax)` : "";
         return {
             value: String(b.id),
-            label: `${String(b.name ?? '')}${cap}`,
+            label: `${String(b.name ?? "")}${cap}`,
         };
     });
 });
@@ -116,7 +108,7 @@ const boatOptions = computed((): ControlPanelSelectOption[] => {
 const guideOptions = computed((): ControlPanelSelectOption[] => {
     return ((guidesRaw.value ?? []) as Record<string, unknown>[]).map((g) => ({
         value: String(g.id),
-        label: String(g.name ?? ''),
+        label: String(g.name ?? ""),
     }));
 });
 
@@ -156,19 +148,19 @@ async function onConfirmDepart(payload: {
 }
 
 function confirmArrive(card: ControlPanelTripCardModel): void {
-    const voyageId = card.voyage?.id != null ? String(card.voyage.id) : '';
+    const voyageId = card.voyage?.id != null ? String(card.voyage.id) : "";
     if (voyageId.length === 0) {
         return;
     }
     confirm({
-        title: t('programsControl.arriveConfirmTitle'),
-        message: t('programsControl.arriveConfirmMessage'),
+        title: t("programsControl.arriveConfirmTitle"),
+        message: t("programsControl.arriveConfirmMessage"),
         onOk: () => markArrival(voyageId),
     });
 }
 
 function onAddPassenger(card: ControlPanelTripCardModel, name: string): void {
-    const voyageId = card.voyage?.id != null ? String(card.voyage.id) : '';
+    const voyageId = card.voyage?.id != null ? String(card.voyage.id) : "";
     if (voyageId.length === 0) {
         return;
     }

@@ -19,7 +19,7 @@ const props = withDefaults(
         paddingClass?: string;
     }>(),
     {
-        paddingClass: "q-pa-xl",
+        paddingClass: "q-pa-md",
     },
 );
 

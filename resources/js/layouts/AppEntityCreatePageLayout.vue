@@ -1,27 +1,12 @@
 <template>
     <q-page :class="pageClass">
         <div class="q-gutter-y-md">
-            <div
-                v-if="backTo"
-                class="row items-center"
-            >
-                <q-btn
-                    flat
-                    color="primary"
-                    icon="arrow_back"
-                    :to="backTo"
-                    :label="backLabel"
-                />
+            <div v-if="backTo" class="row items-center">
+                <q-btn flat color="primary" icon="arrow_back" :to="backTo" :label="backLabel" />
             </div>
-            <AppPageHeader
-                v-if="title || description || $slots['header-extra']"
-                :title="title"
-                :description="description"
-            >
-                <template
-                    v-if="$slots['header-extra']"
-                    #actions
-                >
+            <AppPageHeader v-if="title || description || $slots['header-extra']" :title="title"
+                :description="description">
+                <template v-if="$slots['header-extra']" #actions>
                     <slot name="header-extra" />
                 </template>
             </AppPageHeader>
@@ -49,7 +34,7 @@ const props = withDefaults(
         description: '',
         backTo: null,
         backLabel: '',
-        paddingClass: 'q-pa-xl',
+        paddingClass: 'q-pa-md',
     },
 );
 

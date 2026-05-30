@@ -1,77 +1,49 @@
 <template>
-    <q-card class="control-panel-trip-card column">
-        <q-img
-            :src="bannerUrl"
-            :ratio="16 / 9"
-            class="control-panel-trip-card__hull"
-        >
-            <div class="absolute-top-left q-pa-sm">
-                <q-badge color="primary" class="text-subtitle2">
-                    {{ departureTimeLabel }}
-                </q-badge>
-            </div>
-            <div class="absolute-top-right q-pa-sm">
-                <q-badge :color="statusColor">{{ statusLabel }}</q-badge>
-            </div>
-            <div class="absolute-bottom">
-                <div class="text-h6">{{ productTitle }}</div>
-                <div v-if="routeSubtitle.length > 0" class="text-caption">
-                    {{ routeSubtitle }}
-                </div>
-            </div>
-        </q-img>
+    <div class="relative snap-start mx-4 w-[400px] h-[960px]">
 
-        <q-card-section class="col scroll" style="min-height: 120px">
-            <div v-if="card.voyage == null && card.bookedTicketNames.length > 0" class="q-mb-sm">
-                <div class="text-caption text-grey-7">
-                    {{ t('programsControl.bookedPreview') }}
-                </div>
-                <div class="text-body2">{{ card.bookedTicketNames.join(', ') }}</div>
+
+        <q-card-section class="mt-12">
+            <div class=" text-center">
+                <div class="text-h6">{{ departureTimeLabel }}</div>
+                <div class="text-subtitle1">{{ productTitle }}</div>
+                <div class="text-body1">{{ passengerCount }}/{{ totalSeatsLabel }}</div>
             </div>
 
-            <div class="text-subtitle2 q-mb-xs">{{ t('programsControl.passengers') }}</div>
-            <q-list v-if="card.passengers.length > 0" dense bordered separator>
-                <AppControlPanelPassengerRow
-                    v-for="pax in card.passengers"
-                    :key="String(pax.id)"
-                    :name="String(pax.name ?? '')"
-                    :read-only="manifestReadOnly"
-                    @remove="onRemovePassenger(String(pax.id), String(pax.name ?? ''))"
-                />
-            </q-list>
-            <div v-else class="text-body2 text-grey-7 q-mb-sm">—</div>
-
-            <q-btn
-                v-if="!manifestReadOnly && card.voyage != null"
-                flat
-                dense
-                no-caps
-                color="primary"
-                icon="person_add"
-                :label="t('programsControl.addPassenger')"
-                class="q-mt-sm"
-                @click="addPassengerDialogOpen = true"
-            />
         </q-card-section>
 
-        <q-card-actions v-if="!manifestReadOnly" align="stretch" class="q-px-md q-pb-md">
-            <q-btn
-                v-if="showDepart"
-                class="col"
-                color="primary"
-                no-caps
-                :label="t('programsControl.depart')"
-                @click="emit('open-depart')"
-            />
-            <q-btn
-                v-if="showArrive"
-                class="col"
-                color="secondary"
-                no-caps
-                :label="t('programsControl.arrive')"
-                @click="emit('arrive')"
-            />
+        <q-card-actions v-if="!manifestReadOnly" class="mx-22">
+            <q-btn v-if="showDepart" class="col" color="primary" no-caps :label="t('programsControl.depart')"
+                @click="emit('open-depart')" />
+            <q-btn v-if="showArrive" class="col" color="secondary" no-caps :label="t('programsControl.arrive')"
+                @click="emit('arrive')" />
         </q-card-actions>
+        <q-card-section>
+
+            <q-virtual-scroll :items="manifestSlots" separator class="mx-4 h-[520px]" v-slot="{ item, index }">
+                <q-item :key="index">
+                    <q-item-section>
+                        <q-item-label> #{{ index }} - {{ item.label }} </q-item-label>
+                    </q-item-section>
+                </q-item>
+                <!-- <q-item :key="item.key" dense class="w-full">
+                    <q-item-section v-if="item.kind === 'passenger' || item.kind === 'booked'" flat bordered>
+                        <div class="row items-center no-wrap">
+                            <div class="col text-body1">{{ item.name }}</div>
+                            <div v-if="item.kind === 'passenger' && canManageManifest" class="col-auto">
+                                <q-btn flat dense round color="negative" icon="person_remove"
+                                    :aria-label="t('programsControl.removePassenger')"
+                                    @click="onRemovePassenger(item.passengerId, item.name)" />
+                            </div>
+                        </div>
+                    </q-item-section>
+                    <q-item-section v-else flat :class="{ 'cursor-pointer': canManageManifest }"
+                        class="border border-dashed" @click="onEmptySlotClick">
+                        <q-btn v-if="canManageManifest" flat round color="primary" icon="add"
+                            :aria-label="t('programsControl.addPassenger')" @click.stop="openAddPassengerDialog" />
+                    </q-item-section>
+                </q-item> -->
+            </q-virtual-scroll>
+        </q-card-section>
 
         <q-dialog v-model="addPassengerDialogOpen" persistent>
             <q-card style="min-width: 280px">
@@ -79,25 +51,21 @@
                     {{ t('programsControl.addPassenger') }}
                 </q-card-section>
                 <q-card-section>
-                    <q-input
-                        v-model="newPassengerName"
-                        :label="t('programsControl.passengerName')"
-                        autofocus
-                        @keyup.enter="submitAddPassenger"
-                    />
+                    <q-input v-model="newPassengerName" :label="t('programsControl.passengerName')" autofocus
+                        @keyup.enter="submitAddPassenger" />
                 </q-card-section>
                 <q-card-actions align="right">
                     <q-btn v-close-popup flat no-caps :label="t('common.cancel')" />
-                    <q-btn
-                        color="primary"
-                        no-caps
-                        :label="t('common.save')"
-                        @click="submitAddPassenger"
-                    />
+                    <q-btn color="primary" no-caps :label="t('common.save')" @click="submitAddPassenger" />
                 </q-card-actions>
             </q-card>
         </q-dialog>
-    </q-card>
+        <svg class="absolute inset-0 pointer-events-none" viewBox="0 0 200 480" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M 100 12 C 55 35, 16 130, 16 250 C 16 350, 40 430, 60 455 C 70 462, 85 466, 100 466 C 115 466, 130 462, 140 455 C 160 430, 184 350, 184 250 C 184 130, 145 35, 100 12 Z"
+                fill="none" stroke="#2563eb" stroke-width="3" />
+        </svg>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -106,7 +74,26 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import type { ControlPanelTripCardModel } from '../../composables/useControlPanelDayBoard';
 import { programBannerUrlFromObjectKey } from '../../utilities/program-banner-url';
-import AppControlPanelPassengerRow from './AppControlPanelPassengerRow.vue';
+
+type ManifestPassengerSlot = {
+    kind: 'passenger';
+    key: string;
+    name: string;
+    passengerId: string;
+};
+
+type ManifestBookedSlot = {
+    kind: 'booked';
+    key: string;
+    name: string;
+};
+
+type ManifestEmptySlot = {
+    kind: 'empty';
+    key: string;
+};
+
+type ManifestSlot = ManifestPassengerSlot | ManifestBookedSlot | ManifestEmptySlot;
 
 const props = defineProps<{
     card: ControlPanelTripCardModel;
@@ -161,11 +148,72 @@ const departureTimeLabel = computed((): string => {
     }
 });
 
+const passengerCount = computed((): number => {
+    if (props.card.voyage != null) {
+        return props.card.passengers.length;
+    }
+    return props.card.bookedCount;
+});
+
+const totalSeatsLabel = computed((): string => {
+    const cap = props.card.trip.capacity;
+    if (cap == null || !Number.isFinite(Number(cap))) {
+        return '—';
+    }
+    return String(Number(cap));
+});
+
 const voyageStatus = computed(() => String(props.card.voyage?.status ?? '').trim());
 
 const manifestReadOnly = computed(
     () => voyageStatus.value === 'completed' || voyageStatus.value === 'cancelled',
 );
+
+const canManageManifest = computed(
+    () => props.card.voyage != null && !manifestReadOnly.value,
+);
+
+const manifestSlots = computed((): ManifestSlot[] => {
+    const slots: ManifestSlot[] = [];
+    const cap = props.card.trip.capacity;
+    const capacity =
+        cap != null && Number.isFinite(Number(cap))
+            ? Math.max(0, Math.floor(Number(cap)))
+            : 0;
+
+    if (props.card.voyage != null) {
+        for (const passenger of props.card.passengers) {
+            slots.push({
+                kind: 'passenger',
+                key: `passenger-${passenger.id}`,
+                name: String(passenger.name ?? '').trim() || '—',
+                passengerId: String(passenger.id),
+            });
+        }
+    } else {
+        for (const ticket of props.card.bookingTickets) {
+            const name = String(ticket.name ?? '').trim();
+            if (name.length === 0) {
+                continue;
+            }
+            slots.push({
+                kind: 'booked',
+                key: `booked-${ticket.id}`,
+                name,
+            });
+        }
+    }
+
+    const emptyCount = capacity > 0 ? Math.max(0, capacity - slots.length) : 0;
+    for (let index = 0; index < emptyCount; index += 1) {
+        slots.push({
+            kind: 'empty',
+            key: `empty-${index}`,
+        });
+    }
+
+    return slots;
+});
 
 const showDepart = computed(
     () =>
@@ -210,6 +258,18 @@ const statusColor = computed((): string => {
     return 'primary';
 });
 
+function openAddPassengerDialog(): void {
+    if (!canManageManifest.value) {
+        return;
+    }
+    newPassengerName.value = '';
+    addPassengerDialogOpen.value = true;
+}
+
+function onEmptySlotClick(): void {
+    openAddPassengerDialog();
+}
+
 function submitAddPassenger(): void {
     const name = newPassengerName.value.trim();
     if (name.length === 0) {
@@ -241,5 +301,14 @@ function onRemovePassenger(passengerId: string, name: string): void {
 
 .control-panel-trip-card__hull {
     clip-path: polygon(8% 0%, 92% 0%, 100% 100%, 0% 100%);
+}
+
+.manifest-slots-scroll {
+    max-height: min(52vh, 520px);
+}
+
+.manifest-empty-slot {
+    min-height: 64px;
+    border: 2px dashed rgba(0, 0, 0, 0.24);
 }
 </style>

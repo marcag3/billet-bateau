@@ -1,13 +1,13 @@
 <template>
-    <header class="app-page-header q-mb-md">
+    <header class="app-page-header q-mb-sm">
         <h1 v-if="title" class="text-h4 q-mb-sm">
             {{ title }}
         </h1>
         <slot v-else name="title" />
-        <p v-if="description" class="text-body1 text-grey-8 q-mb-lg">
+        <p v-if="description" class="text-body1 text-grey-8 q-mb-sm">
             {{ description }}
         </p>
-        <p v-else-if="hasDefaultSlot" class="text-body1 text-grey-8 q-mb-lg">
+        <p v-else-if="hasDefaultSlot" class="text-body1 text-grey-8 q-mb-sm">
             <slot />
         </p>
         <div v-if="$slots.actions" class="q-mt-sm row justify-end">

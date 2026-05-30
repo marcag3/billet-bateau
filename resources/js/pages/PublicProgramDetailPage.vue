@@ -5,7 +5,7 @@
             {{ errorMessage }}
         </q-banner>
 
-        <div v-if="isLoading" class="row justify-center q-pa-xl">
+        <div v-if="isLoading" class="row justify-center q-pa-md">
             <q-spinner color="primary" size="48px" />
         </div>
 

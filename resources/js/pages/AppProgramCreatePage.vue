@@ -1,10 +1,7 @@
 <template>
-    <q-page class="q-pa-xl">
-        <AppPageHeader
-            :title="t('programsCreate.title')"
-            :description="t('programsCreate.subtitle')"
-            description-size="body2"
-        />
+    <q-page class="q-pa-md">
+        <AppPageHeader :title="t('programsCreate.title')" :description="t('programsCreate.subtitle')"
+            description-size="body2" />
 
         <AppCardSection :label="t('programsCreate.formSection')">
             <AppAlertBanner v-if="errorMessage.length > 0" variant="error">
@@ -12,52 +9,25 @@
             </AppAlertBanner>
 
             <q-form class="q-gutter-md" @submit.prevent="onFormSubmit">
-                <q-input
-                    v-model="name"
-                    v-bind="nameProps"
-                    outlined
-                    label-slot
-                    :disable="isSubmitting"
-                >
+                <q-input v-model="name" v-bind="nameProps" outlined label-slot :disable="isSubmitting">
                     <template #label>
                         {{ t("programsCreate.name") }}
                         <span class="text-negative" aria-hidden="true">*</span>
                     </template>
                 </q-input>
 
-                <q-input
-                    v-model="description"
-                    v-bind="descriptionProps"
-                    type="textarea"
-                    outlined
-                    autogrow
-                    :label="t('programsCreate.description')"
-                    :disable="isSubmitting"
-                />
+                <q-input v-model="description" v-bind="descriptionProps" type="textarea" outlined autogrow
+                    :label="t('programsCreate.description')" :disable="isSubmitting" />
 
-                <q-input
-                    v-model="themeColor"
-                    v-bind="themeColorProps"
-                    outlined
-                    label-slot
-                    :disable="isSubmitting"
-                >
+                <q-input v-model="themeColor" v-bind="themeColorProps" outlined label-slot :disable="isSubmitting">
                     <template #label>
                         {{ t("programsCreate.themeColor") }}
                         <span class="text-negative" aria-hidden="true">*</span>
                     </template>
                     <template #append>
                         <q-icon name="colorize" class="cursor-pointer">
-                            <q-popup-proxy
-                                cover
-                                transition-show="scale"
-                                transition-hide="scale"
-                            >
-                                <q-color
-                                    v-model="themeColor"
-                                    format-model="hex"
-                                    default-view="palette"
-                                />
+                            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                                <q-color v-model="themeColor" format-model="hex" default-view="palette" />
                             </q-popup-proxy>
                         </q-icon>
                     </template>
@@ -65,14 +35,8 @@
 
                 <div class="row q-col-gutter-md">
                     <div class="col-12 col-sm-6">
-                        <q-input
-                            v-model="startDate"
-                            v-bind="startDateProps"
-                            type="date"
-                            outlined
-                            label-slot
-                            :disable="isSubmitting"
-                        >
+                        <q-input v-model="startDate" v-bind="startDateProps" type="date" outlined label-slot
+                            :disable="isSubmitting">
                             <template #label>
                                 {{ t("programsCreate.startDate") }}
                                 <span class="text-negative" aria-hidden="true">*</span>
@@ -80,14 +44,8 @@
                         </q-input>
                     </div>
                     <div class="col-12 col-sm-6">
-                        <q-input
-                            v-model="endDate"
-                            v-bind="endDateProps"
-                            type="date"
-                            outlined
-                            label-slot
-                            :disable="isSubmitting"
-                        >
+                        <q-input v-model="endDate" v-bind="endDateProps" type="date" outlined label-slot
+                            :disable="isSubmitting">
                             <template #label>
                                 {{ t("programsCreate.endDate") }}
                                 <span class="text-negative" aria-hidden="true">*</span>
@@ -96,108 +54,50 @@
                     </div>
                 </div>
 
-                <AppTextRepeaterField
-                    v-model="bookingQuestionRows"
-                    :label="t('programsCreate.bookingQuestions')"
+                <AppTextRepeaterField v-model="bookingQuestionRows" :label="t('programsCreate.bookingQuestions')"
                     :hint="t('programsCreate.bookingQuestionsHint')"
                     :item-label-template="t('programsCreate.bookingQuestionLabel')"
                     :add-label="t('programsCreate.addBookingQuestion')"
-                    :remove-label="t('programsCreate.removeBookingQuestion')"
-                    :disabled="isSubmitting"
-                >
+                    :remove-label="t('programsCreate.removeBookingQuestion')" :disabled="isSubmitting">
                     <template #fields="{ value, setValue, label, disabled }">
-                        <q-input
-                            :model-value="value"
-                            outlined
-                            :disable="disabled"
-                            :label="label"
-                            @update:model-value="setValue"
-                        />
+                        <q-input :model-value="value" outlined :disable="disabled" :label="label"
+                            @update:model-value="setValue" />
                     </template>
                 </AppTextRepeaterField>
 
-                <q-toggle
-                    v-model="isActive"
-                    v-bind="isActiveProps"
-                    :label="t('programsList.isActive')"
-                    :disable="isSubmitting"
-                />
+                <q-toggle v-model="isActive" v-bind="isActiveProps" :label="t('programsList.isActive')"
+                    :disable="isSubmitting" />
 
-                <q-expansion-item
-                    :label="t('programsCreate.addressOptional')"
-                    icon="place"
-                    class="bg-grey-1 rounded-borders"
-                    dense-toggle
-                    :disable="isSubmitting"
-                >
+                <q-expansion-item :label="t('programsCreate.addressOptional')" icon="place"
+                    class="bg-grey-1 rounded-borders" dense-toggle :disable="isSubmitting">
                     <div class="q-pa-md q-gutter-y-md">
-                        <q-input
-                            v-model="line1"
-                            v-bind="line1Props"
-                            outlined
-                            :label="t('programsCreate.line1')"
-                            :disable="isSubmitting"
-                        />
-                        <q-input
-                            v-model="line2"
-                            v-bind="line2Props"
-                            outlined
-                            :label="t('programsCreate.line2')"
-                            :disable="isSubmitting"
-                        />
+                        <q-input v-model="line1" v-bind="line1Props" outlined :label="t('programsCreate.line1')"
+                            :disable="isSubmitting" />
+                        <q-input v-model="line2" v-bind="line2Props" outlined :label="t('programsCreate.line2')"
+                            :disable="isSubmitting" />
                         <div class="row q-col-gutter-sm">
                             <div class="col-12 col-sm-6">
-                                <q-input
-                                    v-model="city"
-                                    v-bind="cityProps"
-                                    outlined
-                                    :label="t('programsCreate.city')"
-                                    :disable="isSubmitting"
-                                />
+                                <q-input v-model="city" v-bind="cityProps" outlined :label="t('programsCreate.city')"
+                                    :disable="isSubmitting" />
                             </div>
                             <div class="col-12 col-sm-6">
-                                <q-input
-                                    v-model="postalCode"
-                                    v-bind="postalCodeProps"
-                                    outlined
-                                    :label="t('programsCreate.postalCode')"
-                                    :disable="isSubmitting"
-                                />
+                                <q-input v-model="postalCode" v-bind="postalCodeProps" outlined
+                                    :label="t('programsCreate.postalCode')" :disable="isSubmitting" />
                             </div>
                         </div>
-                        <q-input
-                            v-model="country"
-                            v-bind="countryProps"
-                            outlined
-                            :label="t('programsCreate.country')"
-                            :disable="isSubmitting"
-                        />
+                        <q-input v-model="country" v-bind="countryProps" outlined :label="t('programsCreate.country')"
+                            :disable="isSubmitting" />
                     </div>
                 </q-expansion-item>
 
-                <AppImageUploadField
-                    ref="imageUploadField"
-                    :label="t('programsCreate.images')"
-                    :disabled="isSubmitting"
-                    accept="image/jpeg,image/png,image/webp"
-                    :presign-url="presignUpload.url()"
-                />
+                <AppImageUploadField ref="imageUploadField" :label="t('programsCreate.images')" :disabled="isSubmitting"
+                    accept="image/jpeg,image/png,image/webp" :presign-url="presignUpload.url()" />
 
                 <div class="row q-gutter-sm">
-                    <q-btn
-                        color="primary"
-                        type="submit"
-                        :loading="isSubmitting"
-                        :disable="isSubmitting"
-                        :label="t('programsCreate.submit')"
-                    />
-                    <q-btn
-                        flat
-                        color="primary"
-                        :disable="isSubmitting"
-                        :label="t('common.programs')"
-                        @click="goToProgramsList"
-                    />
+                    <q-btn color="primary" type="submit" :loading="isSubmitting" :disable="isSubmitting"
+                        :label="t('programsCreate.submit')" />
+                    <q-btn flat color="primary" :disable="isSubmitting" :label="t('common.programs')"
+                        @click="goToProgramsList" />
                 </div>
             </q-form>
         </AppCardSection>

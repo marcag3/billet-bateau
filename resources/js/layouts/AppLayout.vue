@@ -2,34 +2,14 @@
     <q-layout view="lHh LpR fFf">
         <q-header elevated reveal class="app-header">
             <q-toolbar class="app-toolbar">
-                <q-btn
-                    v-if="showSideNav && $q.screen.lt.md"
-                    flat
-                    dense
-                    round
-                    icon="menu"
-                    class="q-mr-sm"
-                    aria-label="Main menu"
-                    @click="leftDrawerOpen = !leftDrawerOpen"
-                />
+                <q-btn v-if="showSideNav && $q.screen.lt.md" flat dense round icon="menu" class="q-mr-sm"
+                    aria-label="Main menu" @click="leftDrawerOpen = !leftDrawerOpen" />
                 <q-toolbar-title class="app-toolbar-title">
-                    <q-btn-dropdown
-                        v-if="showAppNav && hasSelectedProgram"
-                        flat
-                        dense
-                        color="white"
-                        :label="currentContextLabel"
-                        :aria-label="t('common.switchWorkspaceContext')"
-                    >
+                    <q-btn-dropdown v-if="showAppNav && hasSelectedProgram" flat dense color="white"
+                        :label="currentContextLabel" :aria-label="t('common.switchWorkspaceContext')">
                         <q-list>
-                            <q-item
-                                v-for="opt in contextSwitcherOptions"
-                                :key="opt.value"
-                                v-close-popup
-                                clickable
-                                :active="opt.value === currentContext"
-                                @click="() => onSwitchContext(opt.value)"
-                            >
+                            <q-item v-for="opt in contextSwitcherOptions" :key="opt.value" v-close-popup clickable
+                                :active="opt.value === currentContext" @click="() => onSwitchContext(opt.value)">
                                 <q-item-section>{{ opt.label }}</q-item-section>
                             </q-item>
                         </q-list>
@@ -42,47 +22,26 @@
 
                 <AppLanguageSwitcher />
 
-                <q-btn
-                    v-if="authStore.isAuthenticated"
-                    flat
-                    color="grey-2"
-                    :label="t('common.logout')"
-                    class="q-ml-md"
-                    style="min-width: 10rem"
-                    @click="logout"
-                />
-          
+                <q-btn v-if="authStore.isAuthenticated" flat color="grey-2" :label="t('common.logout')" class="q-ml-md"
+                    style="min-width: 10rem" @click="logout" />
+
             </q-toolbar>
         </q-header>
 
-        <q-drawer
-            v-if="showSideNav"
-            v-model="leftDrawerOpen"
-            show-if-above
-            bordered
-            :width="260"
-            class="app-drawer"
-        >
-            <q-scroll-area
-                style="
+        <q-drawer v-if="showSideNav" v-model="leftDrawerOpen" show-if-above bordered :width="260" class="app-drawer">
+            <q-scroll-area style="
                     height: calc(100% - 150px);
                     margin-top: 150px;
                     border-right: 1px solid #ddd;
-                "
-            >
+                ">
                 <q-list padding class="app-nav-list">
-                    <q-item
-                        v-ripple
-                        clickable
-                        class="app-nav-item--back"
-                        @click="backToPrograms"
-                    >
+                    <q-item v-ripple clickable class="app-nav-item--back" @click="backToPrograms">
                         <q-item-section avatar>
                             <q-icon name="arrow_back" />
                         </q-item-section>
                         <q-item-section>{{
                             t("common.backToPrograms")
-                        }}</q-item-section>
+                            }}</q-item-section>
                     </q-item>
 
                     <q-separator class="q-my-sm" />
@@ -90,12 +49,7 @@
                     <div :id="APP_PROGRAM_MAIN_NAV_TELEPORT_ID" />
                 </q-list>
             </q-scroll-area>
-            <q-img
-                class="absolute-top"
-                src="/icons/logo.jpg"
-                alt="Brand logo"
-                style="height: 150px"
-            >
+            <q-img class="absolute-top" src="/icons/logo.jpg" alt="Brand logo" style="height: 150px">
                 <div class="absolute-bottom bg-transparent">
                     <q-avatar size="56px" class="q-mb-sm">
                         <img src="/icons/logo.jpg" alt="Brand logo" />
@@ -109,22 +63,13 @@
         </q-drawer>
 
         <q-page-container class="app-page-container">
-            <AppAlertBanner
-                v-if="authStore.requiresReauthentication"
-                variant="warning"
-                class="q-ma-md"
-            >
+            <AppAlertBanner v-if="authStore.requiresReauthentication" variant="warning" class="q-ma-md">
                 {{
                     authStore.authErrorMessage ||
                     t("auth.sessionExpiredAfterReconnect")
                 }}
                 <template #action>
-                    <q-btn
-                        flat
-                        color="primary"
-                        :label="t('common.reauthenticate')"
-                        @click="goToLogin"
-                    />
+                    <q-btn flat color="primary" :label="t('common.reauthenticate')" @click="goToLogin" />
                 </template>
             </AppAlertBanner>
 
@@ -213,11 +158,9 @@ async function logout() {
 
 <style scoped>
 .app-header {
-    background: linear-gradient(
-        180deg,
-        color-mix(var(--q-primary) 90%, white) 90%,
-        var(--q-secondary)
-    );
+    background: linear-gradient(180deg,
+            color-mix(var(--q-primary) 90%, white) 90%,
+            var(--q-secondary));
     color: #ffffff;
 }
 
@@ -259,10 +202,5 @@ async function logout() {
 .app-nav-list :deep(.app-nav-item--back) {
     font-weight: 600;
     color: var(--q-secondary);
-}
-
-.app-page-container :deep(.q-page) {
-    width: min(76rem, 100%);
-    margin: 0 auto;
 }
 </style>

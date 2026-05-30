@@ -1,20 +1,12 @@
 <template>
-    <q-page class="q-pa-xl">
-        <AppPageHeader
-            :title="t('programsEdit.title')"
-            :description="t('programsEdit.subtitle')"
-            description-size="body2"
-        />
+    <q-page class="q-pa-md">
+        <AppPageHeader :title="t('programsEdit.title')" :description="t('programsEdit.subtitle')"
+            description-size="body2" />
 
         <AppAlertBanner v-if="showNotFound" variant="error">
             {{ t("programsEdit.notFound") }}
             <div class="q-mt-sm">
-                <q-btn
-                    color="primary"
-                    outline
-                    :label="t('programsEdit.backToList')"
-                    :to="{ name: 'programs.list' }"
-                />
+                <q-btn color="primary" outline :label="t('programsEdit.backToList')" :to="{ name: 'programs.list' }" />
             </div>
         </AppAlertBanner>
 
@@ -25,213 +17,108 @@
 
             <q-form @submit.prevent="onFormSubmit">
                 <AppFormStack>
-                <q-input
-                    v-model="name"
-                    v-bind="nameProps"
-                    outlined
-                    label-slot
-                    :disable="isSubmitting"
-                >
-                    <template #label>
-                        {{ t("programsCreate.name") }}
-                        <span class="text-negative" aria-hidden="true">*</span>
-                    </template>
-                </q-input>
+                    <q-input v-model="name" v-bind="nameProps" outlined label-slot :disable="isSubmitting">
+                        <template #label>
+                            {{ t("programsCreate.name") }}
+                            <span class="text-negative" aria-hidden="true">*</span>
+                        </template>
+                    </q-input>
 
-                <q-input
-                    v-model="description"
-                    v-bind="descriptionProps"
-                    type="textarea"
-                    outlined
-                    autogrow
-                    :label="t('programsCreate.description')"
-                    :disable="isSubmitting"
-                />
+                    <q-input v-model="description" v-bind="descriptionProps" type="textarea" outlined autogrow
+                        :label="t('programsCreate.description')" :disable="isSubmitting" />
 
-                <q-input
-                    v-model="themeColor"
-                    v-bind="themeColorProps"
-                    outlined
-                    label-slot
-                    :disable="isSubmitting"
-                >
-                    <template #label>
-                        {{ t("programsCreate.themeColor") }}
-                        <span class="text-negative" aria-hidden="true">*</span>
-                    </template>
-                    <template #append>
-                        <q-icon name="colorize" class="cursor-pointer">
-                            <q-popup-proxy
-                                cover
-                                transition-show="scale"
-                                transition-hide="scale"
-                            >
-                                <q-color
-                                    v-model="themeColor"
-                                    format-model="hex"
-                                    default-view="palette"
-                                />
-                            </q-popup-proxy>
-                        </q-icon>
-                    </template>
-                </q-input>
+                    <q-input v-model="themeColor" v-bind="themeColorProps" outlined label-slot :disable="isSubmitting">
+                        <template #label>
+                            {{ t("programsCreate.themeColor") }}
+                            <span class="text-negative" aria-hidden="true">*</span>
+                        </template>
+                        <template #append>
+                            <q-icon name="colorize" class="cursor-pointer">
+                                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                                    <q-color v-model="themeColor" format-model="hex" default-view="palette" />
+                                </q-popup-proxy>
+                            </q-icon>
+                        </template>
+                    </q-input>
 
-                <q-input
-                    v-model="slug"
-                    v-bind="slugProps"
-                    outlined
-                    :label="t('programsList.slug')"
-                    :hint="t('programsList.slugHint')"
-                    :disable="isSubmitting"
-                />
+                    <q-input v-model="slug" v-bind="slugProps" outlined :label="t('programsList.slug')"
+                        :hint="t('programsList.slugHint')" :disable="isSubmitting" />
 
-                <AppFormRow>
-                    <div class="col-12 col-sm-6">
-                        <q-input
-                            v-model="startDate"
-                            v-bind="startDateProps"
-                            type="date"
-                            outlined
-                            label-slot
-                            :disable="isSubmitting"
-                        >
-                            <template #label>
-                                {{ t("programsEdit.startDate") }}
-                                <span class="text-negative" aria-hidden="true">*</span>
-                            </template>
-                        </q-input>
+                    <AppFormRow>
+                        <div class="col-12 col-sm-6">
+                            <q-input v-model="startDate" v-bind="startDateProps" type="date" outlined label-slot
+                                :disable="isSubmitting">
+                                <template #label>
+                                    {{ t("programsEdit.startDate") }}
+                                    <span class="text-negative" aria-hidden="true">*</span>
+                                </template>
+                            </q-input>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <q-input v-model="endDate" v-bind="endDateProps" type="date" outlined label-slot
+                                :disable="isSubmitting">
+                                <template #label>
+                                    {{ t("programsEdit.endDate") }}
+                                    <span class="text-negative" aria-hidden="true">*</span>
+                                </template>
+                            </q-input>
+                        </div>
+                    </AppFormRow>
+
+                    <AppTextRepeaterField v-model="bookingQuestionRows" :label="t('programsEdit.bookingQuestions')"
+                        :hint="t('programsEdit.bookingQuestionsHint')"
+                        :item-label-template="t('programsEdit.bookingQuestionLabel')"
+                        :add-label="t('programsEdit.addBookingQuestion')"
+                        :remove-label="t('programsEdit.removeBookingQuestion')" :disabled="isSubmitting">
+                        <template #fields="{ value, setValue, label, disabled }">
+                            <q-input :model-value="value" outlined :disable="disabled" :label="label"
+                                @update:model-value="setValue" />
+                        </template>
+                    </AppTextRepeaterField>
+
+                    <q-toggle v-model="isActive" v-bind="isActiveProps" :label="t('programsList.isActive')"
+                        :disable="isSubmitting" />
+
+                    <q-expansion-item :label="t('programsCreate.addressOptional')" icon="place"
+                        class="bg-grey-1 rounded-borders" dense-toggle :disable="isSubmitting">
+                        <div class="q-pa-md q-gutter-y-md">
+                            <q-input v-model="line1" v-bind="line1Props" outlined :label="t('programsCreate.line1')"
+                                :disable="isSubmitting" />
+                            <q-input v-model="line2" v-bind="line2Props" outlined :label="t('programsCreate.line2')"
+                                :disable="isSubmitting" />
+                            <AppFormRow gutter="sm">
+                                <div class="col-12 col-sm-6">
+                                    <q-input v-model="city" v-bind="cityProps" outlined
+                                        :label="t('programsCreate.city')" :disable="isSubmitting" />
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <q-input v-model="postalCode" v-bind="postalCodeProps" outlined
+                                        :label="t('programsCreate.postalCode')" :disable="isSubmitting" />
+                                </div>
+                            </AppFormRow>
+                            <q-input v-model="country" v-bind="countryProps" outlined
+                                :label="t('programsCreate.country')" :disable="isSubmitting" />
+                        </div>
+                    </q-expansion-item>
+
+                    <AppImageUploadField ref="imageUploadField" :label="t('programsCreate.images')"
+                        :disabled="isSubmitting" accept="image/jpeg,image/png,image/webp"
+                        :existing-image-url="currentProgramBannerUrl"
+                        :existing-image-caption="t('programsEdit.currentBannerCaption')"
+                        :presign-url="presignUpload.url()" />
+
+                    <div class="row q-gutter-sm">
+                        <q-btn color="primary" type="submit" :loading="isSubmitting"
+                            :disable="isSubmitting || showNotFound" :label="t('programsEdit.submit')" />
+                        <q-btn flat color="primary" :disable="isSubmitting" :label="t('common.programs')"
+                            @click="goToProgramsList" />
                     </div>
-                    <div class="col-12 col-sm-6">
-                        <q-input
-                            v-model="endDate"
-                            v-bind="endDateProps"
-                            type="date"
-                            outlined
-                            label-slot
-                            :disable="isSubmitting"
-                        >
-                            <template #label>
-                                {{ t("programsEdit.endDate") }}
-                                <span class="text-negative" aria-hidden="true">*</span>
-                            </template>
-                        </q-input>
-                    </div>
-                </AppFormRow>
-
-                <AppTextRepeaterField
-                    v-model="bookingQuestionRows"
-                    :label="t('programsEdit.bookingQuestions')"
-                    :hint="t('programsEdit.bookingQuestionsHint')"
-                    :item-label-template="t('programsEdit.bookingQuestionLabel')"
-                    :add-label="t('programsEdit.addBookingQuestion')"
-                    :remove-label="t('programsEdit.removeBookingQuestion')"
-                    :disabled="isSubmitting"
-                >
-                    <template #fields="{ value, setValue, label, disabled }">
-                        <q-input
-                            :model-value="value"
-                            outlined
-                            :disable="disabled"
-                            :label="label"
-                            @update:model-value="setValue"
-                        />
-                    </template>
-                </AppTextRepeaterField>
-
-                <q-toggle
-                    v-model="isActive"
-                    v-bind="isActiveProps"
-                    :label="t('programsList.isActive')"
-                    :disable="isSubmitting"
-                />
-
-                <q-expansion-item
-                    :label="t('programsCreate.addressOptional')"
-                    icon="place"
-                    class="bg-grey-1 rounded-borders"
-                    dense-toggle
-                    :disable="isSubmitting"
-                >
-                    <div class="q-pa-md q-gutter-y-md">
-                        <q-input
-                            v-model="line1"
-                            v-bind="line1Props"
-                            outlined
-                            :label="t('programsCreate.line1')"
-                            :disable="isSubmitting"
-                        />
-                        <q-input
-                            v-model="line2"
-                            v-bind="line2Props"
-                            outlined
-                            :label="t('programsCreate.line2')"
-                            :disable="isSubmitting"
-                        />
-                        <AppFormRow gutter="sm">
-                            <div class="col-12 col-sm-6">
-                                <q-input
-                                    v-model="city"
-                                    v-bind="cityProps"
-                                    outlined
-                                    :label="t('programsCreate.city')"
-                                    :disable="isSubmitting"
-                                />
-                            </div>
-                            <div class="col-12 col-sm-6">
-                                <q-input
-                                    v-model="postalCode"
-                                    v-bind="postalCodeProps"
-                                    outlined
-                                    :label="t('programsCreate.postalCode')"
-                                    :disable="isSubmitting"
-                                />
-                            </div>
-                        </AppFormRow>
-                        <q-input
-                            v-model="country"
-                            v-bind="countryProps"
-                            outlined
-                            :label="t('programsCreate.country')"
-                            :disable="isSubmitting"
-                        />
-                    </div>
-                </q-expansion-item>
-
-                <AppImageUploadField
-                    ref="imageUploadField"
-                    :label="t('programsCreate.images')"
-                    :disabled="isSubmitting"
-                    accept="image/jpeg,image/png,image/webp"
-                    :existing-image-url="currentProgramBannerUrl"
-                    :existing-image-caption="t('programsEdit.currentBannerCaption')"
-                    :presign-url="presignUpload.url()"
-                />
-
-                <div class="row q-gutter-sm">
-                    <q-btn
-                        color="primary"
-                        type="submit"
-                        :loading="isSubmitting"
-                        :disable="isSubmitting || showNotFound"
-                        :label="t('programsEdit.submit')"
-                    />
-                    <q-btn
-                        flat
-                        color="primary"
-                        :disable="isSubmitting"
-                        :label="t('common.programs')"
-                        @click="goToProgramsList"
-                    />
-                </div>
                 </AppFormStack>
             </q-form>
         </AppCardSection>
 
-        <AppCardSection
-            v-if="eligibilityLoaded && canInviteAdmins && !showNotFound"
-            :label="t('programsInvite.editSectionTitle')"
-            class="q-mt-lg"
-        >
+        <AppCardSection v-if="eligibilityLoaded && canInviteAdmins && !showNotFound"
+            :label="t('programsInvite.editSectionTitle')" class="q-mt-lg">
             <p class="text-body2 text-grey-8">
                 {{ t("programsInvite.editSectionSubtitle") }}
             </p>
@@ -242,29 +129,15 @@
                 <AppAlertBanner v-if="inviteSuccess" variant="info">
                     {{ t("programsInvite.inviteSent") }}
                 </AppAlertBanner>
-                <q-input
-                    v-model="inviteEmail"
-                    type="email"
-                    outlined
-                    :label="t('programsInvite.emailLabel')"
-                    :disable="inviteSubmitting"
-                    autocomplete="off"
-                />
-                <q-btn
-                    color="primary"
-                    type="submit"
-                    :loading="inviteSubmitting"
-                    :disable="inviteSubmitting"
-                    :label="t('programsInvite.sendInvite')"
-                />
+                <q-input v-model="inviteEmail" type="email" outlined :label="t('programsInvite.emailLabel')"
+                    :disable="inviteSubmitting" autocomplete="off" />
+                <q-btn color="primary" type="submit" :loading="inviteSubmitting" :disable="inviteSubmitting"
+                    :label="t('programsInvite.sendInvite')" />
             </q-form>
         </AppCardSection>
 
-        <AppAlertBanner
-            v-else-if="eligibilityLoaded && !canInviteAdmins && !showNotFound"
-            variant="info"
-            class="q-mt-lg"
-        >
+        <AppAlertBanner v-else-if="eligibilityLoaded && !canInviteAdmins && !showNotFound" variant="info"
+            class="q-mt-lg">
             {{ t("programsInvite.notOwner") }}
         </AppAlertBanner>
     </q-page>
@@ -627,12 +500,12 @@ const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
         const bannerPatch =
             uploadResult != null
                 ? {
-                      banner_object_key: uploadResult.objectKey,
-                      banner_mime_type: uploadResult.mimeType,
-                      banner_size_bytes: uploadResult.sizeBytes,
-                      banner_etag: uploadResult.etag,
-                      banner_uploaded_at: new Date().toISOString(),
-                  }
+                    banner_object_key: uploadResult.objectKey,
+                    banner_mime_type: uploadResult.mimeType,
+                    banner_size_bytes: uploadResult.sizeBytes,
+                    banner_etag: uploadResult.etag,
+                    banner_uploaded_at: new Date().toISOString(),
+                }
                 : {};
 
         col.update(id, (draft) => {
