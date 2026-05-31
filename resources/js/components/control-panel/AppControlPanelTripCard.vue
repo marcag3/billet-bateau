@@ -5,6 +5,9 @@
                 <div class="text-h6">{{ departureTimeLabel }}</div>
                 <div class="text-subtitle1">{{ productTitle }}</div>
                 <div class="text-body1">{{ passengerCount }}/{{ totalSeatsLabel }}</div>
+                <div class="text-body2" :class="tripDisplayStatusTextClass">
+                    {{ tripDisplayStatusLabel }}
+                </div>
             </div>
         </q-card-section>
 
@@ -100,11 +103,16 @@
             </q-card>
         </q-dialog>
 
-        <svg class="absolute inset-0 pointer-events-none" viewBox="0 0 200 480" xmlns="http://www.w3.org/2000/svg">
+        <svg
+            class="absolute inset-0 pointer-events-none"
+            :class="tripBorderStrokeClass"
+            viewBox="0 0 200 480"
+            xmlns="http://www.w3.org/2000/svg"
+        >
             <path
                 d="M 100 12 C 55 35, 16 130, 16 250 C 16 350, 40 430, 60 455 C 70 462, 85 466, 100 466 C 115 466, 130 462, 140 455 C 160 430, 184 350, 184 250 C 184 130, 145 35, 100 12 Z"
                 fill="none"
-                stroke="#2563eb"
+                stroke="currentColor"
                 stroke-width="3"
             />
         </svg>
@@ -117,6 +125,10 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useConfirmDialog } from '../../composables/useConfirmDialog';
 import type { ControlPanelTripCardModel } from '../../composables/useControlPanelDayBoard';
+import {
+    resolveControlPanelTripDisplayStatus,
+    type ControlPanelTripDisplayStatus,
+} from '../../utilities/control-panel-day-board';
 
 type ManifestPassengerSlot = {
     kind: 'passenger';
@@ -197,6 +209,47 @@ const totalSeatsLabel = computed((): string =>
 );
 
 const voyageStatus = computed(() => String(props.card.voyage?.status ?? '').trim());
+
+const tripDisplayStatus = computed((): ControlPanelTripDisplayStatus =>
+    resolveControlPanelTripDisplayStatus(props.card.voyage),
+);
+
+const tripDisplayStatusLabel = computed((): string => {
+    switch (tripDisplayStatus.value) {
+        case 'on_water':
+            return t('programsControl.tripStatusOnWater');
+        case 'returned':
+            return t('programsControl.tripStatusReturned');
+        case 'cancelled':
+            return t('programsControl.statusCancelled');
+        default:
+            return t('programsControl.tripStatusScheduled');
+    }
+});
+
+const tripDisplayStatusTextClass = computed((): string => {
+    switch (tripDisplayStatus.value) {
+        case 'on_water':
+            return 'text-green-600';
+        case 'returned':
+        case 'cancelled':
+            return 'text-grey-6';
+        default:
+            return 'text-blue-600';
+    }
+});
+
+const tripBorderStrokeClass = computed((): string => {
+    switch (tripDisplayStatus.value) {
+        case 'on_water':
+            return 'text-green-600';
+        case 'returned':
+        case 'cancelled':
+            return 'text-grey-6';
+        default:
+            return 'text-blue-600';
+    }
+});
 
 const manifestReadOnly = computed(
     () => voyageStatus.value === 'completed' || voyageStatus.value === 'cancelled',

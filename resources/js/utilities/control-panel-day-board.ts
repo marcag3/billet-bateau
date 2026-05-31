@@ -12,6 +12,34 @@ export type ControlPanelStatsVoyage = {
     arrived_at: Date | string | null;
 };
 
+export type ControlPanelTripDisplayStatus =
+    | 'scheduled'
+    | 'on_water'
+    | 'returned'
+    | 'cancelled';
+
+export function resolveControlPanelTripDisplayStatus(
+    voyage: { status: string } | null,
+): ControlPanelTripDisplayStatus {
+    if (voyage == null) {
+        return 'scheduled';
+    }
+
+    const status = String(voyage.status ?? '').trim();
+
+    if (status === 'underway') {
+        return 'on_water';
+    }
+    if (status === 'completed') {
+        return 'returned';
+    }
+    if (status === 'cancelled') {
+        return 'cancelled';
+    }
+
+    return 'scheduled';
+}
+
 export function todayLocalDateYmd(): string {
     const now = new Date();
     const y = now.getFullYear();

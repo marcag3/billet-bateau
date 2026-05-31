@@ -4,6 +4,7 @@ import {
     computeControlPanelDayStatsFromCards,
     normalizeCalendarYmd,
     parseRouteDateYmdOrToday,
+    resolveControlPanelTripDisplayStatus,
     todayLocalDateYmd,
     voyageArrivedOnDateYmd,
 } from '../../utilities/control-panel-day-board';
@@ -75,5 +76,14 @@ describe('control-panel-day-board', () => {
             returned: 2,
             total: 3,
         });
+    });
+
+    it('resolveControlPanelTripDisplayStatus maps voyage lifecycle to display buckets', () => {
+        expect(resolveControlPanelTripDisplayStatus(null)).toBe('scheduled');
+        expect(resolveControlPanelTripDisplayStatus({ status: 'draft' })).toBe('scheduled');
+        expect(resolveControlPanelTripDisplayStatus({ status: 'ready' })).toBe('scheduled');
+        expect(resolveControlPanelTripDisplayStatus({ status: 'underway' })).toBe('on_water');
+        expect(resolveControlPanelTripDisplayStatus({ status: 'completed' })).toBe('returned');
+        expect(resolveControlPanelTripDisplayStatus({ status: 'cancelled' })).toBe('cancelled');
     });
 });
