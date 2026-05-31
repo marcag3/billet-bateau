@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import { defineConfig, loadEnv } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import { wayfinder } from '@laravel/vite-plugin-wayfinder';
@@ -25,7 +26,15 @@ export default defineConfig(({ mode }) => {
         .map((s) => s.trim())
         .filter(Boolean);
 
+    const sentryUploadEnabled = env.SENTRY_UPLOAD === 'true'
+        && Boolean(env.SENTRY_AUTH_TOKEN)
+        && Boolean(env.SENTRY_ORG)
+        && Boolean(env.SENTRY_PROJECT);
+
     return {
+        build: {
+            sourcemap: sentryUploadEnabled ? 'hidden' : false,
+        },
         resolve: {
             alias: isVitest
                 ? {
@@ -92,6 +101,22 @@ export default defineConfig(({ mode }) => {
                     maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
                 },
             }),
+            ...(sentryUploadEnabled
+                ? [
+                      sentryVitePlugin({
+                          org: env.SENTRY_ORG,
+                          project: env.SENTRY_PROJECT,
+                          authToken: env.SENTRY_AUTH_TOKEN,
+                          release: {
+                              name: env.VITE_SENTRY_RELEASE,
+                          },
+                          sourcemaps: {
+                              assets: './public/build/**',
+                              filesToDeleteAfterUpload: ['./public/build/**/*.map'],
+                          },
+                      }),
+                  ]
+                : []),
         ],
         define: {
             __OBJECT_STORAGE_ORIGINS__: JSON.stringify(objectStorageOrigins),

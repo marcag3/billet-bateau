@@ -11,6 +11,7 @@ export function initSentry(app: App): void {
     Sentry.init({
         app,
         dsn,
+        release: import.meta.env.VITE_SENTRY_RELEASE,
         sendDefaultPii: import.meta.env.VITE_SENTRY_SEND_DEFAULT_PII !== "false",
         environment: import.meta.env.MODE,
     });

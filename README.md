@@ -5,6 +5,20 @@ Optimistic update.
 
 Production is deployed with Docker Compose under `deploy/` (`deploy/compose.yaml`, `deploy/.env.example`). Schema changes use **new** Laravel migrations (`php artisan make:migration`); do not edit migrations that have already run in production.
 
+### CI (`.github/workflows/build.yml`)
+
+On pushes to `main`, the workflow builds the production image (Vue source maps upload when `SENTRY_UPLOAD=true`), then creates a Sentry release in **both** projects using the commit SHA. Configure these repository secrets:
+
+| Secret | Purpose |
+| ------ | ------- |
+| `SENTRY_AUTH_TOKEN` | Org auth token (`Release` + `Project` write) |
+| `SENTRY_ORG` | Organization slug |
+| `SENTRY_LARAVEL_PROJECT` | Laravel project slug |
+| `SENTRY_VUE_PROJECT` | Vue project slug |
+| `VITE_SENTRY_DSN` | Vue SDK DSN (baked into the image at build time) |
+
+`SENTRY_RELEASE` / `VITE_SENTRY_RELEASE` are set to `${{ github.sha }}` in the image; set `SENTRY_LARAVEL_DSN` in `deploy/.env` on the server.
+
 ## Configuration
 
 Environment files should contain **secrets** and **values that differ per environment** (URLs, domains, credentials). Everything else uses defaults from `config/*.php` or is injected by Docker Compose.
@@ -73,8 +87,11 @@ PowerSync Postgres URIs default in compose from `DB_*` (`POWERSYNC_DATA_SOURCE_U
 | `MAIL_MAILER` | `log` | `config/mail.php` |
 | `MAIL_FROM_ADDRESS` | `hello@example.com` | `config/mail.php` |
 | `SENTRY_LARAVEL_DSN` | — (disabled) | `config/sentry.php` |
+| `SENTRY_RELEASE` | baked into production image (`github.sha`) | `config/sentry.php` |
+| `SENTRY_ENVIRONMENT` | `production` in image | `config/sentry.php` |
 | `SENTRY_TRACES_SAMPLE_RATE` | — | `config/sentry.php` |
 | `VITE_SENTRY_DSN` | — (disabled) | `resources/js/sentry.ts` |
+| `VITE_SENTRY_RELEASE` | baked into production image (`github.sha`) | `resources/js/sentry.ts` |
 | `VITE_SENTRY_SEND_DEFAULT_PII` | `true` | `resources/js/sentry.ts` |
 | `VITE_OBJECT_STORAGE_ORIGINS` | falls back to `AWS_URL` | `vite.config.ts` |
 
