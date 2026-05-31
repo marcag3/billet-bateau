@@ -18,7 +18,7 @@ import {
 import { joinTripsWithRelationsFrom, type TripWithRelationsRow } from './joined-queries';
 import type { ControlPanelQueryCollections } from './control-panel-collection-types';
 import { toBrowserLocalDateYmd } from '../utilities/public-booking-filters';
-import { voyageArrivedOnDateYmd } from '../utilities/control-panel-day-board';
+import { resolveControlPanelTripDisplayStatus } from '../utilities/control-panel-day-board';
 import type { VoyageOutput } from './voyages.collection';
 import type { PassengerOutput } from './passengers.collection';
 import type { BookingTicketOutput } from './booking-tickets.collection';
@@ -52,18 +52,8 @@ export function tripDepartureMatchesLocalDateYmd(
     return local != null && local === dateYmd.trim();
 }
 
-export function passengerOnReturnedVoyageForDateYmd(
-    voyage: Pick<VoyageOutput, 'id' | 'trip_id' | 'arrived_at'>,
-    dateYmd: string,
-): boolean {
-    return voyageArrivedOnDateYmd(
-        {
-            id: String(voyage.id),
-            trip_id: voyage.trip_id,
-            arrived_at: voyage.arrived_at,
-        },
-        dateYmd,
-    );
+export function passengerOnReturnedVoyage(voyage: Pick<VoyageOutput, 'status'>): boolean {
+    return resolveControlPanelTripDisplayStatus(voyage) === 'returned';
 }
 
 function programTripWhere(
@@ -135,8 +125,6 @@ export function buildControlPanelDayStatsQuery(
     dateYmd: string,
 ) {
     const tripsForDay = buildTripsForProgramDayQuery(qb, cols, programId, dateYmd);
-    const ymd = dateYmd.trim();
-
     const bookedBranch = qb
         .from({ ticket: cols.booking_tickets })
         .innerJoin({ booking: cols.bookings }, ({ ticket, booking }) =>
@@ -172,10 +160,7 @@ export function buildControlPanelDayStatsQuery(
             eq(returnedVoyage.trip_id, returnedDayTrip.id),
         )
         .fn.where((row) =>
-            passengerOnReturnedVoyageForDateYmd(
-                row.returnedVoyage as unknown as VoyageOutput,
-                ymd,
-            ),
+            passengerOnReturnedVoyage(row.returnedVoyage as unknown as VoyageOutput),
         )
         .select(({ returnedPassenger }) => ({
             metric: 'returned' as const,

@@ -7,7 +7,7 @@ import {
     buildProgramTripsJoinedSubquery,
     buildTripsForProgramDayQuery,
     mapControlPanelTripCardRow,
-    passengerOnReturnedVoyageForDateYmd,
+    passengerOnReturnedVoyage,
     reduceDayStatsRows,
     tripDepartureMatchesLocalDateYmd,
 } from '../../powersync/control-panel-queries';
@@ -58,26 +58,21 @@ describe('control-panel-queries', () => {
         expect(tripDepartureMatchesLocalDateYmd(null, '2026-06-05')).toBe(false);
     });
 
-    it('passengerOnReturnedVoyageForDateYmd uses voyage arrival local date', () => {
+    it('passengerOnReturnedVoyage matches completed voyage status', () => {
         expect(
-            passengerOnReturnedVoyageForDateYmd(
-                {
-                    id: 'v1',
-                    trip_id: 't1',
-                    arrived_at: new Date('2026-06-05T18:00:00.000Z'),
-                },
-                '2026-06-05',
-            ),
+            passengerOnReturnedVoyage({
+                status: 'completed',
+            }),
         ).toBe(true);
         expect(
-            passengerOnReturnedVoyageForDateYmd(
-                {
-                    id: 'v1',
-                    trip_id: 't1',
-                    arrived_at: null,
-                },
-                '2026-06-05',
-            ),
+            passengerOnReturnedVoyage({
+                status: 'underway',
+            }),
+        ).toBe(false);
+        expect(
+            passengerOnReturnedVoyage({
+                status: null,
+            }),
         ).toBe(false);
     });
 

@@ -60,13 +60,19 @@ describe('control-panel-day-board', () => {
                         voyage: {
                             id: 'v1',
                             trip_id: 't1',
+                            status: 'completed',
                             arrived_at: '2026-06-05T18:00:00.000Z',
                         },
                     },
                     {
                         bookedCount: 1,
                         passengers: [{}],
-                        voyage: { id: 'v2', trip_id: 't2', arrived_at: null },
+                        voyage: {
+                            id: 'v2',
+                            trip_id: 't2',
+                            status: 'underway',
+                            arrived_at: null,
+                        },
                     },
                 ],
                 '2026-06-05',
@@ -75,6 +81,30 @@ describe('control-panel-day-board', () => {
             booked: 3,
             returned: 2,
             total: 3,
+        });
+    });
+
+    it('computeControlPanelDayStatsFromCards counts returned from completed status, not arrival date', () => {
+        expect(
+            computeControlPanelDayStatsFromCards(
+                [
+                    {
+                        bookedCount: 1,
+                        passengers: [{}, {}],
+                        voyage: {
+                            id: 'v1',
+                            trip_id: 't1',
+                            status: 'completed',
+                            arrived_at: '2026-06-06T12:00:00.000Z',
+                        },
+                    },
+                ],
+                '2026-06-05',
+            ),
+        ).toEqual({
+            booked: 1,
+            returned: 2,
+            total: 2,
         });
     });
 

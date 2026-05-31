@@ -118,13 +118,13 @@ export function voyageArrivedOnDateYmd(
 type ControlPanelDayStatsCardInput = {
     bookedCount: number;
     passengers: readonly unknown[];
-    voyage: ControlPanelStatsVoyage | null;
+    voyage: (ControlPanelStatsVoyage & { status?: string | null }) | null;
 };
 
 /** Derive toolbar stats from day-filtered trip cards (keeps stats in sync with the strip). */
 export function computeControlPanelDayStatsFromCards(
     cards: readonly ControlPanelDayStatsCardInput[],
-    dateYmd: string,
+    _dateYmd: string,
 ): ControlPanelDayStats {
     let booked = 0;
     let manifestCount = 0;
@@ -132,7 +132,10 @@ export function computeControlPanelDayStatsFromCards(
     for (const card of cards) {
         booked += card.bookedCount;
         manifestCount += card.passengers.length;
-        if (card.voyage != null && voyageArrivedOnDateYmd(card.voyage, dateYmd)) {
+        if (
+            card.voyage != null &&
+            resolveControlPanelTripDisplayStatus(card.voyage) === 'returned'
+        ) {
             returned += card.passengers.length;
         }
     }
