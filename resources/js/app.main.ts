@@ -15,6 +15,7 @@ import { useAuthStore } from "./store/auth.store";
 import { bootstrapDomainModels } from "./models/model.registry";
 import { i18n, syncQuasarLanguageWithI18n } from "./utilities/i18n";
 import { APP_AUTH_EXPIRED_EVENT } from "./utilities/events";
+import { initSentry } from "./sentry";
 
 const APP_SW_URL = "/app-sw.js";
 const APP_SW_SCOPE = "/app/";
@@ -28,6 +29,9 @@ configure({
 });
 
 const app = createApp(AppLayout);
+
+initSentry(app);
+
 const pinia = createPinia();
 
 app.use(pinia);

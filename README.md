@@ -5,6 +5,100 @@ Optimistic update.
 
 Production is deployed with Docker Compose under `deploy/` (`deploy/compose.yaml`, `deploy/.env.example`). Schema changes use **new** Laravel migrations (`php artisan make:migration`); do not edit migrations that have already run in production.
 
+## Configuration
+
+Environment files should contain **secrets** and **values that differ per environment** (URLs, domains, credentials). Everything else uses defaults from `config/*.php` or is injected by Docker Compose.
+
+Copy `.env.example` → `.env` for local Sail dev. Copy `deploy/.env.example` → `deploy/.env` for production. Run `php artisan key:generate` after creating `.env`.
+
+### Required
+
+| Variable | Dev | Production | Notes |
+| -------- | --- | ------------ | ----- |
+| `APP_KEY` | ✓ | ✓ | `php artisan key:generate` |
+| `DB_DATABASE` | ✓ | ✓ | Also used by Postgres container |
+| `DB_USERNAME` | ✓ | ✓ | Also used by Postgres container |
+| `DB_PASSWORD` | ✓ | ✓ | Also used by Postgres container |
+| `AWS_ACCESS_KEY_ID` | ✓ | ✓ | Garage S3 access key (≥ 8 chars in dev) |
+| `AWS_SECRET_ACCESS_KEY` | ✓ | ✓ | Garage S3 secret key |
+| `AWS_URL` | ✓ | ✓ | Browser-facing public object URL base (Garage s3_web) |
+| `AWS_ENDPOINT_PUBLIC` | ✓ | ✓ | Browser-facing S3 API host for presigned uploads |
+| `PRODUCTION_IMAGE` | | ✓ | Container image tag (`deploy/.env` only) |
+| `APP_URL` | | ✓ | Public app URL (HTTPS) |
+| `SANCTUM_STATEFUL_DOMAINS` | | ✓ | SPA host(s) for cookie auth, comma-separated |
+| `POWERSYNC_PUBLIC_URL` | | ✓ | Browser-reachable PowerSync URL |
+| `POWERSYNC_JWT_SECRET` | | ✓ | HS256 secret; must match PowerSync service config |
+| `MAIL_HOST` | | ✓ | SMTP host for booking confirmation emails |
+
+### Injected by Docker Compose
+
+These are set in `compose.yaml` / `deploy/compose.yaml` and usually do not belong in `.env`:
+
+| Variable | Dev (`laravel.test`) | Production (`production`*) |
+| -------- | -------------------- | -------------------------- |
+| `DB_HOST` | `pgsql` | `pgsql` |
+| `REDIS_HOST` | `redis` | `redis` |
+| `AWS_ENDPOINT` | `http://garage:3900` | — (default in `config/filesystems.php`) |
+| `MAIL_MAILER` / `MAIL_HOST` / `MAIL_PORT` | `smtp` / `mailpit` / `1025` | — |
+
+\*Also applied to `production-schedule` and `production-queue`.
+
+PowerSync Postgres URIs default in compose from `DB_*` (`POWERSYNC_DATA_SOURCE_URI`, `POWERSYNC_STORAGE_SOURCE_URI`).
+
+### Optional overrides
+
+| Variable | Default | Config |
+| -------- | ------- | ------ |
+| `APP_NAME` | `Laravel` | `config/app.php` |
+| `APP_ENV` | `production` | `config/app.php` |
+| `APP_DEBUG` | `false` | `config/app.php` |
+| `APP_URL` | `http://localhost` | `config/app.php` |
+| `DB_CONNECTION` | `pgsql` | `config/database.php` |
+| `DB_HOST` | `127.0.0.1` | `config/database.php` |
+| `DB_PORT` | `5432` | `config/database.php` |
+| `SESSION_DRIVER` | `redis` | `config/session.php` |
+| `QUEUE_CONNECTION` | `redis` | `config/queue.php` |
+| `CACHE_STORE` | `redis` | `config/cache.php` |
+| `FILESYSTEM_DISK` | `s3` | `config/filesystems.php` |
+| `REDIS_HOST` | `127.0.0.1` | `config/database.php` |
+| `AWS_DEFAULT_REGION` | `garage` | `config/filesystems.php` |
+| `AWS_BUCKET` | `app` | `config/filesystems.php` |
+| `AWS_USE_PATH_STYLE_ENDPOINT` | `true` | `config/filesystems.php` |
+| `AWS_CORS_ALLOWED_ORIGINS` | `*` | `config/filesystems.php` |
+| `POWERSYNC_PUBLIC_URL` | `http://localhost:6080` | `config/powersync.php` |
+| `POWERSYNC_JWT_SECRET` | local dev placeholder | `config/powersync.php` |
+| `POWERSYNC_JWT_KID` | `local-dev` | `config/powersync.php` |
+| `POWERSYNC_JWT_AUDIENCE` | `powersync-dev` | `config/powersync.php` |
+| `SANCTUM_STATEFUL_DOMAINS` | localhost + current host | `config/sanctum.php` |
+| `MAIL_MAILER` | `log` | `config/mail.php` |
+| `MAIL_FROM_ADDRESS` | `hello@example.com` | `config/mail.php` |
+| `SENTRY_LARAVEL_DSN` | — (disabled) | `config/sentry.php` |
+| `SENTRY_TRACES_SAMPLE_RATE` | — | `config/sentry.php` |
+| `VITE_SENTRY_DSN` | — (disabled) | `resources/js/sentry.ts` |
+| `VITE_SENTRY_SEND_DEFAULT_PII` | `true` | `resources/js/sentry.ts` |
+| `VITE_OBJECT_STORAGE_ORIGINS` | falls back to `AWS_URL` | `vite.config.ts` |
+
+### Compose-only (not Laravel)
+
+Used by root `compose.yaml` for port forwarding and Sail; optional in a root `.env`:
+
+| Variable | Default |
+| -------- | ------- |
+| `APP_PORT` | `80` |
+| `VITE_PORT` | `5173` |
+| `FORWARD_DB_PORT` | `5432` |
+| `FORWARD_REDIS_PORT` | `6379` |
+| `FORWARD_POWERSYNC_PORT` | `6080` |
+| `FORWARD_GARAGE_PORT` | `9000` |
+| `FORWARD_GARAGE_WEB_PORT` | `8900` |
+| `FORWARD_MAILPIT_PORT` | `1025` |
+| `FORWARD_MAILPIT_DASHBOARD_PORT` | `8025` |
+| `WWWUSER` / `WWWGROUP` | `1000` |
+
+After production deploy, run `php artisan storage:configure` to apply `AWS_CORS_ALLOWED_ORIGINS` to Garage.
+
+Local tests use `DB_DATABASE=testing` (see `phpunit.xml`). The testing database is created by `deploy/config/pgsql/create-testing-databases.sql`; run `CREATE EXTENSION postgis;` there if geometry tests fail.
+
 ## Program admin contexts (edit, control, checkin)
 
 After a program is selected, staff work is split into **three contexts**. Each context is a separate route subtree under `/programs/:programId/` with its own **context layout** component in `resources/js/layouts/` (`AppProgramEditContextLayout.vue`, `AppProgramControlContextLayout.vue`, `AppProgramCheckinContextLayout.vue`). Those wrappers own **defaults** for shell behavior in that area—navigation grouping, header mode, program-switch rules—so `AppLayout.vue` stays a thin shell and child routes inherit context-level intent instead of repeating the same route meta everywhere.

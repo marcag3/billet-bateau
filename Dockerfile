@@ -98,6 +98,11 @@ COPY public/ public/
 
 ENV DISABLE_WAYFINDER=true
 
+ARG VITE_SENTRY_DSN=
+ARG VITE_SENTRY_SEND_DEFAULT_PII=true
+ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
+ENV VITE_SENTRY_SEND_DEFAULT_PII=$VITE_SENTRY_SEND_DEFAULT_PII
+
 RUN npm ci && npm run build
 
 ############################################
