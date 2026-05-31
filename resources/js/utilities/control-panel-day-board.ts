@@ -5,6 +5,8 @@ export type ControlPanelDayStats = {
     /** Passengers on voyages currently underway. */
     onWater: number;
     returned: number;
+    /** Sum of booked, on-water, and returned passenger counts. */
+    totalPassengers: number;
     /** Sum of product capacity across all trips on the selected day. */
     places: number;
 };
@@ -28,6 +30,7 @@ export const CONTROL_PANEL_STATUS_COLOR = {
     returned: '#616161',
     cancelled: '#616161',
     places: '#9333ea',
+    totalPassengers: '#c2410c',
 } as const;
 
 export function controlPanelTripDisplayStatusColor(
@@ -45,7 +48,12 @@ export function controlPanelTripDisplayStatusColor(
     }
 }
 
-export type ControlPanelStatChipKind = 'booked' | 'onWater' | 'returned' | 'places';
+export type ControlPanelStatChipKind =
+    | 'booked'
+    | 'onWater'
+    | 'returned'
+    | 'totalPassengers'
+    | 'places';
 
 /** Inline style for outline q-chips (Quasar overrides Tailwind text-* on .q-chip). */
 export function controlPanelStatChipStyle(
@@ -58,7 +66,9 @@ export function controlPanelStatChipStyle(
               ? CONTROL_PANEL_STATUS_COLOR.on_water
               : kind === 'returned'
                 ? CONTROL_PANEL_STATUS_COLOR.returned
-                : CONTROL_PANEL_STATUS_COLOR.places;
+                : kind === 'totalPassengers'
+                  ? CONTROL_PANEL_STATUS_COLOR.totalPassengers
+                  : CONTROL_PANEL_STATUS_COLOR.places;
     return { color };
 }
 
@@ -199,6 +209,7 @@ export function computeControlPanelDayStatsFromCards(
         booked,
         onWater,
         returned,
+        totalPassengers: booked + onWater + returned,
         places,
     };
 }

@@ -529,6 +529,7 @@ export default {
         statsBooked: "Réservés",
         statsOnWater: "Sur l'eau",
         statsReturned: "Retournés",
+        statsTotalPassengers: "Total passagers",
         statsPlaces: "Places",
         prevDay: "Jour précédent",
         nextDay: "Jour suivant",

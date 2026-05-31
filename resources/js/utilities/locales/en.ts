@@ -509,6 +509,7 @@ export default {
         statsBooked: "Booked",
         statsOnWater: "On the water",
         statsReturned: "Returned",
+        statsTotalPassengers: "Total passengers",
         statsPlaces: "Places",
         prevDay: "Previous day",
         nextDay: "Next day",

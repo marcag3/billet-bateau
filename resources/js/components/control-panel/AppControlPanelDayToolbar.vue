@@ -59,6 +59,9 @@
             <q-chip outline :style="controlPanelStatChipStyle('returned')">
                 {{ t('programsControl.statsReturned') }}: {{ stats.returned }}
             </q-chip>
+            <q-chip outline :style="controlPanelStatChipStyle('totalPassengers')">
+                {{ t('programsControl.statsTotalPassengers') }}: {{ stats.totalPassengers }}
+            </q-chip>
             <q-chip outline :style="controlPanelStatChipStyle('places')">
                 {{ t('programsControl.statsPlaces') }}: {{ stats.places }}
             </q-chip>

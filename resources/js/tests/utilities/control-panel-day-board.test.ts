@@ -86,6 +86,7 @@ describe('control-panel-day-board', () => {
             booked: 3,
             onWater: 1,
             returned: 2,
+            totalPassengers: 6,
             places: 20,
         });
     });
@@ -112,6 +113,7 @@ describe('control-panel-day-board', () => {
             booked: 1,
             onWater: 0,
             returned: 2,
+            totalPassengers: 3,
             places: 10,
         });
     });
@@ -139,6 +141,7 @@ describe('control-panel-day-board', () => {
             booked: 0,
             onWater: 0,
             returned: 0,
+            totalPassengers: 0,
             places: 6,
         });
     });
@@ -161,6 +164,9 @@ describe('control-panel-day-board', () => {
         });
         expect(controlPanelStatChipStyle('returned')).toEqual({
             color: CONTROL_PANEL_STATUS_COLOR.returned,
+        });
+        expect(controlPanelStatChipStyle('totalPassengers')).toEqual({
+            color: CONTROL_PANEL_STATUS_COLOR.totalPassengers,
         });
         expect(controlPanelStatChipStyle('places')).toEqual({
             color: CONTROL_PANEL_STATUS_COLOR.places,
