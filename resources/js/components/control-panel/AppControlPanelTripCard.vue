@@ -1,9 +1,7 @@
 <template>
-    <div
-        class="control-panel-trip-card relative snap-start shrink-0 h-full w-auto aspect-[5/12] overflow-hidden flex flex-col"
-    >
-        <q-card-section class="shrink-0 mt-12">
-            <div class=" text-center">
+    <div class="relative snap-start shrink-0 h-full w-auto aspect-[5/12] overflow-hidden flex flex-col">
+        <q-card-section class="shrink-0 mt-6">
+            <div class="text-center">
                 <div class="text-h6">{{ departureTimeLabel }}</div>
                 <div class="text-subtitle1">{{ productTitle }}</div>
                 <div class="text-body1">{{ passengerCount }}/{{ totalSeatsLabel }}</div>
@@ -18,35 +16,35 @@
         </q-card-actions>
         <div class="col relative-position min-h-0 mx-10 mt-8 mb-6">
             <q-scroll-area class="fit">
-                    <q-list separator class="">
-                        <q-item v-for="item in manifestSlots" :key="item.key">
-                            <q-item-section v-if="item.kind === 'passenger' || item.kind === 'booked'">
-                                <div class="row items-center no-wrap w-full">
-                                    <div class="col text-body1">{{ item.name }}</div>
-                                    <div v-if="item.kind === 'passenger' && canManagePassengers" class="col-auto">
-                                        <q-btn flat dense round color="negative" icon="person_remove"
-                                            :aria-label="t('programsControl.removePassenger')"
-                                            @click="onRemovePassenger(item.passengerId, item.name)" />
-                                    </div>
-                                    <div v-else-if="item.kind === 'booked' && canManageBookings" class="col-auto">
-                                        <q-btn flat dense round color="negative" icon="person_remove"
-                                            :aria-label="t('programsControl.removeWalkIn')"
-                                            @click="onRemoveBookedTicket(item.ticketId, item.bookingId, item.name)" />
-                                    </div>
+                <q-list separator>
+                    <q-item v-for="item in manifestSlots" :key="item.key">
+                        <q-item-section v-if="item.kind === 'passenger' || item.kind === 'booked'">
+                            <div class="row items-center no-wrap w-full">
+                                <div class="col text-body1">{{ item.name }}</div>
+                                <div v-if="item.kind === 'passenger' && canManagePassengers" class="col-auto">
+                                    <q-btn flat dense round color="negative" icon="person_remove"
+                                        :aria-label="t('programsControl.removePassenger')"
+                                        @click="onRemovePassenger(item.passengerId, item.name)" />
                                 </div>
-                            </q-item-section>
-                            <q-item-section v-else :class="{ 'cursor-pointer': canAddWalkIn || canManagePassengers }"
-                                class="h-8 border-2 border-dashed border-black/24" @click="onEmptySlotClick">
-                                <div class="row items-center justify-center w-full">
-                                    <q-btn v-if="canAddWalkIn" flat round color="primary" icon="add"
-                                        :aria-label="t('programsControl.addWalkIn')" @click.stop="openWalkInDialog" />
-                                    <q-btn v-else-if="canManagePassengers" flat round color="primary" icon="add"
-                                        :aria-label="t('programsControl.addPassenger')"
-                                        @click.stop="openAddPassengerDialog" />
+                                <div v-else-if="item.kind === 'booked' && canManageBookings" class="col-auto">
+                                    <q-btn flat dense round color="negative" icon="person_remove"
+                                        :aria-label="t('programsControl.removeWalkIn')"
+                                        @click="onRemoveBookedTicket(item.ticketId, item.bookingId, item.name)" />
                                 </div>
-                            </q-item-section>
-                        </q-item>
-                    </q-list>
+                            </div>
+                        </q-item-section>
+                        <q-item-section v-else :class="{ 'cursor-pointer': canAddWalkIn || canManagePassengers }"
+                            class="h-8 border-2 border-dashed border-black/24" @click="onEmptySlotClick">
+                            <div class="row items-center justify-center w-full">
+                                <q-btn v-if="canAddWalkIn" flat round color="primary" icon="add"
+                                    :aria-label="t('programsControl.addWalkIn')" @click.stop="openWalkInDialog" />
+                                <q-btn v-else-if="canManagePassengers" flat round color="primary" icon="add"
+                                    :aria-label="t('programsControl.addPassenger')"
+                                    @click.stop="openAddPassengerDialog" />
+                            </div>
+                        </q-item-section>
+                    </q-item>
+                </q-list>
             </q-scroll-area>
         </div>
 
@@ -78,7 +76,6 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import type { ControlPanelTripCardModel } from '../../composables/useControlPanelDayBoard';
-import { programBannerUrlFromObjectKey } from '../../utilities/program-banner-url';
 
 type ManifestPassengerSlot = {
     kind: 'passenger';
@@ -121,26 +118,9 @@ const $q = useQuasar();
 const addPassengerDialogOpen = ref(false);
 const newPassengerName = ref('');
 
-const bannerUrl = computed(() =>
-    programBannerUrlFromObjectKey(props.card.trip.productBannerObjectKey),
-);
-
 const productTitle = computed(() =>
     String(props.card.trip.product_name ?? props.card.trip.boatTypeName ?? '—'),
 );
-
-const routeSubtitle = computed((): string => {
-    const parts: string[] = [];
-    const route = props.card.trip.waterRouteName;
-    if (route != null && String(route).trim().length > 0) {
-        parts.push(String(route));
-    }
-    const mins = props.card.trip.waterRouteDurationMinutes;
-    if (mins != null && Number(mins) > 0) {
-        parts.push(`${mins} min`);
-    }
-    return parts.join(' · ');
-});
 
 const departureTimeLabel = computed((): string => {
     const raw = props.card.trip.scheduled_departure_at;
@@ -185,10 +165,6 @@ const canManagePassengers = computed(
 const canManageBookings = computed(() => props.card.voyage == null);
 
 const canAddWalkIn = computed(() => canManageBookings.value);
-
-const canManageManifest = computed(
-    () => canManagePassengers.value || canManageBookings.value,
-);
 
 const manifestSlots = computed((): ManifestSlot[] => {
     const slots: ManifestSlot[] = [];
@@ -238,40 +214,6 @@ const showDepart = computed(
 );
 
 const showArrive = computed(() => voyageStatus.value === 'underway');
-
-const statusLabel = computed((): string => {
-    const s = voyageStatus.value;
-    if (s === 'underway') {
-        return t('programsControl.statusUnderway');
-    }
-    if (s === 'completed') {
-        return t('programsControl.statusCompleted');
-    }
-    if (s === 'ready') {
-        return t('programsControl.statusReady');
-    }
-    if (s === 'cancelled') {
-        return t('programsControl.statusCancelled');
-    }
-    if (props.card.voyage != null) {
-        return t('programsControl.statusDraft');
-    }
-    return t('programsControl.statusReady');
-});
-
-const statusColor = computed((): string => {
-    const s = voyageStatus.value;
-    if (s === 'underway') {
-        return 'orange';
-    }
-    if (s === 'completed') {
-        return 'positive';
-    }
-    if (s === 'cancelled') {
-        return 'grey';
-    }
-    return 'primary';
-});
 
 function openAddPassengerDialog(): void {
     if (!canManagePassengers.value) {

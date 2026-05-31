@@ -1,5 +1,5 @@
 <template>
-    <q-page class="q-pa-md column control-panel-page">
+    <q-page class="q-pa-md column min-h-0">
         <AppPageHeader :title="t('programsControl.title')" class="q-mb-sm" />
 
         <AppControlPanelDayToolbar v-model:selected-date-ymd="selectedDateYmd" :stats="dayStats"
@@ -11,15 +11,9 @@
             {{ t("programsControl.emptyDay") }}
         </p>
 
-        <q-virtual-scroll
-            v-else
-            :items="tripCards"
-            virtual-scroll-horizontal
-            :virtual-scroll-item-size="tripCardItemSize"
-            :style="tripLaneStyle"
-            class="col w-full min-h-0 control-panel-trip-lane snap-x snap-mandatory"
-            v-slot="{ item, index }"
-        >
+        <q-virtual-scroll v-else ref="tripLaneRef" v-touch-pan.mouse.horizontal="onTripLanePan" :items="tripCards"
+            virtual-scroll-horizontal :virtual-scroll-item-size="tripCardItemSize" :style="tripLaneStyle"
+            class="col w-full max-w-full min-h-0 snap-x snap-mandatory" v-slot="{ item }">
             <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" @open-depart="openDepartModal(item)"
                 @arrive="confirmArrive(item)" @add-passenger="(name) => onAddPassenger(item, name)"
                 @remove-passenger="(id) => removePassenger(id)" @open-walk-in="openWalkInModal(item)"
@@ -37,19 +31,8 @@
     </q-page>
 </template>
 
-<style scoped>
-.control-panel-page {
-    min-height: 0;
-}
-
-.control-panel-trip-lane {
-    width: 100%;
-    max-width: 100%;
-}
-</style>
-
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, ref, type ComponentPublicInstance } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
@@ -62,6 +45,8 @@ import {
 import { useControlPanelVoyageOps } from "../composables/useControlPanelVoyageOps";
 import { useControlPanelWalkInBooking } from "../composables/useControlPanelWalkInBooking";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
+import { useControlPanelTripLaneLayout } from "../composables/useControlPanelTripLaneLayout";
+import { useControlPanelTripLanePan } from "../composables/useControlPanelTripLanePan";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppControlPanelDayToolbar from "../components/control-panel/AppControlPanelDayToolbar.vue";
@@ -80,38 +65,10 @@ usePageLayout({ documentTitleKey: "programsControl.title" });
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
-/** Space for page header, day toolbar, and padding below the trip lane. */
-const TRIP_LANE_CHROME_PX = 220;
+const tripLaneRef = ref<ComponentPublicInstance | null>(null);
 
-const viewportHeightPx = ref(
-    typeof window !== "undefined" ? window.innerHeight : 800,
-);
-
-function syncViewportHeight(): void {
-    viewportHeightPx.value = window.innerHeight;
-}
-
-onMounted(() => {
-    syncViewportHeight();
-    window.addEventListener("resize", syncViewportHeight, { passive: true });
-});
-
-onUnmounted(() => {
-    window.removeEventListener("resize", syncViewportHeight);
-});
-
-const tripLaneHeightPx = computed(() =>
-    Math.max(400, viewportHeightPx.value - TRIP_LANE_CHROME_PX),
-);
-
-const tripCardItemSize = computed(() =>
-    Math.round(tripLaneHeightPx.value * (5 / 12)),
-);
-
-const tripLaneStyle = computed(() => ({
-    "--trip-card-height": `${tripLaneHeightPx.value}px`,
-    height: `${tripLaneHeightPx.value}px`,
-}));
+const { tripCardItemSize, tripLaneStyle } = useControlPanelTripLaneLayout();
+const { onTripLanePan } = useControlPanelTripLanePan(tripLaneRef);
 
 const {
     selectedDateYmd,
