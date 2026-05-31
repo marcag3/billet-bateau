@@ -10,6 +10,9 @@
                         <q-list>
                             <q-item v-for="opt in contextSwitcherOptions" :key="opt.value" v-close-popup clickable
                                 :active="opt.value === currentContext" @click="() => onSwitchContext(opt.value)">
+                                <q-item-section avatar>
+                                    <q-icon :name="opt.icon" />
+                                </q-item-section>
                                 <q-item-section>{{ opt.label }}</q-item-section>
                             </q-item>
                         </q-list>

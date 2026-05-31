@@ -245,6 +245,11 @@ describe("useProgramWorkspaceLayout context switcher", () => {
             "control",
             "checkin",
         ]);
+        expect(contextSwitcherOptions.value.map((o) => o.icon)).toEqual([
+            "edit",
+            "dashboard",
+            "confirmation_number",
+        ]);
     });
 
     test("onSwitchContext pushes context home route with current programId", async () => {

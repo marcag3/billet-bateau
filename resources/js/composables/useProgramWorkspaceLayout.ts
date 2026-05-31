@@ -6,6 +6,7 @@ import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import {
     isProgramWorkspaceContext,
     PROGRAM_CONTEXT_HOME_ROUTE_NAMES,
+    PROGRAM_WORKSPACE_CONTEXT_ICONS,
     PROGRAM_WORKSPACE_CONTEXTS,
     resolveProgramWorkspaceContextFromMatched,
     type ProgramWorkspaceContext,
@@ -87,6 +88,7 @@ export function useProgramWorkspaceLayout({
         PROGRAM_WORKSPACE_CONTEXTS.map((value) => ({
             value,
             label: t(WORKSPACE_CONTEXT_LABEL_KEYS[value]),
+            icon: PROGRAM_WORKSPACE_CONTEXT_ICONS[value],
         })),
     );
 

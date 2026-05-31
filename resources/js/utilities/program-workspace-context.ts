@@ -10,6 +10,13 @@ export const PROGRAM_CONTEXT_HOME_ROUTE_NAMES = {
     checkin: "programs.checkin",
 } as const satisfies Record<ProgramWorkspaceContext, string>;
 
+/** Material icons for each workspace context (matches programs list actions). */
+export const PROGRAM_WORKSPACE_CONTEXT_ICONS = {
+    edit: "edit",
+    control: "dashboard",
+    checkin: "confirmation_number",
+} as const satisfies Record<ProgramWorkspaceContext, string>;
+
 export function isProgramWorkspaceContext(value: string): value is ProgramWorkspaceContext {
     return (PROGRAM_WORKSPACE_CONTEXTS as readonly string[]).includes(value);
 }
