@@ -1,8 +1,8 @@
 <template>
-    <div class="relative snap-start w-[400px] h-[960px]">
-
-
-        <q-card-section class="mt-12">
+    <div
+        class="control-panel-trip-card relative snap-start shrink-0 h-full w-auto aspect-[5/12] overflow-hidden flex flex-col"
+    >
+        <q-card-section class="shrink-0 mt-12">
             <div class=" text-center">
                 <div class="text-h6">{{ departureTimeLabel }}</div>
                 <div class="text-subtitle1">{{ productTitle }}</div>
@@ -10,45 +10,45 @@
             </div>
         </q-card-section>
 
-        <q-card-actions v-if="!manifestReadOnly" class="mx-22">
+        <q-card-actions v-if="!manifestReadOnly" class="shrink-0 mx-22">
             <q-btn v-if="showDepart" class="col" color="primary" no-caps :label="t('programsControl.depart')"
                 @click="emit('open-depart')" />
             <q-btn v-if="showArrive" class="col" color="secondary" no-caps :label="t('programsControl.arrive')"
                 @click="emit('arrive')" />
         </q-card-actions>
-        <q-card-section>
-            <q-scroll-area class=" mx-10 mt-8 h-[520px]">
-                <q-list separator class="">
-                    <q-item v-for="item in manifestSlots" :key="item.key">
-                        <q-item-section v-if="item.kind === 'passenger' || item.kind === 'booked'">
-                            <div class="row items-center no-wrap w-full">
-                                <div class="col text-body1">{{ item.name }}</div>
-                                <div v-if="item.kind === 'passenger' && canManagePassengers" class="col-auto">
-                                    <q-btn flat dense round color="negative" icon="person_remove"
-                                        :aria-label="t('programsControl.removePassenger')"
-                                        @click="onRemovePassenger(item.passengerId, item.name)" />
+        <div class="col relative-position min-h-0 mx-10 mt-8 mb-6">
+            <q-scroll-area class="fit">
+                    <q-list separator class="">
+                        <q-item v-for="item in manifestSlots" :key="item.key">
+                            <q-item-section v-if="item.kind === 'passenger' || item.kind === 'booked'">
+                                <div class="row items-center no-wrap w-full">
+                                    <div class="col text-body1">{{ item.name }}</div>
+                                    <div v-if="item.kind === 'passenger' && canManagePassengers" class="col-auto">
+                                        <q-btn flat dense round color="negative" icon="person_remove"
+                                            :aria-label="t('programsControl.removePassenger')"
+                                            @click="onRemovePassenger(item.passengerId, item.name)" />
+                                    </div>
+                                    <div v-else-if="item.kind === 'booked' && canManageBookings" class="col-auto">
+                                        <q-btn flat dense round color="negative" icon="person_remove"
+                                            :aria-label="t('programsControl.removeWalkIn')"
+                                            @click="onRemoveBookedTicket(item.ticketId, item.bookingId, item.name)" />
+                                    </div>
                                 </div>
-                                <div v-else-if="item.kind === 'booked' && canManageBookings" class="col-auto">
-                                    <q-btn flat dense round color="negative" icon="person_remove"
-                                        :aria-label="t('programsControl.removeWalkIn')"
-                                        @click="onRemoveBookedTicket(item.ticketId, item.bookingId, item.name)" />
+                            </q-item-section>
+                            <q-item-section v-else :class="{ 'cursor-pointer': canAddWalkIn || canManagePassengers }"
+                                class="h-8 border-2 border-dashed border-black/24" @click="onEmptySlotClick">
+                                <div class="row items-center justify-center w-full">
+                                    <q-btn v-if="canAddWalkIn" flat round color="primary" icon="add"
+                                        :aria-label="t('programsControl.addWalkIn')" @click.stop="openWalkInDialog" />
+                                    <q-btn v-else-if="canManagePassengers" flat round color="primary" icon="add"
+                                        :aria-label="t('programsControl.addPassenger')"
+                                        @click.stop="openAddPassengerDialog" />
                                 </div>
-                            </div>
-                        </q-item-section>
-                        <q-item-section v-else :class="{ 'cursor-pointer': canAddWalkIn || canManagePassengers }"
-                            class="h-8 border-2 border-dashed border-black/24" @click="onEmptySlotClick">
-                            <div class="row items-center justify-center w-full">
-                                <q-btn v-if="canAddWalkIn" flat round color="primary" icon="add"
-                                    :aria-label="t('programsControl.addWalkIn')" @click.stop="openWalkInDialog" />
-                                <q-btn v-else-if="canManagePassengers" flat round color="primary" icon="add"
-                                    :aria-label="t('programsControl.addPassenger')"
-                                    @click.stop="openAddPassengerDialog" />
-                            </div>
-                        </q-item-section>
-                    </q-item>
-                </q-list>
+                            </q-item-section>
+                        </q-item>
+                    </q-list>
             </q-scroll-area>
-        </q-card-section>
+        </div>
 
         <q-dialog v-model="addPassengerDialogOpen" persistent>
             <q-card class="min-w-[280px]">

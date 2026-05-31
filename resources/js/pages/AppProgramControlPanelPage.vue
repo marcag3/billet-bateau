@@ -1,5 +1,5 @@
 <template>
-    <q-page class="q-pa-md">
+    <q-page class="q-pa-md column control-panel-page">
         <AppPageHeader :title="t('programsControl.title')" class="q-mb-sm" />
 
         <AppControlPanelDayToolbar v-model:selected-date-ymd="selectedDateYmd" :stats="dayStats"
@@ -11,8 +11,15 @@
             {{ t("programsControl.emptyDay") }}
         </p>
 
-        <q-virtual-scroll v-else :items="tripCards" virtual-scroll-horizontal v-slot="{ item, index }"
-            class="snap-x snap-mandatory">
+        <q-virtual-scroll
+            v-else
+            :items="tripCards"
+            virtual-scroll-horizontal
+            :virtual-scroll-item-size="tripCardItemSize"
+            :style="tripLaneStyle"
+            class="col w-full min-h-0 control-panel-trip-lane snap-x snap-mandatory"
+            v-slot="{ item, index }"
+        >
             <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" @open-depart="openDepartModal(item)"
                 @arrive="confirmArrive(item)" @add-passenger="(name) => onAddPassenger(item, name)"
                 @remove-passenger="(id) => removePassenger(id)" @open-walk-in="openWalkInModal(item)"
@@ -30,8 +37,19 @@
     </q-page>
 </template>
 
+<style scoped>
+.control-panel-page {
+    min-height: 0;
+}
+
+.control-panel-trip-lane {
+    width: 100%;
+    max-width: 100%;
+}
+</style>
+
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
@@ -61,6 +79,39 @@ const powersync = getAppPowerSyncContext();
 usePageLayout({ documentTitleKey: "programsControl.title" });
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
+
+/** Space for page header, day toolbar, and padding below the trip lane. */
+const TRIP_LANE_CHROME_PX = 220;
+
+const viewportHeightPx = ref(
+    typeof window !== "undefined" ? window.innerHeight : 800,
+);
+
+function syncViewportHeight(): void {
+    viewportHeightPx.value = window.innerHeight;
+}
+
+onMounted(() => {
+    syncViewportHeight();
+    window.addEventListener("resize", syncViewportHeight, { passive: true });
+});
+
+onUnmounted(() => {
+    window.removeEventListener("resize", syncViewportHeight);
+});
+
+const tripLaneHeightPx = computed(() =>
+    Math.max(400, viewportHeightPx.value - TRIP_LANE_CHROME_PX),
+);
+
+const tripCardItemSize = computed(() =>
+    Math.round(tripLaneHeightPx.value * (5 / 12)),
+);
+
+const tripLaneStyle = computed(() => ({
+    "--trip-card-height": `${tripLaneHeightPx.value}px`,
+    height: `${tripLaneHeightPx.value}px`,
+}));
 
 const {
     selectedDateYmd,
