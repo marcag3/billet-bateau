@@ -50,16 +50,16 @@
         <q-space />
 
         <div class="col-auto row q-gutter-sm">
-            <q-chip outline color="primary">
-                {{ t('programsControl.statsTotal') }}: {{ stats.total }}
-            </q-chip>
-            <q-chip outline color="secondary">
+            <q-chip outline :style="controlPanelStatChipStyle('booked')">
                 {{ t('programsControl.statsBooked') }}: {{ stats.booked }}
             </q-chip>
-            <q-chip outline color="positive">
+            <q-chip outline :style="controlPanelStatChipStyle('onWater')">
+                {{ t('programsControl.statsOnWater') }}: {{ stats.onWater }}
+            </q-chip>
+            <q-chip outline :style="controlPanelStatChipStyle('returned')">
                 {{ t('programsControl.statsReturned') }}: {{ stats.returned }}
             </q-chip>
-            <q-chip outline color="info">
+            <q-chip outline :style="controlPanelStatChipStyle('places')">
                 {{ t('programsControl.statsPlaces') }}: {{ stats.places }}
             </q-chip>
         </div>
@@ -70,6 +70,7 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
+    controlPanelStatChipStyle,
     normalizeCalendarYmd,
     type ControlPanelDayStats,
 } from '../../utilities/control-panel-day-board';

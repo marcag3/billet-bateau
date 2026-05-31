@@ -506,8 +506,8 @@ export default {
     },
     programsControl: {
         title: "Control panel",
-        statsTotal: "Total passengers",
         statsBooked: "Booked",
+        statsOnWater: "On the water",
         statsReturned: "Returned",
         statsPlaces: "Places",
         prevDay: "Previous day",

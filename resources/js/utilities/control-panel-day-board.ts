@@ -1,8 +1,9 @@
 import { toBrowserLocalDateYmd } from './public-booking-filters';
 
 export type ControlPanelDayStats = {
-    total: number;
     booked: number;
+    /** Passengers on voyages currently underway. */
+    onWater: number;
     returned: number;
     /** Sum of product capacity across all trips on the selected day. */
     places: number;
@@ -19,6 +20,47 @@ export type ControlPanelTripDisplayStatus =
     | 'on_water'
     | 'returned'
     | 'cancelled';
+
+/** Shared hex colors for boat outline, status label, and day-toolbar stat chips. */
+export const CONTROL_PANEL_STATUS_COLOR = {
+    scheduled: '#2563eb',
+    on_water: '#16a34a',
+    returned: '#616161',
+    cancelled: '#616161',
+    places: '#9333ea',
+} as const;
+
+export function controlPanelTripDisplayStatusColor(
+    displayStatus: ControlPanelTripDisplayStatus,
+): string {
+    switch (displayStatus) {
+        case 'on_water':
+            return CONTROL_PANEL_STATUS_COLOR.on_water;
+        case 'returned':
+            return CONTROL_PANEL_STATUS_COLOR.returned;
+        case 'cancelled':
+            return CONTROL_PANEL_STATUS_COLOR.cancelled;
+        default:
+            return CONTROL_PANEL_STATUS_COLOR.scheduled;
+    }
+}
+
+export type ControlPanelStatChipKind = 'booked' | 'onWater' | 'returned' | 'places';
+
+/** Inline style for outline q-chips (Quasar overrides Tailwind text-* on .q-chip). */
+export function controlPanelStatChipStyle(
+    kind: ControlPanelStatChipKind,
+): { color: string } {
+    const color =
+        kind === 'booked'
+            ? CONTROL_PANEL_STATUS_COLOR.scheduled
+            : kind === 'onWater'
+              ? CONTROL_PANEL_STATUS_COLOR.on_water
+              : kind === 'returned'
+                ? CONTROL_PANEL_STATUS_COLOR.returned
+                : CONTROL_PANEL_STATUS_COLOR.places;
+    return { color };
+}
 
 export function resolveControlPanelTripDisplayStatus(
     voyage: { status: string } | null,
@@ -137,24 +179,26 @@ export function computeControlPanelDayStatsFromCards(
     _dateYmd: string,
 ): ControlPanelDayStats {
     let booked = 0;
-    let manifestCount = 0;
+    let onWater = 0;
     let returned = 0;
     let places = 0;
     for (const card of cards) {
         booked += card.bookedCount;
-        manifestCount += card.passengers.length;
         places += tripCapacitySeats(card.trip.capacity);
-        if (
-            card.voyage != null &&
-            resolveControlPanelTripDisplayStatus(card.voyage) === 'returned'
-        ) {
+        if (card.voyage == null) {
+            continue;
+        }
+        const displayStatus = resolveControlPanelTripDisplayStatus(card.voyage);
+        if (displayStatus === 'on_water') {
+            onWater += card.passengers.length;
+        } else if (displayStatus === 'returned') {
             returned += card.passengers.length;
         }
     }
     return {
         booked,
+        onWater,
         returned,
-        total: manifestCount > 0 ? manifestCount : booked,
         places,
     };
 }

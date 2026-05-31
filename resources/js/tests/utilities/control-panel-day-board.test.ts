@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
     addDaysToYmd,
     computeControlPanelDayStatsFromCards,
+    CONTROL_PANEL_STATUS_COLOR,
+    controlPanelStatChipStyle,
+    controlPanelTripDisplayStatusColor,
     normalizeCalendarYmd,
     parseRouteDateYmdOrToday,
     resolveControlPanelTripDisplayStatus,
@@ -81,8 +84,8 @@ describe('control-panel-day-board', () => {
             ),
         ).toEqual({
             booked: 3,
+            onWater: 1,
             returned: 2,
-            total: 3,
             places: 20,
         });
     });
@@ -107,8 +110,8 @@ describe('control-panel-day-board', () => {
             ),
         ).toEqual({
             booked: 1,
+            onWater: 0,
             returned: 2,
-            total: 2,
             places: 10,
         });
     });
@@ -134,9 +137,33 @@ describe('control-panel-day-board', () => {
             ),
         ).toEqual({
             booked: 0,
+            onWater: 0,
             returned: 0,
-            total: 0,
             places: 6,
+        });
+    });
+
+    it('controlPanelTripDisplayStatusColor matches boat outline and stat chips', () => {
+        expect(controlPanelTripDisplayStatusColor('scheduled')).toBe(
+            CONTROL_PANEL_STATUS_COLOR.scheduled,
+        );
+        expect(controlPanelTripDisplayStatusColor('on_water')).toBe(
+            CONTROL_PANEL_STATUS_COLOR.on_water,
+        );
+        expect(controlPanelTripDisplayStatusColor('returned')).toBe(
+            CONTROL_PANEL_STATUS_COLOR.returned,
+        );
+        expect(controlPanelStatChipStyle('booked')).toEqual({
+            color: CONTROL_PANEL_STATUS_COLOR.scheduled,
+        });
+        expect(controlPanelStatChipStyle('onWater')).toEqual({
+            color: CONTROL_PANEL_STATUS_COLOR.on_water,
+        });
+        expect(controlPanelStatChipStyle('returned')).toEqual({
+            color: CONTROL_PANEL_STATUS_COLOR.returned,
+        });
+        expect(controlPanelStatChipStyle('places')).toEqual({
+            color: CONTROL_PANEL_STATUS_COLOR.places,
         });
     });
 

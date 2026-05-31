@@ -5,32 +5,20 @@
                 <div class="text-h6">{{ departureTimeLabel }}</div>
                 <div class="text-subtitle1">{{ productTitle }}</div>
                 <div class="text-body1">{{ passengerCount }}/{{ totalSeatsLabel }}</div>
-                <div class="text-body2" :class="tripDisplayStatusTextClass">
+                <div class="text-body2" :style="tripDisplayStatusStyle">
                     {{ tripDisplayStatusLabel }}
                 </div>
             </div>
         </q-card-section>
 
         <q-card-actions v-if="!manifestReadOnly" class="shrink-0 mx-22">
-            <q-btn
-                v-if="showDepart"
-                class="col"
-                color="primary"
-                no-caps
-                :label="t('programsControl.depart')"
-                @click="emit('open-depart')"
-            />
-            <q-btn
-                v-if="showArrive"
-                class="col"
-                color="secondary"
-                no-caps
-                :label="t('programsControl.arrive')"
-                @click="emit('arrive')"
-            />
+            <q-btn v-if="showDepart" class="col" color="primary" no-caps :label="t('programsControl.depart')"
+                @click="emit('open-depart')" />
+            <q-btn v-if="showArrive" class="col" color="secondary" no-caps :label="t('programsControl.arrive')"
+                @click="emit('arrive')" />
         </q-card-actions>
 
-        <div class="col relative-position min-h-0 mx-10 mt-8 mb-6">
+        <div class="col relative-position min-h-0 mx-10  mb-16">
             <q-scroll-area class="fit">
                 <q-list separator>
                     <q-item v-for="item in manifestSlots" :key="item.key">
@@ -38,43 +26,20 @@
                             <div class="row items-center no-wrap w-full">
                                 <div class="col text-body1">{{ item.name }}</div>
                                 <div v-if="canRemoveManifestItem(item)" class="col-auto">
-                                    <q-btn
-                                        flat
-                                        dense
-                                        round
-                                        color="negative"
-                                        icon="person_remove"
+                                    <q-btn flat dense round color="negative" icon="person_remove"
                                         :aria-label="removeManifestAriaLabel(item)"
-                                        @click="onRemoveManifestItem(item)"
-                                    />
+                                        @click="onRemoveManifestItem(item)" />
                                 </div>
                             </div>
                         </q-item-section>
-                        <q-item-section
-                            v-else
-                            :class="{ 'cursor-pointer': canManageBookings || canManagePassengers }"
-                            class="h-8 border-2 border-dashed border-black/24"
-                            @click="onEmptySlotClick"
-                        >
+                        <q-item-section v-else :class="{ 'cursor-pointer': canManageBookings || canManagePassengers }"
+                            class="h-8 border-2 border-dashed border-black/24" @click="onEmptySlotClick">
                             <div class="row items-center justify-center w-full">
-                                <q-btn
-                                    v-if="canManageBookings"
-                                    flat
-                                    round
-                                    color="primary"
-                                    icon="add"
-                                    :aria-label="t('programsControl.addWalkIn')"
-                                    @click.stop="emit('open-walk-in')"
-                                />
-                                <q-btn
-                                    v-else-if="canManagePassengers"
-                                    flat
-                                    round
-                                    color="primary"
-                                    icon="add"
+                                <q-btn v-if="canManageBookings" flat round color="primary" icon="add"
+                                    :aria-label="t('programsControl.addWalkIn')" @click.stop="emit('open-walk-in')" />
+                                <q-btn v-else-if="canManagePassengers" flat round color="primary" icon="add"
                                     :aria-label="t('programsControl.addPassenger')"
-                                    @click.stop="openAddPassengerDialog"
-                                />
+                                    @click.stop="openAddPassengerDialog" />
                             </div>
                         </q-item-section>
                     </q-item>
@@ -89,11 +54,7 @@
                 </q-card-section>
                 <q-form @submit="submitAddPassenger">
                     <q-card-section>
-                        <q-input
-                            v-model="newPassengerName"
-                            :label="t('programsControl.passengerName')"
-                            autofocus
-                        />
+                        <q-input v-model="newPassengerName" :label="t('programsControl.passengerName')" autofocus />
                     </q-card-section>
                     <q-card-actions align="right">
                         <q-btn v-close-popup flat no-caps :label="t('common.cancel')" />
@@ -103,18 +64,11 @@
             </q-card>
         </q-dialog>
 
-        <svg
-            class="absolute inset-0 pointer-events-none"
-            :class="tripBorderStrokeClass"
-            viewBox="0 0 200 480"
-            xmlns="http://www.w3.org/2000/svg"
-        >
+        <svg class="absolute inset-0 pointer-events-none" :style="tripDisplayStatusStyle" viewBox="0 0 200 480"
+            xmlns="http://www.w3.org/2000/svg">
             <path
                 d="M 100 12 C 55 35, 16 130, 16 250 C 16 350, 40 430, 60 455 C 70 462, 85 466, 100 466 C 115 466, 130 462, 140 455 C 160 430, 184 350, 184 250 C 184 130, 145 35, 100 12 Z"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="3"
-            />
+                fill="none" stroke="currentColor" stroke-width="3" />
         </svg>
     </div>
 </template>
@@ -126,6 +80,7 @@ import { useQuasar } from 'quasar';
 import { useConfirmDialog } from '../../composables/useConfirmDialog';
 import type { ControlPanelTripCardModel } from '../../composables/useControlPanelDayBoard';
 import {
+    controlPanelTripDisplayStatusColor,
     resolveControlPanelTripDisplayStatus,
     type ControlPanelTripDisplayStatus,
 } from '../../utilities/control-panel-day-board';
@@ -227,29 +182,9 @@ const tripDisplayStatusLabel = computed((): string => {
     }
 });
 
-const tripDisplayStatusTextClass = computed((): string => {
-    switch (tripDisplayStatus.value) {
-        case 'on_water':
-            return 'text-green-600';
-        case 'returned':
-        case 'cancelled':
-            return 'text-grey-6';
-        default:
-            return 'text-blue-600';
-    }
-});
-
-const tripBorderStrokeClass = computed((): string => {
-    switch (tripDisplayStatus.value) {
-        case 'on_water':
-            return 'text-green-600';
-        case 'returned':
-        case 'cancelled':
-            return 'text-grey-6';
-        default:
-            return 'text-blue-600';
-    }
-});
+const tripDisplayStatusStyle = computed((): { color: string } => ({
+    color: controlPanelTripDisplayStatusColor(tripDisplayStatus.value),
+}));
 
 const manifestReadOnly = computed(
     () => voyageStatus.value === 'completed' || voyageStatus.value === 'cancelled',

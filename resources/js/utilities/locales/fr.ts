@@ -526,8 +526,8 @@ export default {
     },
     programsControl: {
         title: "Panneau de contrôle",
-        statsTotal: "Total passagers",
         statsBooked: "Réservés",
+        statsOnWater: "Sur l'eau",
         statsReturned: "Retournés",
         statsPlaces: "Places",
         prevDay: "Jour précédent",
