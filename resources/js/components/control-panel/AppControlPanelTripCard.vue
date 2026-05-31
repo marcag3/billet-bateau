@@ -19,8 +19,8 @@
         <q-card-section>
             <q-scroll-area class=" mx-10 mt-8 h-[520px]">
                 <q-list separator class="">
-                    <q-item v-for="item in manifestSlots" :key="item.key" dense class="">
-                        <q-item-section v-if="item.kind === 'passenger' || item.kind === 'booked'" flat bordered>
+                    <q-item v-for="item in manifestSlots" :key="item.key">
+                        <q-item-section v-if="item.kind === 'passenger' || item.kind === 'booked'">
                             <div class="row items-center no-wrap w-full">
                                 <div class="col text-body1">{{ item.name }}</div>
                                 <div v-if="item.kind === 'passenger' && canManagePassengers" class="col-auto">
@@ -35,10 +35,8 @@
                                 </div>
                             </div>
                         </q-item-section>
-                        <q-item-section v-else flat
-                            :class="{ 'cursor-pointer': canAddWalkIn || canManagePassengers }"
-                            class="min-h-16 border-2 border-dashed border-black/24"
-                            @click="onEmptySlotClick">
+                        <q-item-section v-else :class="{ 'cursor-pointer': canAddWalkIn || canManagePassengers }"
+                            class="h-8 border-2 border-dashed border-black/24" @click="onEmptySlotClick">
                             <div class="row items-center justify-center w-full">
                                 <q-btn v-if="canAddWalkIn" flat round color="primary" icon="add"
                                     :aria-label="t('programsControl.addWalkIn')" @click.stop="openWalkInDialog" />
@@ -211,14 +209,10 @@ const manifestSlots = computed((): ManifestSlot[] => {
         }
     } else {
         for (const ticket of props.card.bookingTickets) {
-            const name = String(ticket.name ?? '').trim();
-            if (name.length === 0) {
-                continue;
-            }
             slots.push({
                 kind: 'booked',
                 key: `booked-${ticket.id}`,
-                name,
+                name: String(ticket.name ?? '').trim() || '—',
                 ticketId: String(ticket.id),
                 bookingId: String(ticket.booking_id),
             });

@@ -4,6 +4,7 @@
  * Day-scoped joins, includes, and aggregates for the program control panel.
  * Prefer composing queries here over hand-rolled Maps in Vue composables.
  *
+ * @see docs/liveQuery.md
  * @see https://tanstack.com/db/latest/docs/guides/live-queries
  */
 
@@ -203,7 +204,8 @@ export function reduceDayStatsRows(
 }
 
 /**
- * Day trips with nested voyage (passengers + pivots), and trip-level booking tickets.
+ * Day trips with nested includes: booking tickets and voyage (passengers + pivots).
+ * Booking include correlates from `bookings` (`eq(booking.trip_id, trip.id)`), not via a join alias.
  */
 export function buildControlPanelTripCardsQuery(
     qb: InitialQueryBuilder,
@@ -230,11 +232,11 @@ export function buildControlPanelTripCardsQuery(
             productBannerObjectKey: trip.productBannerObjectKey,
             bookingTickets: toArray(
                 qb
-                    .from({ ticket: cols.booking_tickets })
-                    .join({ booking: cols.bookings }, ({ ticket, booking }) =>
-                        eq(ticket.booking_id, booking.id),
-                    )
+                    .from({ booking: cols.bookings })
                     .where(({ booking }) => eq(booking.trip_id, trip.id))
+                    .innerJoin({ ticket: cols.booking_tickets }, ({ booking, ticket }) =>
+                        eq(booking.id, ticket.booking_id),
+                    )
                     .select(({ ticket }) => ({
                         id: ticket.id,
                         booking_id: ticket.booking_id,
@@ -310,14 +312,87 @@ function firstRowOrValue<T>(value: T | T[] | { toArray: T[] } | null | undefined
     return value;
 }
 
-function asArray<T>(value: T[] | { toArray?: T[] } | null | undefined): T[] {
+function asArray<T>(value: T[] | { toArray?: T[] | (() => T[]) } | null | undefined): T[] {
     if (value == null) {
         return [];
     }
     if (Array.isArray(value)) {
         return value;
     }
-    return value.toArray ?? [];
+    const nested = value.toArray;
+    if (typeof nested === 'function') {
+        return nested.call(value);
+    }
+    if (Array.isArray(nested)) {
+        return nested;
+    }
+    return [];
+}
+
+function normalizeBookingTicketRow(raw: unknown): BookingTicketOutput {
+    const row = raw as Record<string, unknown>;
+    const ticket =
+        row.ticket != null && typeof row.ticket === 'object'
+            ? (row.ticket as Record<string, unknown>)
+            : row;
+
+    return {
+        id: String(ticket.id ?? row.id ?? ''),
+        booking_id:
+            ticket.booking_id != null
+                ? String(ticket.booking_id)
+                : row.booking_id != null
+                  ? String(row.booking_id)
+                  : null,
+        ticket_type_id:
+            ticket.ticket_type_id != null
+                ? String(ticket.ticket_type_id)
+                : row.ticket_type_id != null
+                  ? String(row.ticket_type_id)
+                  : null,
+        name:
+            ticket.name != null
+                ? String(ticket.name)
+                : row.name != null
+                  ? String(row.name)
+                  : null,
+        email:
+            ticket.email != null
+                ? String(ticket.email)
+                : row.email != null
+                  ? String(row.email)
+                  : null,
+        country:
+            ticket.country != null
+                ? String(ticket.country)
+                : row.country != null
+                  ? String(row.country)
+                  : null,
+        custom_fields:
+            ticket.custom_fields != null
+                ? String(ticket.custom_fields)
+                : row.custom_fields != null
+                  ? String(row.custom_fields)
+                  : null,
+        waiver_confirmation_id:
+            ticket.waiver_confirmation_id != null
+                ? String(ticket.waiver_confirmation_id)
+                : row.waiver_confirmation_id != null
+                  ? String(row.waiver_confirmation_id)
+                  : null,
+    };
+}
+
+function bookingTicketDisplayName(ticket: BookingTicketOutput): string {
+    const name = String(ticket.name ?? '').trim();
+    if (name.length > 0) {
+        return name;
+    }
+    const email = String(ticket.email ?? '').trim();
+    if (email.length > 0) {
+        return email;
+    }
+    return '—';
 }
 
 function extractVoyageInclude(voyage: ControlPanelTripCardQueryRow['voyage']): VoyageIncludeRow | null {
@@ -355,12 +430,12 @@ export function mapControlPanelTripCardRow(
     initialBoatIds: string[];
     initialGuideIds: string[];
 } {
-    const tickets = asArray(row.bookingTickets);
+    const tickets = asArray(row.bookingTickets).map(normalizeBookingTicketRow);
     const names: string[] = [];
     for (const bt of tickets) {
-        const name = String(bt.name ?? '').trim();
-        if (name.length > 0) {
-            names.push(name);
+        const label = bookingTicketDisplayName(bt);
+        if (label !== '—') {
+            names.push(label);
         }
     }
 
@@ -380,8 +455,8 @@ export function mapControlPanelTripCardRow(
         bookedCount: tickets.length,
         bookingTickets: tickets.map((bt) => ({
             id: String(bt.id),
-            name: String(bt.name ?? '').trim(),
-            booking_id: String(bt.booking_id),
+            name: bookingTicketDisplayName(bt),
+            booking_id: String(bt.booking_id ?? ''),
         })),
         voyageBoatPivotIds: voyageBoatPivots.map((p) => String(p.id)),
         voyageGuidePivotIds: voyageGuidePivots.map((p) => String(p.id)),

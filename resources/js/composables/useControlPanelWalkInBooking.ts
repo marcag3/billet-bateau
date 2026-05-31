@@ -10,6 +10,7 @@ export type WalkInBookingInput = {
     ticketTypeId: string;
     contactName: string;
     contactEmail: string;
+    country: string;
     customFieldMap: Record<string, string>;
 };
 
@@ -54,7 +55,7 @@ export function useControlPanelWalkInBooking() {
                         ticket_type_id: ticketTypeId,
                         name: input.contactName.trim(),
                         email: input.contactEmail.trim(),
-                        country: '',
+                        country: input.country.trim().toUpperCase(),
                         custom_fields: JSON.stringify(input.customFieldMap),
                         waiver_confirmation_id: null,
                     })

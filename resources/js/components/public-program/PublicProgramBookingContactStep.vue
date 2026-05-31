@@ -7,6 +7,8 @@
             :label="t('publicBooking.contactName')" />
         <q-input v-model="contactEmail" v-bind="contactEmailProps" outlined type="email" :disable="isSubmitting"
             :label="t('publicBooking.contactEmail')" />
+        <AppCountrySelect v-model="country" v-bind="countryProps" :disable="isSubmitting"
+            :label="t('publicBooking.country')" />
         <div v-if="customQuestions.length > 0" >
             <q-input v-for="(question, index) in customQuestions" :key="`${index}-${question}`"
                 v-model="customAnswers[index]" outlined :disable="isSubmitting" :label="question"
@@ -23,12 +25,14 @@
 <script setup lang="ts">
 import type { BaseFieldProps } from 'vee-validate';
 import { useI18n } from 'vue-i18n';
+import AppCountrySelect from '../molecules/AppCountrySelect.vue';
 
 type QuasarVeeFieldProps = BaseFieldProps & { error: boolean; errorMessage: string };
 
 defineProps<{
     contactNameProps: QuasarVeeFieldProps;
     contactEmailProps: QuasarVeeFieldProps;
+    countryProps: QuasarVeeFieldProps;
     submitError: string;
     isSubmitting: boolean;
     canSubmit: boolean;
@@ -43,6 +47,7 @@ const emit = defineEmits<{
 
 const contactName = defineModel<string>('contactName', { required: true });
 const contactEmail = defineModel<string>('contactEmail', { required: true });
+const country = defineModel<string>('country', { required: true });
 const customAnswers = defineModel<string[]>('customAnswers', { required: true });
 
 const { t } = useI18n();

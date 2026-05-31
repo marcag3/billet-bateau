@@ -174,7 +174,7 @@ final class CreatePublicBookingAction
                         'ticket_type_id' => (string) $ticketTypeId,
                         'name' => $data->contact_name,
                         'email' => $data->contact_email,
-                        'country' => '',
+                        'country' => strtoupper($data->country),
                         'custom_fields' => $customFieldMap,
                         'waiver_confirmation_id' => null,
                     ]);

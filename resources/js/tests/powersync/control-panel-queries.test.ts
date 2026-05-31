@@ -233,4 +233,41 @@ describe('control-panel-queries', () => {
         expect(mapped.initialBoatIds).toEqual([]);
         expect(mapped.initialGuideIds).toEqual([]);
     });
+
+    it('mapControlPanelTripCardRow maps included booking tickets with email fallback', () => {
+        const mapped = mapControlPanelTripCardRow({
+            id: '01kswq5ryy30ymzwwrmt7hzwfj',
+            program_id: 'prog-1',
+            voyage: null,
+            bookingTickets: [
+                {
+                    id: 'bt-1',
+                    booking_id: 'b-1',
+                    ticket_type_id: null,
+                    name: 'Ada',
+                    email: 'ada@example.com',
+                    country: null,
+                    custom_fields: null,
+                    waiver_confirmation_id: null,
+                },
+                {
+                    id: 'bt-2',
+                    booking_id: 'b-2',
+                    ticket_type_id: null,
+                    name: '',
+                    email: 'bob@example.com',
+                    country: null,
+                    custom_fields: null,
+                    waiver_confirmation_id: null,
+                },
+            ],
+        } as never);
+
+        expect(mapped.bookedCount).toBe(2);
+        expect(mapped.bookingTickets).toEqual([
+            { id: 'bt-1', name: 'Ada', booking_id: 'b-1' },
+            { id: 'bt-2', name: 'bob@example.com', booking_id: 'b-2' },
+        ]);
+        expect(mapped.bookedTicketNames).toEqual(['Ada', 'bob@example.com']);
+    });
 });

@@ -4,7 +4,7 @@ import { zRequiredTrimmedString } from '../../validation/zod-fields';
 
 export type Translator = (key: string) => string;
 
-function createPublicBookingContactZodSchema(t: Translator) {
+export function createPublicBookingContactZodSchema(t: Translator) {
     return z.object({
         contact_name: zRequiredTrimmedString(t('publicBooking.contactNameRequired')),
         contact_email: z
@@ -13,6 +13,13 @@ function createPublicBookingContactZodSchema(t: Translator) {
             .min(1, t('publicBooking.contactEmailRequired'))
             .email(t('publicBooking.contactEmailInvalid'))
             .max(255),
+        country: z
+            .string()
+            .trim()
+            .min(1, t('publicBooking.countryRequired'))
+            .length(2, t('publicBooking.countryRequired'))
+            .regex(/^[A-Za-z]{2}$/, t('publicBooking.countryRequired'))
+            .transform((value) => value.toUpperCase()),
     });
 }
 

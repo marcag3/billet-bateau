@@ -227,6 +227,7 @@ async function onConfirmWalkIn(payload: WalkInBookingConfirmPayload): Promise<vo
         ticketTypeId: payload.ticketTypeId,
         contactName: payload.contactName,
         contactEmail: payload.contactEmail,
+        country: payload.country,
         customFieldMap: payload.customFieldMap,
     });
 }

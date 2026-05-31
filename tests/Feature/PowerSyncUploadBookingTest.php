@@ -49,14 +49,18 @@ class PowerSyncUploadBookingTest extends TestCase
         ]);
     }
 
-    public function test_put_booking_rejects_past_trip(): void
+    public function test_put_walk_in_booking_and_ticket_for_past_trip(): void
     {
         $user = User::factory()->create();
-        $program = Program::factory()->withOwner($user)->create();
-        $trip = Trip::factory()->forProgram($program)->create([
-            'scheduled_departure_at' => now()->subDay(),
+        $program = Program::factory()->withOwner($user)->create([
+            'booking_questions' => ['Dietary restrictions?'],
         ]);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->subHour(),
+        ]);
+        $ticketType = TicketType::factory()->create(['program_id' => $program->getKey()]);
         $bookingId = (string) Str::ulid();
+        $bookingTicketId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -71,10 +75,30 @@ class PowerSyncUploadBookingTest extends TestCase
                         'contact_email' => 'walkin@example.com',
                     ],
                 ],
+                [
+                    'op' => 'PUT',
+                    'type' => 'booking_tickets',
+                    'id' => $bookingTicketId,
+                    'data' => [
+                        'booking_id' => $bookingId,
+                        'ticket_type_id' => $ticketType->getKey(),
+                        'name' => 'Walk-in Guest',
+                        'email' => 'walkin@example.com',
+                        'country' => '',
+                        'custom_fields' => ['Dietary restrictions?' => 'None'],
+                    ],
+                ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk();
 
-        $this->assertDatabaseMissing('bookings', ['id' => $bookingId]);
+        $this->assertDatabaseHas('bookings', [
+            'id' => $bookingId,
+            'trip_id' => $trip->getKey(),
+        ]);
+        $this->assertDatabaseHas('booking_tickets', [
+            'id' => $bookingTicketId,
+            'booking_id' => $bookingId,
+        ]);
     }
 
     public function test_put_booking_forbids_non_member(): void

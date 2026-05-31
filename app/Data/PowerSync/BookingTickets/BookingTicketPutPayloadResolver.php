@@ -51,7 +51,8 @@ final class BookingTicketPutPayloadResolver
 
         $name = $dto->name instanceof Optional ? ($existing?->name ?? null) : $dto->name;
         $email = $dto->email instanceof Optional ? ($existing?->email ?? null) : $dto->email;
-        $country = $dto->country instanceof Optional ? ($existing?->country ?? null) : $dto->country;
+        $country = $dto->country instanceof Optional ? ($existing?->country ?? '') : $dto->country;
+        $country = is_string($country) ? $country : '';
         $customFields = $dto->custom_fields instanceof Optional
             ? (is_array($existing?->custom_fields) ? $existing->custom_fields : [])
             : self::normalizeCustomFields($dto->custom_fields);

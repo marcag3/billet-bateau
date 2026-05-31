@@ -184,6 +184,7 @@ class PublicBookingApiTest extends TestCase
             'ticket_quantities' => [],
             'contact_name' => 'A',
             'contact_email' => 'a@example.com',
+            'country' => 'CA',
         ])->assertNotFound();
     }
 
@@ -202,6 +203,7 @@ class PublicBookingApiTest extends TestCase
             'ticket_quantities' => [],
             'contact_name' => 'A',
             'contact_email' => 'a@example.com',
+            'country' => 'CA',
         ])->assertNotFound();
     }
 
@@ -229,6 +231,7 @@ class PublicBookingApiTest extends TestCase
             ],
             'contact_name' => 'Alex River',
             'contact_email' => 'alex@example.com',
+            'country' => 'CA',
         ];
 
         $r = $this->postJson('/api/public/programs/book-me/bookings', $payload);
@@ -244,6 +247,10 @@ class PublicBookingApiTest extends TestCase
             'contact_email' => 'alex@example.com',
         ]);
         $this->assertSame(2, BookingTicket::query()->where('booking_id', $bookingId)->count());
+        $this->assertSame(
+            2,
+            BookingTicket::query()->where('booking_id', $bookingId)->where('country', 'CA')->count(),
+        );
     }
 
     public function test_store_sends_booking_confirmation_notification(): void
@@ -272,6 +279,7 @@ class PublicBookingApiTest extends TestCase
             'ticket_quantities' => [(string) $type->getKey() => 2],
             'contact_name' => 'Alex River',
             'contact_email' => 'alex@example.com',
+            'country' => 'CA',
         ])->assertCreated();
 
         Notification::assertSentOnDemand(
@@ -350,6 +358,7 @@ class PublicBookingApiTest extends TestCase
             'ticket_quantities' => [(string) $type->getKey() => 0],
             'contact_name' => 'A',
             'contact_email' => 'a@example.com',
+            'country' => 'CA',
         ])->assertUnprocessable();
 
         Notification::assertNothingSent();
@@ -373,6 +382,7 @@ class PublicBookingApiTest extends TestCase
             'ticket_quantities' => [(string) $typeA->getKey() => 1],
             'contact_name' => 'A',
             'contact_email' => 'a@example.com',
+            'country' => 'CA',
         ])->assertUnprocessable()->assertJsonValidationErrors(['trip_id']);
     }
 
@@ -391,6 +401,7 @@ class PublicBookingApiTest extends TestCase
             'ticket_quantities' => [(string) $type->getKey() => 0],
             'contact_name' => 'A',
             'contact_email' => 'a@example.com',
+            'country' => 'CA',
         ])->assertUnprocessable()->assertJsonValidationErrors(['ticket_quantities']);
     }
 
@@ -422,6 +433,7 @@ class PublicBookingApiTest extends TestCase
             'ticket_quantities' => [(string) $type->getKey() => 1],
             'contact_name' => 'A',
             'contact_email' => 'a@example.com',
+            'country' => 'CA',
         ])->assertUnprocessable()->assertJsonValidationErrors(['ticket_quantities']);
     }
 
@@ -440,6 +452,7 @@ class PublicBookingApiTest extends TestCase
             'ticket_quantities' => [(string) $type->getKey() => 1],
             'contact_name' => 'A',
             'contact_email' => 'not-an-email',
+            'country' => 'CA',
         ])->assertUnprocessable()->assertJsonValidationErrors(['contact_email']);
     }
 
@@ -487,6 +500,7 @@ class PublicBookingApiTest extends TestCase
             'ticket_quantities' => [(string) $type->getKey() => 1],
             'contact_name' => 'A',
             'contact_email' => 'a@example.com',
+            'country' => 'CA',
             'custom_answers' => [],
         ])->assertUnprocessable()->assertJsonValidationErrors(['custom_answers']);
 
@@ -495,6 +509,7 @@ class PublicBookingApiTest extends TestCase
             'ticket_quantities' => [(string) $type->getKey() => 1],
             'contact_name' => 'A',
             'contact_email' => 'a@example.com',
+            'country' => 'CA',
             'custom_answers' => ['H2X'],
         ])->assertCreated();
 
@@ -535,6 +550,7 @@ class PublicBookingApiTest extends TestCase
             ],
             'contact_name' => 'A',
             'contact_email' => 'a@example.com',
+            'country' => 'CA',
         ])->assertUnprocessable()->assertJsonValidationErrors(["ticket_quantities.{$child->getKey()}"]);
     }
 
@@ -566,6 +582,7 @@ class PublicBookingApiTest extends TestCase
             ],
             'contact_name' => 'A',
             'contact_email' => 'a@example.com',
+            'country' => 'CA',
         ])->assertUnprocessable()->assertJsonValidationErrors(["ticket_quantities.{$child->getKey()}"]);
     }
 
@@ -599,6 +616,33 @@ class PublicBookingApiTest extends TestCase
             ],
             'contact_name' => 'A',
             'contact_email' => 'a@example.com',
+            'country' => 'CA',
         ])->assertCreated()->assertJsonPath('data.total_tickets', 6);
+    }
+
+    public function test_store_validates_country(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['slug' => 'bad-country']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+        $type = TicketType::factory()->forProgram($program)->create();
+
+        $this->postJson('/api/public/programs/bad-country/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['country']);
+
+        $this->postJson('/api/public/programs/bad-country/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+            'country' => 'CAN',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['country']);
     }
 }

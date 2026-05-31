@@ -32,6 +32,12 @@
                         :label="t('publicBooking.contactEmail')"
                     />
 
+                    <AppCountrySelect
+                        v-model="country"
+                        v-bind="countryProps"
+                        :label="t('publicBooking.country')"
+                    />
+
                     <q-input
                         v-for="(question, index) in bookingQuestions"
                         :key="`${index}-${question}`"
@@ -58,6 +64,8 @@ import { useForm } from 'vee-validate';
 import { useI18n } from 'vue-i18n';
 import { createPublicBookingContactFormSchema } from '../../models/public-booking/public-booking.validation';
 import { createQuasarFieldBinder } from '../../validation/quasar-vee-fields';
+import { DEFAULT_COUNTRY_CODE } from '../../composables/useCountryOptions';
+import AppCountrySelect from '../molecules/AppCountrySelect.vue';
 
 export type WalkInTicketTypeOption = {
     value: string;
@@ -68,6 +76,7 @@ export type WalkInBookingConfirmPayload = {
     ticketTypeId: string;
     contactName: string;
     contactEmail: string;
+    country: string;
     customFieldMap: Record<string, string>;
 };
 
@@ -102,12 +111,14 @@ const { handleSubmit, defineField, resetForm } = useForm({
     initialValues: {
         contact_name: '',
         contact_email: '',
+        country: DEFAULT_COUNTRY_CODE,
     },
 });
 
 const quasarField = createQuasarFieldBinder(defineField);
 const [contactName, contactNameProps] = quasarField('contact_name');
 const [contactEmail, contactEmailProps] = quasarField('contact_email');
+const [country, countryProps] = quasarField('country');
 
 function resetDialogState(): void {
     ticketTypeId.value = '';
@@ -118,6 +129,7 @@ function resetDialogState(): void {
         values: {
             contact_name: '',
             contact_email: '',
+            country: DEFAULT_COUNTRY_CODE,
         },
     });
 }
@@ -181,6 +193,7 @@ const onSubmit = handleSubmit((values) => {
         ticketTypeId: selectedTicketTypeId,
         contactName: String(values.contact_name).trim(),
         contactEmail: String(values.contact_email).trim(),
+        country: String(values.country).trim().toUpperCase(),
         customFieldMap,
     });
     emit('update:open', false);

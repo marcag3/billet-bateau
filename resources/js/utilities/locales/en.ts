@@ -205,6 +205,8 @@ export default {
         contactNameRequired: "Contact name is required.",
         contactEmailRequired: "Email is required.",
         contactEmailInvalid: "Enter a valid email address.",
+        country: "Country",
+        countryRequired: "Country is required.",
         customAnswerRequired: "This answer is required.",
         submitBook: "Complete booking",
         submitting: "Booking…",

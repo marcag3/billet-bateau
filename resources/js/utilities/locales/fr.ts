@@ -214,6 +214,8 @@ export default {
         contactNameRequired: "Le nom du contact est requis.",
         contactEmailRequired: "Le courriel est requis.",
         contactEmailInvalid: "Entrez une adresse courriel valide.",
+        country: "Pays",
+        countryRequired: "Le pays est requis.",
         customAnswerRequired: "Cette reponse est requise.",
         submitBook: "Confirmer la réservation",
         submitting: "Réservation…",

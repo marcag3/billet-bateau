@@ -73,8 +73,9 @@
                 <q-step :name="3" :title="t('publicBooking.stepContact')" :disable="!canAccessStep3"
                     :header-nav="canAccessStep3">
                     <PublicProgramBookingContactStep v-model:contact-name="contactName"
-                        v-model:contact-email="contactEmail" :contact-name-props="contactNameProps"
-                        :contact-email-props="contactEmailProps" :submit-error="submitError"
+                        v-model:contact-email="contactEmail" v-model:country="country"
+                        :contact-name-props="contactNameProps" :contact-email-props="contactEmailProps"
+                        :country-props="countryProps" :submit-error="submitError"
                         v-model:custom-answers="customAnswers" :custom-questions="customQuestions"
                         :custom-answer-errors="customAnswerErrors" :is-submitting="isSubmitting"
                         :can-submit="canSubmitContactStep" @back="step = 2" @submit="onContactSubmit" />
@@ -114,6 +115,7 @@ import {
     type PublicBookingContactFormValues,
 } from '../models/public-booking/public-booking.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
+import { DEFAULT_COUNTRY_CODE } from '../composables/useCountryOptions';
 import type {
     BookingOptionsPayload,
     BookingTicketTypeOption,
@@ -159,12 +161,14 @@ const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm<Pub
     initialValues: {
         contact_name: '',
         contact_email: '',
+        country: DEFAULT_COUNTRY_CODE,
     },
 });
 
 const quasarField = createQuasarFieldBinder(defineField);
 const [contactName, contactNameProps] = quasarField('contact_name');
 const [contactEmail, contactEmailProps] = quasarField('contact_email');
+const [country, countryProps] = quasarField('country');
 
 const tripOptions = computed((): BookingTripOption[] => bookingOptionsData.value?.trips ?? []);
 const ticketTypeOptions = computed((): BookingTicketTypeOption[] => bookingOptionsData.value?.ticket_types ?? []);
@@ -336,6 +340,7 @@ const onContactSubmit = handleSubmit(async (values) => {
         ticket_quantities: quantities,
         contact_name: String(values.contact_name).trim(),
         contact_email: String(values.contact_email).trim(),
+        country: String(values.country).trim().toUpperCase(),
         custom_answers: [] as string[],
     };
 

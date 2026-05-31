@@ -18,6 +18,7 @@ final class PublicBookingStoreData extends Data
         public array $ticket_quantities,
         public string $contact_name,
         public string $contact_email,
+        public string $country,
         public array $custom_answers = [],
     ) {}
 
@@ -32,6 +33,7 @@ final class PublicBookingStoreData extends Data
             'ticket_quantities.*' => ['integer', 'min:0'],
             'contact_name' => ['required', 'string', 'max:255'],
             'contact_email' => ['required', 'string', 'email', 'max:255'],
+            'country' => ['required', 'string', 'size:2', 'regex:/^[A-Za-z]{2}$/'],
             'custom_answers' => ['sometimes', 'array', 'max:20'],
             'custom_answers.*' => ['string', 'min:1', 'max:255'],
         ];

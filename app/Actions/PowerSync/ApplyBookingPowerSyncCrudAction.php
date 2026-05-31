@@ -174,12 +174,6 @@ final class ApplyBookingPowerSyncCrudAction
             ]);
         }
 
-        if ($trip->scheduled_departure_at->isPast()) {
-            throw ValidationException::withMessages([
-                'data.trip_id' => __('This trip is no longer available for booking.'),
-            ]);
-        }
-
         return $trip;
     }
 
