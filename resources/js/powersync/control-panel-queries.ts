@@ -248,53 +248,55 @@ export function buildControlPanelTripCardsQuery(
                         waiver_confirmation_id: ticket.waiver_confirmation_id,
                     })),
             ),
-            voyage: qb
-                .from({ voyage: cols.voyages })
-                .where(({ voyage }) => eq(voyage.trip_id, trip.id))
-                .orderBy(({ voyage }) => voyage.id, 'asc')
-                .select(({ voyage }) => ({
-                    id: voyage.id,
-                    program_id: voyage.program_id,
-                    user_id: voyage.user_id,
-                    trip_id: voyage.trip_id,
-                    water_route_id: voyage.water_route_id,
-                    scheduled_departure_at: voyage.scheduled_departure_at,
-                    started_at: voyage.started_at,
-                    arrived_at: voyage.arrived_at,
-                    status: voyage.status,
-                    passengers: toArray(
-                        qb
-                            .from({ passenger: cols.passengers })
-                            .where(({ passenger }) => eq(passenger.voyage_id, voyage.id))
-                            .select(({ passenger }) => ({
-                                id: passenger.id,
-                                voyage_id: passenger.voyage_id,
-                                name: passenger.name,
-                                booking_id: passenger.booking_id,
-                                check_in_id: passenger.check_in_id,
-                                notes: passenger.notes,
-                            })),
-                    ),
-                    voyageBoatPivotIds: toArray(
-                        qb
-                            .from({ voyageBoat: cols.voyage_boat })
-                            .where(({ voyageBoat }) => eq(voyageBoat.voyage_id, voyage.id))
-                            .select(({ voyageBoat }) => ({
-                                id: voyageBoat.id,
-                                boat_id: voyageBoat.boat_id,
-                            })),
-                    ),
-                    voyageGuidePivotIds: toArray(
-                        qb
-                            .from({ voyageGuide: cols.voyage_guide })
-                            .where(({ voyageGuide }) => eq(voyageGuide.voyage_id, voyage.id))
-                            .select(({ voyageGuide }) => ({
-                                id: voyageGuide.id,
-                                guide_id: voyageGuide.guide_id,
-                            })),
-                    ),
-                }))
-                .findOne(),
+            voyage: toArray(
+                qb
+                    .from({ voyage: cols.voyages })
+                    .where(({ voyage }) => eq(voyage.trip_id, trip.id))
+                    .orderBy(({ voyage }) => voyage.id, 'asc')
+                    .limit(1)
+                    .select(({ voyage }) => ({
+                        id: voyage.id,
+                        program_id: voyage.program_id,
+                        user_id: voyage.user_id,
+                        trip_id: voyage.trip_id,
+                        water_route_id: voyage.water_route_id,
+                        scheduled_departure_at: voyage.scheduled_departure_at,
+                        started_at: voyage.started_at,
+                        arrived_at: voyage.arrived_at,
+                        status: voyage.status,
+                        passengers: toArray(
+                            qb
+                                .from({ passenger: cols.passengers })
+                                .where(({ passenger }) => eq(passenger.voyage_id, voyage.id))
+                                .select(({ passenger }) => ({
+                                    id: passenger.id,
+                                    voyage_id: passenger.voyage_id,
+                                    name: passenger.name,
+                                    booking_id: passenger.booking_id,
+                                    check_in_id: passenger.check_in_id,
+                                    notes: passenger.notes,
+                                })),
+                        ),
+                        voyageBoatPivotIds: toArray(
+                            qb
+                                .from({ voyageBoat: cols.voyage_boat })
+                                .where(({ voyageBoat }) => eq(voyageBoat.voyage_id, voyage.id))
+                                .select(({ voyageBoat }) => ({
+                                    id: voyageBoat.id,
+                                    boat_id: voyageBoat.boat_id,
+                                })),
+                        ),
+                        voyageGuidePivotIds: toArray(
+                            qb
+                                .from({ voyageGuide: cols.voyage_guide })
+                                .where(({ voyageGuide }) => eq(voyageGuide.voyage_id, voyage.id))
+                                .select(({ voyageGuide }) => ({
+                                    id: voyageGuide.id,
+                                    guide_id: voyageGuide.guide_id,
+                                })),
+                        ),
+                    })),
+            ),
         }));
 }
 

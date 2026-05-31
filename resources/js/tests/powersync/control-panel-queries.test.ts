@@ -26,6 +26,7 @@ function mockQueryBuilder() {
         join: vi.fn(() => chain),
         select: vi.fn(() => chain),
         orderBy: vi.fn(() => chain),
+        limit: vi.fn(() => chain),
         findOne: vi.fn(() => chain),
         from: vi.fn(() => chain),
         unionAll: vi.fn(() => chain),
@@ -184,7 +185,8 @@ describe('control-panel-queries', () => {
         expect(topProjection).not.toHaveProperty('passengers');
         expect(topProjection).not.toHaveProperty('voyageBoatPivotIds');
         expect(topProjection).not.toHaveProperty('voyageGuidePivotIds');
-        expect(qb.findOne).toHaveBeenCalled();
+        expect(qb.limit).toHaveBeenCalledWith(1);
+        expect(qb.findOne).not.toHaveBeenCalled();
     });
 
     it('mapControlPanelTripCardRow maps nested voyage pivots for depart modal', () => {
@@ -216,6 +218,43 @@ describe('control-panel-queries', () => {
         expect(mapped.voyageGuidePivotIds).toEqual(['vg-1']);
         expect(mapped.initialBoatIds).toEqual(['boat-a', 'boat-b']);
         expect(mapped.initialGuideIds).toEqual(['guide-x']);
+    });
+
+    it('mapControlPanelTripCardRow maps voyage from one-element array after depart', () => {
+        const mapped = mapControlPanelTripCardRow({
+            id: '01kswq5ryy30ymzwwrmt7hzwfj',
+            program_id: 'prog-1',
+            voyage: [
+                {
+                    id: 'v1',
+                    program_id: 'prog-1',
+                    user_id: null,
+                    trip_id: '01kswq5ryy30ymzwwrmt7hzwfj',
+                    water_route_id: 'wr-1',
+                    scheduled_departure_at: null,
+                    started_at: null,
+                    arrived_at: null,
+                    status: 'underway',
+                    passengers: [
+                        {
+                            id: 'p-1',
+                            voyage_id: 'v1',
+                            name: 'Ada',
+                            booking_id: 'b-1',
+                            check_in_id: null,
+                            notes: null,
+                        },
+                    ],
+                    voyageBoatPivotIds: [],
+                    voyageGuidePivotIds: [],
+                },
+            ],
+            bookingTickets: [],
+        } as never);
+
+        expect(mapped.voyage?.status).toBe('underway');
+        expect(mapped.passengers).toHaveLength(1);
+        expect(mapped.passengers[0]?.name).toBe('Ada');
     });
 
     it('mapControlPanelTripCardRow handles null voyage', () => {
