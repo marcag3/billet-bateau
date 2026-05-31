@@ -59,6 +59,9 @@
             <q-chip outline color="positive">
                 {{ t('programsControl.statsReturned') }}: {{ stats.returned }}
             </q-chip>
+            <q-chip outline color="info">
+                {{ t('programsControl.statsPlaces') }}: {{ stats.places }}
+            </q-chip>
         </div>
     </div>
 </template>

@@ -4,6 +4,8 @@ export type ControlPanelDayStats = {
     total: number;
     booked: number;
     returned: number;
+    /** Sum of product capacity across all trips on the selected day. */
+    places: number;
 };
 
 export type ControlPanelStatsVoyage = {
@@ -119,7 +121,15 @@ type ControlPanelDayStatsCardInput = {
     bookedCount: number;
     passengers: readonly unknown[];
     voyage: (ControlPanelStatsVoyage & { status?: string | null }) | null;
+    trip: { capacity: number | null };
 };
+
+function tripCapacitySeats(capacity: number | null): number {
+    if (capacity == null || !Number.isFinite(Number(capacity))) {
+        return 0;
+    }
+    return Math.max(0, Math.floor(Number(capacity)));
+}
 
 /** Derive toolbar stats from day-filtered trip cards (keeps stats in sync with the strip). */
 export function computeControlPanelDayStatsFromCards(
@@ -129,9 +139,11 @@ export function computeControlPanelDayStatsFromCards(
     let booked = 0;
     let manifestCount = 0;
     let returned = 0;
+    let places = 0;
     for (const card of cards) {
         booked += card.bookedCount;
         manifestCount += card.passengers.length;
+        places += tripCapacitySeats(card.trip.capacity);
         if (
             card.voyage != null &&
             resolveControlPanelTripDisplayStatus(card.voyage) === 'returned'
@@ -143,5 +155,6 @@ export function computeControlPanelDayStatsFromCards(
         booked,
         returned,
         total: manifestCount > 0 ? manifestCount : booked,
+        places,
     };
 }

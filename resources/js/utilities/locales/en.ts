@@ -509,6 +509,7 @@ export default {
         statsTotal: "Total passengers",
         statsBooked: "Booked",
         statsReturned: "Returned",
+        statsPlaces: "Places",
         prevDay: "Previous day",
         nextDay: "Next day",
         today: "Today",

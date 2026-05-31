@@ -529,6 +529,7 @@ export default {
         statsTotal: "Total passagers",
         statsBooked: "Réservés",
         statsReturned: "Retournés",
+        statsPlaces: "Places",
         prevDay: "Jour précédent",
         nextDay: "Jour suivant",
         today: "Aujourd'hui",

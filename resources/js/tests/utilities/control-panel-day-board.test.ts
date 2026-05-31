@@ -50,13 +50,14 @@ describe('control-panel-day-board', () => {
         expect(parseRouteDateYmdOrToday(undefined)).toBe(todayLocalDateYmd());
     });
 
-    it('computeControlPanelDayStatsFromCards aggregates booked, manifest, and returned', () => {
+    it('computeControlPanelDayStatsFromCards aggregates booked, manifest, returned, and places', () => {
         expect(
             computeControlPanelDayStatsFromCards(
                 [
                     {
                         bookedCount: 2,
                         passengers: [{}, {}],
+                        trip: { capacity: 12 },
                         voyage: {
                             id: 'v1',
                             trip_id: 't1',
@@ -67,6 +68,7 @@ describe('control-panel-day-board', () => {
                     {
                         bookedCount: 1,
                         passengers: [{}],
+                        trip: { capacity: 8 },
                         voyage: {
                             id: 'v2',
                             trip_id: 't2',
@@ -81,6 +83,7 @@ describe('control-panel-day-board', () => {
             booked: 3,
             returned: 2,
             total: 3,
+            places: 20,
         });
     });
 
@@ -91,6 +94,7 @@ describe('control-panel-day-board', () => {
                     {
                         bookedCount: 1,
                         passengers: [{}, {}],
+                        trip: { capacity: 10 },
                         voyage: {
                             id: 'v1',
                             trip_id: 't1',
@@ -105,6 +109,34 @@ describe('control-panel-day-board', () => {
             booked: 1,
             returned: 2,
             total: 2,
+            places: 10,
+        });
+    });
+
+    it('computeControlPanelDayStatsFromCards ignores null or invalid trip capacity', () => {
+        expect(
+            computeControlPanelDayStatsFromCards(
+                [
+                    {
+                        bookedCount: 0,
+                        passengers: [],
+                        trip: { capacity: null },
+                        voyage: null,
+                    },
+                    {
+                        bookedCount: 0,
+                        passengers: [],
+                        trip: { capacity: 6.9 },
+                        voyage: null,
+                    },
+                ],
+                '2026-06-05',
+            ),
+        ).toEqual({
+            booked: 0,
+            returned: 0,
+            total: 0,
+            places: 6,
         });
     });
 
