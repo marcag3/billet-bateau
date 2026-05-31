@@ -14,6 +14,8 @@ use App\Models\Trip;
 use App\Models\Voyage;
 use App\Models\WaterRoute;
 use App\Support\Voyages\VoyageProgramResolver;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Validation\ValidationException;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Spatie\LaravelData\Optional;
@@ -106,8 +108,19 @@ final class ApplyVoyagePowerSyncCrudAction
             ],
         );
 
+        if (! ($dto->started_at instanceof Optional)) {
+            $voyage->started_at = $this->patchTimestamp($dto->started_at);
+        }
+
+        if (! ($dto->arrived_at instanceof Optional)) {
+            $voyage->arrived_at = $this->patchTimestamp($dto->arrived_at);
+        }
+
+        $this->assertRequiredLifecycleTimestamps($voyage, $status);
+        $voyage->save();
+
         if ($status !== $persistedStatus) {
-            $this->applyStatusTransition($voyage, $status, $userId);
+            $this->applyStatusTransition($voyage->fresh() ?? $voyage, $status, $userId);
         }
     }
 
@@ -139,6 +152,14 @@ final class ApplyVoyagePowerSyncCrudAction
             $voyage->scheduled_departure_at = $patch->scheduled_departure_at;
         }
 
+        if (! ($patch->started_at instanceof Optional)) {
+            $voyage->started_at = $this->patchTimestamp($patch->started_at);
+        }
+
+        if (! ($patch->arrived_at instanceof Optional)) {
+            $voyage->arrived_at = $this->patchTimestamp($patch->arrived_at);
+        }
+
         if (
             ! ($patch->trip_id instanceof Optional)
             || ! ($patch->water_route_id instanceof Optional)
@@ -164,15 +185,7 @@ final class ApplyVoyagePowerSyncCrudAction
             $this->guardImmutableLifecycleFields($voyage, $targetStatus);
         }
 
-        if (
-            ! ($patch->started_at instanceof Optional)
-            || ! ($patch->arrived_at instanceof Optional)
-        ) {
-            throw ValidationException::withMessages([
-                'voyage' => __('Departure timestamps are set by the server when starting or arriving.'),
-            ]);
-        }
-
+        $this->assertRequiredLifecycleTimestamps($voyage, $targetStatus);
         $voyage->save();
 
         if ($targetStatus !== $voyage->status) {
@@ -194,6 +207,30 @@ final class ApplyVoyagePowerSyncCrudAction
         }
 
         return $existingStatus ?? VoyageStatus::Draft;
+    }
+
+    private function patchTimestamp(?CarbonInterface $value): ?Carbon
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return Carbon::instance($value);
+    }
+
+    private function assertRequiredLifecycleTimestamps(Voyage $voyage, VoyageStatus $targetStatus): void
+    {
+        if ($targetStatus === VoyageStatus::Underway && $voyage->started_at === null) {
+            throw ValidationException::withMessages([
+                'started_at' => __('A departure start time is required when marking underway.'),
+            ]);
+        }
+
+        if ($targetStatus === VoyageStatus::Completed && $voyage->arrived_at === null) {
+            throw ValidationException::withMessages([
+                'arrived_at' => __('An arrival time is required when marking completed.'),
+            ]);
+        }
     }
 
     private function isLifecycleTransitionStatus(VoyageStatus $status): bool

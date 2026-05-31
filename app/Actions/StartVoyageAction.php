@@ -35,7 +35,6 @@ final class StartVoyageAction
         }
 
         $voyage->status = VoyageStatus::Underway;
-        $voyage->started_at ??= now();
         $voyage->user_id ??= $userId;
         $voyage->save();
 

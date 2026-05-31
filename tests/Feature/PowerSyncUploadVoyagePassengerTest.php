@@ -56,6 +56,7 @@ class PowerSyncUploadVoyagePassengerTest extends TestCase
                     'id' => $voyageId,
                     'data' => [
                         'status' => 'underway',
+                        'started_at' => now()->utc()->format('Y-m-d\TH:i:s.v\Z'),
                     ],
                 ],
             ],
@@ -90,6 +91,87 @@ class PowerSyncUploadVoyagePassengerTest extends TestCase
             'updated_at' => now(),
         ]);
 
+        $clientArrivedAt = now()->subMinutes(2);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'voyages',
+                    'id' => $voyage->getKey(),
+                    'data' => [
+                        'status' => 'completed',
+                        'arrived_at' => $clientArrivedAt->utc()->format('Y-m-d\TH:i:s.v\Z'),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $voyage->refresh();
+        $this->assertSame(VoyageStatus::Completed, $voyage->status);
+        $this->assertNotNull($voyage->arrived_at);
+    }
+
+    public function test_patch_voyage_underway_requires_started_at(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->withWaterRoute()->forProgram($program)->create();
+        $boat = Boat::factory()->create(['program_id' => $program->getKey()]);
+        $voyageId = (string) Str::ulid();
+        $waterRouteId = (string) $trip->product->water_route_id;
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'voyages',
+                    'id' => $voyageId,
+                    'data' => [
+                        'trip_id' => $trip->getKey(),
+                        'water_route_id' => $waterRouteId,
+                        'status' => 'ready',
+                    ],
+                ],
+                [
+                    'op' => 'PUT',
+                    'type' => 'voyage_boat',
+                    'id' => (string) Str::ulid(),
+                    'data' => [
+                        'voyage_id' => $voyageId,
+                        'boat_id' => $boat->getKey(),
+                    ],
+                ],
+                [
+                    'op' => 'PATCH',
+                    'type' => 'voyages',
+                    'id' => $voyageId,
+                    'data' => [
+                        'status' => 'underway',
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
+    }
+
+    public function test_patch_voyage_completed_requires_arrived_at(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->withWaterRoute()->forProgram($program)->create();
+        $boat = Boat::factory()->create(['program_id' => $program->getKey()]);
+        $voyage = Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Underway,
+            'started_at' => now(),
+        ]);
+        DB::table('voyage_boat')->insert([
+            'id' => (string) Str::ulid(),
+            'voyage_id' => $voyage->getKey(),
+            'boat_id' => $boat->getKey(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
                 [
@@ -101,11 +183,51 @@ class PowerSyncUploadVoyagePassengerTest extends TestCase
                     ],
                 ],
             ],
+        ])->assertUnprocessable();
+    }
+
+    public function test_patch_voyage_mark_arrived_uses_client_arrived_at(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->withWaterRoute()->forProgram($program)->create();
+        $boat = Boat::factory()->create(['program_id' => $program->getKey()]);
+        $startedAt = now()->subHour();
+        $clientArrivedAt = now()->subMinutes(5);
+        $voyage = Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Underway,
+            'started_at' => $startedAt,
+        ]);
+        DB::table('voyage_boat')->insert([
+            'id' => (string) Str::ulid(),
+            'voyage_id' => $voyage->getKey(),
+            'boat_id' => $boat->getKey(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'voyages',
+                    'id' => $voyage->getKey(),
+                    'data' => [
+                        'status' => 'completed',
+                        'started_at' => $startedAt->utc()->format('Y-m-d\TH:i:s.v\Z'),
+                        'arrived_at' => $clientArrivedAt->utc()->format('Y-m-d\TH:i:s.v\Z'),
+                    ],
+                ],
+            ],
         ])->assertOk();
 
         $voyage->refresh();
         $this->assertSame(VoyageStatus::Completed, $voyage->status);
-        $this->assertNotNull($voyage->arrived_at);
+        $this->assertSame(
+            $clientArrivedAt->utc()->format('Y-m-d H:i:s'),
+            $voyage->arrived_at->utc()->format('Y-m-d H:i:s'),
+            'client='.$clientArrivedAt->utc()->format('c').' db='.$voyage->arrived_at->utc()->format('c'),
+        );
     }
 
     public function test_put_passenger_for_program_manager(): void

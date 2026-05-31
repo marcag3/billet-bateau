@@ -125,6 +125,7 @@ export function useControlPanelVoyageOps() {
 
                 voyagesCol.update(voyageId, (draft) => {
                     draft.status = 'underway';
+                    draft.started_at = new Date();
                 });
 
                 void powersync.refreshOutboxSnapshot();
@@ -145,6 +146,7 @@ export function useControlPanelVoyageOps() {
                 }
                 col.update(voyageId, (draft) => {
                     draft.status = 'completed';
+                    draft.arrived_at = new Date();
                 });
                 void powersync.refreshOutboxSnapshot();
             },

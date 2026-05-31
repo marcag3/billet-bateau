@@ -29,7 +29,6 @@ final class MarkVoyageArrivedAction
         }
 
         $voyage->status = VoyageStatus::Completed;
-        $voyage->arrived_at ??= now();
         $voyage->save();
 
         return $voyage->fresh() ?? $voyage;

@@ -1,6 +1,7 @@
 import { createAppPowerSyncCollection } from './collection-defaults';
 import { powerSyncCollectionOptions } from "@tanstack/powersync-db-collection";
 import { z } from "zod";
+import { powerSyncNullableIsoDate } from '../validation/zod-fields';
 import { appVoyagesPowerSyncTable } from "./app.powersync-schema";
 
 export const voyagesSchema = z.object({
@@ -9,21 +10,9 @@ export const voyagesSchema = z.object({
     user_id: z.string().nullable().default(null),
     trip_id: z.string().nullable().default(null),
     water_route_id: z.string().nullable().default(null),
-    scheduled_departure_at: z
-        .string()
-        .transform((v) => (v.trim() === "" ? null : new Date(v)))
-        .nullable()
-        .default(null),
-    started_at: z
-        .string()
-        .transform((v) => (v.trim() === "" ? null : new Date(v)))
-        .nullable()
-        .default(null),
-    arrived_at: z
-        .string()
-        .transform((v) => (v.trim() === "" ? null : new Date(v)))
-        .nullable()
-        .default(null),
+    scheduled_departure_at: powerSyncNullableIsoDate(),
+    started_at: powerSyncNullableIsoDate(),
+    arrived_at: powerSyncNullableIsoDate(),
     status: z.string().nullable().default(null),
 });
 

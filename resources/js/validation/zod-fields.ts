@@ -70,3 +70,27 @@ export function zTrimmedEmail(requiredMessage: string, emailMessage: string): z.
 export function zRequiredPassword(requiredMessage: string): z.ZodString {
     return z.string().min(1, requiredMessage);
 }
+
+/**
+ * ISO datetime stored as TEXT in PowerSync SQLite.
+ * Accepts sync input (string) and in-memory rows (Date) after deserialization.
+ */
+export function powerSyncNullableIsoDate() {
+    return z
+        .union([z.string(), z.date(), z.null()])
+        .transform((v): Date | null => {
+            if (v === null) {
+                return null;
+            }
+            if (v instanceof Date) {
+                return v;
+            }
+            const trimmed = v.trim();
+            if (trimmed === '') {
+                return null;
+            }
+            return new Date(trimmed);
+        })
+        .nullable()
+        .default(null);
+}
