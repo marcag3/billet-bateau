@@ -16,8 +16,6 @@ services:
                 condition: service_healthy
             redis:
                 condition: service_healthy
-            gotenberg:
-                condition: service_started
             garage:
                 condition: service_healthy
         networks:
@@ -125,17 +123,6 @@ services:
                 - ping
             retries: 3
             timeout: 5s
-
-    gotenberg:
-        image: "gotenberg/gotenberg:8-chromium"
-        restart: unless-stopped
-        environment:
-            CHROMIUM_ALLOW_INSECURE_LOCALHOST: true
-            CHROMIUM_IGNORE_CERTIFICATE_ERRORS: true
-            CHROMIUM_DISABLE_WEB_SECURITY: true
-            CHROMIUM_AUTO_START: true
-        networks:
-            - app
 
     garage:
         image: "dxflrs/garage:v2.3.0"

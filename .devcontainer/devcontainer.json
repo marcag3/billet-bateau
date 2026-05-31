@@ -10,7 +10,6 @@
         "powersync",
         "garage",
         "mailpit",
-        "gotenberg",
         "laravel.test"
     ],
     "forwardPorts": [80, 5173, 5432, 6080, 8025],
