@@ -22,6 +22,7 @@ import {
     todayLocalDateYmd,
     type ControlPanelDayStats,
 } from '../utilities/control-panel-day-board';
+import { parseProgramBookingQuestions } from '../utilities/program-booking-questions';
 
 export type ControlPanelTripCardModel = ReturnType<typeof mapControlPanelTripCardRow>;
 
@@ -132,6 +133,14 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
         return { startYmd: '', endYmd: '' };
     });
 
+    const bookingQuestions = computed((): string[] => {
+        const row = (programRowsRaw.value ?? [])[0] as unknown as ProgramOutput | undefined;
+        if (row == null) {
+            return [];
+        }
+        return parseProgramBookingQuestions(row.booking_questions);
+    });
+
     const { data: tripDepartureRowsRaw } = useLiveQuery(
         (queryBuilder) => {
             const tripsCol = collections.trips.value;
@@ -197,6 +206,7 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
         dayStats,
         tripDateYmds,
         programDateBounds,
+        bookingQuestions,
         shiftSelectedDay,
         goToToday,
     };

@@ -164,6 +164,7 @@ import {
     normalizeAddressRowFields,
 } from "../utilities/program-helpers";
 import { mediaObjectPublicUrl } from "../utilities/media-url";
+import { parseProgramBookingQuestions } from "../utilities/program-booking-questions";
 import { presignUpload } from "../actions/App/Http/Controllers/Api/PresignUploadController";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
@@ -336,23 +337,6 @@ type ProgramDraftPatch = {
     postal_code: string | null;
     country: string | null;
 };
-
-function parseProgramBookingQuestions(raw: unknown): string[] {
-    if (typeof raw !== "string" || raw.trim().length === 0) {
-        return [];
-    }
-    try {
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
-        return parsed
-            .map((question) => (typeof question === "string" ? question.trim() : ""))
-            .filter((question) => question.length > 0);
-    } catch {
-        return [];
-    }
-}
 
 function parseBookingQuestionsInput(raw: string[]): string[] {
     return Array.from(

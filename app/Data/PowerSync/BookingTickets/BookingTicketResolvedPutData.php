@@ -34,7 +34,7 @@ final class BookingTicketResolvedPutData extends Data
             'ticket_type_id' => ['required', 'ulid', 'exists:ticket_types,id'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255'],
-            'country' => ['required', 'string', 'max:255'],
+            'country' => ['present', 'string', 'max:255'],
             'custom_fields' => ['present', 'array'],
             'waiver_confirmation_id' => ['nullable', 'ulid'],
         ];

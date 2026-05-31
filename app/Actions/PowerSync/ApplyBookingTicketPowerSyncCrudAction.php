@@ -11,6 +11,7 @@ use App\Models\Booking;
 use App\Models\BookingTicket;
 use App\Models\Program;
 use App\Models\TicketType;
+use App\Models\Trip;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
 use Lorisleiva\Actions\Concerns\AsAction;
@@ -97,6 +98,10 @@ final class ApplyBookingTicketPowerSyncCrudAction
                 'data.ticket_type_id' => 'Ticket type must belong to the booking program.',
             ]);
         }
+
+        $program = Program::query()->whereKey($booking->program_id)->first();
+        $this->assertCustomQuestionAnswers($program, $resolved->custom_fields);
+        $this->assertTripHasCapacity($booking, $id);
 
         BookingTicket::query()->updateOrCreate(
             ['id' => $id],
@@ -188,7 +193,7 @@ final class ApplyBookingTicketPowerSyncCrudAction
         }
 
         if (! ($dto->country instanceof Optional)) {
-            if ($dto->country === null || $dto->country === '') {
+            if ($dto->country === null) {
                 throw ValidationException::withMessages([
                     'data.country' => 'Country is required.',
                 ]);
@@ -213,6 +218,67 @@ final class ApplyBookingTicketPowerSyncCrudAction
 
         if ($program === null || ! $program->userCanManage($userId)) {
             throw new AuthorizationException;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $customFields
+     */
+    private function assertCustomQuestionAnswers(?Program $program, array $customFields): void
+    {
+        if ($program === null) {
+            return;
+        }
+
+        $configuredQuestions = collect($program->booking_questions ?? [])
+            ->map(static fn ($question): string => trim((string) $question))
+            ->filter(static fn (string $question): bool => $question !== '')
+            ->values()
+            ->all();
+
+        foreach ($configuredQuestions as $question) {
+            $answer = trim((string) ($customFields[$question] ?? ''));
+            if ($answer === '') {
+                throw ValidationException::withMessages([
+                    'data.custom_fields' => __('Answers are required for all configured booking questions.'),
+                ]);
+            }
+        }
+    }
+
+    private function assertTripHasCapacity(Booking $booking, string $excludingTicketId): void
+    {
+        $tripId = $booking->trip_id;
+        if ($tripId === null) {
+            return;
+        }
+
+        $trip = Trip::query()->whereKey($tripId)->with('product')->first();
+
+        if ($trip === null) {
+            throw ValidationException::withMessages([
+                'data.booking_id' => __('The selected trip is invalid.'),
+            ]);
+        }
+
+        $product = $trip->product;
+        if ($product === null) {
+            throw ValidationException::withMessages([
+                'data.booking_id' => __('The selected trip is not available for booking.'),
+            ]);
+        }
+
+        $usedSeats = BookingTicket::query()
+            ->whereHas('booking', static function ($query) use ($tripId): void {
+                $query->where('trip_id', $tripId);
+            })
+            ->whereKeyNot($excludingTicketId)
+            ->count();
+
+        if ($usedSeats + 1 > (int) $product->capacity) {
+            throw ValidationException::withMessages([
+                'data' => __('This trip does not have enough remaining capacity.'),
+            ]);
         }
     }
 

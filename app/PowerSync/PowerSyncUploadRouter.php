@@ -4,6 +4,7 @@ namespace App\PowerSync;
 
 use App\Actions\PowerSync\ApplyBoatPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyBoatTypePowerSyncCrudAction;
+use App\Actions\PowerSync\ApplyBookingPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyBookingTicketPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyPassengerPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyProductPowerSyncCrudAction;
@@ -34,6 +35,7 @@ final class PowerSyncUploadRouter
             PowerSyncCrudType::TemplateDaySlots => ApplyTemplateDaySlotPowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::TemplateDayDates => ApplyTemplateDayDatePowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::TicketTypes => ApplyTicketTypePowerSyncCrudAction::run($entry, $userId),
+            PowerSyncCrudType::Bookings => ApplyBookingPowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::BookingTickets => ApplyBookingTicketPowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::Voyages => ApplyVoyagePowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::Passengers => ApplyPassengerPowerSyncCrudAction::run($entry, $userId),

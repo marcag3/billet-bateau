@@ -27,6 +27,8 @@ enum PowerSyncCrudType: string
 
     case TicketTypes = 'ticket_types';
 
+    case Bookings = 'bookings';
+
     case BookingTickets = 'booking_tickets';
 
     case Voyages = 'voyages';
