@@ -40,7 +40,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 ## PowerSync Data Flow
 
-Two sync streams in `docker/powersync/sync-config.yaml`:
+Two sync streams in `deploy/config/powersync/sync-config.yaml`:
 
 - **`user_scope`** (auto_subscribe: true) — user's programs. Always subscribed.
 - **`program_scope`** — program-scoped data (template days, boats, trips, etc.). Requires a `program_id`.
@@ -53,7 +53,9 @@ Two sync streams in `docker/powersync/sync-config.yaml`:
 
 | Concern                      | File                                                     |
 | ---------------------------- | -------------------------------------------------------- |
-| Sync stream queries          | `docker/powersync/sync-config.yaml`                      |
+| Dev compose                  | `compose.yaml` (repo root)                               |
+| Prod compose                 | `deploy/compose.yaml`                                    |
+| Sync stream queries          | `deploy/config/powersync/sync-config.yaml`               |
 | Subscription management      | `resources/js/powersync/app-powersync.runtime.ts`        |
 | Router guard (sets program)  | `resources/js/router/index.ts`                           |
 | PowerSync connector (upload) | `resources/js/services/powersync.connector.ts`           |

@@ -106,7 +106,7 @@ WORKDIR /var/www/html
 
 ENV S6_CMD_WAIT_FOR_SERVICES=1
 
-COPY --chmod=755 ./.docker/entrypoint.d/ /etc/entrypoint.d/
+COPY --chmod=755 ./deploy/entrypoint.d/ /etc/entrypoint.d/
 COPY --chown=www-data:www-data . .
 COPY --from=composer_deps /var/www/html/vendor/ ./vendor
 COPY --from=frontend_assets /var/www/html/public/build ./public/build

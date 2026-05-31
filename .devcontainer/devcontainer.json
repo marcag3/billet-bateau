@@ -1,6 +1,6 @@
 {
     "name": "Billet Bateau",
-    "dockerComposeFile": ["../compose.yaml", "../compose.dev.yaml"],
+    "dockerComposeFile": "../compose.yaml",
     "service": "laravel.test",
     "workspaceFolder": "/var/www/html",
     "remoteUser": "sail",

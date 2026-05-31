@@ -69,7 +69,7 @@ Checkboxes mirror the working roadmap; high-level domain notes stay in sections 
 
 ### PowerSync and admin client
 
-- **Synced today** (program scope in `docker/powersync/sync-config.yaml`): programs (user scope list), `boat_types`, `media`, `boat_program`, `boats`, `trips`, `water_routes`, `template_days` / `template_day_slots` / `template_day_dates`, `ticket_types`, `bookings` (subset: id, program_id, trip_id, contact fields), `booking_tickets` (joined through `bookings`)
+- **Synced today** (program scope in `deploy/config/powersync/sync-config.yaml`): programs (user scope list), `boat_types`, `media`, `boat_program`, `boats`, `trips`, `water_routes`, `template_days` / `template_day_slots` / `template_day_dates`, `ticket_types`, `bookings` (subset: id, program_id, trip_id, contact fields), `booking_tickets` (joined through `bookings`)
 - **Uplink** for those tables via `POST /api/powersync/upload` (`PowerSyncUploadRouter`) — **excluding** parent `bookings` (headers) for now
 - Sync / uplink for `**bookings`** writes, `**voyages**`, `**guides**` (if edited offline), `**check_ins**`, `**passengers**`, operational pivots — required for field ops + check-in offline
 - Conflict rules (single-writer per voyage, queue retries, …) documented and enforced beyond best-effort FIFO batches

@@ -1,6 +1,6 @@
 import type { SyncStatus } from "@powersync/common";
 
-/** Matches `user_scope.priority` in `docker/powersync/sync-config.yaml`. */
+/** Matches `user_scope.priority` in `deploy/config/powersync/sync-config.yaml`. */
 const USER_SCOPE_SYNC_PRIORITY = 1;
 
 /**
