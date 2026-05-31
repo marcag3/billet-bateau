@@ -87,13 +87,16 @@ RUN composer install \
     --no-scripts \
     --prefer-dist
 
-FROM node:24-alpine AS frontend_assets
+FROM node:24-bookworm-slim AS frontend_assets
 
 WORKDIR /var/www/html
 
-COPY package.json package-lock.json vite.config.js ./
-COPY resources/frontend/ resources/frontend/
-COPY --from=composer_deps /var/www/html/vendor/ vendor/
+COPY package.json package-lock.json vite.config.ts ./
+COPY resources/js/ resources/js/
+COPY resources/css/ resources/css/
+COPY public/ public/
+
+ENV DISABLE_WAYFINDER=true
 
 RUN npm ci && npm run build
 
