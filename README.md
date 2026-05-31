@@ -1,6 +1,10 @@
 Local-first pwa based on tanstack-db + powersync. Using quasar.dev components and laravel backend.
 Optimistic update.
 
+## Deployment
+
+Production is deployed with Docker Compose under `deploy/` (`deploy/compose.yaml`, `deploy/.env.example`). Schema changes use **new** Laravel migrations (`php artisan make:migration`); do not edit migrations that have already run in production.
+
 ## Program admin contexts (edit, control, checkin)
 
 After a program is selected, staff work is split into **three contexts**. Each context is a separate route subtree under `/programs/:programId/` with its own **context layout** component in `resources/js/layouts/` (`AppProgramEditContextLayout.vue`, `AppProgramControlContextLayout.vue`, `AppProgramCheckinContextLayout.vue`). Those wrappers own **defaults** for shell behavior in that area—navigation grouping, header mode, program-switch rules—so `AppLayout.vue` stays a thin shell and child routes inherit context-level intent instead of repeating the same route meta everywhere.

@@ -32,6 +32,12 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - `laravel-best-practices` — Apply this skill whenever writing, reviewing, or refactoring Laravel PHP code. This includes creating or modifying controllers, models, migrations, form requests, policies, jobs, scheduled commands, service classes, and Eloquent queries. Triggers for N+1 and query performance issues, caching strategies, authorization and security patterns, validation, error handling, queue and job configuration, route definitions, and architectural decisions. Also use for Laravel code reviews and refactoring existing Laravel code to follow best practices. Covers any task involving Laravel backend PHP code patterns.
 
+## Deployment
+
+Production runs via `deploy/compose.yaml` (see `deploy/.env.example` for server setup). The app is **deployed** — treat the production database as live.
+
+- **Schema changes:** use `php artisan make:migration` and add a new migration. Never edit migrations that have already run in production.
+
 ## Conventions
 
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
@@ -161,4 +167,5 @@ Two sync streams in `deploy/config/powersync/sync-config.yaml`:
 </laravel-boost-guidelines>
 
 # Frontend design
+
 we use quasar components as atomic components. Minimize added style and relies on default quasar styling. Create atomic design components that could be reused across pages.
