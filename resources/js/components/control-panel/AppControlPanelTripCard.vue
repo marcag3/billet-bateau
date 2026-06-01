@@ -25,6 +25,11 @@
                         <q-item-section v-if="item.kind !== 'empty'">
                             <div class="row items-center no-wrap w-full">
                                 <div class="col text-body1">{{ item.name }}</div>
+                                <div v-if="item.kind === 'pendingBooking' && item.canCheckIn" class="col-auto">
+                                    <q-btn flat dense round color="primary" icon="how_to_reg"
+                                        :aria-label="t('programsControl.checkIn')"
+                                        @click="emit('check-in-booking', item.bookingId)" />
+                                </div>
                                 <div v-if="canRemoveManifestItem(item)" class="col-auto">
                                     <q-btn flat dense round color="negative" icon="person_remove"
                                         :aria-label="removeManifestAriaLabel(item)"
@@ -80,33 +85,15 @@ import { useQuasar } from 'quasar';
 import { useConfirmDialog } from '../../composables/useConfirmDialog';
 import type { ControlPanelTripCardModel } from '../../composables/useControlPanelDayBoard';
 import {
+    buildManifestSlots,
+    type ManifestOccupiedSlot,
+    type ManifestSlot,
+} from '../../utilities/control-panel-manifest';
+import {
     controlPanelTripDisplayStatusColor,
     resolveControlPanelTripDisplayStatus,
     type ControlPanelTripDisplayStatus,
 } from '../../utilities/control-panel-day-board';
-
-type ManifestPassengerSlot = {
-    kind: 'passenger';
-    key: string;
-    name: string;
-    passengerId: string;
-};
-
-type ManifestBookedSlot = {
-    kind: 'booked';
-    key: string;
-    name: string;
-    ticketId: string;
-    bookingId: string;
-};
-
-type ManifestEmptySlot = {
-    kind: 'empty';
-    key: string;
-};
-
-type ManifestOccupiedSlot = ManifestPassengerSlot | ManifestBookedSlot;
-type ManifestSlot = ManifestOccupiedSlot | ManifestEmptySlot;
 
 const props = defineProps<{
     card: ControlPanelTripCardModel;
@@ -119,8 +106,8 @@ const emit = defineEmits<{
     'remove-passenger': [passengerId: string];
     'open-walk-in': [];
     'remove-booked-ticket': [ticketId: string, bookingId: string];
+    'check-in-booking': [bookingId: string];
 }>();
-
 const { t, locale } = useI18n();
 const $q = useQuasar();
 const { confirm } = useConfirmDialog();
@@ -148,7 +135,12 @@ const departureTimeLabel = computed((): string => {
 });
 
 const passengerCount = computed((): number =>
-    props.card.voyage != null ? props.card.passengers.length : props.card.bookedCount,
+    props.card.voyage != null
+        ? props.card.passengers.length + props.card.pendingBookingGroups.reduce(
+              (sum, group) => sum + group.ticketCount,
+              0,
+          )
+        : props.card.bookedCount,
 );
 
 const tripCapacity = computed((): number | null => {
@@ -197,7 +189,7 @@ const canManagePassengers = computed(
 const canManageBookings = computed(() => props.card.voyage == null);
 
 const manifestSlots = computed((): ManifestSlot[] =>
-    buildManifestSlots(props.card, tripCapacity.value ?? 0),
+    buildManifestSlots(props.card, tripCapacity.value ?? 0, manifestReadOnly.value),
 );
 
 const showDepart = computed(
@@ -209,54 +201,19 @@ const showDepart = computed(
 
 const showArrive = computed(() => voyageStatus.value === 'underway');
 
-function slotDisplayName(raw: unknown): string {
-    const trimmed = String(raw ?? '').trim();
-    return trimmed.length > 0 ? trimmed : '—';
-}
-
-function buildManifestSlots(card: ControlPanelTripCardModel, capacity: number): ManifestSlot[] {
-    const slots: ManifestSlot[] = [];
-
-    if (card.voyage != null) {
-        for (const passenger of card.passengers) {
-            slots.push({
-                kind: 'passenger',
-                key: `passenger-${passenger.id}`,
-                name: slotDisplayName(passenger.name),
-                passengerId: String(passenger.id),
-            });
-        }
-    } else {
-        for (const ticket of card.bookingTickets) {
-            slots.push({
-                kind: 'booked',
-                key: `booked-${ticket.id}`,
-                name: slotDisplayName(ticket.name),
-                ticketId: String(ticket.id),
-                bookingId: String(ticket.booking_id),
-            });
-        }
-    }
-
-    const emptyCount = capacity > 0 ? Math.max(0, capacity - slots.length) : 0;
-    for (let index = 0; index < emptyCount; index += 1) {
-        slots.push({ kind: 'empty', key: `empty-${index}` });
-    }
-
-    return slots;
-}
-
 function canRemoveManifestItem(item: ManifestOccupiedSlot): boolean {
     return (
         (item.kind === 'passenger' && canManagePassengers.value) ||
-        (item.kind === 'booked' && canManageBookings.value)
+        (item.kind === 'booked' && canManageBookings.value) ||
+        (item.kind === 'pendingBooking' && canManageBookings.value)
     );
 }
 
 function removeManifestAriaLabel(item: ManifestOccupiedSlot): string {
-    return item.kind === 'passenger'
-        ? t('programsControl.removePassenger')
-        : t('programsControl.removeWalkIn');
+    if (item.kind === 'passenger') {
+        return t('programsControl.removePassenger');
+    }
+    return t('programsControl.removeWalkIn');
 }
 
 function openAddPassengerDialog(): void {
@@ -295,10 +252,33 @@ function onRemoveManifestItem(item: ManifestOccupiedSlot): void {
         return;
     }
 
-    confirm({
-        title: t('programsControl.removeWalkIn'),
-        message: t('programsControl.removeWalkInConfirm', { name: item.name }),
-        onOk: () => emit('remove-booked-ticket', item.ticketId, item.bookingId),
-    });
+    if (item.kind === 'booked') {
+        confirm({
+            title: t('programsControl.removeWalkIn'),
+            message: t('programsControl.removeWalkInConfirm', { name: item.name }),
+            onOk: () => emit('remove-booked-ticket', item.ticketId, item.bookingId),
+        });
+        return;
+    }
+
+    if (item.kind === 'pendingBooking') {
+        const group = props.card.pendingBookingGroups.find(
+            (g) => g.bookingId === item.bookingId,
+        );
+        const firstTicket = group?.tickets[0];
+        if (firstTicket == null) {
+            return;
+        }
+        confirm({
+            title: t('programsControl.removeWalkIn'),
+            message: t('programsControl.removeWalkInConfirm', { name: item.name }),
+            onOk: () =>
+                emit(
+                    'remove-booked-ticket',
+                    firstTicket.id,
+                    item.bookingId,
+                ),
+        });
+    }
 }
 </script>

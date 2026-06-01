@@ -553,6 +553,9 @@ export default {
         ticketType: "Ticket type",
         ticketTypeRequired: "Select a ticket type.",
         capacityFull: "This trip is at capacity.",
+        checkIn: "Check in",
+        checkInSuccess: "Guest checked in.",
+        checkInAlready: "This guest is already checked in.",
         errorGeneric: "Something went wrong. Please try again.",
     },
     programsCheckin: {

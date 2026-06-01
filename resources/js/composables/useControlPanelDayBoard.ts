@@ -75,6 +75,7 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
         booking_tickets: powersync.collections.booking_tickets,
         voyage_boat: powersync.collections.voyage_boat,
         voyage_guide: powersync.collections.voyage_guide,
+        check_ins: powersync.collections.check_ins,
         programs: powersync.collections.programs,
     };
 
@@ -89,6 +90,7 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
         collections.booking_tickets,
         collections.voyage_boat,
         collections.voyage_guide,
+        collections.check_ins,
         collections.programs,
         programId,
         activeProgramIdRef,
@@ -107,6 +109,7 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
             collections.booking_tickets.value,
             collections.voyage_boat.value,
             collections.voyage_guide.value,
+            collections.check_ins.value,
         ].map((col) => col?.size ?? 0);
         return `${activeProgramIdRef.value}:${sizes.join(',')}`;
     });
@@ -166,6 +169,7 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
                 booking_tickets: collections.booking_tickets.value,
                 voyage_boat: collections.voyage_boat.value,
                 voyage_guide: collections.voyage_guide.value,
+                check_ins: collections.check_ins.value,
             };
             if (!areControlPanelQueryCollectionsReady(cols, programId.value)) {
                 return undefined;

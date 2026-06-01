@@ -8,6 +8,7 @@ import type { createBookingsCollection } from './bookings.collection';
 import type { createBookingTicketsCollection } from './booking-tickets.collection';
 import type { createVoyageBoatCollection } from './voyage-boat.collection';
 import type { createVoyageGuideCollection } from './voyage-guide.collection';
+import type { createCheckInsCollection } from './check-ins.collection';
 
 export type ControlPanelQueryCollections = {
     trips: ReturnType<typeof createTripsCollection>;
@@ -20,4 +21,5 @@ export type ControlPanelQueryCollections = {
     booking_tickets: ReturnType<typeof createBookingTicketsCollection>;
     voyage_boat: ReturnType<typeof createVoyageBoatCollection>;
     voyage_guide: ReturnType<typeof createVoyageGuideCollection>;
+    check_ins: ReturnType<typeof createCheckInsCollection>;
 };

@@ -45,6 +45,7 @@ const allCollections = {
     booking_tickets: mockCollection('booking_tickets'),
     voyage_boat: mockCollection('voyage_boat'),
     voyage_guide: mockCollection('voyage_guide'),
+    check_ins: mockCollection('check_ins'),
 };
 
 describe('control-panel-queries', () => {
@@ -303,5 +304,59 @@ describe('control-panel-queries', () => {
             { id: 'bt-2', name: 'bob@example.com', booking_id: 'b-2' },
         ]);
         expect(mapped.bookedTicketNames).toEqual(['Ada', 'bob@example.com']);
+    });
+
+    it('mapControlPanelTripCardRow derives checkedInBookingIds and pending groups', () => {
+        const mapped = mapControlPanelTripCardRow({
+            id: 'trip-1',
+            program_id: 'prog-1',
+            voyage: {
+                id: 'v1',
+                program_id: 'prog-1',
+                user_id: null,
+                trip_id: 'trip-1',
+                water_route_id: 'wr-1',
+                scheduled_departure_at: null,
+                started_at: null,
+                arrived_at: null,
+                status: 'ready',
+                passengers: [],
+                checkIns: [{ id: 'ci-1', booking_id: 'b1', voyage_id: 'v1', notes: null }],
+                voyageBoatPivotIds: [],
+                voyageGuidePivotIds: [],
+            },
+            bookingTickets: [
+                {
+                    id: 'bt-1',
+                    booking_id: 'b1',
+                    ticket_type_id: null,
+                    name: 'Ada',
+                    email: null,
+                    country: null,
+                    custom_fields: null,
+                    waiver_confirmation_id: null,
+                },
+                {
+                    id: 'bt-2',
+                    booking_id: 'b2',
+                    ticket_type_id: null,
+                    name: 'Bob',
+                    email: null,
+                    country: null,
+                    custom_fields: null,
+                    waiver_confirmation_id: null,
+                },
+            ],
+        } as never);
+
+        expect(mapped.checkedInBookingIds).toEqual(['b1']);
+        expect(mapped.pendingBookingGroups).toEqual([
+            {
+                bookingId: 'b2',
+                tickets: [{ id: 'bt-2', name: 'Bob', booking_id: 'b2' }],
+                displayName: 'Bob',
+                ticketCount: 1,
+            },
+        ]);
     });
 });

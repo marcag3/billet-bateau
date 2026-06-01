@@ -573,6 +573,9 @@ export default {
         ticketType: "Type de billet",
         ticketTypeRequired: "Sélectionnez un type de billet.",
         capacityFull: "Cette sortie est complète.",
+        checkIn: "Enregistrer",
+        checkInSuccess: "Client enregistré.",
+        checkInAlready: "Ce client est déjà enregistré.",
         errorGeneric: "Une erreur est survenue. Veuillez réessayer.",
     },
     programsCheckin: {

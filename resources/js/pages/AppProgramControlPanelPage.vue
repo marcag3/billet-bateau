@@ -17,7 +17,8 @@
             <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" @open-depart="openDepartModal(item)"
                 @arrive="confirmArrive(item)" @add-passenger="(name) => onAddPassenger(item, name)"
                 @remove-passenger="(id) => removePassenger(id)" @open-walk-in="openWalkInModal(item)"
-                @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)" />
+                @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)"
+                @check-in-booking="(bookingId) => onCheckInBooking(item, bookingId)" />
         </q-virtual-scroll>
 
         <AppControlPanelWalkInBookingDialog v-model:open="walkInDialogOpen" :ticket-type-options="ticketTypeOptions"
@@ -44,6 +45,7 @@ import {
 } from "../composables/useControlPanelDayBoard";
 import { useControlPanelVoyageOps } from "../composables/useControlPanelVoyageOps";
 import { useControlPanelWalkInBooking } from "../composables/useControlPanelWalkInBooking";
+import { useControlPanelCheckIn } from "../composables/useControlPanelCheckIn";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useControlPanelTripLaneLayout } from "../composables/useControlPanelTripLaneLayout";
 import { useControlPanelTripLanePan } from "../composables/useControlPanelTripLanePan";
@@ -84,6 +86,7 @@ const {
 const { startDeparture, markArrival, addPassenger, removePassenger } =
     useControlPanelVoyageOps();
 const { addWalkInBooking, removeWalkInBookingTicket } = useControlPanelWalkInBooking();
+const { checkInBooking } = useControlPanelCheckIn();
 
 const boatsCollection = powersync.collections.boats;
 const guidesCollection = powersync.collections.guides;
@@ -187,10 +190,8 @@ async function onConfirmDepart(payload: {
             existingVoyage: card.voyage,
             boatIds: payload.boatIds,
             guideIds: payload.guideIds,
-            bookingTicketsToSeed: card.bookingTickets,
             existingVoyageBoatPivotIds: card.voyageBoatPivotIds,
             existingVoyageGuidePivotIds: card.voyageGuidePivotIds,
-            existingPassengerCount: card.passengers.length,
         });
         departModalOpen.value = false;
     } finally {
@@ -249,5 +250,13 @@ function onRemoveBookedTicket(
         (ticket) => String(ticket.booking_id) === bookingId,
     ).length;
     void removeWalkInBookingTicket(ticketId, bookingId, ticketsForBookingCount);
+}
+
+function onCheckInBooking(card: ControlPanelTripCardModel, bookingId: string): void {
+    void checkInBooking({
+        card,
+        bookingId,
+        tickets: card.bookingTickets,
+    });
 }
 </script>

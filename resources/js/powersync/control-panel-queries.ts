@@ -22,6 +22,11 @@ import { resolveControlPanelTripDisplayStatus } from '../utilities/control-panel
 import type { VoyageOutput } from './voyages.collection';
 import type { PassengerOutput } from './passengers.collection';
 import type { BookingTicketOutput } from './booking-tickets.collection';
+import type { CheckInOutput } from './check-ins.collection';
+import {
+    derivePendingBookingGroups,
+    type ControlPanelPendingBookingGroup,
+} from '../utilities/control-panel-manifest';
 
 export type { ControlPanelQueryCollections } from './control-panel-collection-types';
 
@@ -37,6 +42,7 @@ type VoyageGuidePivotRow = { id: string; guide_id: string | null };
 
 type VoyageIncludeRow = VoyageOutput & {
     passengers: PassengerOutput[];
+    checkIns: CheckInOutput[];
     voyageBoatPivotIds: VoyageBoatPivotRow[];
     voyageGuidePivotIds: VoyageGuidePivotRow[];
 };
@@ -262,6 +268,17 @@ export function buildControlPanelTripCardsQuery(
                                     notes: passenger.notes,
                                 })),
                         ),
+                        checkIns: toArray(
+                            qb
+                                .from({ checkIn: cols.check_ins })
+                                .where(({ checkIn }) => eq(checkIn.voyage_id, voyage.id))
+                                .select(({ checkIn }) => ({
+                                    id: checkIn.id,
+                                    booking_id: checkIn.booking_id,
+                                    voyage_id: checkIn.voyage_id,
+                                    notes: checkIn.notes,
+                                })),
+                        ),
                         voyageBoatPivotIds: toArray(
                             qb
                                 .from({ voyageBoat: cols.voyage_boat })
@@ -396,6 +413,7 @@ function extractVoyageInclude(voyage: ControlPanelTripCardQueryRow['voyage']): V
 function stripVoyageInclude(voyageInclude: VoyageIncludeRow): VoyageOutput {
     const {
         passengers: _passengers,
+        checkIns: _checkIns,
         voyageBoatPivotIds: _voyageBoatPivotIds,
         voyageGuidePivotIds: _voyageGuidePivotIds,
         ...voyage
@@ -412,6 +430,8 @@ export function mapControlPanelTripCardRow(
     bookedTicketNames: string[];
     bookedCount: number;
     bookingTickets: { id: string; name: string; booking_id: string }[];
+    checkedInBookingIds: string[];
+    pendingBookingGroups: ControlPanelPendingBookingGroup[];
     voyageBoatPivotIds: string[];
     voyageGuidePivotIds: string[];
     initialBoatIds: string[];
@@ -431,8 +451,24 @@ export function mapControlPanelTripCardRow(
         ? stripVoyageInclude(voyageInclude)
         : null;
     const passengers = asArray(voyageInclude?.passengers);
+    const checkIns = asArray(voyageInclude?.checkIns);
     const voyageBoatPivots = asArray(voyageInclude?.voyageBoatPivotIds);
     const voyageGuidePivots = asArray(voyageInclude?.voyageGuidePivotIds);
+
+    const bookingTickets = tickets.map((bt) => ({
+        id: String(bt.id),
+        name: bookingTicketDisplayName(bt),
+        booking_id: String(bt.booking_id ?? ''),
+    }));
+
+    const checkedInBookingIds = checkIns
+        .map((checkIn) => String(checkIn.booking_id ?? '').trim())
+        .filter((id) => id.length > 0);
+
+    const pendingBookingGroups = derivePendingBookingGroups(
+        bookingTickets,
+        checkedInBookingIds,
+    );
 
     return {
         trip: row,
@@ -440,11 +476,9 @@ export function mapControlPanelTripCardRow(
         passengers,
         bookedTicketNames: names,
         bookedCount: tickets.length,
-        bookingTickets: tickets.map((bt) => ({
-            id: String(bt.id),
-            name: bookingTicketDisplayName(bt),
-            booking_id: String(bt.booking_id ?? ''),
-        })),
+        bookingTickets,
+        checkedInBookingIds,
+        pendingBookingGroups,
         voyageBoatPivotIds: voyageBoatPivots.map((p) => String(p.id)),
         voyageGuidePivotIds: voyageGuidePivots.map((p) => String(p.id)),
         initialBoatIds: voyageBoatPivots
@@ -505,7 +539,8 @@ export function areControlPanelQueryCollectionsReady(
         isLiveQueryCollectionPresent(cols.bookings) &&
         isLiveQueryCollectionPresent(cols.booking_tickets) &&
         isLiveQueryCollectionPresent(cols.voyage_boat) &&
-        isLiveQueryCollectionPresent(cols.voyage_guide)
+        isLiveQueryCollectionPresent(cols.voyage_guide) &&
+        isLiveQueryCollectionPresent(cols.check_ins)
     );
 }
 

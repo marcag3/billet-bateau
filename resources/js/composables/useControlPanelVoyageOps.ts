@@ -15,19 +15,16 @@ export function useControlPanelVoyageOps() {
         existingVoyage: VoyageOutput | null;
         boatIds: string[];
         guideIds: string[];
-        bookingTicketsToSeed: { id: string; name: string; booking_id: string }[];
         existingVoyageBoatPivotIds: string[];
         existingVoyageGuidePivotIds: string[];
-        existingPassengerCount: number;
     }): Promise<void> {
         await runWithNotify(
             async () => {
                 const voyagesCol = powersync.collections.voyages.value;
                 const voyageBoatCol = powersync.collections.voyage_boat.value;
                 const voyageGuideCol = powersync.collections.voyage_guide.value;
-                const passengersCol = powersync.collections.passengers.value;
 
-                if (!voyagesCol || !voyageBoatCol || !voyageGuideCol || !passengersCol) {
+                if (!voyagesCol || !voyageBoatCol || !voyageGuideCol) {
                     throw new Error('Collections not ready.');
                 }
 
@@ -102,25 +99,6 @@ export function useControlPanelVoyageOps() {
                             guide_id: guideId,
                         })
                         .isPersisted.promise;
-                }
-
-                if (input.existingPassengerCount === 0) {
-                    for (const ticket of input.bookingTicketsToSeed) {
-                        const name = ticket.name.trim();
-                        if (name.length === 0) {
-                            continue;
-                        }
-                        await passengersCol
-                            .insert({
-                                id: ulid(),
-                                voyage_id: voyageId,
-                                name,
-                                booking_id: ticket.booking_id,
-                                check_in_id: null,
-                                notes: null,
-                            })
-                            .isPersisted.promise;
-                    }
                 }
 
                 voyagesCol.update(voyageId, (draft) => {
