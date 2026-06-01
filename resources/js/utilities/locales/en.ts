@@ -512,6 +512,9 @@ export default {
         prevDay: "Previous day",
         nextDay: "Next day",
         today: "Today",
+        showFinishedTrips: "Show completed trips",
+        allTripsFinishedHidden:
+            "All trips for this day are completed. Turn on “Show completed trips” to view them.",
         emptyDay: "No trips scheduled for this day.",
         depart: "Depart",
         arrive: "Arrival",

@@ -532,6 +532,9 @@ export default {
         prevDay: "Jour précédent",
         nextDay: "Jour suivant",
         today: "Aujourd'hui",
+        showFinishedTrips: "Afficher les sorties terminées",
+        allTripsFinishedHidden:
+            "Toutes les sorties de ce jour sont terminées. Activez « Afficher les sorties terminées » pour les voir.",
         emptyDay: "Aucune sortie planifiée pour ce jour.",
         depart: "Départ",
         arrive: "Arrivée",

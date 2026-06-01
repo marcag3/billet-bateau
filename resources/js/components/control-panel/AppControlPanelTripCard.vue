@@ -1,6 +1,6 @@
 <template>
     <div class="relative snap-start shrink-0 h-full w-auto aspect-[5/12] overflow-hidden flex flex-col">
-        <q-card-section class="shrink-0 mt-6">
+        <div class="shrink-0 mt-10">
             <div class="text-center">
                 <div class="text-h6">{{ departureTimeLabel }}</div>
                 <div class="text-subtitle1">{{ productTitle }}</div>
@@ -9,7 +9,7 @@
                     {{ tripDisplayStatusLabel }}
                 </div>
             </div>
-        </q-card-section>
+        </div>
 
         <q-card-actions v-if="!manifestReadOnly" class="shrink-0 mx-22">
             <q-btn v-if="showDepart" class="col" color="primary" no-caps :label="t('programsControl.depart')"

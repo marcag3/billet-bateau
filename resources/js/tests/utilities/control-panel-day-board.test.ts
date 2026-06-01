@@ -7,6 +7,7 @@ import {
     controlPanelTripDisplayStatusColor,
     normalizeCalendarYmd,
     parseRouteDateYmdOrToday,
+    isControlPanelTripFinished,
     resolveControlPanelTripDisplayStatus,
     todayLocalDateYmd,
     voyageArrivedOnDateYmd,
@@ -171,6 +172,13 @@ describe('control-panel-day-board', () => {
         expect(controlPanelStatChipStyle('places')).toEqual({
             color: CONTROL_PANEL_STATUS_COLOR.places,
         });
+    });
+
+    it('isControlPanelTripFinished is true for completed or cancelled voyages', () => {
+        expect(isControlPanelTripFinished(null)).toBe(false);
+        expect(isControlPanelTripFinished({ status: 'underway' })).toBe(false);
+        expect(isControlPanelTripFinished({ status: 'completed' })).toBe(true);
+        expect(isControlPanelTripFinished({ status: 'cancelled' })).toBe(true);
     });
 
     it('resolveControlPanelTripDisplayStatus maps voyage lifecycle to display buckets', () => {

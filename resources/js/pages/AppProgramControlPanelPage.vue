@@ -2,16 +2,16 @@
     <q-page class="q-pa-md column min-h-0">
         <AppPageHeader :title="t('programsControl.title')" class="q-mb-sm" />
 
-        <AppControlPanelDayToolbar v-model:selected-date-ymd="selectedDateYmd" :stats="dayStats"
-            :trip-date-ymds="tripDateYmds" :program-start-date-ymd="programDateBounds.startYmd"
-            :program-end-date-ymd="programDateBounds.endYmd" @prev-day="shiftSelectedDay(-1)"
-            @next-day="shiftSelectedDay(1)" @go-today="goToToday" />
+        <AppControlPanelDayToolbar v-model:selected-date-ymd="selectedDateYmd"
+            v-model:show-finished-trips="showFinishedTrips" :stats="dayStats" :trip-date-ymds="tripDateYmds"
+            :program-start-date-ymd="programDateBounds.startYmd" :program-end-date-ymd="programDateBounds.endYmd"
+            @prev-day="shiftSelectedDay(-1)" @next-day="shiftSelectedDay(1)" @go-today="goToToday" />
 
-        <p v-if="tripCards.length === 0" class="text-body1 text-grey-7">
-            {{ t("programsControl.emptyDay") }}
+        <p v-if="visibleTripCards.length === 0" class="text-body1 text-grey-7">
+            {{ emptyDayMessage }}
         </p>
 
-        <q-virtual-scroll v-else ref="tripLaneRef" v-touch-pan.mouse.horizontal="onTripLanePan" :items="tripCards"
+        <q-virtual-scroll v-else ref="tripLaneRef" v-touch-pan.mouse.horizontal="onTripLanePan" :items="visibleTripCards"
             virtual-scroll-horizontal :virtual-scroll-item-size="tripCardItemSize" :style="tripLaneStyle"
             class="col w-full max-w-full min-h-0 snap-x snap-mandatory" v-slot="{ item }">
             <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" @open-depart="openDepartModal(item)"
@@ -59,6 +59,7 @@ import AppControlPanelStartVoyageModal from "../components/control-panel/AppCont
 import AppControlPanelWalkInBookingDialog from "../components/control-panel/AppControlPanelWalkInBookingDialog.vue";
 import type { ControlPanelSelectOption } from "../components/control-panel/AppControlPanelStartVoyageModal.vue";
 import type { WalkInBookingConfirmPayload } from "../components/control-panel/AppControlPanelWalkInBookingDialog.vue";
+import { isControlPanelTripFinished } from "../utilities/control-panel-day-board";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -84,6 +85,22 @@ const {
     shiftSelectedDay,
     goToToday,
 } = useControlPanelDayBoard(programId);
+
+const showFinishedTrips = ref(false);
+
+const visibleTripCards = computed(() => {
+    if (showFinishedTrips.value) {
+        return tripCards.value;
+    }
+    return tripCards.value.filter((card) => !isControlPanelTripFinished(card.voyage));
+});
+
+const emptyDayMessage = computed((): string => {
+    if (tripCards.value.length > 0 && visibleTripCards.value.length === 0) {
+        return t("programsControl.allTripsFinishedHidden");
+    }
+    return t("programsControl.emptyDay");
+});
 
 const { startDeparture, markArrival, removePassenger } = useControlPanelVoyageOps();
 const { addWalkInBooking, removeWalkInBookingTicket } = useControlPanelWalkInBooking();

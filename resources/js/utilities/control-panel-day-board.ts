@@ -72,6 +72,13 @@ export function controlPanelStatChipStyle(
     return { color };
 }
 
+export function isControlPanelTripFinished(
+    voyage: { status: string } | null,
+): boolean {
+    const displayStatus = resolveControlPanelTripDisplayStatus(voyage);
+    return displayStatus === 'returned' || displayStatus === 'cancelled';
+}
+
 export function resolveControlPanelTripDisplayStatus(
     voyage: { status: string } | null,
 ): ControlPanelTripDisplayStatus {

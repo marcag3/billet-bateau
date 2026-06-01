@@ -47,6 +47,14 @@
             </q-dialog>
         </div>
 
+        <div class="col-auto">
+            <q-toggle
+                v-model="showFinishedTrips"
+                dense
+                :label="t('programsControl.showFinishedTrips')"
+            />
+        </div>
+
         <q-space />
 
         <div class="col-auto row q-gutter-sm">
@@ -87,6 +95,7 @@ const props = defineProps<{
 }>();
 
 const selectedDateYmd = defineModel<string>('selectedDateYmd', { required: true });
+const showFinishedTrips = defineModel<boolean>('showFinishedTrips', { default: false });
 
 const emit = defineEmits<{
     'prev-day': [];
