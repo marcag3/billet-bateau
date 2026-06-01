@@ -12,58 +12,58 @@ Local-first **program operations + public booking** platform for seasonal boat a
 
 ### v1 launch decisions (locked 2026-05-31)
 
-| Topic | Decision |
-| ----- | -------- |
-| **Launch** | Next week; **staging** environment being installed now (`deploy/` + `staging` branch `config`) |
-| **Locales** | **French only** for v1 (UI + booking email) |
-| **Tenancy** | **Multi-program** — users see programs via `program_user`; no change needed for v1 |
-| **Payment** | **None** — reservations only |
+| Topic              | Decision                                                                                                                                              |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Launch**         | Next week; **staging** environment being installed now (`deploy/` + `staging` branch `config`)                                                        |
+| **Locales**        | **French only** for v1 (UI + booking email)                                                                                                           |
+| **Tenancy**        | **Multi-program** — users see programs via `program_user`; no change needed for v1                                                                    |
+| **Payment**        | **None** — reservations only                                                                                                                          |
 | **Admin contexts** | **Two for v1:** **Edit** (catalog/schedule) + **Control** (day ops). **No separate check-in context** — routes/layout may remain but are out of v1 UX |
-| **Check-in UX** | Lives in **Control** only: associate bookings to a _Départ_ via **QR scan** or **manual check-in** button |
-| **Guides** | **Required for v1** — admin CRUD + PowerSync uplink (sync down already exists) |
-| **`check_ins`** | **Required** — one row per booking per voyage; PowerSync sync + uplink; backs control-panel check-in |
-| **Staff roles** | **None** — any authenticated program member can do all admin ops |
-| **Voyage start** | **Manual only** — staff start a _Départ_ from the control board |
-| **Offline** | Control + edit must work offline for synced data via PowerSync |
+| **Check-in UX**    | Lives in **Control** only: associate bookings to a _Départ_ via **QR scan** or **manual check-in** button                                             |
+| **Guides**         | **Required for v1** — admin CRUD + PowerSync uplink (sync down already exists)                                                                        |
+| **`check_ins`**    | **Required** — one row per booking per voyage; PowerSync sync + uplink; backs control-panel check-in                                                  |
+| **Staff roles**    | **None** — any authenticated program member can do all admin ops                                                                                      |
+| **Voyage start**   | **Manual only** — staff start a _Départ_ from the control board                                                                                       |
+| **Offline**        | Control + edit must work offline for synced data via PowerSync                                                                                        |
 
 ### What “v1” means (technical)
 
-| Decision | Choice |
-| -------- | ------ |
+| Decision            | Choice                                                                         |
+| ------------------- | ------------------------------------------------------------------------------ |
 | Check-in data model | `check_ins` (booking ↔ voyage) + `passengers` (one row per person on manifest) |
-| Voyage lifecycle | Client → PowerSync upload (no REST `startVoyage` / `markArrived`) |
+| Voyage lifecycle    | Client → PowerSync upload (no REST `startVoyage` / `markArrived`)              |
 
 ### Feature matrix
 
-| Area | Status | Notes |
-| ---- | ------ | ----- |
-| **Public catalog** | Done | `GET /api/public/programs`, program detail by `slug` |
-| **Public booking (no payment)** | Done | Trip → tickets → contact; capacity, ticket min/max, dependency ratio, custom questions; confirmation email (FR) |
-| **Program edit context** | Done | Program, boats, **products** (catalog SKU: boat type + _parcours_ + media), ticket types, template days, trip calendar |
-| **_Parcours_ (water routes)** | Done | Leaflet polyline editor in product/water-route dialogs; PowerSync sync + uplink |
-| **PowerSync (sync + uplink)** | Mostly done | See [Synced data](#synced-data) — `check_ins` and guide **writes** not wired |
-| **Control context (ops + check-in)** | In progress | Day board, _Départ_, manifest, walk-ins — **missing:** QR check-in, manual check-in button, `check_ins` workflow |
-| **Check-in context (separate)** | **Dropped v1** | Do not ship; hide nav links if needed — all check-in in Control |
-| **Guides** | **Blocked for launch** | Synced read-only; need edit-context CRUD + uplink |
-| **`check_ins` + QR** | **Blocked for launch** | DB exists; not in PowerSync; no QR encode/scan on booking reference yet |
-| **HTTP voyage API** | Not in v1 | Voyage lifecycle via PowerSync upload |
-| **i18n** | Partial | Finish **French-only** pass on control + new check-in/guide screens |
-| **Payment / PWYC amounts** | Out of v1 | PWYC label only; no amount capture |
+| Area                                 | Status                 | Notes                                                                                                                  |
+| ------------------------------------ | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Public catalog**                   | Done                   | `GET /api/public/programs`, program detail by `slug`                                                                   |
+| **Public booking (no payment)**      | Done                   | Trip → tickets → contact; capacity, ticket min/max, dependency ratio, custom questions; confirmation email (FR)        |
+| **Program edit context**             | Done                   | Program, boats, **products** (catalog SKU: boat type + _parcours_ + media), ticket types, template days, trip calendar |
+| **_Parcours_ (water routes)**        | Done                   | Leaflet polyline editor in product/water-route dialogs; PowerSync sync + uplink                                        |
+| **PowerSync (sync + uplink)**        | Mostly done            | See [Synced data](#synced-data) — `check_ins` and guide **writes** not wired                                           |
+| **Control context (ops + check-in)** | In progress            | Day board, _Départ_, manifest, walk-ins — **missing:** QR check-in, manual check-in button, `check_ins` workflow       |
+| **Check-in context (separate)**      | **Dropped v1**         | Do not ship; hide nav links if needed — all check-in in Control                                                        |
+| **Guides**                           | **Blocked for launch** | Synced read-only; need edit-context CRUD + uplink                                                                      |
+| **`check_ins` + QR**                 | **Blocked for launch** | DB exists; not in PowerSync; no QR encode/scan on booking reference yet                                                |
+| **HTTP voyage API**                  | Not in v1              | Voyage lifecycle via PowerSync upload                                                                                  |
+| **i18n**                             | Partial                | Finish **French-only** pass on control + new check-in/guide screens                                                    |
+| **Payment / PWYC amounts**           | Out of v1              | PWYC label only; no amount capture                                                                                     |
 
 ### Sprint backlog (launch week)
 
 Priority order for **staging → production** next week:
 
-| # | Work item | Owner hint |
-| - | --------- | ---------- |
-| 1 | **Staging smoke** — compose up, migrate, `storage:configure`, PowerSync URL, mail test booking | Ops |
-| 2 | **`check_ins` PowerSync** — add to `sync-config.yaml`, client collection, `ApplyCheckInPowerSyncCrudAction`, tests | Backend |
-| 3 | **Control: manual check-in** — pick booking on trip card → create `check_ins` + manifest `passengers` from `booking_tickets` | Frontend |
-| 4 | **Control: QR check-in** — booking reference in confirmation (email/UI); scanner on control board resolves booking → same check-in path | Full stack |
-| 5 | **Guides CRUD** — edit-context list/create/edit, uplink `guides`, French copy | Full stack |
-| 6 | **Hide check-in context** — remove/hide `checkin-context` nav; document two-context v1 | Frontend |
-| 7 | **French pass** — control, guides, check-in strings; drop or ignore EN for launch | Frontend |
-| 8 | **E2E dry run** — public book → control board → QR or manual check-in → _Départ_ → arrive; offline replay | QA |
+| #   | Work item                                                                                                                               | Owner hint |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| 1   | **Staging smoke** — compose up, migrate, `storage:configure`, PowerSync URL, mail test booking                                          | Ops        |
+| 2   | **`check_ins` PowerSync** — add to `sync-config.yaml`, client collection, `ApplyCheckInPowerSyncCrudAction`, tests                      | Backend    |
+| 3   | **Control: manual check-in** — pick booking on trip card → create `check_ins` + manifest `passengers` from `booking_tickets`            | Frontend   |
+| 4   | **Control: QR check-in** — booking reference in confirmation (email/UI); scanner on control board resolves booking → same check-in path | Full stack |
+| 5   | **Guides CRUD** — edit-context list/create/edit, uplink `guides`, French copy                                                           | Full stack |
+| 6   | **Hide check-in context** — remove/hide `checkin-context` nav; document two-context v1                                                  | Frontend   |
+| 7   | **French pass** — control, guides, check-in strings; drop or ignore EN for launch                                                       | Frontend   |
+| 8   | **E2E dry run** — public book → control board → QR or manual check-in → _Départ_ → arrive; offline replay                               | QA         |
 
 **Launch gate:** items 1–5 + 8 green on staging; 6–7 before prod cutover.
 
@@ -71,10 +71,10 @@ Deferred past v1: separate check-in context, payment, PWYC amounts, per-passenge
 
 ### Reference plans
 
-| Document | Purpose |
-| -------- | ------- |
-| [`docs/superpowers/plans/2026-05-27-public-booking-flow-completion.md`](docs/superpowers/plans/2026-05-27-public-booking-flow-completion.md) | Public booking — **complete** (phases 0–3) |
-| [`AGENTS.md`](AGENTS.md) | Agent/dev conventions (Laravel Boost, PowerSync pitfalls) |
+| Document                                                                                                                                     | Purpose                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| [`docs/superpowers/plans/2026-05-27-public-booking-flow-completion.md`](docs/superpowers/plans/2026-05-27-public-booking-flow-completion.md) | Public booking — **complete** (phases 0–3)                |
+| [`AGENTS.md`](AGENTS.md)                                                                                                                     | Agent/dev conventions (Laravel Boost, PowerSync pitfalls) |
 
 ---
 
@@ -101,10 +101,10 @@ flowchart LR
   CC -->|QR or manual check-in| CC
 ```
 
-| Bundle | Entry | Auth |
-| ------ | ----- | ---- |
-| **Public** | `/`, `/programs/:slug` | None |
-| **Admin** | `/programs`, program-scoped routes | Sanctum session |
+| Bundle     | Entry                              | Auth            |
+| ---------- | ---------------------------------- | --------------- |
+| **Public** | `/`, `/programs/:slug`             | None            |
+| **Admin**  | `/programs`, program-scoped routes | Sanctum session |
 
 **PowerSync streams** (`deploy/config/powersync/sync-config.yaml`):
 
@@ -115,11 +115,9 @@ If `program_scope` never subscribes, program data stays empty — see `resources
 
 ### Synced data
 
-**Downlink (representative):** `programs`, `boat_types`, `boats`, `products`, `trips`, `water_routes`, template stack, `ticket_types`, `bookings`, `booking_tickets`, `voyages`, `voyage_boat`, `voyage_guide`, `passengers`, `guides`.
+**Downlink (representative):** `programs`, `boat_types`, `boats`, `products`, `trips`, `water_routes`, template stack, `ticket_types`, `bookings`, `booking_tickets`, `voyages`, `voyage_boat`, `voyage_guide`, `passengers`, `check_ins`, `guides`.
 
-**Uplink** (`POST /api/powersync/upload`, types in `App\PowerSync\PowerSyncCrudType`): programs, products, boats, boat types, trips, water routes, templates, ticket types, **bookings**, booking tickets, **voyages**, voyage_boat, voyage_guide, **passengers**.
-
-**Not uplinked today (v1 blockers):** `guides`, `check_ins`.
+**Uplink** (`POST /api/powersync/upload`, types in `App\PowerSync\PowerSyncCrudType`): programs, products, boats, boat types, trips, water routes, templates, ticket types, **bookings**, booking tickets, **voyages**, voyage_boat, voyage_guide, **passengers**, **guides**, **check_ins**.
 
 Staff walk-ins and check-in bookings use uplink `bookings` from control panel; public guests use `POST /api/public/…/bookings`.
 
@@ -127,10 +125,10 @@ Staff walk-ins and check-in bookings use uplink `bookings` from control panel; p
 
 After selecting a program, staff use **two** contexts:
 
-| Context | URL | Purpose |
-| ------- | --- | -------- |
-| **Edit** | `/programs/:id/edit-context/` | Catalog & schedule: program, boats, products, **guides**, ticket types, template days, trips |
-| **Control** | `…/control-context/control` | Day ops: board, _Départs_, **check-in** (QR + manual), manifest, walk-ins |
+| Context     | URL                           | Purpose                                                                                      |
+| ----------- | ----------------------------- | -------------------------------------------------------------------------------------------- |
+| **Edit**    | `/programs/:id/edit-context/` | Catalog & schedule: program, boats, products, **guides**, ticket types, template days, trips |
+| **Control** | `…/control-context/control`   | Day ops: board, _Départs_, **check-in** (QR + manual), manifest, walk-ins                    |
 
 `checkin-context` routes exist in code but are **not part of v1** — check-in ships only inside Control.
 
@@ -147,13 +145,13 @@ Context layouts set shell behavior (nav, program switch policy) via Pinia `appLa
 
 **French UI terms (code stays English):**
 
-| Model | Fr (i18n) |
-| ----- | --------- |
-| `Boat` | Embarcation |
-| `BoatType` | Type d'embarcation |
-| `WaterRoute` | Parcours |
-| `Trip` | Sortie |
-| `Voyage` | Départ |
+| Model        | Fr (i18n)          |
+| ------------ | ------------------ |
+| `Boat`       | Embarcation        |
+| `BoatType`   | Type d'embarcation |
+| `WaterRoute` | Parcours           |
+| `Trip`       | Sortie             |
+| `Voyage`     | Départ             |
 
 ### Ticket dependency ratio
 
@@ -216,88 +214,88 @@ Copy `.env.example` → `.env` (Sail). Copy `deploy/.env.example` → `deploy/.e
 
 ### Required
 
-| Variable | Dev | Production | Notes |
-| -------- | --- | ------------ | ----- |
-| `APP_KEY` | ✓ | ✓ | `php artisan key:generate` |
-| `DB_DATABASE` | ✓ | ✓ | Postgres container |
-| `DB_USERNAME` | ✓ | ✓ | |
-| `DB_PASSWORD` | ✓ | ✓ | |
-| `AWS_ACCESS_KEY_ID` | ✓ | ✓ | Garage S3 (≥ 8 chars dev) |
-| `AWS_SECRET_ACCESS_KEY` | ✓ | ✓ | |
-| `AWS_URL` | ✓ | ✓ | Public object URL (Garage s3_web) |
-| `AWS_ENDPOINT_PUBLIC` | ✓ | ✓ | Presigned upload host |
-| `PRODUCTION_IMAGE` | | ✓ | `deploy/.env` only |
-| `APP_URL` | | ✓ | HTTPS |
-| `SANCTUM_STATEFUL_DOMAINS` | | ✓ | SPA host(s), comma-separated |
-| `POWERSYNC_PUBLIC_URL` | | ✓ | Browser PowerSync URL |
-| `POWERSYNC_JWT_SECRET` | | ✓ | HS256; must match PowerSync service |
-| `MAIL_HOST` | | ✓ | Booking confirmation email |
+| Variable                   | Dev | Production | Notes                               |
+| -------------------------- | --- | ---------- | ----------------------------------- |
+| `APP_KEY`                  | ✓   | ✓          | `php artisan key:generate`          |
+| `DB_DATABASE`              | ✓   | ✓          | Postgres container                  |
+| `DB_USERNAME`              | ✓   | ✓          |                                     |
+| `DB_PASSWORD`              | ✓   | ✓          |                                     |
+| `AWS_ACCESS_KEY_ID`        | ✓   | ✓          | Garage S3 (≥ 8 chars dev)           |
+| `AWS_SECRET_ACCESS_KEY`    | ✓   | ✓          |                                     |
+| `AWS_URL`                  | ✓   | ✓          | Public object URL (Garage s3_web)   |
+| `AWS_ENDPOINT_PUBLIC`      | ✓   | ✓          | Presigned upload host               |
+| `PRODUCTION_IMAGE`         |     | ✓          | `deploy/.env` only                  |
+| `APP_URL`                  |     | ✓          | HTTPS                               |
+| `SANCTUM_STATEFUL_DOMAINS` |     | ✓          | SPA host(s), comma-separated        |
+| `POWERSYNC_PUBLIC_URL`     |     | ✓          | Browser PowerSync URL               |
+| `POWERSYNC_JWT_SECRET`     |     | ✓          | HS256; must match PowerSync service |
+| `MAIL_HOST`                |     | ✓          | Booking confirmation email          |
 
 ### Injected by Docker Compose
 
 Usually omit from `.env`:
 
-| Variable | Dev (`laravel.test`) | Production (`production`*) |
-| -------- | -------------------- | -------------------------- |
-| `DB_HOST` | `pgsql` | `pgsql` |
-| `REDIS_HOST` | `redis` | `redis` |
+| Variable       | Dev (`laravel.test`) | Production (`production`\*)         |
+| -------------- | -------------------- | ----------------------------------- |
+| `DB_HOST`      | `pgsql`              | `pgsql`                             |
+| `REDIS_HOST`   | `redis`              | `redis`                             |
 | `AWS_ENDPOINT` | `http://garage:3900` | default in `config/filesystems.php` |
-| `MAIL_*` | Mailpit | — |
+| `MAIL_*`       | Mailpit              | —                                   |
 
 \*Also `production-schedule`, `production-queue`. PowerSync Postgres URIs default from `DB_*`.
 
 ### Optional overrides
 
-| Variable | Default | Config |
-| -------- | ------- | ------ |
-| `APP_NAME` | `Laravel` | `config/app.php` |
-| `APP_ENV` | `production` | `config/app.php` |
-| `APP_DEBUG` | `false` | `config/app.php` |
-| `APP_URL` | `http://localhost` | `config/app.php` |
-| `DB_CONNECTION` | `pgsql` | `config/database.php` |
-| `DB_HOST` | `127.0.0.1` | `config/database.php` |
-| `DB_PORT` | `5432` | `config/database.php` |
-| `SESSION_DRIVER` | `redis` | `config/session.php` |
-| `QUEUE_CONNECTION` | `redis` | `config/queue.php` |
-| `CACHE_STORE` | `redis` | `config/cache.php` |
-| `FILESYSTEM_DISK` | `s3` | `config/filesystems.php` |
-| `REDIS_HOST` | `127.0.0.1` | `config/database.php` |
-| `AWS_DEFAULT_REGION` | `garage` | `config/filesystems.php` |
-| `AWS_BUCKET` | `app` | `config/filesystems.php` |
-| `AWS_USE_PATH_STYLE_ENDPOINT` | `true` | `config/filesystems.php` |
-| `AWS_CORS_ALLOWED_ORIGINS` | `*` | `config/filesystems.php` |
-| `POWERSYNC_PUBLIC_URL` | `http://localhost:6080` | `config/powersync.php` |
-| `POWERSYNC_JWT_SECRET` | dev placeholder | `config/powersync.php` |
-| `POWERSYNC_JWT_KID` | `local-dev` | `config/powersync.php` |
-| `POWERSYNC_JWT_AUDIENCE` | `powersync-dev` | `config/powersync.php` |
-| `SANCTUM_STATEFUL_DOMAINS` | localhost + host | `config/sanctum.php` |
-| `MAIL_MAILER` | `log` | `config/mail.php` |
-| `MAIL_FROM_ADDRESS` | `hello@example.com` | `config/mail.php` |
-| `SENTRY_LARAVEL_DSN` | disabled | `config/sentry.php` |
-| `SENTRY_RELEASE` | image `github.sha` | `config/sentry.php` |
-| `SENTRY_ENVIRONMENT` | `production` in image | `config/sentry.php` |
-| `SENTRY_TRACES_SAMPLE_RATE` | — | `config/sentry.php` |
-| `VITE_SENTRY_DSN` | disabled | `resources/js/sentry.ts` |
-| `VITE_SENTRY_RELEASE` | image `github.sha` | `resources/js/sentry.ts` |
-| `VITE_SENTRY_SEND_DEFAULT_PII` | `true` | `resources/js/sentry.ts` |
-| `VITE_OBJECT_STORAGE_ORIGINS` | `AWS_URL` | `vite.config.ts` |
+| Variable                       | Default                 | Config                   |
+| ------------------------------ | ----------------------- | ------------------------ |
+| `APP_NAME`                     | `Laravel`               | `config/app.php`         |
+| `APP_ENV`                      | `production`            | `config/app.php`         |
+| `APP_DEBUG`                    | `false`                 | `config/app.php`         |
+| `APP_URL`                      | `http://localhost`      | `config/app.php`         |
+| `DB_CONNECTION`                | `pgsql`                 | `config/database.php`    |
+| `DB_HOST`                      | `127.0.0.1`             | `config/database.php`    |
+| `DB_PORT`                      | `5432`                  | `config/database.php`    |
+| `SESSION_DRIVER`               | `redis`                 | `config/session.php`     |
+| `QUEUE_CONNECTION`             | `redis`                 | `config/queue.php`       |
+| `CACHE_STORE`                  | `redis`                 | `config/cache.php`       |
+| `FILESYSTEM_DISK`              | `s3`                    | `config/filesystems.php` |
+| `REDIS_HOST`                   | `127.0.0.1`             | `config/database.php`    |
+| `AWS_DEFAULT_REGION`           | `garage`                | `config/filesystems.php` |
+| `AWS_BUCKET`                   | `app`                   | `config/filesystems.php` |
+| `AWS_USE_PATH_STYLE_ENDPOINT`  | `true`                  | `config/filesystems.php` |
+| `AWS_CORS_ALLOWED_ORIGINS`     | `*`                     | `config/filesystems.php` |
+| `POWERSYNC_PUBLIC_URL`         | `http://localhost:6080` | `config/powersync.php`   |
+| `POWERSYNC_JWT_SECRET`         | dev placeholder         | `config/powersync.php`   |
+| `POWERSYNC_JWT_KID`            | `local-dev`             | `config/powersync.php`   |
+| `POWERSYNC_JWT_AUDIENCE`       | `powersync-dev`         | `config/powersync.php`   |
+| `SANCTUM_STATEFUL_DOMAINS`     | localhost + host        | `config/sanctum.php`     |
+| `MAIL_MAILER`                  | `log`                   | `config/mail.php`        |
+| `MAIL_FROM_ADDRESS`            | `hello@example.com`     | `config/mail.php`        |
+| `SENTRY_LARAVEL_DSN`           | disabled                | `config/sentry.php`      |
+| `SENTRY_RELEASE`               | image `github.sha`      | `config/sentry.php`      |
+| `SENTRY_ENVIRONMENT`           | `production` in image   | `config/sentry.php`      |
+| `SENTRY_TRACES_SAMPLE_RATE`    | —                       | `config/sentry.php`      |
+| `VITE_SENTRY_DSN`              | disabled                | `resources/js/sentry.ts` |
+| `VITE_SENTRY_RELEASE`          | image `github.sha`      | `resources/js/sentry.ts` |
+| `VITE_SENTRY_SEND_DEFAULT_PII` | `true`                  | `resources/js/sentry.ts` |
+| `VITE_OBJECT_STORAGE_ORIGINS`  | `AWS_URL`               | `vite.config.ts`         |
 
 ### Compose-only (not Laravel)
 
 Root `compose.yaml` port forwards:
 
-| Variable | Default |
-| -------- | ------- |
-| `APP_PORT` | `80` |
-| `VITE_PORT` | `5173` |
-| `FORWARD_DB_PORT` | `5432` |
-| `FORWARD_REDIS_PORT` | `6379` |
-| `FORWARD_POWERSYNC_PORT` | `6080` |
-| `FORWARD_GARAGE_PORT` | `9000` |
-| `FORWARD_GARAGE_WEB_PORT` | `8900` |
-| `FORWARD_MAILPIT_PORT` | `1025` |
-| `FORWARD_MAILPIT_DASHBOARD_PORT` | `8025` |
-| `WWWUSER` / `WWWGROUP` | `1000` |
+| Variable                         | Default |
+| -------------------------------- | ------- |
+| `APP_PORT`                       | `80`    |
+| `VITE_PORT`                      | `5173`  |
+| `FORWARD_DB_PORT`                | `5432`  |
+| `FORWARD_REDIS_PORT`             | `6379`  |
+| `FORWARD_POWERSYNC_PORT`         | `6080`  |
+| `FORWARD_GARAGE_PORT`            | `9000`  |
+| `FORWARD_GARAGE_WEB_PORT`        | `8900`  |
+| `FORWARD_MAILPIT_PORT`           | `1025`  |
+| `FORWARD_MAILPIT_DASHBOARD_PORT` | `8025`  |
+| `WWWUSER` / `WWWGROUP`           | `1000`  |
 
 After prod deploy: `php artisan storage:configure` applies `AWS_CORS_ALLOWED_ORIGINS` to Garage.
 
@@ -307,15 +305,15 @@ Tests: `DB_DATABASE=testing`; DB created by `deploy/config/pgsql/create-testing-
 
 ## Key code locations
 
-| Concern | Location |
-| ------- | -------- |
-| Public API | `routes/api.php`, `PublicProgramController`, `PublicBookingController` |
-| PowerSync upload | `PowerSyncUploadController`, `app/Actions/PowerSync/*` |
-| Sync SQL | `deploy/config/powersync/sync-config.yaml` |
-| Admin router | `resources/js/router/index.ts` |
-| Control panel | `AppProgramControlPanelPage.vue`, `useControlPanel*` composables |
-| Public checkout | `PublicProgramDetailPage.vue`, `public-booking-validation.ts` |
-| Collections | `resources/js/powersync/*.collection.ts` |
+| Concern          | Location                                                               |
+| ---------------- | ---------------------------------------------------------------------- |
+| Public API       | `routes/api.php`, `PublicProgramController`, `PublicBookingController` |
+| PowerSync upload | `PowerSyncUploadController`, `app/Actions/PowerSync/*`                 |
+| Sync SQL         | `deploy/config/powersync/sync-config.yaml`                             |
+| Admin router     | `resources/js/router/index.ts`                                         |
+| Control panel    | `AppProgramControlPanelPage.vue`, `useControlPanel*` composables       |
+| Public checkout  | `PublicProgramDetailPage.vue`, `public-booking-validation.ts`          |
+| Collections      | `resources/js/powersync/*.collection.ts`                               |
 
 ---
 

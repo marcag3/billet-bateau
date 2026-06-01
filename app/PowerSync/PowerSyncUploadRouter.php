@@ -6,6 +6,8 @@ use App\Actions\PowerSync\ApplyBoatPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyBoatTypePowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyBookingPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyBookingTicketPowerSyncCrudAction;
+use App\Actions\PowerSync\ApplyCheckInPowerSyncCrudAction;
+use App\Actions\PowerSync\ApplyGuidePowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyPassengerPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyProductPowerSyncCrudAction;
 use App\Actions\PowerSync\ApplyProgramPowerSyncCrudAction;
@@ -41,6 +43,8 @@ final class PowerSyncUploadRouter
             PowerSyncCrudType::Passengers => ApplyPassengerPowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::VoyageBoat => ApplyVoyageBoatPowerSyncCrudAction::run($entry, $userId),
             PowerSyncCrudType::VoyageGuide => ApplyVoyageGuidePowerSyncCrudAction::run($entry, $userId),
+            PowerSyncCrudType::Guides => ApplyGuidePowerSyncCrudAction::run($entry, $userId),
+            PowerSyncCrudType::CheckIns => ApplyCheckInPowerSyncCrudAction::run($entry, $userId),
         };
     }
 }

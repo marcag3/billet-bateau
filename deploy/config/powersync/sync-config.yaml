@@ -200,6 +200,16 @@ streams:
           AND voyages.program_id IN accessible_program_ids
       - |
         SELECT
+          check_ins.id,
+          check_ins.booking_id,
+          check_ins.voyage_id,
+          check_ins.notes
+        FROM check_ins
+        INNER JOIN voyages ON voyages.id = check_ins.voyage_id
+        WHERE voyages.program_id = subscription.parameter('program_id')
+          AND voyages.program_id IN accessible_program_ids
+      - |
+        SELECT
           voyage_boat.id,
           voyage_boat.voyage_id,
           voyage_boat.boat_id

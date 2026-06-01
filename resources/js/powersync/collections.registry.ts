@@ -14,6 +14,7 @@ import { createTemplateDayDatesCollection } from "./template-day-dates.collectio
 import { createGuidesCollection } from "./guides.collection";
 import { createVoyagesCollection } from "./voyages.collection";
 import { createPassengersCollection } from "./passengers.collection";
+import { createCheckInsCollection } from "./check-ins.collection";
 import { createVoyageBoatCollection } from "./voyage-boat.collection";
 import { createVoyageGuideCollection } from "./voyage-guide.collection";
 import {
@@ -68,6 +69,8 @@ const collectionFactories: {
     voyages: (db, onError, onLoad) => createVoyagesCollection(db, onError, onLoad),
     passengers: (db, onError, onLoad) =>
         createPassengersCollection(db, onError, onLoad),
+    check_ins: (db, onError, onLoad) =>
+        createCheckInsCollection(db, onError, onLoad),
     voyage_boat: (db, onError, onLoad) =>
         createVoyageBoatCollection(db, onError, onLoad),
     voyage_guide: (db, onError, onLoad) =>

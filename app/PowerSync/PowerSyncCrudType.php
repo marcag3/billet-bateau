@@ -38,4 +38,8 @@ enum PowerSyncCrudType: string
     case VoyageBoat = 'voyage_boat';
 
     case VoyageGuide = 'voyage_guide';
+
+    case Guides = 'guides';
+
+    case CheckIns = 'check_ins';
 }

@@ -15,11 +15,12 @@ import type { createTemplateDayDatesCollection } from "./template-day-dates.coll
 import type { createGuidesCollection } from "./guides.collection";
 import type { createVoyagesCollection } from "./voyages.collection";
 import type { createPassengersCollection } from "./passengers.collection";
+import type { createCheckInsCollection } from "./check-ins.collection";
 import type { createVoyageBoatCollection } from "./voyage-boat.collection";
 import type { createVoyageGuideCollection } from "./voyage-guide.collection";
 import { translate } from "../utilities/i18n";
 
-export const DB_FILENAME = "billbateau-app-v23.db";
+export const DB_FILENAME = "billbateau-app-v24.db";
 
 export const loadFailedMessage = translate("sync.unableLoadSync");
 export const persistenceLimitedMessage = translate("sync.persistenceLimited");
@@ -40,6 +41,7 @@ export type PowerSyncCollectionKey =
     | "guides"
     | "voyages"
     | "passengers"
+    | "check_ins"
     | "voyage_boat"
     | "voyage_guide";
 
@@ -63,6 +65,7 @@ type PowerSyncCollectionInstanceMap = {
     guides: ReturnType<typeof createGuidesCollection>;
     voyages: ReturnType<typeof createVoyagesCollection>;
     passengers: ReturnType<typeof createPassengersCollection>;
+    check_ins: ReturnType<typeof createCheckInsCollection>;
     voyage_boat: ReturnType<typeof createVoyageBoatCollection>;
     voyage_guide: ReturnType<typeof createVoyageGuideCollection>;
 };
@@ -100,6 +103,9 @@ export const collectionRefs: PowerSyncCollectionRefs = {
     guides: shallowRef<PowerSyncCollectionInstance<"guides"> | null>(null),
     voyages: shallowRef<PowerSyncCollectionInstance<"voyages"> | null>(null),
     passengers: shallowRef<PowerSyncCollectionInstance<"passengers"> | null>(
+        null,
+    ),
+    check_ins: shallowRef<PowerSyncCollectionInstance<"check_ins"> | null>(
         null,
     ),
     voyage_boat: shallowRef<PowerSyncCollectionInstance<"voyage_boat"> | null>(

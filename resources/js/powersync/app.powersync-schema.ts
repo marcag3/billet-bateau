@@ -155,6 +155,13 @@ const passengersTable = new Table({
     notes: column.text,
 });
 
+const checkInsTable = new Table({
+    id: column.text,
+    booking_id: column.text,
+    voyage_id: column.text,
+    notes: column.text,
+});
+
 const voyageBoatTable = new Table({
     id: column.text,
     voyage_id: column.text,
@@ -183,6 +190,7 @@ export const appPowerSyncSchema = new Schema({
     guides: guidesTable,
     voyages: voyagesTable,
     passengers: passengersTable,
+    check_ins: checkInsTable,
     voyage_boat: voyageBoatTable,
     voyage_guide: voyageGuideTable,
 });
@@ -231,6 +239,9 @@ export const appVoyagesPowerSyncTable = appPowerSyncSchema.props.voyages;
 
 /** @type {import('@powersync/web').Table} */
 export const appPassengersPowerSyncTable = appPowerSyncSchema.props.passengers;
+
+/** @type {import('@powersync/web').Table} */
+export const appCheckInsPowerSyncTable = appPowerSyncSchema.props.check_ins;
 
 /** @type {import('@powersync/web').Table} */
 export const appVoyageBoatPowerSyncTable = appPowerSyncSchema.props.voyage_boat;
