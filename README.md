@@ -197,7 +197,12 @@ Then `deploy/.env` from `deploy/.env.example`, set `PRODUCTION_IMAGE` and secret
 ```bash
 cd deploy && docker compose pull && docker compose up -d
 docker compose exec production php artisan migrate --force
-docker compose exec production php artisan storage:configure
+```
+
+Garage bucket website + CORS (`AWS_CORS_ALLOWED_ORIGINS`) are applied when the `production` container starts (`deploy/entrypoint.d/60-startup.sh`). Re-run manually after changing CORS origins:
+
+```bash
+docker compose exec production php artisan storage:configure --no-interaction
 ```
 
 ### CI (`.github/workflows/build.yml`)
@@ -297,7 +302,7 @@ Root `compose.yaml` port forwards:
 | `FORWARD_MAILPIT_DASHBOARD_PORT` | `8025`  |
 | `WWWUSER` / `WWWGROUP`           | `1000`  |
 
-After prod deploy: `php artisan storage:configure` applies `AWS_CORS_ALLOWED_ORIGINS` to Garage.
+Production startup runs `storage:configure` (see `deploy/entrypoint.d/60-startup.sh`); set `AWS_CORS_ALLOWED_ORIGINS` to your SPA origin(s).
 
 Tests: `DB_DATABASE=testing`; DB created by `deploy/config/pgsql/create-testing-databases.sql` — run `CREATE EXTENSION postgis;` there if geometry tests fail.
 
