@@ -3,6 +3,7 @@ import {
     buildManifestSlots,
     derivePendingBookingGroups,
     groupTicketsByBookingId,
+    isControlPanelManifestModifiable,
 } from '../../utilities/control-panel-manifest';
 
 describe('control-panel-manifest', () => {
@@ -52,7 +53,14 @@ describe('control-panel-manifest', () => {
         const slots = buildManifestSlots(
             {
                 voyage: { id: 'v1', status: 'ready' } as never,
-                passengers: [{ id: 'p1', name: 'Checked In' } as never],
+                passengers: [
+                    {
+                        id: 'p1',
+                        name: 'Checked In',
+                        booking_id: 'b1',
+                        check_in_id: 'ci-1',
+                    } as never,
+                ],
                 bookingTickets: [
                     { id: 't1', name: 'Ada', booking_id: 'b1' },
                     { id: 't2', name: 'Bob', booking_id: 'b2' },
@@ -68,9 +76,13 @@ describe('control-panel-manifest', () => {
                 ],
             },
             4,
-            false,
+            true,
         );
 
+        expect(slots[0]).toMatchObject({
+            kind: 'passenger',
+            bookingId: 'b1',
+        });
         expect(slots.map((slot) => slot.kind)).toEqual([
             'passenger',
             'pendingBooking',
@@ -84,7 +96,7 @@ describe('control-panel-manifest', () => {
         });
     });
 
-    it('buildManifestSlots shows pending bookings before voyage exists', () => {
+    it('buildManifestSlots shows booked rows before voyage exists', () => {
         const slots = buildManifestSlots(
             {
                 voyage: null,
@@ -101,13 +113,77 @@ describe('control-panel-manifest', () => {
                 ],
             },
             2,
+            true,
+        );
+
+        expect(slots.map((slot) => slot.kind)).toEqual(['booked', 'empty']);
+        expect(slots[0]).toMatchObject({
+            kind: 'booked',
+            bookingId: 'b1',
+            ticketId: 't1',
+            name: 'Ada',
+            canCheckIn: true,
+        });
+    });
+
+    it('buildManifestSlots hides check-in when manifest is locked', () => {
+        const slots = buildManifestSlots(
+            {
+                voyage: null,
+                passengers: [],
+                bookingTickets: [{ id: 't1', name: 'Ada', booking_id: 'b1' }],
+                checkedInBookingIds: [],
+                pendingBookingGroups: [],
+            },
+            2,
+            false,
+        );
+
+        expect(slots[0]).toMatchObject({
+            kind: 'booked',
+            canCheckIn: false,
+        });
+    });
+
+    it('buildManifestSlots hides check-in after trip has departed', () => {
+        const slots = buildManifestSlots(
+            {
+                voyage: { id: 'v1', status: 'underway' } as never,
+                passengers: [],
+                bookingTickets: [],
+                checkedInBookingIds: [],
+                pendingBookingGroups: [
+                    {
+                        bookingId: 'b2',
+                        tickets: [{ id: 't2', name: 'Bob', booking_id: 'b2' }],
+                        displayName: 'Bob',
+                        ticketCount: 1,
+                    },
+                ],
+            },
+            2,
             false,
         );
 
         expect(slots[0]).toMatchObject({
             kind: 'pendingBooking',
-            bookingId: 'b1',
-            canCheckIn: true,
+            canCheckIn: false,
         });
+    });
+
+    it('isControlPanelManifestModifiable is false once underway or terminal', () => {
+        expect(isControlPanelManifestModifiable(null)).toBe(true);
+        expect(isControlPanelManifestModifiable({ status: 'ready' } as never)).toBe(
+            true,
+        );
+        expect(isControlPanelManifestModifiable({ status: 'underway' } as never)).toBe(
+            false,
+        );
+        expect(isControlPanelManifestModifiable({ status: 'completed' } as never)).toBe(
+            false,
+        );
+        expect(isControlPanelManifestModifiable({ status: 'cancelled' } as never)).toBe(
+            false,
+        );
     });
 });

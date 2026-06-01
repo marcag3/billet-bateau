@@ -15,9 +15,10 @@
             virtual-scroll-horizontal :virtual-scroll-item-size="tripCardItemSize" :style="tripLaneStyle"
             class="col w-full max-w-full min-h-0 snap-x snap-mandatory" v-slot="{ item }">
             <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" @open-depart="openDepartModal(item)"
-                @arrive="confirmArrive(item)" @add-passenger="(name) => onAddPassenger(item, name)"
-                @remove-passenger="(id) => removePassenger(id)" @open-walk-in="openWalkInModal(item)"
+                @arrive="confirmArrive(item)" @open-walk-in="openWalkInModal(item)"
                 @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)"
+                @undo-check-in-booking="(bookingId) => onUndoCheckInBooking(item, bookingId)"
+                @remove-passenger="(passengerId) => removePassenger(passengerId)"
                 @check-in-booking="(bookingId) => onCheckInBooking(item, bookingId)" />
         </q-virtual-scroll>
 
@@ -46,6 +47,7 @@ import {
 import { useControlPanelVoyageOps } from "../composables/useControlPanelVoyageOps";
 import { useControlPanelWalkInBooking } from "../composables/useControlPanelWalkInBooking";
 import { useControlPanelCheckIn } from "../composables/useControlPanelCheckIn";
+import { useControlPanelUndoCheckIn } from "../composables/useControlPanelUndoCheckIn";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useControlPanelTripLaneLayout } from "../composables/useControlPanelTripLaneLayout";
 import { useControlPanelTripLanePan } from "../composables/useControlPanelTripLanePan";
@@ -83,10 +85,10 @@ const {
     goToToday,
 } = useControlPanelDayBoard(programId);
 
-const { startDeparture, markArrival, addPassenger, removePassenger } =
-    useControlPanelVoyageOps();
+const { startDeparture, markArrival, removePassenger } = useControlPanelVoyageOps();
 const { addWalkInBooking, removeWalkInBookingTicket } = useControlPanelWalkInBooking();
 const { checkInBooking } = useControlPanelCheckIn();
+const { undoCheckInForBooking } = useControlPanelUndoCheckIn();
 
 const boatsCollection = powersync.collections.boats;
 const guidesCollection = powersync.collections.guides;
@@ -211,14 +213,6 @@ function confirmArrive(card: ControlPanelTripCardModel): void {
     });
 }
 
-function onAddPassenger(card: ControlPanelTripCardModel, name: string): void {
-    const voyageId = card.voyage?.id != null ? String(card.voyage.id) : "";
-    if (voyageId.length === 0) {
-        return;
-    }
-    void addPassenger(voyageId, name);
-}
-
 function openWalkInModal(card: ControlPanelTripCardModel): void {
     walkInCard.value = card;
     walkInDialogOpen.value = true;
@@ -230,7 +224,7 @@ async function onConfirmWalkIn(payload: WalkInBookingConfirmPayload): Promise<vo
         return;
     }
 
-    await addWalkInBooking({
+    const result = await addWalkInBooking({
         trip: card.trip,
         programId: programId.value,
         ticketTypeId: payload.ticketTypeId,
@@ -238,6 +232,16 @@ async function onConfirmWalkIn(payload: WalkInBookingConfirmPayload): Promise<vo
         contactEmail: payload.contactEmail,
         country: payload.country,
         customFieldMap: payload.customFieldMap,
+    });
+
+    if (result == null || card.voyage == null) {
+        return;
+    }
+
+    void checkInBooking({
+        card,
+        bookingId: result.bookingId,
+        tickets: [...card.bookingTickets, result.ticket],
     });
 }
 
@@ -258,5 +262,12 @@ function onCheckInBooking(card: ControlPanelTripCardModel, bookingId: string): v
         bookingId,
         tickets: card.bookingTickets,
     });
+}
+
+function onUndoCheckInBooking(
+    card: ControlPanelTripCardModel,
+    bookingId: string,
+): void {
+    void undoCheckInForBooking(bookingId, card.passengers);
 }
 </script>

@@ -55,13 +55,12 @@ export function useControlPanelCheckIn() {
                 const capacity = trip.capacity;
                 if (capacity != null && Number.isFinite(Number(capacity))) {
                     const maxSeats = Math.max(0, Math.floor(Number(capacity)));
-                    const occupied =
-                        input.card.passengers.length +
-                        input.card.pendingBookingGroups.reduce(
-                            (sum, group) => sum + group.ticketCount,
-                            0,
-                        );
-                    if (occupied + ticketsForBooking.length > maxSeats) {
+                    const pendingTicketCount = input.card.pendingBookingGroups.reduce(
+                        (sum, group) => sum + group.ticketCount,
+                        0,
+                    );
+                    const occupied = input.card.passengers.length + pendingTicketCount;
+                    if (occupied > maxSeats) {
                         throw new Error(t('programsControl.capacityFull'));
                     }
                 }

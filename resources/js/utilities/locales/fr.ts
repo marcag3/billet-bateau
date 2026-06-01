@@ -573,6 +573,10 @@ export default {
         capacityFull: "Cette sortie est complète.",
         checkIn: "Enregistrer",
         checkInSuccess: "Client enregistré.",
+        checkInUndone: "Enregistrement annulé.",
+        undoCheckIn: "Annuler l'enregistrement",
+        undoCheckInConfirm:
+            "Annuler l'enregistrement de {name} ? La réservation redeviendra en attente.",
         checkInAlready: "Ce client est déjà enregistré.",
         errorGeneric: "Une erreur est survenue. Veuillez réessayer.",
     },

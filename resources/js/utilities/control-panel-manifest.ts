@@ -1,4 +1,15 @@
 import type { ControlPanelTripCardModel } from '../composables/useControlPanelDayBoard';
+import type { VoyageOutput } from '../powersync/voyages.collection';
+
+/** Manifest edits allowed only before the trip has departed (not underway / terminal). */
+export function isControlPanelManifestModifiable(
+    voyage: Pick<VoyageOutput, 'status'> | null,
+): boolean {
+    const status = String(voyage?.status ?? '').trim();
+    return (
+        status !== 'underway' && status !== 'completed' && status !== 'cancelled'
+    );
+}
 
 export type ControlPanelBookingTicketRow = {
     id: string;
@@ -18,6 +29,7 @@ export type ManifestPassengerSlot = {
     key: string;
     name: string;
     passengerId: string;
+    bookingId: string | null;
 };
 
 export type ManifestPendingBookingSlot = {
@@ -36,6 +48,7 @@ export type ManifestBookedSlot = {
     name: string;
     ticketId: string;
     bookingId: string;
+    canCheckIn: boolean;
 };
 
 export type ManifestEmptySlot = {
@@ -108,29 +121,49 @@ export function buildManifestSlots(
         'voyage' | 'passengers' | 'bookingTickets' | 'checkedInBookingIds' | 'pendingBookingGroups'
     >,
     capacity: number,
-    manifestReadOnly: boolean,
+    manifestModifiable: boolean,
 ): ManifestSlot[] {
     const slots: ManifestSlot[] = [];
+    const hasVoyage = card.voyage != null;
 
-    for (const passenger of card.passengers) {
-        slots.push({
-            kind: 'passenger',
-            key: `passenger-${passenger.id}`,
-            name: slotDisplayName(passenger.name),
-            passengerId: String(passenger.id),
-        });
-    }
+    if (hasVoyage) {
+        for (const passenger of card.passengers) {
+            const bookingId = String(passenger.booking_id ?? '').trim();
+            slots.push({
+                kind: 'passenger',
+                key: `passenger-${passenger.id}`,
+                name: slotDisplayName(passenger.name),
+                passengerId: String(passenger.id),
+                bookingId: bookingId.length > 0 ? bookingId : null,
+            });
+        }
 
-    for (const group of card.pendingBookingGroups) {
-        slots.push({
-            kind: 'pendingBooking',
-            key: `pending-${group.bookingId}`,
-            bookingId: group.bookingId,
-            name: group.displayName,
-            displayName: group.displayName,
-            ticketCount: group.ticketCount,
-            canCheckIn: !manifestReadOnly,
-        });
+        for (const group of card.pendingBookingGroups) {
+            slots.push({
+                kind: 'pendingBooking',
+                key: `pending-${group.bookingId}`,
+                bookingId: group.bookingId,
+                name: group.displayName,
+                displayName: group.displayName,
+                ticketCount: group.ticketCount,
+                canCheckIn: manifestModifiable,
+            });
+        }
+    } else {
+        for (const group of groupTicketsByBookingId(card.bookingTickets)) {
+            const firstTicket = group.tickets[0];
+            if (firstTicket == null) {
+                continue;
+            }
+            slots.push({
+                kind: 'booked',
+                key: `booked-${group.bookingId}`,
+                name: group.displayName,
+                ticketId: firstTicket.id,
+                bookingId: group.bookingId,
+                canCheckIn: manifestModifiable,
+            });
+        }
     }
 
     const emptyCount = capacity > 0 ? Math.max(0, capacity - slots.length) : 0;

@@ -553,6 +553,10 @@ export default {
         capacityFull: "This trip is at capacity.",
         checkIn: "Check in",
         checkInSuccess: "Guest checked in.",
+        checkInUndone: "Check-in removed.",
+        undoCheckIn: "Undo check-in",
+        undoCheckInConfirm:
+            "Undo check-in for {name}? The booking will return to pending.",
         checkInAlready: "This guest is already checked in.",
         errorGeneric: "Something went wrong. Please try again.",
     },

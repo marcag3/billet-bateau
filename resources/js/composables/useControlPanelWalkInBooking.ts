@@ -19,8 +19,16 @@ export function useControlPanelWalkInBooking() {
     const { t } = useI18n();
     const { runWithNotify } = useNotifyAsyncAction();
 
-    async function addWalkInBooking(input: WalkInBookingInput): Promise<void> {
-        await runWithNotify(
+    async function addWalkInBooking(
+        input: WalkInBookingInput,
+    ): Promise<
+        | {
+              bookingId: string;
+              ticket: { id: string; name: string; booking_id: string };
+          }
+        | undefined
+    > {
+        return runWithNotify(
             async () => {
                 const bookingsCol = powersync.collections.bookings.value;
                 const ticketsCol = powersync.collections.booking_tickets.value;
@@ -38,22 +46,24 @@ export function useControlPanelWalkInBooking() {
                 }
 
                 const bookingId = ulid();
+                const ticketId = ulid();
+                const contactName = input.contactName.trim();
                 await bookingsCol
                     .insert({
                         id: bookingId,
                         program_id: programId,
                         trip_id: tripId,
-                        contact_name: input.contactName.trim(),
+                        contact_name: contactName,
                         contact_email: input.contactEmail.trim(),
                     })
                     .isPersisted.promise;
 
                 await ticketsCol
                     .insert({
-                        id: ulid(),
+                        id: ticketId,
                         booking_id: bookingId,
                         ticket_type_id: ticketTypeId,
-                        name: input.contactName.trim(),
+                        name: contactName,
                         email: input.contactEmail.trim(),
                         country: input.country.trim().toUpperCase(),
                         custom_fields: JSON.stringify(input.customFieldMap),
@@ -62,6 +72,11 @@ export function useControlPanelWalkInBooking() {
                     .isPersisted.promise;
 
                 void powersync.refreshOutboxSnapshot();
+
+                return {
+                    bookingId,
+                    ticket: { id: ticketId, name: contactName, booking_id: bookingId },
+                };
             },
             {
                 successMessage: t('programsControl.walkInAdded'),
