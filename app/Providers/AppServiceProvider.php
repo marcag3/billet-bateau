@@ -8,6 +8,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Lorisleiva\Actions\Facades\Actions;
 
@@ -36,6 +37,10 @@ class AppServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole() && is_dir(app_path('Actions'))) {
             Actions::registerCommands();
+        }
+
+        if ($this->app->isProduction()) {
+            URL::forceScheme('https');
         }
     }
 }
