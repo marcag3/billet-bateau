@@ -126,8 +126,6 @@ export default {
     },
     programsCreate: {
         title: "Creer un programme",
-        subtitle:
-            "Les details de programme sont synchronises via PowerSync ; les images sont envoyees au serveur puis leurs metadonnees sont synchronisees.",
         formSection: "Details du programme",
         name: "Nom",
         description: "Description",

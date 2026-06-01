@@ -1,7 +1,6 @@
 <template>
     <q-page class="q-pa-md">
-        <AppPageHeader :title="t('programsCreate.title')" :description="t('programsCreate.subtitle')"
-            description-size="body2" />
+        <AppPageHeader :title="t('programsCreate.title')" />
 
         <AppCardSection :label="t('programsCreate.formSection')">
             <AppAlertBanner v-if="errorMessage.length > 0" variant="error">

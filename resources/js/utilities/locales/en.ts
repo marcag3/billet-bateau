@@ -121,8 +121,6 @@ export default {
     },
     programsCreate: {
         title: "Create program",
-        subtitle:
-            "Program details sync through PowerSync; images upload to the server and sync as metadata.",
         formSection: "Program details",
         name: "Name",
         description: "Description",
