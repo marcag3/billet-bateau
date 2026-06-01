@@ -27,12 +27,12 @@
                                 <q-icon v-if="item.kind === 'passenger'" name="check" color="positive" size="xs" />
                                 <div class="col text-body1">{{ item.name }}</div>
                                 <div v-if="manifestItemCanCheckIn(item)" class="col-auto">
-                                    <q-btn flat dense round color="primary" icon="how_to_reg"
+                                    <q-btn flat dense round color="primary" icon="how_to_reg" size="sm"
                                         :aria-label="t('programsControl.checkIn')"
                                         @click="emit('check-in-booking', item.bookingId)" />
                                 </div>
                                 <div v-if="canRemoveManifestItem(item)" class="col-auto">
-                                    <q-btn flat dense round color="negative" icon="person_remove"
+                                    <q-btn flat dense round color="negative" icon="person_remove" size="sm"
                                         :aria-label="removeManifestAriaLabel(item)"
                                         @click="onRemoveManifestItem(item)" />
                                 </div>
@@ -41,7 +41,7 @@
                         <q-item-section v-else :class="{ 'cursor-pointer': canAddWalkIn }"
                             class="h-8 border-2 border-dashed border-black/24" @click="onEmptySlotClick">
                             <div class="row items-center justify-center w-full">
-                                <q-btn v-if="canAddWalkIn" flat round color="primary" icon="add"
+                                <q-btn v-if="canAddWalkIn" flat round color="primary" icon="add" size="sm"
                                     :aria-label="t('programsControl.addWalkIn')" @click.stop="emit('open-walk-in')" />
                             </div>
                         </q-item-section>
@@ -111,14 +111,23 @@ const departureTimeLabel = computed((): string => {
     }
 });
 
-const passengerCount = computed((): number =>
-    props.card.voyage != null
-        ? props.card.passengers.length + props.card.pendingBookingGroups.reduce(
+const passengerCount = computed((): number => {
+    if (props.card.voyage == null) {
+        return props.card.bookedCount;
+    }
+
+    if (!manifestModifiable.value) {
+        return props.card.passengers.length;
+    }
+
+    return (
+        props.card.passengers.length +
+        props.card.pendingBookingGroups.reduce(
             (sum, group) => sum + group.ticketCount,
             0,
         )
-        : props.card.bookedCount,
-);
+    );
+});
 
 const tripCapacity = computed((): number | null => {
     const cap = props.card.trip.capacity;

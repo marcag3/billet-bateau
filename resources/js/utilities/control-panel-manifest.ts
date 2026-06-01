@@ -138,16 +138,18 @@ export function buildManifestSlots(
             });
         }
 
-        for (const group of card.pendingBookingGroups) {
-            slots.push({
-                kind: 'pendingBooking',
-                key: `pending-${group.bookingId}`,
-                bookingId: group.bookingId,
-                name: group.displayName,
-                displayName: group.displayName,
-                ticketCount: group.ticketCount,
-                canCheckIn: manifestModifiable,
-            });
+        if (manifestModifiable) {
+            for (const group of card.pendingBookingGroups) {
+                slots.push({
+                    kind: 'pendingBooking',
+                    key: `pending-${group.bookingId}`,
+                    bookingId: group.bookingId,
+                    name: group.displayName,
+                    displayName: group.displayName,
+                    ticketCount: group.ticketCount,
+                    canCheckIn: true,
+                });
+            }
         }
     } else {
         for (const group of groupTicketsByBookingId(card.bookingTickets)) {
@@ -166,7 +168,10 @@ export function buildManifestSlots(
         }
     }
 
-    const emptyCount = capacity > 0 ? Math.max(0, capacity - slots.length) : 0;
+    const emptyCount =
+        manifestModifiable && capacity > 0
+            ? Math.max(0, capacity - slots.length)
+            : 0;
     for (let index = 0; index < emptyCount; index += 1) {
         slots.push({ kind: 'empty', key: `empty-${index}` });
     }

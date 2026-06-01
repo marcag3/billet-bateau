@@ -145,13 +145,20 @@ describe('control-panel-manifest', () => {
         });
     });
 
-    it('buildManifestSlots hides check-in after trip has departed', () => {
+    it('buildManifestSlots hides pending bookings after trip has departed', () => {
         const slots = buildManifestSlots(
             {
                 voyage: { id: 'v1', status: 'underway' } as never,
-                passengers: [],
+                passengers: [
+                    {
+                        id: 'p1',
+                        name: 'Checked In',
+                        booking_id: 'b1',
+                        check_in_id: 'ci-1',
+                    } as never,
+                ],
                 bookingTickets: [],
-                checkedInBookingIds: [],
+                checkedInBookingIds: ['b1'],
                 pendingBookingGroups: [
                     {
                         bookingId: 'b2',
@@ -161,13 +168,14 @@ describe('control-panel-manifest', () => {
                     },
                 ],
             },
-            2,
+            4,
             false,
         );
 
+        expect(slots.map((slot) => slot.kind)).toEqual(['passenger']);
         expect(slots[0]).toMatchObject({
-            kind: 'pendingBooking',
-            canCheckIn: false,
+            kind: 'passenger',
+            bookingId: 'b1',
         });
     });
 
