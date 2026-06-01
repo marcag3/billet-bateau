@@ -3,8 +3,6 @@ services:
         image: "${PRODUCTION_IMAGE}"
         restart: unless-stopped
         env_file: ".env"
-        volumes:
-            - "./storage/app:/var/www/html/storage/app"
         environment:
             AUTORUN_ENABLED: true
             AUTORUN_LARAVEL_VIEW_CACHE: false
