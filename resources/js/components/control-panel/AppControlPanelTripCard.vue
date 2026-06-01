@@ -137,9 +137,9 @@ const departureTimeLabel = computed((): string => {
 const passengerCount = computed((): number =>
     props.card.voyage != null
         ? props.card.passengers.length + props.card.pendingBookingGroups.reduce(
-              (sum, group) => sum + group.ticketCount,
-              0,
-          )
+            (sum, group) => sum + group.ticketCount,
+            0,
+        )
         : props.card.bookedCount,
 );
 
