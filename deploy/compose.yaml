@@ -5,6 +5,7 @@ services:
         env_file: ".env"
         environment:
             AUTORUN_ENABLED: true
+            AUTORUN_LARAVEL_STORAGE_LINK: false
             AUTORUN_LARAVEL_VIEW_CACHE: false
             HEALTHCHECK_PATH: "/up"
             DB_HOST: "pgsql"
