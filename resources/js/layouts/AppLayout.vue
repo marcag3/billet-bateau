@@ -23,7 +23,7 @@
 
                 <AppOutboxToolbarMenu />
 
-                <AppLanguageSwitcher />
+                <AppLanguageSwitcher on-dark-header />
 
                 <q-btn v-if="authStore.isAuthenticated" flat color="grey-2" :label="t('common.logout')" class="q-ml-md"
                     style="min-width: 10rem" @click="logout" />

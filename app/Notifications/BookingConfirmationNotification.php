@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Booking;
+use App\Support\AppLocale;
 use App\Support\Calendar\BookingIcsGenerator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -15,6 +16,7 @@ class BookingConfirmationNotification extends Notification
 
     public function __construct(
         public Booking $booking,
+        public ?string $mailLocale = null,
     ) {}
 
     /**
@@ -27,6 +29,19 @@ class BookingConfirmationNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        $locale = AppLocale::normalize($this->mailLocale);
+        $previousLocale = app()->getLocale();
+        app()->setLocale($locale);
+
+        try {
+            return $this->buildMailMessage($locale);
+        } finally {
+            app()->setLocale($previousLocale);
+        }
+    }
+
+    private function buildMailMessage(string $locale): MailMessage
+    {
         $this->booking->load([
             'program:id,name,line_1,line_2,city,postal_code,country',
             'trip:id,scheduled_departure_at,product_id',
@@ -35,10 +50,14 @@ class BookingConfirmationNotification extends Notification
             'bookingTickets.ticketType:id,title',
         ]);
 
-        $programName = $this->booking->program?->name ?? 'Programme';
+        $programName = $this->booking->program?->name ?? __('Program');
         $departure = $this->booking->trip?->scheduled_departure_at;
         $departureLabel = $departure !== null
-            ? $departure->timezone(config('app.timezone'))->locale('fr')->isoFormat('dddd D MMMM YYYY [à] HH:mm')
+            ? $departure->timezone(config('app.timezone'))->locale($locale)->isoFormat(
+                $locale === 'fr'
+                    ? 'dddd D MMMM YYYY [à] HH:mm'
+                    : 'dddd, MMMM D, YYYY [at] h:mm A',
+            )
             : '—';
         $productName = $this->booking->trip?->product?->name;
         $ticketSummary = $this->formatTicketSummary();

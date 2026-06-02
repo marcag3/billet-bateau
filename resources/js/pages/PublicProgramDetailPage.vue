@@ -342,6 +342,7 @@ const onContactSubmit = handleSubmit(async (values) => {
         contact_email: String(values.contact_email).trim(),
         country: String(values.country).trim().toUpperCase(),
         custom_answers: [] as string[],
+        locale: String(locale.value) === 'fr' ? 'fr' : 'en',
     };
 
     const answerErrors: Record<number, string> = {};

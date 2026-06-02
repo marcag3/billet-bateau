@@ -15,7 +15,7 @@ Local-first **program operations + public booking** platform for seasonal boat a
 | Topic              | Decision                                                                                                                                              |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Launch**         | Next week; **staging** environment being installed now (`deploy/` + `staging` branch `config`)                                                        |
-| **Locales**        | **French only** for v1 (UI + booking email)                                                                                                           |
+| **Locales**        | **English + French** (UI + booking confirmation email follow active locale)                                                                             |
 | **Tenancy**        | **Multi-program** — users see programs via `program_user`; no change needed for v1                                                                    |
 | **Payment**        | **None** — reservations only                                                                                                                          |
 | **Admin contexts** | **Two for v1:** **Edit** (catalog/schedule) + **Control** (day ops). **No separate check-in context** — routes/layout may remain but are out of v1 UX |
@@ -38,7 +38,7 @@ Local-first **program operations + public booking** platform for seasonal boat a
 | Area                                 | Status                 | Notes                                                                                                                  |
 | ------------------------------------ | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | **Public catalog**                   | Done                   | `GET /api/public/programs`, program detail by `slug`                                                                   |
-| **Public booking (no payment)**      | Done                   | Trip → tickets → contact; capacity, ticket min/max, dependency ratio, custom questions; confirmation email (FR)        |
+| **Public booking (no payment)**      | Done                   | Trip → tickets → contact; capacity, ticket min/max, dependency ratio, custom questions; confirmation email (EN/FR)     |
 | **Program edit context**             | Done                   | Program, boats, **products** (catalog SKU: boat type + _parcours_ + media), ticket types, template days, trip calendar |
 | **_Parcours_ (water routes)**        | Done                   | Leaflet polyline editor in product/water-route dialogs; PowerSync sync + uplink                                        |
 | **PowerSync (sync + uplink)**        | Mostly done            | See [Synced data](#synced-data) — `check_ins` and guide **writes** not wired                                           |
@@ -47,7 +47,7 @@ Local-first **program operations + public booking** platform for seasonal boat a
 | **Guides**                           | **Blocked for launch** | Synced read-only; need edit-context CRUD + uplink                                                                      |
 | **`check_ins` + QR**                 | **Blocked for launch** | DB exists; not in PowerSync; no QR encode/scan on booking reference yet                                                |
 | **HTTP voyage API**                  | Not in v1              | Voyage lifecycle via PowerSync upload                                                                                  |
-| **i18n**                             | Partial                | Finish **French-only** pass on control + new check-in/guide screens                                                    |
+| **i18n**                             | Mostly done            | EN/FR via vue-i18n + Laravel JSON lang; finish any new control/guide screens as they ship                              |
 | **Payment / PWYC amounts**           | Out of v1              | PWYC label only; no amount capture                                                                                     |
 
 ### Sprint backlog (launch week)
@@ -60,14 +60,14 @@ Priority order for **staging → production** next week:
 | 2   | **`check_ins` PowerSync** — add to `sync-config.yaml`, client collection, `ApplyCheckInPowerSyncCrudAction`, tests                      | Backend    |
 | 3   | **Control: manual check-in** — pick booking on trip card → create `check_ins` + manifest `passengers` from `booking_tickets`            | Frontend   |
 | 4   | **Control: QR check-in** — booking reference in confirmation (email/UI); scanner on control board resolves booking → same check-in path | Full stack |
-| 5   | **Guides CRUD** — edit-context list/create/edit, uplink `guides`, French copy                                                           | Full stack |
+| 5   | **Guides CRUD** — edit-context list/create/edit, uplink `guides`, EN/FR copy                                                          | Full stack |
 | 6   | **Hide check-in context** — remove/hide `checkin-context` nav; document two-context v1                                                  | Frontend   |
-| 7   | **French pass** — control, guides, check-in strings; drop or ignore EN for launch                                                       | Frontend   |
+| 7   | **i18n sweep** — control, guides, check-in: add keys to `en.ts` / `fr.ts` for any new screens                                         | Frontend   |
 | 8   | **E2E dry run** — public book → control board → QR or manual check-in → _Départ_ → arrive; offline replay                               | QA         |
 
 **Launch gate:** items 1–5 + 8 green on staging; 6–7 before prod cutover.
 
-Deferred past v1: separate check-in context, payment, PWYC amounts, per-passenger checkout, EN locale, schedule overrides.
+Deferred past v1: separate check-in context, payment, PWYC amounts, per-passenger checkout, schedule overrides.
 
 ### Reference plans
 
@@ -143,7 +143,7 @@ Context layouts set shell behavior (nav, program switch policy) via Pinia `appLa
 - **Voyage** (_Départ_) — on-water execution; optional `trip_id`; required `water_route_id` (may differ from trip’s planned route).
 - **Booking** / **booking_tickets** — reservation + line items; ticket dependency rules on `ticket_types`.
 
-**French UI terms (code stays English):**
+**Bilingual UI terms (code stays English; labels in `resources/js/utilities/locales/`):**
 
 | Model        | Fr (i18n)          |
 | ------------ | ------------------ |

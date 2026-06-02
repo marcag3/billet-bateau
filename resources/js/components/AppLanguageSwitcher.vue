@@ -1,6 +1,7 @@
 <template>
     <q-btn
-        class="q-ml-md app-language-switcher__btn"
+        class="q-ml-md"
+        :class="{ 'app-language-switcher__btn--on-dark': onDarkHeader }"
         flat
         round
         dense
@@ -38,6 +39,16 @@ import { useI18n } from "vue-i18n";
 
 import { setLocale, type AppLocale } from "../utilities/i18n";
 
+withDefaults(
+    defineProps<{
+        /** White icon/text for the elevated app admin header. */
+        onDarkHeader?: boolean;
+    }>(),
+    {
+        onDarkHeader: false,
+    },
+);
+
 const { t, locale } = useI18n();
 
 const menuOpen = ref(false);
@@ -50,7 +61,7 @@ const langOptions: { label: string; value: AppLocale }[] = [
 </script>
 
 <style scoped>
-.app-language-switcher__btn {
+.app-language-switcher__btn--on-dark {
     color: rgba(255, 255, 255, 0.92);
 }
 

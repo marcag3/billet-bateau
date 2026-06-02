@@ -10,6 +10,7 @@ use App\Models\Program;
 use App\Models\TicketType;
 use App\Models\Trip;
 use App\Notifications\BookingConfirmationNotification;
+use App\Support\AppLocale;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -191,9 +192,10 @@ final class CreatePublicBookingAction
         });
 
         $booking = Booking::query()->findOrFail($created->id);
+        $locale = AppLocale::normalize($data->locale);
 
         Notification::route('mail', $created->contact_email)
-            ->notify(new BookingConfirmationNotification($booking));
+            ->notify(new BookingConfirmationNotification($booking, mailLocale: $locale));
 
         return $created;
     }

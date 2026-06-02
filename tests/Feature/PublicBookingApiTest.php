@@ -341,6 +341,50 @@ class PublicBookingApiTest extends TestCase
         $this->assertStringContainsString('Harbor Tours', $ics);
     }
 
+    public function test_booking_confirmation_notification_mail_renders_in_english_when_locale_en(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['name' => 'Harbor Tours']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $booking = Booking::query()->create([
+            'program_id' => $program->getKey(),
+            'trip_id' => $trip->getKey(),
+            'contact_name' => 'Alex River',
+            'contact_email' => 'alex@example.com',
+        ]);
+
+        $mail = (new BookingConfirmationNotification($booking, mailLocale: 'en'))->toMail(
+            Notification::route('mail', 'alex@example.com'),
+        );
+
+        $this->assertStringContainsString('Booking confirmation', (string) $mail->subject);
+        $this->assertStringContainsString('Hello Alex River', (string) $mail->greeting);
+    }
+
+    public function test_booking_confirmation_notification_mail_renders_in_french_when_locale_fr(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['name' => 'Croisières']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $booking = Booking::query()->create([
+            'program_id' => $program->getKey(),
+            'trip_id' => $trip->getKey(),
+            'contact_name' => 'Alex River',
+            'contact_email' => 'alex@example.com',
+        ]);
+
+        $mail = (new BookingConfirmationNotification($booking, mailLocale: 'fr'))->toMail(
+            Notification::route('mail', 'alex@example.com'),
+        );
+
+        $this->assertStringContainsString('Confirmation de réservation', (string) $mail->subject);
+        $this->assertStringContainsString('Bonjour Alex River', (string) $mail->greeting);
+    }
+
     public function test_store_does_not_send_notification_when_validation_fails(): void
     {
         Notification::fake();

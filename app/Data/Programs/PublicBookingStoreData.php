@@ -20,6 +20,7 @@ final class PublicBookingStoreData extends Data
         public string $contact_email,
         public string $country,
         public array $custom_answers = [],
+        public ?string $locale = null,
     ) {}
 
     /**
@@ -36,6 +37,7 @@ final class PublicBookingStoreData extends Data
             'country' => ['required', 'string', 'size:2', 'regex:/^[A-Za-z]{2}$/'],
             'custom_answers' => ['sometimes', 'array', 'max:20'],
             'custom_answers.*' => ['string', 'min:1', 'max:255'],
+            'locale' => ['sometimes', 'nullable', 'string', 'in:en,fr'],
         ];
     }
 }
