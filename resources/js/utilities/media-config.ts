@@ -1,7 +1,12 @@
+import { ref } from 'vue';
+
 export type AppMediaConfig = {
     publicBaseUrl: string;
     trustedImageOrigins: string[];
 };
+
+/** Bumped when media config is loaded or refreshed so banner URLs recompute. */
+export const mediaConfigRevision = ref(0);
 
 export const APP_MEDIA_CONFIG_META_NAME = 'app-media-config';
 export const APP_SW_CONFIG_URL = '/app/sw-config.json';
@@ -29,11 +34,7 @@ function parseAppMediaConfig(raw: unknown): AppMediaConfig | null {
     return { publicBaseUrl, trustedImageOrigins };
 }
 
-function vitestFallbackConfig(): AppMediaConfig | null {
-    if (import.meta.env.MODE !== 'test' && !import.meta.env.VITEST) {
-        return null;
-    }
-
+function configFromViteMediaPublicBaseUrl(): AppMediaConfig | null {
     const base = import.meta.env.VITE_MEDIA_PUBLIC_BASE_URL;
     if (typeof base !== 'string' || base.trim() === '') {
         return null;
@@ -52,6 +53,14 @@ function vitestFallbackConfig(): AppMediaConfig | null {
     }
 
     return { publicBaseUrl, trustedImageOrigins };
+}
+
+function vitestFallbackConfig(): AppMediaConfig | null {
+    if (import.meta.env.MODE !== 'test' && !import.meta.env.VITEST) {
+        return null;
+    }
+
+    return configFromViteMediaPublicBaseUrl();
 }
 
 export function readAppMediaConfigFromMeta(): AppMediaConfig | null {
@@ -78,17 +87,21 @@ export function getAppMediaConfig(): AppMediaConfig | null {
     }
 
     cachedConfig =
-        readAppMediaConfigFromMeta() ?? vitestFallbackConfig();
+        readAppMediaConfigFromMeta() ??
+        configFromViteMediaPublicBaseUrl() ??
+        vitestFallbackConfig();
 
     return cachedConfig;
 }
 
 export function setAppMediaConfig(config: AppMediaConfig): void {
     cachedConfig = config;
+    mediaConfigRevision.value += 1;
 }
 
 export function resetAppMediaConfig(): void {
     cachedConfig = null;
+    mediaConfigRevision.value += 1;
 }
 
 export function mediaPublicBaseUrl(): string {

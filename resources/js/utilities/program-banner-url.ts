@@ -14,6 +14,25 @@ export function programBannerUrlFromObjectKey(
     return PROGRAM_BANNER_FALLBACK_URL;
 }
 
+/**
+ * Banner URL for edit/upload previews: empty when no key, otherwise public URL or fallback.
+ */
+export function programBannerPreviewUrlFromObjectKey(
+    objectKey: string | null | undefined,
+): string {
+    const key = objectKey != null ? String(objectKey).trim() : '';
+    if (key.length === 0) {
+        return '';
+    }
+
+    const url = mediaObjectPublicUrl(key);
+    if (url.length > 0) {
+        return url;
+    }
+
+    return PROGRAM_BANNER_FALLBACK_URL;
+}
+
 export function programBannerUrlFromUrl(url: string | null | undefined): string {
     const trimmed = url != null ? String(url).trim() : '';
     if (trimmed.length > 0) {

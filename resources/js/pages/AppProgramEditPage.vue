@@ -164,7 +164,7 @@ import type { ProgramUserOutput } from "../powersync/program-user.collection";
 import {
     normalizeAddressRowFields,
 } from "../utilities/program-helpers";
-import { mediaObjectPublicUrl } from "../utilities/media-url";
+import { programBannerPreviewUrlFromObjectKey } from "../utilities/program-banner-url";
 import { parseProgramBookingQuestions } from "../utilities/program-booking-questions";
 import { canInviteProgramAdmins } from "../utilities/program-membership";
 import { presignUpload } from "../actions/App/Http/Controllers/Api/PresignUploadController";
@@ -268,7 +268,7 @@ const currentProgramBannerUrlFromReplica = computed(() => {
     if (p == null) {
         return "";
     }
-    return mediaObjectPublicUrl(p.banner_object_key);
+    return programBannerPreviewUrlFromObjectKey(p.banner_object_key);
 });
 const currentProgramBannerUrl = computed(() => {
     const remoteUrl = currentProgramBannerUrlRemote.value;

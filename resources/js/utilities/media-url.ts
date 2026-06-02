@@ -1,9 +1,11 @@
-import { mediaPublicBaseUrl } from './media-config';
+import { mediaConfigRevision, mediaPublicBaseUrl } from './media-config';
 
 /**
  * Public URL for an object storage key (no SDK), matching server {@see Program::mediaUrlFromKey}.
  */
 export function mediaObjectPublicUrl(objectKey: string | null | undefined): string {
+    void mediaConfigRevision.value;
+
     if (objectKey == null) {
         return '';
     }

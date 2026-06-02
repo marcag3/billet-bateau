@@ -43,7 +43,9 @@
                     <AppEmptyListRow class="col-12" :show="showProgramsEmptyState" :message="emptyListMessage" />
                     <div v-for="program in filteredPrograms" :key="String(program.id)" class="col-12 col-sm-6 col-md-4">
                         <q-card>
-                            <q-img :src="programBannerUrlFromObjectKey(program.banner_object_key)" :ratio="16 / 9">
+                            <q-img :src="programListBannerSrc(program)" :ratio="16 / 9"
+                                :style="programListBannerStyle(program)"
+                                @error="markProgramBannerLoadFailed(program)">
                                 <div class="absolute-bottom">
                                     <div class="text-h6">{{ program.name }}</div>
                                     <div class="text-subtitle2" v-if="programDescription(program)">
@@ -103,7 +105,10 @@ import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 
 const powersync = getAppPowerSyncContext();
 import type { ProgramOutput } from "../powersync/programs.collection";
-import { programBannerUrlFromObjectKey } from "../utilities/program-banner-url";
+import {
+    PROGRAM_BANNER_FALLBACK_URL,
+    programBannerUrlFromObjectKey,
+} from "../utilities/program-banner-url";
 import { isProgramArchivedByEndDateYmd } from "../utilities/program-helpers";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
@@ -135,6 +140,41 @@ const { data: programs, isLoading: programsQueryLoading } = useLiveQuery(
 );
 
 const programTab = ref<"active" | "archived">("active");
+const programBannerLoadFailedIds = ref<Set<string>>(new Set());
+
+function programListBannerSrc(program: ProgramOutput): string {
+    const id = String(program.id);
+    if (programBannerLoadFailedIds.value.has(id)) {
+        return PROGRAM_BANNER_FALLBACK_URL;
+    }
+    return programBannerUrlFromObjectKey(program.banner_object_key);
+}
+
+function programListBannerStyle(program: ProgramOutput): Record<string, string> {
+    const key =
+        program.banner_object_key != null
+            ? String(program.banner_object_key).trim()
+            : "";
+    if (key.length > 0 && !programBannerLoadFailedIds.value.has(String(program.id))) {
+        return {};
+    }
+    const hex =
+        typeof program.theme_color === "string"
+            ? program.theme_color.trim()
+            : "";
+    return { background: hex.length > 0 ? hex : "#e0e0e0" };
+}
+
+function markProgramBannerLoadFailed(program: ProgramOutput): void {
+    const id = String(program.id);
+    if (programBannerLoadFailedIds.value.has(id)) {
+        return;
+    }
+    programBannerLoadFailedIds.value = new Set([
+        ...programBannerLoadFailedIds.value,
+        id,
+    ]);
+}
 
 const totalProgramCount = computed(() => (programs.value ?? []).length);
 

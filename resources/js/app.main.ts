@@ -64,6 +64,9 @@ window.addEventListener("online", () => {
 
 await authStore.initialize();
 
+await refreshAppMediaConfigFromNetwork();
+notifyServiceWorkerOfMediaConfig();
+
 app.mount("#app-root");
 
 if (authStore.canAccessProtectedRoute()) {
