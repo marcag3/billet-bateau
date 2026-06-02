@@ -16,15 +16,6 @@ const wayfinderDisabled = process.env.VITEST === 'true' || process.env.DISABLE_W
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
     const isVitest = mode === 'test' || process.env.VITEST === 'true';
-    const objectStorageOrigins = (
-        env.VITE_OBJECT_STORAGE_ORIGINS
-        ?? env.VITE_MEDIA_PUBLIC_BASE_URL
-        ?? env.AWS_URL
-        ?? 'http://localhost:9000'
-    )
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
 
     const sentryUploadEnabled = env.SENTRY_UPLOAD === 'true'
         && Boolean(env.SENTRY_AUTH_TOKEN)
@@ -118,9 +109,6 @@ export default defineConfig(({ mode }) => {
                   ]
                 : []),
         ],
-        define: {
-            __OBJECT_STORAGE_ORIGINS__: JSON.stringify(objectStorageOrigins),
-        },
         worker: {
             format: 'es',
         },

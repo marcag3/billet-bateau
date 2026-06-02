@@ -1,6 +1,50 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
-* @see routes/web.php:10
+* @see \App\Http\Controllers\AppServiceWorkerConfigController::__invoke
+* @see app/Http/Controllers/AppServiceWorkerConfigController.php:12
+* @route '/app/sw-config.json'
+*/
+export const swConfig = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: swConfig.url(options),
+    method: 'get',
+})
+
+swConfig.definition = {
+    methods: ["get","head"],
+    url: '/app/sw-config.json',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\AppServiceWorkerConfigController::__invoke
+* @see app/Http/Controllers/AppServiceWorkerConfigController.php:12
+* @route '/app/sw-config.json'
+*/
+swConfig.url = (options?: RouteQueryOptions) => {
+    return swConfig.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\AppServiceWorkerConfigController::__invoke
+* @see app/Http/Controllers/AppServiceWorkerConfigController.php:12
+* @route '/app/sw-config.json'
+*/
+swConfig.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: swConfig.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\AppServiceWorkerConfigController::__invoke
+* @see app/Http/Controllers/AppServiceWorkerConfigController.php:12
+* @route '/app/sw-config.json'
+*/
+swConfig.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: swConfig.url(options),
+    method: 'head',
+})
+
+/**
+* @see routes/web.php:14
 * @route '/app/invite/{token}'
 */
 export const invite = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +58,7 @@ invite.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:10
+* @see routes/web.php:14
 * @route '/app/invite/{token}'
 */
 invite.url = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -40,7 +84,7 @@ invite.url = (args: { token: string | number } | [token: string | number ] | str
 }
 
 /**
-* @see routes/web.php:10
+* @see routes/web.php:14
 * @route '/app/invite/{token}'
 */
 invite.get = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -49,7 +93,7 @@ invite.get = (args: { token: string | number } | [token: string | number ] | str
 })
 
 /**
-* @see routes/web.php:10
+* @see routes/web.php:14
 * @route '/app/invite/{token}'
 */
 invite.head = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -58,7 +102,7 @@ invite.head = (args: { token: string | number } | [token: string | number ] | st
 })
 
 /**
-* @see routes/web.php:25
+* @see routes/web.php:29
 * @route '/app/setup'
 */
 export const setup = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -72,7 +116,7 @@ setup.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:25
+* @see routes/web.php:29
 * @route '/app/setup'
 */
 setup.url = (options?: RouteQueryOptions) => {
@@ -80,7 +124,7 @@ setup.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:25
+* @see routes/web.php:29
 * @route '/app/setup'
 */
 setup.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -89,7 +133,7 @@ setup.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:25
+* @see routes/web.php:29
 * @route '/app/setup'
 */
 setup.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -98,7 +142,7 @@ setup.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:33
+* @see routes/web.php:37
 * @route '/app/login'
 */
 export const login = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +156,7 @@ login.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:33
+* @see routes/web.php:37
 * @route '/app/login'
 */
 login.url = (options?: RouteQueryOptions) => {
@@ -120,7 +164,7 @@ login.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:33
+* @see routes/web.php:37
 * @route '/app/login'
 */
 login.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -129,7 +173,7 @@ login.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:33
+* @see routes/web.php:37
 * @route '/app/login'
 */
 login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -138,6 +182,7 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 const app = {
+    swConfig: Object.assign(swConfig, swConfig),
     invite: Object.assign(invite, invite),
     setup: Object.assign(setup, setup),
     login: Object.assign(login, login),

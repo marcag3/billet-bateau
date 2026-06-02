@@ -10,22 +10,77 @@ const APP_SHELL_URLS = ['/app', '/app/'];
 const STATIC_FILE_PATTERN = /\.(?:css|js|mjs|ico|png|jpe?g|svg|webp|woff2?|ttf)$/i;
 const AUTH_PATH_PATTERN = /^\/(?:login|logout|register|password\/?|sanctum\/csrf-cookie)/;
 
-declare const __OBJECT_STORAGE_ORIGINS__: string[];
+const SW_CONFIG_PATH = '/app/sw-config.json';
+const SW_META_CACHE = 'sw-meta-v1';
+const SW_CONFIG_CACHE_KEY = SW_CONFIG_PATH;
 
-const trustedImageOrigins = new Set(
-    typeof __OBJECT_STORAGE_ORIGINS__ !== 'undefined'
-        ? __OBJECT_STORAGE_ORIGINS__
-        : ['http://localhost:9000'],
-);
+/** @type {Set<string>} */
+let trustedImageOrigins = new Set();
+/** @type {Promise<void>} */
+let originsReady = loadTrustedOrigins();
+
+/**
+ * @param {string[]} origins
+ */
+function applyTrustedImageOrigins(origins) {
+    trustedImageOrigins = new Set(
+        origins.map((origin) => String(origin).trim()).filter(Boolean),
+    );
+}
+
+async function loadTrustedOrigins() {
+    const metaCache = await caches.open(SW_META_CACHE);
+
+    try {
+        const response = await fetch(SW_CONFIG_PATH, { cache: 'no-store' });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data?.trustedImageOrigins)) {
+                applyTrustedImageOrigins(data.trustedImageOrigins);
+            }
+
+            await metaCache.put(SW_CONFIG_CACHE_KEY, response.clone());
+
+            return;
+        }
+    } catch {
+        // offline or unreachable — fall back to cached config below
+    }
+
+    const cached = await metaCache.match(SW_CONFIG_CACHE_KEY);
+    if (cached == null) {
+        return;
+    }
+
+    try {
+        const data = await cached.json();
+        if (Array.isArray(data?.trustedImageOrigins)) {
+            applyTrustedImageOrigins(data.trustedImageOrigins);
+        }
+    } catch {
+        // ignore invalid cache payload
+    }
+}
 
 self.skipWaiting();
 clientsClaim();
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST || []);
 
+self.addEventListener('message', (event) => {
+    const data = event.data;
+    if (data?.type === 'SET_TRUSTED_ORIGINS' && Array.isArray(data.trustedImageOrigins)) {
+        applyTrustedImageOrigins(data.trustedImageOrigins);
+    }
+});
+
 self.addEventListener('install', (event) => {
     event.waitUntil(
         (async () => {
+            originsReady = loadTrustedOrigins();
+            await originsReady;
+
             const shellCache = await caches.open(APP_SHELL_CACHE);
             const staticCache = await caches.open(APP_STATIC_CACHE);
 
@@ -45,8 +100,11 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         (async () => {
+            originsReady = loadTrustedOrigins();
+            await originsReady;
+
             const cacheNames = await caches.keys();
-            const keepNames = new Set([APP_SHELL_CACHE, APP_STATIC_CACHE, APP_MEDIA_CACHE]);
+            const keepNames = new Set([APP_SHELL_CACHE, APP_STATIC_CACHE, APP_MEDIA_CACHE, SW_META_CACHE]);
 
             await Promise.all(
                 cacheNames.map((cacheName) => {
@@ -71,12 +129,15 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(request.url);
 
     if (url.origin !== self.location.origin) {
-        if (
-            request.destination === 'image' &&
-            trustedImageOrigins.has(url.origin)
-        ) {
+        if (request.destination === 'image') {
             event.respondWith(
                 (async () => {
+                    await originsReady;
+
+                    if (!trustedImageOrigins.has(url.origin)) {
+                        return fetch(request);
+                    }
+
                     const mediaCache = await caches.open(APP_MEDIA_CACHE);
                     const cached = await mediaCache.match(request);
 

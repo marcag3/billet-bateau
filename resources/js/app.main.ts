@@ -16,6 +16,10 @@ import { bootstrapDomainModels } from "./models/model.registry";
 import { i18n, syncQuasarLanguageWithI18n } from "./utilities/i18n";
 import { APP_AUTH_EXPIRED_EVENT } from "./utilities/events";
 import { initSentry } from "./sentry";
+import {
+    notifyServiceWorkerOfMediaConfig,
+    refreshAppMediaConfigFromNetwork,
+} from "./utilities/media-config";
 
 const APP_SW_URL = "/app-sw.js";
 const APP_SW_SCOPE = "/app/";
@@ -68,8 +72,15 @@ if (authStore.canAccessProtectedRoute()) {
 
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
     window.addEventListener("load", () => {
+        void refreshAppMediaConfigFromNetwork().then(() => {
+            notifyServiceWorkerOfMediaConfig();
+        });
+
         navigator.serviceWorker
             .register(APP_SW_URL, { scope: APP_SW_SCOPE })
+            .then(() => {
+                notifyServiceWorkerOfMediaConfig();
+            })
             .catch((error) => {
                 console.error("App service worker registration failed:", error);
             });

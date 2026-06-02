@@ -283,7 +283,7 @@ Usually omit from `.env`:
 | `VITE_SENTRY_DSN`              | disabled                | `resources/js/sentry.ts` |
 | `VITE_SENTRY_RELEASE`          | image `github.sha`      | `resources/js/sentry.ts` |
 | `VITE_SENTRY_SEND_DEFAULT_PII` | `true`                  | `resources/js/sentry.ts` |
-| `VITE_OBJECT_STORAGE_ORIGINS`  | `AWS_URL`               | `vite.config.ts`         |
+| `MEDIA_TRUSTED_ORIGINS`        | —                       | `config/media.php` (extra SW image origins) |
 
 ### Compose-only (not Laravel)
 

@@ -16,4 +16,15 @@ return [
     |
     */
     'public_base_url' => env('AWS_URL', env('AWS_ENDPOINT_PUBLIC', '')),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Extra trusted image origins (service worker)
+    |--------------------------------------------------------------------------
+    |
+    | Comma-separated browser origins (scheme + host + optional port) in addition
+    | to the origin derived from `public_base_url`. Rarely needed.
+    |
+    */
+    'trusted_origins' => env('MEDIA_TRUSTED_ORIGINS'),
 ];
