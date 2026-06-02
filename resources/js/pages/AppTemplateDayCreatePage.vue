@@ -1,29 +1,15 @@
 <template>
-    <AppEntityCreatePageLayout
-        :title="t('templateDaysList.createPageTitle')"
-        :description="t('templateDaysList.createPageDescription')"
-        :back-to="backTo"
-        :back-label="t('templateDaysList.backToList')"
-    >
+    <AppEntityCreatePageLayout :title="t('templateDaysList.createPageTitle')" :back-to="backTo"
+        :back-label="t('templateDaysList.backToList')">
 
 
         <AppCardSection :label="t('templateDaysList.addNew')">
             <q-form @submit.prevent="onCreateSubmit">
                 <AppFormStack>
-                    <q-input
-                        v-model="createName"
-                        outlined
-                        :label="t('templateDaysList.name')"
-                        :disable="isSubmitting"
-                    />
-                    <q-btn
-                        color="primary"
-                        type="submit"
-                        :label="t('templateDaysList.create')"
-                        :loading="isSubmitting"
-                        :disable="isSubmitting || programId.length === 0"
-                        class="self-start"
-                    />
+                    <q-input v-model="createName" outlined :label="t('templateDaysList.name')"
+                        :disable="isSubmitting" />
+                    <q-btn color="primary" type="submit" :label="t('templateDaysList.create')" :loading="isSubmitting"
+                        :disable="isSubmitting || programId.length === 0" class="self-start" />
                 </AppFormStack>
             </q-form>
         </AppCardSection>

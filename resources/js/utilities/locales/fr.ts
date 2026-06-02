@@ -50,6 +50,13 @@ export default {
         validationRequired: "Ce champ est requis.",
         validationEmail: "Entrez une adresse e-mail valide.",
     },
+    imageUploadField: {
+        emptyHint: "Deposez une image ici ou cliquez pour televerser",
+        replace: "Remplacer",
+        remove: "Retirer",
+        clear: "Effacer la selection",
+        invalidType: "Choisissez une image JPEG, PNG ou WebP.",
+    },
     setup: {
         title: "Configuration initiale",
         subtitle: "Creez votre premier compte administrateur.",
@@ -65,15 +72,11 @@ export default {
 
     programsEdit: {
         title: "Modifier le programme",
-        subtitle:
-            "Mettez a jour les details, l’identifiant d’URL, les dates et la visibilite publique. L’onglet Archive liste les programmes dont la date de fin est avant aujourd’hui. Les changements se synchronisent via PowerSync ; les nouvelles images sont envoyees au serveur.",
         submit: "Enregistrer",
         success: "Programme mis a jour.",
         notFound:
             "Impossible de charger ce programme. Il a peut-etre ete supprime ou vous n’y avez pas acces.",
         backToList: "Retour aux programmes",
-        currentBannerCaption:
-            "Banniere actuelle du programme. Choisissez un nouveau fichier ci-dessus pour la remplacer.",
         startDate: "Date de debut du programme",
         endDate: "Date de fin du programme",
         bookingQuestions: "Questions supplementaires de reservation",
@@ -163,15 +166,6 @@ export default {
         rowPendingSync: "En attente du serveur",
         outboxCommitFailed:
             "La synchronisation d'une modification vers le serveur a echoue pour le moment. Votre modification reste en file localement ; vous pouvez reessayer.",
-    },
-    legacyDashboard: {
-        featureRichDescription:
-            "Ce bundle applicatif est volontairement riche en fonctionnalites et peut evoluer independamment du site public.",
-        operationsTitle: "Operations",
-        operationsSubtitle: "Gerez les traverses, les bateaux et la capacite.",
-        analyticsTitle: "Analytique",
-        analyticsSubtitle:
-            "Suivez les reservations et les tendances de conversion.",
     },
     publicHome: {
         description: "Parcourez les programmes et trouvez votre prochaine aventure.",

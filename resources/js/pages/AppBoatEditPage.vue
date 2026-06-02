@@ -1,53 +1,21 @@
 <template>
-    <AppEntityEditPageLayout
-        :title="t('boatsList.editPageTitle')"
-        :description="t('boatsList.editPageDescription')"
-        :back-to="backTo"
-        :back-label="t('boatsList.backToList')"
-    >
-        <template
-            v-if="currentBoat && boatSwitcherOptions.length > 0"
-            #quickNav
-        >
+    <AppEntityEditPageLayout :title="t('boatsList.editPageTitle')" :back-to="backTo"
+        :back-label="t('boatsList.backToList')">
+        <template v-if="currentBoat && boatSwitcherOptions.length > 0" #quickNav>
             <AppCardSection :label="t('boatsList.quickNavLabel')">
                 <div class="row q-col-gutter-sm items-center">
                     <div class="col-12 col-sm-auto">
-                        <q-btn
-                            flat
-                            round
-                            dense
-                            icon="chevron_left"
-                            :aria-label="t('boatsList.previousBoat')"
-                            :disable="!neighbors.prev"
-                            @click="goPrev"
-                        />
+                        <q-btn flat round dense icon="chevron_left" :aria-label="t('boatsList.previousBoat')"
+                            :disable="!neighbors.prev" @click="goPrev" />
                     </div>
-                    <q-select
-                        class="col-12 col-sm"
-                        :model-value="String(boatId)"
-                        :options="boatSwitcherOptions"
-                        emit-value
-                        map-options
-                        dense
-                        outlined
-                        :label="t('boatsList.name')"
-                        @update:model-value="onSwitchBoat"
-                    />
+                    <q-select class="col-12 col-sm" :model-value="String(boatId)" :options="boatSwitcherOptions"
+                        emit-value map-options dense outlined :label="t('boatsList.name')"
+                        @update:model-value="onSwitchBoat" />
                     <div class="col-12 col-sm-auto">
-                        <q-btn
-                            flat
-                            round
-                            dense
-                            icon="chevron_right"
-                            :aria-label="t('boatsList.nextBoat')"
-                            :disable="!neighbors.next"
-                            @click="goNext"
-                        />
+                        <q-btn flat round dense icon="chevron_right" :aria-label="t('boatsList.nextBoat')"
+                            :disable="!neighbors.next" @click="goNext" />
                     </div>
-                    <div
-                        v-if="neighbors.total > 0 && neighbors.index >= 0"
-                        class="col-12 text-caption text-grey-8"
-                    >
+                    <div v-if="neighbors.total > 0 && neighbors.index >= 0" class="col-12 text-caption text-grey-8">
                         {{
                             t("boatsList.positionInList", {
                                 index: neighbors.index + 1,
@@ -59,73 +27,31 @@
             </AppCardSection>
         </template>
 
-        <q-banner
-            v-if="showNotFound"
-            class="bg-warning text-dark q-mb-md"
-            rounded
-        >
+        <q-banner v-if="showNotFound" class="bg-warning text-dark q-mb-md" rounded>
             {{ t("boatsList.notFound") }}
             <template #action>
-                <q-btn
-                    color="primary"
-                    flat
-                    :label="t('boatsList.backToList')"
-                    :to="backTo"
-                />
+                <q-btn color="primary" flat :label="t('boatsList.backToList')" :to="backTo" />
             </template>
         </q-banner>
 
         <AppCardSection v-else-if="currentBoat" :label="formSectionLabel">
             <q-form @submit.prevent="onSaveSubmit">
                 <AppFormStack>
-                    <q-input
-                        v-model="editName"
-                        v-bind="editNameProps"
-                        outlined
-                        :label="t('boatsList.name')"
-                        :disable="isSubmitting || isDeleting"
-                    />
-                    <q-input
-                        v-model.number="editCapacity"
-                        v-bind="editCapacityProps"
-                        outlined
-                        type="number"
-                        :label="t('boatsList.capacity')"
-                        :hint="t('boatsList.capacityHint')"
-                        :disable="isSubmitting || isDeleting"
-                    />
-                    <q-input
-                        v-model="editNotes"
-                        v-bind="editNotesProps"
-                        type="textarea"
-                        autogrow
-                        outlined
-                        :label="t('boatsList.notes')"
-                        :disable="isSubmitting || isDeleting"
-                    />
-                    <AppBoatTypeSelectField
-                        v-model="editBoatTypeId"
-                        v-bind="editBoatTypeIdProps"
-                        :program-id="programId"
-                        :label="t('boatsList.boatType')"
-                        :disable="isSubmitting || isDeleting"
-                    />
+                    <q-input v-model="editName" v-bind="editNameProps" outlined :label="t('boatsList.name')"
+                        :disable="isSubmitting || isDeleting" />
+                    <q-input v-model.number="editCapacity" v-bind="editCapacityProps" outlined type="number"
+                        :label="t('boatsList.capacity')" :hint="t('boatsList.capacityHint')"
+                        :disable="isSubmitting || isDeleting" />
+                    <q-input v-model="editNotes" v-bind="editNotesProps" type="textarea" autogrow outlined
+                        :label="t('boatsList.notes')" :disable="isSubmitting || isDeleting" />
+                    <AppBoatTypeSelectField v-model="editBoatTypeId" v-bind="editBoatTypeIdProps"
+                        :program-id="programId" :label="t('boatsList.boatType')"
+                        :disable="isSubmitting || isDeleting" />
                     <div class="row q-gutter-sm">
-                        <q-btn
-                            color="primary"
-                            type="submit"
-                            :label="t('boatsList.saveChanges')"
-                            :loading="isSubmitting"
-                            :disable="!meta.valid || isDeleting"
-                        />
-                        <q-btn
-                            flat
-                            color="negative"
-                            icon="delete"
-                            :label="t('boatsList.delete')"
-                            :disable="isSubmitting || isDeleting"
-                            @click="confirmDelete"
-                        />
+                        <q-btn color="primary" type="submit" :label="t('boatsList.saveChanges')" :loading="isSubmitting"
+                            :disable="!meta.valid || isDeleting" />
+                        <q-btn flat color="negative" icon="delete" :label="t('boatsList.delete')"
+                            :disable="isSubmitting || isDeleting" @click="confirmDelete" />
                     </div>
                 </AppFormStack>
             </q-form>

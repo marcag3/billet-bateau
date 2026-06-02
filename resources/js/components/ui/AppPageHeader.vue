@@ -4,10 +4,7 @@
             {{ title }}
         </h1>
         <slot v-else name="title" />
-        <p v-if="description" class="text-body1 text-grey-8 q-mb-sm">
-            {{ description }}
-        </p>
-        <p v-else-if="hasDefaultSlot" class="text-body1 text-grey-8 q-mb-sm">
+        <p v-if="hasDefaultSlot" class="text-body1 text-grey-8 q-mb-sm">
             <slot />
         </p>
         <div v-if="$slots.actions" class="q-mt-sm row justify-end">
@@ -22,11 +19,9 @@ import { computed, useSlots } from "vue";
 withDefaults(
     defineProps<{
         title?: string;
-        description?: string;
     }>(),
     {
         title: "",
-        description: "",
     },
 );
 

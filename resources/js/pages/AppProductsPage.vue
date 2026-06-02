@@ -1,69 +1,36 @@
 <template>
     <AppEntityIndexPageLayout>
         <template #header>
-            <AppPageHeader
-                :title="t('productsList.title')"
-                :description="t('productsList.description')"
-            >
+            <AppPageHeader :title="t('productsList.title')">
                 <template #actions>
-                    <q-btn
-                        color="primary"
-                        icon="add"
-                        :label="t('productsList.addProduct')"
-                        @click="productModalRef?.openCreateModal()"
-                    />
+                    <q-btn color="primary" icon="add" :label="t('productsList.addProduct')"
+                        @click="productModalRef?.openCreateModal()" />
                 </template>
             </AppPageHeader>
         </template>
 
         <AppEntityList>
-            <AppEmptyListRow
-                :show="products.length === 0"
-                :message="t('productsList.empty')"
-            />
-            <q-item
-                v-for="row in products"
-                :key="String(row.id)"
-                class="q-pa-md"
-            >
-                <q-item-section
-                    v-if="productImageUrl(row).length > 0"
-                    avatar
-                >
+            <AppEmptyListRow :show="products.length === 0" :message="t('productsList.empty')" />
+            <q-item v-for="row in products" :key="String(row.id)" class="q-pa-md">
+                <q-item-section v-if="productImageUrl(row).length > 0" avatar>
                     <q-avatar rounded size="48px">
-                        <q-img
-                            :src="productImageUrl(row)"
-                            ratio="1"
-                            fit="cover"
-                            :alt="t('productsList.image')"
-                        />
+                        <q-img :src="productImageUrl(row)" ratio="1" fit="cover" :alt="t('productsList.image')" />
                     </q-avatar>
                 </q-item-section>
                 <q-item-section>
                     <q-item-label class="text-h6">{{
                         productTitle(row)
-                    }}</q-item-label>
+                        }}</q-item-label>
                     <q-item-label caption>
                         {{ productSummary(row) }}
                     </q-item-label>
                 </q-item-section>
                 <q-item-section side>
                     <div class="column q-gutter-xs items-end">
-                        <q-btn
-                            color="primary"
-                            outline
-                            dense
-                            :label="t('common.edit')"
-                            @click="() => productModalRef?.openEditModal(row)"
-                        />
-                        <q-btn
-                            flat
-                            dense
-                            color="negative"
-                            icon="delete"
-                            :label="t('productsList.delete')"
-                            @click="() => confirmDelete(row)"
-                        />
+                        <q-btn color="primary" outline dense :label="t('common.edit')"
+                            @click="() => productModalRef?.openEditModal(row)" />
+                        <q-btn flat dense color="negative" icon="delete" :label="t('productsList.delete')"
+                            @click="() => confirmDelete(row)" />
                     </div>
                 </q-item-section>
             </q-item>

@@ -1,23 +1,10 @@
 <template>
-    <AppEntityEditPageLayout
-        :title="t('templateDaysList.editPageTitle')"
-        :description="t('templateDaysList.editPageDescription')"
-        :back-to="backTo"
-        :back-label="t('templateDaysList.backToList')"
-    >
-        <q-banner
-            v-if="showNotFound"
-            class="bg-warning text-dark q-mb-md"
-            rounded
-        >
+    <AppEntityEditPageLayout :title="t('templateDaysList.editPageTitle')" :back-to="backTo"
+        :back-label="t('templateDaysList.backToList')">
+        <q-banner v-if="showNotFound" class="bg-warning text-dark q-mb-md" rounded>
             {{ t("templateDaysList.notFound") }}
             <template #action>
-                <q-btn
-                    color="primary"
-                    flat
-                    :label="t('templateDaysList.backToList')"
-                    :to="backTo"
-                />
+                <q-btn color="primary" flat :label="t('templateDaysList.backToList')" :to="backTo" />
             </template>
         </q-banner>
 
@@ -25,20 +12,10 @@
             <AppCardSection :label="t('templateDaysList.detailsSection')">
                 <q-form @submit.prevent="onSaveNameSubmit">
                     <AppFormStack>
-                        <q-input
-                            v-model="editName"
-                            outlined
-                            :label="t('templateDaysList.name')"
-                            :disable="isSavingName"
-                        />
-                        <q-btn
-                            color="primary"
-                            type="submit"
-                            :label="t('templateDaysList.saveChanges')"
-                            :loading="isSavingName"
-                            :disable="isSavingName"
-                            class="self-start"
-                        />
+                        <q-input v-model="editName" outlined :label="t('templateDaysList.name')"
+                            :disable="isSavingName" />
+                        <q-btn color="primary" type="submit" :label="t('templateDaysList.saveChanges')"
+                            :loading="isSavingName" :disable="isSavingName" class="self-start" />
                     </AppFormStack>
                 </q-form>
             </AppCardSection>
@@ -48,40 +25,20 @@
                     {{ t("templateDaysList.slotCalendarHint") }}
                 </div>
                 <div class="template-day-slot-calendar">
-                    <QCalendarDay
-                        v-model="slotCalendarDateStr"
-                        view="day"
-                        bordered
-                        no-header
-                        :locale="slotCalendarDateLocale"
-                        hour24-format
-                        interval-minutes="30"
-                        interval-count="48"
-                        interval-height="22"
-                        :use-navigation="false"
-                        class="template-day-slot-calendar-surface"
-                        @click-time="onSlotCalendarClickTime"
-                    >
+                    <QCalendarDay v-model="slotCalendarDateStr" view="day" bordered no-header
+                        :locale="slotCalendarDateLocale" hour24-format interval-minutes="30" interval-count="48"
+                        interval-height="22" :use-navigation="false" class="template-day-slot-calendar-surface"
+                        @click-time="onSlotCalendarClickTime">
                         <template #day-body="{ scope }">
                             <div class="template-day-slot-cal-day-body">
-                                <div
-                                    v-for="ev in slotCalendarEventsForScope(scope)"
-                                    :key="ev.id"
-                                    class="template-day-slot-cal-event-wrap"
-                                    :style="slotEventPositionStyle(scope, ev)"
-                                >
-                                    <q-btn
-                                        dense
-                                        no-caps
-                                        padding="xs sm"
-                                        outline
-                                        color="primary"
+                                <div v-for="ev in slotCalendarEventsForScope(scope)" :key="ev.id"
+                                    class="template-day-slot-cal-event-wrap" :style="slotEventPositionStyle(scope, ev)">
+                                    <q-btn dense no-caps padding="xs sm" outline color="primary"
                                         class="template-day-slot-cal-event-btn full-width text-left"
-                                        @click.stop="openEditSlotDialogByEventId(ev.id)"
-                                    >
+                                        @click.stop="openEditSlotDialogByEventId(ev.id)">
                                         <span class="ellipsis block">{{
                                             ev.title
-                                        }}</span>
+                                            }}</span>
                                     </q-btn>
                                 </div>
                             </div>
@@ -92,11 +49,7 @@
         </template>
     </AppEntityEditPageLayout>
 
-    <q-dialog
-        v-model="slotDialogOpen"
-        persistent
-        @show="onSlotDialogShow"
-    >
+    <q-dialog v-model="slotDialogOpen" persistent @show="onSlotDialogShow">
         <q-card style="min-width: 480px; max-width: 600px">
             <q-card-section class="q-pb-none">
                 <div class="text-h6">
@@ -109,18 +62,10 @@
             </q-card-section>
 
             <q-card-section>
-                <AppTemplateDaySlotForm
-                    ref="templateDaySlotFormRef"
-                    v-model="slotForm"
-                    :program-id="programId"
-                    :editing-slot-id="editingSlotId"
-                    :ticket-type-options="ticketTypeOptions"
-                    :is-saving-slot="isSavingSlot"
-                    :is-deleting-slot="isDeletingSlot"
-                    @submit="submitSlotDialog"
-                    @cancel="closeSlotDialog"
-                    @delete-request="confirmDeleteSlotFromDialog"
-                />
+                <AppTemplateDaySlotForm ref="templateDaySlotFormRef" v-model="slotForm" :program-id="programId"
+                    :editing-slot-id="editingSlotId" :ticket-type-options="ticketTypeOptions"
+                    :is-saving-slot="isSavingSlot" :is-deleting-slot="isDeletingSlot" @submit="submitSlotDialog"
+                    @cancel="closeSlotDialog" @delete-request="confirmDeleteSlotFromDialog" />
             </q-card-section>
         </q-card>
     </q-dialog>
@@ -400,7 +345,7 @@ const slotCalendarEvents = computed<SlotCalendarEvent[]>(() => {
         }
         const routeId =
             slot.water_route_id != null &&
-            String(slot.water_route_id).trim() !== ""
+                String(slot.water_route_id).trim() !== ""
                 ? String(slot.water_route_id)
                 : null;
         const rawDur = routeId ? durByRoute.get(routeId) : undefined;
@@ -752,8 +697,7 @@ async function submitSlotDialog(closeAfter: boolean): Promise<void> {
 }
 
 .template-day-slot-calendar-surface :deep(.q-calendar-day__day-interval),
-.template-day-slot-calendar-surface
-    :deep(.q-calendar-day__day-interval--section) {
+.template-day-slot-calendar-surface :deep(.q-calendar-day__day-interval--section) {
     cursor: pointer;
 }
 

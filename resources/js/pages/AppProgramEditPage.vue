@@ -1,7 +1,6 @@
 <template>
     <q-page class="q-pa-md">
-        <AppPageHeader :title="t('programsEdit.title')" :description="t('programsEdit.subtitle')"
-            description-size="body2" />
+        <AppPageHeader :title="t('programsEdit.title')" />
 
         <AppAlertBanner v-if="showNotFound" variant="error">
             {{ t("programsEdit.notFound") }}
@@ -103,15 +102,11 @@
 
                     <AppImageUploadField ref="imageUploadField" :label="t('programsCreate.images')"
                         :disabled="isSubmitting" accept="image/jpeg,image/png,image/webp"
-                        :existing-image-url="currentProgramBannerUrl"
-                        :existing-image-caption="t('programsEdit.currentBannerCaption')"
-                        :presign-url="presignUpload.url()" />
+                        :existing-image-url="currentProgramBannerUrl" :presign-url="presignUpload.url()" />
 
                     <div class="row q-gutter-sm">
                         <q-btn color="primary" type="submit" :loading="isSubmitting"
                             :disable="isSubmitting || showNotFound" :label="t('programsEdit.submit')" />
-                        <q-btn flat color="primary" :disable="isSubmitting" :label="t('common.programs')"
-                            @click="goToProgramsList" />
                     </div>
                 </AppFormStack>
             </q-form>
@@ -145,7 +140,7 @@
 <script setup lang="ts">
 import { useForm } from "vee-validate";
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import { useQuasar } from "quasar";
 import { computed, ref, watch, nextTick } from "vue";
 import { useLiveQuery } from "@tanstack/vue-db";
@@ -180,7 +175,6 @@ import {
 
 const { t } = useI18n();
 const route = useRoute();
-const router = useRouter();
 const $q = useQuasar();
 const programsCollection = powersync.collections.programs;
 const programUsersCollection = powersync.collections.program_user;
@@ -425,10 +419,6 @@ watch(
     },
     { immediate: true },
 );
-
-function goToProgramsList() {
-    void router.push({ name: "programs.list" });
-}
 
 async function onInviteSubmit() {
     inviteError.value = "";

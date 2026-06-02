@@ -1,56 +1,31 @@
 <template>
     <AppEntityIndexPageLayout>
         <template #header>
-            <AppPageHeader
-                :title="t('ticketTypesList.title')"
-                :description="t('ticketTypesList.description')"
-            >
+            <AppPageHeader :title="t('ticketTypesList.title')">
                 <template #actions>
-                    <q-btn
-                        color="primary"
-                        icon="add"
-                        :label="t('ticketTypesList.addType')"
-                        @click="ticketTypeModalRef?.openCreateModal()"
-                    />
+                    <q-btn color="primary" icon="add" :label="t('ticketTypesList.addType')"
+                        @click="ticketTypeModalRef?.openCreateModal()" />
                 </template>
             </AppPageHeader>
         </template>
 
         <AppEntityList>
-            <AppEmptyListRow
-                :show="ticketTypes.length === 0"
-                :message="t('ticketTypesList.empty')"
-            />
-            <q-item
-                v-for="row in ticketTypes"
-                :key="String(row.id)"
-                class="q-pa-md"
-            >
+            <AppEmptyListRow :show="ticketTypes.length === 0" :message="t('ticketTypesList.empty')" />
+            <q-item v-for="row in ticketTypes" :key="String(row.id)" class="q-pa-md">
                 <q-item-section>
                     <q-item-label class="text-h6">{{
                         row.title
-                    }}</q-item-label>
+                        }}</q-item-label>
                     <q-item-label caption>
                         {{ summaryLine(row) }}
                     </q-item-label>
                 </q-item-section>
                 <q-item-section side>
                     <div class="column q-gutter-xs items-end">
-                        <q-btn
-                            color="primary"
-                            outline
-                            dense
-                            :label="t('common.edit')"
-                            @click="() => ticketTypeModalRef?.openEditModal(row)"
-                        />
-                        <q-btn
-                            flat
-                            dense
-                            color="negative"
-                            icon="delete"
-                            :label="t('ticketTypesList.delete')"
-                            @click="() => confirmDelete(row)"
-                        />
+                        <q-btn color="primary" outline dense :label="t('common.edit')"
+                            @click="() => ticketTypeModalRef?.openEditModal(row)" />
+                        <q-btn flat dense color="negative" icon="delete" :label="t('ticketTypesList.delete')"
+                            @click="() => confirmDelete(row)" />
                     </div>
                 </q-item-section>
             </q-item>

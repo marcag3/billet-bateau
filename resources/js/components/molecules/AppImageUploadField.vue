@@ -1,39 +1,98 @@
 <template>
-    <div class="app-image-upload-field q-gutter-y-sm">
-        <div v-if="showExistingRemotePreview" class="row q-col-gutter-sm items-start">
-            <div class="col-auto">
-                <q-card flat bordered class="relative-position app-image-upload-field__thumb" :style="thumbCardStyle">
-                    <q-img :src="existingImageUrl" :ratio="previewRatio" fit="cover"
-                        class="app-image-upload-field__thumb-img" />
-                    <q-btn v-if="allowClearExisting" flat round dense icon="close" color="negative" size="sm"
-                        class="absolute-top-right q-ma-xs" :loading="clearExistingLoading"
-                        :disable="disabled || isUploading || clearExistingLoading" :aria-label="clearExistingAriaLabel"
-                        @click="emit('clear-existing')" />
-                    <q-card-section v-if="existingImageCaption.length > 0" class="text-caption text-grey-7">
-                        {{ existingImageCaption }}
-                    </q-card-section>
-                </q-card>
-            </div>
+    <div class="column q-gutter-y-xs">
+        <div v-if="label.length > 0" class="text-caption text-grey-7">
+            {{ label }}
         </div>
 
-        <q-file v-model="fileModel" outlined :dense="dense" :clearable="clearable" :label="label" :hint="hint"
-            :accept="accept" :disable="disabled || isUploading" :loading="isUploading" @clear="onFileClear" />
+        <q-card
+            flat
+            bordered
+            class="relative cursor-pointer"
+            :class="[
+                !hasPreview && 'border-dashed',
+                isDragOver && 'bg-blue-1',
+                (disabled || isUploading) && 'cursor-not-allowed opacity-70',
+            ]"
+            :style="cardStyle"
+            role="button"
+            tabindex="0"
+            :aria-label="dropzoneAriaLabel"
+            @click="onDropzoneClick"
+            @keydown.enter.prevent="onDropzoneKeydown"
+            @keydown.space.prevent="onDropzoneKeydown"
+            @dragover.prevent="onDragOver"
+            @dragleave.prevent="isDragOver = false"
+            @drop.prevent="onDrop"
+        >
+            <q-img
+                v-if="hasPreview"
+                :src="displayPreviewUrl"
+                :ratio="previewRatio"
+                :fit="compactPreview ? 'cover' : 'contain'"
+                :style="compactPreview ? undefined : previewStyle"
+                class="block"
+            />
 
-        <q-card v-if="localPreviewUrl.length > 0" flat bordered class="app-image-upload-field__preview-card"
-            :style="thumbCardStyle">
-            <q-img :src="localPreviewUrl" :ratio="previewRatio" fit="cover" />
-            <q-card-section v-if="previewCaption.length > 0" class="text-caption text-grey-7">
-                {{ previewCaption }}
-            </q-card-section>
+            <div
+                v-else
+                class="column items-center justify-center q-pa-md text-center"
+                :style="emptyStateStyle"
+            >
+                <q-icon name="image" size="md" color="grey-6" />
+                <div class="text-body2 q-mt-sm">{{ t('imageUploadField.emptyHint') }}</div>
+                <div v-if="hint.length > 0" class="text-caption text-grey-7 q-mt-xs">
+                    {{ hint }}
+                </div>
+            </div>
         </q-card>
+
+        <div v-if="fieldError.length > 0" class="text-negative text-caption" role="alert">
+            {{ fieldError }}
+        </div>
+
+        <div v-if="showActions" class="row q-gutter-sm">
+            <q-btn
+                flat
+                dense
+                no-caps
+                color="primary"
+                :label="t('imageUploadField.replace')"
+                :disable="disabled || isUploading"
+                @click.stop="openFilePicker"
+            />
+            <q-btn
+                v-if="showRemoveAction"
+                flat
+                dense
+                no-caps
+                color="negative"
+                :label="removeActionLabel"
+                :loading="clearExistingLoading"
+                :disable="disabled || isUploading || clearExistingLoading"
+                @click.stop="onRemove"
+            />
+        </div>
+
+        <q-file
+            ref="fileInputRef"
+            v-model="fileModel"
+            class="hidden"
+            :accept="accept"
+            :max-files="1"
+            :disable="disabled || isUploading"
+            @update:model-value="onFileModelUpdated"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, useTemplateRef } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { QFile } from 'quasar';
+import { fileMatchesAccept } from '../../utilities/image-accept';
+import { normalizeImageFiles } from '../../utilities/image-files';
 import type { ImageDirectUploadResult } from '../../utilities/image-uploader';
 import { uploadImageViaPresignedPut } from '../../utilities/image-uploader';
-import { normalizeImageFiles } from '../../utilities/image-files';
 
 const props = withDefaults(
     defineProps<{
@@ -41,18 +100,12 @@ const props = withDefaults(
         hint?: string;
         accept?: string;
         disabled?: boolean;
-        dense?: boolean;
-        /** Current remote image (shown when no new file is selected). */
         existingImageUrl?: string;
-        /** Optional caption under the existing remote preview (e.g. program edit). */
-        existingImageCaption?: string;
         presignUrl?: string;
         clearable?: boolean;
-        /** Optional preview dimensions for thumbnail-style UIs (e.g. boat type). */
         previewMaxWidthPx?: number;
-        /** Passed to `q-img` for crop box aspect. */
+        previewMaxHeightPx?: number;
         previewRatio?: number;
-        previewCaption?: string;
         allowClearExisting?: boolean;
         clearExistingLoading?: boolean;
         clearExistingAriaLabel?: string;
@@ -61,14 +114,12 @@ const props = withDefaults(
         hint: '',
         accept: 'image/jpeg,image/png,image/webp',
         disabled: false,
-        dense: false,
         existingImageUrl: '',
-        existingImageCaption: '',
         presignUrl: '',
         clearable: true,
         previewMaxWidthPx: 0,
+        previewMaxHeightPx: 240,
         previewRatio: 16 / 9,
-        previewCaption: '',
         allowClearExisting: false,
         clearExistingLoading: false,
         clearExistingAriaLabel: '',
@@ -82,58 +133,192 @@ const emit = defineEmits<{
     'clear-existing': [];
 }>();
 
+const { t } = useI18n();
+
+const fileInputRef = useTemplateRef<InstanceType<typeof QFile>>('fileInputRef');
 const fileModel = ref<File | File[] | null>(null);
+const pendingUploadFile = ref<File | null>(null);
+const pendingPreviewUrl = ref<string | null>(null);
 const isUploading = ref(false);
-const localObjectUrl = ref<string | null>(null);
+const isDragOver = ref(false);
+const fieldError = ref('');
 
-const thumbCardStyle = computed(() => {
-    const w = props.previewMaxWidthPx;
-    if (typeof w === 'number' && w > 0) {
-        return { maxWidth: `${String(w)}px` };
-    }
-    return {};
-});
-
-const localPreviewUrl = computed(() =>
-    localObjectUrl.value != null && localObjectUrl.value.length > 0
-        ? localObjectUrl.value
-        : '',
+const compactPreview = computed(
+    () => typeof props.previewMaxWidthPx === 'number' && props.previewMaxWidthPx > 0,
 );
 
-const showExistingRemotePreview = computed(() => {
-    if (props.existingImageUrl.length === 0) {
-        return false;
+const cardStyle = computed(() => {
+    const style: Record<string, string> = {};
+    const width = props.previewMaxWidthPx;
+    if (typeof width === 'number' && width > 0) {
+        style.maxWidth = `${String(width)}px`;
     }
-    return localObjectUrl.value == null;
+
+    return style;
 });
 
-function revokeLocalPreview(): void {
-    if (localObjectUrl.value != null) {
-        URL.revokeObjectURL(localObjectUrl.value);
-        localObjectUrl.value = null;
+const previewStyle = computed(() => ({
+    height: `${String(props.previewMaxHeightPx)}px`,
+    width: '100%',
+}));
+
+const emptyStateStyle = computed(() => {
+    if (compactPreview.value) {
+        const size = `${String(props.previewMaxWidthPx)}px`;
+        return { width: size, minHeight: size };
+    }
+
+    return {
+        height: `${String(props.previewMaxHeightPx)}px`,
+        width: '100%',
+    };
+});
+
+const hasPendingSelection = computed(() => pendingUploadFile.value != null);
+
+const displayPreviewUrl = computed(() => {
+    if (pendingPreviewUrl.value != null && pendingPreviewUrl.value.length > 0) {
+        return pendingPreviewUrl.value;
+    }
+
+    return props.existingImageUrl;
+});
+
+const hasPreview = computed(() => displayPreviewUrl.value.length > 0);
+
+const dropzoneAriaLabel = computed(() => {
+    if (props.label.length > 0) {
+        return props.label;
+    }
+
+    return t('imageUploadField.emptyHint');
+});
+
+const showActions = computed(
+    () => hasPreview.value || hasPendingSelection.value || props.existingImageUrl.length > 0,
+);
+
+const showRemoveAction = computed(() => {
+    if (hasPendingSelection.value) {
+        return props.clearable;
+    }
+
+    return props.allowClearExisting && props.existingImageUrl.length > 0;
+});
+
+const removeActionLabel = computed(() => {
+    if (hasPendingSelection.value) {
+        return t('imageUploadField.clear');
+    }
+
+    if (props.clearExistingAriaLabel.length > 0) {
+        return props.clearExistingAriaLabel;
+    }
+
+    return t('imageUploadField.remove');
+});
+
+function setFieldError(message: string): void {
+    fieldError.value = message;
+    emit('error', message);
+}
+
+function clearFieldError(): void {
+    fieldError.value = '';
+}
+
+function revokePendingPreview(): void {
+    if (pendingPreviewUrl.value != null) {
+        URL.revokeObjectURL(pendingPreviewUrl.value);
+        pendingPreviewUrl.value = null;
     }
 }
 
-function syncLocalPreviewFromModel(): void {
-    revokeLocalPreview();
-    const files = normalizeImageFiles(fileModel.value);
-    const first = files[0];
-    if (first instanceof File) {
-        localObjectUrl.value = URL.createObjectURL(first);
-    }
+function clearPendingSelection(): void {
+    pendingUploadFile.value = null;
+    revokePendingPreview();
 }
 
-watch(fileModel, () => {
-    syncLocalPreviewFromModel();
-});
+function setPendingFile(file: File): void {
+    clearPendingSelection();
+    pendingUploadFile.value = file;
+    pendingPreviewUrl.value = URL.createObjectURL(file);
+}
 
-onBeforeUnmount(() => {
-    revokeLocalPreview();
-});
+function openFilePicker(): void {
+    if (props.disabled || isUploading.value) {
+        return;
+    }
 
-function onFileClear(): void {
-    revokeLocalPreview();
-    emit('cleared');
+    fileInputRef.value?.pickFiles();
+}
+
+function onDropzoneClick(): void {
+    if (props.disabled || isUploading.value) {
+        return;
+    }
+
+    openFilePicker();
+}
+
+function onDropzoneKeydown(): void {
+    onDropzoneClick();
+}
+
+function onDragOver(): void {
+    if (props.disabled || isUploading.value) {
+        return;
+    }
+
+    isDragOver.value = true;
+}
+
+function ingestFile(file: File): void {
+    if (!fileMatchesAccept(file, props.accept)) {
+        setFieldError(t('imageUploadField.invalidType'));
+        return;
+    }
+
+    clearFieldError();
+    setPendingFile(file);
+    fileModel.value = null;
+}
+
+function onFileModelUpdated(value: File | File[] | null): void {
+    const files = normalizeImageFiles(value);
+    const file = files[0];
+    if (!(file instanceof File)) {
+        return;
+    }
+
+    ingestFile(file);
+}
+
+function onDrop(event: DragEvent): void {
+    isDragOver.value = false;
+
+    if (props.disabled || isUploading.value) {
+        return;
+    }
+
+    const file = event.dataTransfer?.files.item(0);
+    if (!(file instanceof File)) {
+        return;
+    }
+
+    ingestFile(file);
+}
+
+function onRemove(): void {
+    if (hasPendingSelection.value) {
+        clearPendingSelection();
+        fileModel.value = null;
+        clearFieldError();
+        emit('cleared');
+        return;
+    }
+
+    emit('clear-existing');
 }
 
 async function runUpload(presignUrl: string): Promise<ImageDirectUploadResult | null> {
@@ -141,8 +326,7 @@ async function runUpload(presignUrl: string): Promise<ImageDirectUploadResult | 
         return null;
     }
 
-    const files = normalizeImageFiles(fileModel.value);
-    const file = files[0];
+    const file = pendingUploadFile.value;
     if (!(file instanceof File)) {
         return null;
     }
@@ -155,22 +339,19 @@ async function runUpload(presignUrl: string): Promise<ImageDirectUploadResult | 
     try {
         const result = await uploadImageViaPresignedPut(file, presignUrl);
         emit('uploaded', result);
+        clearPendingSelection();
         fileModel.value = null;
-        revokeLocalPreview();
+        clearFieldError();
         return result;
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
-        emit('error', message);
+        setFieldError(message);
         throw error;
     } finally {
         isUploading.value = false;
     }
 }
 
-/**
- * Uploads the currently selected file on demand.
- * The component does not auto-upload on file selection.
- */
 async function uploadIfNeeded(override?: {
     presignUrl: string;
 }): Promise<ImageDirectUploadResult | null> {
@@ -179,26 +360,17 @@ async function uploadIfNeeded(override?: {
 }
 
 function clearSelection(): void {
+    clearPendingSelection();
     fileModel.value = null;
-    revokeLocalPreview();
+    clearFieldError();
 }
+
+onBeforeUnmount(() => {
+    clearPendingSelection();
+});
 
 defineExpose({
     uploadIfNeeded,
     clearSelection,
 });
 </script>
-
-<style scoped>
-.app-image-upload-field__thumb {
-    width: 100%;
-}
-
-.app-image-upload-field__thumb-img {
-    width: 100%;
-}
-
-.app-image-upload-field__preview-card {
-    overflow: hidden;
-}
-</style>

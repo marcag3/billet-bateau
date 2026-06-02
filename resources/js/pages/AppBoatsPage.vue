@@ -1,64 +1,31 @@
 <template>
     <AppEntityIndexPageLayout>
         <template #header>
-            <AppPageHeader
-                :title="t('boatsList.title')"
-                :description="t('boatsList.description')"
-            >
+            <AppPageHeader :title="t('boatsList.title')">
                 <template #actions>
-                    <q-btn
-                        color="primary"
-                        icon="add"
-                        :label="t('boatsList.addBoat')"
-                        :to="{ name: 'boats.create', params: { programId } }"
-                    />
+                    <q-btn color="primary" icon="add" :label="t('boatsList.addBoat')"
+                        :to="{ name: 'boats.create', params: { programId } }" />
                 </template>
             </AppPageHeader>
         </template>
 
         <div class="row q-col-gutter-md">
-            <AppEmptyListRow
-                class="col-12"
-                :show="boats.length === 0"
-                :message="t('boatsList.empty')"
-            />
-            <div
-                v-for="b in boats"
-                :key="String(b.id)"
-                class="col-12 col-sm-6 col-md-4"
-            >
-                <q-card
-                    class="boat-card cursor-pointer full-height column relative-position"
-                    role="button"
-                    tabindex="0"
-                    :aria-label="`${t('common.edit')}: ${boatDisplayTitle(b)}`"
-                    @click="goEdit(b)"
-                    @keydown.enter.prevent="goEdit(b)"
-                    @keydown.space.prevent="goEdit(b)"
-                >
-                    <q-img
-                        :src="boatTypeBannerUrl(b)"
-                        :style="boatBannerPlaceholderStyle(b)"
-                        fit="cover"
-                        ratio="1"
-                        spinner-color="primary"
-                        class="boat-card__img rounded-borders"
-                        :alt="boatDisplayTitle(b)"
-                    >
+            <AppEmptyListRow class="col-12" :show="boats.length === 0" :message="t('boatsList.empty')" />
+            <div v-for="b in boats" :key="String(b.id)" class="col-12 col-sm-6 col-md-4">
+                <q-card class="boat-card cursor-pointer full-height column relative-position" role="button" tabindex="0"
+                    :aria-label="`${t('common.edit')}: ${boatDisplayTitle(b)}`" @click="goEdit(b)"
+                    @keydown.enter.prevent="goEdit(b)" @keydown.space.prevent="goEdit(b)">
+                    <q-img :src="boatTypeBannerUrl(b)" :style="boatBannerPlaceholderStyle(b)" fit="cover" ratio="1"
+                        spinner-color="primary" class="boat-card__img rounded-borders" :alt="boatDisplayTitle(b)">
                         <div class="absolute-bottom">
                             <div class="text-h6">{{ boatDisplayTitle(b) }}</div>
-                            <div
-                                v-if="boatTypeSubtitle(b)"
-                                class="text-subtitle2"
-                            >
+                            <div v-if="boatTypeSubtitle(b)" class="text-subtitle2">
                                 {{ boatTypeSubtitle(b) }}
                             </div>
                         </div>
                     </q-img>
-                    <div
-                        class="boat-card__hint absolute-full flex flex-center text-white text-body1 text-weight-medium text-center q-px-md"
-                        aria-hidden="true"
-                    >
+                    <div class="boat-card__hint absolute-full flex flex-center text-white text-body1 text-weight-medium text-center q-px-md"
+                        aria-hidden="true">
                         {{ t("common.edit") }}
                     </div>
                 </q-card>

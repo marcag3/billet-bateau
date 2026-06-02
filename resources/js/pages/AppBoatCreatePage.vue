@@ -1,57 +1,22 @@
 <template>
-    <AppEntityCreatePageLayout
-        :title="t('boatsList.createPageTitle')"
-        :description="t('boatsList.createPageDescription')"
-        :back-to="backTo"
-        :back-label="t('boatsList.backToList')"
-    >
+    <AppEntityCreatePageLayout :title="t('boatsList.createPageTitle')" :back-to="backTo"
+        :back-label="t('boatsList.backToList')">
         <AppCardSection :label="t('boatsList.addNew')">
             <q-form @submit.prevent="onCreateSubmit">
                 <AppFormStack>
-                    <q-input
-                        v-model="createName"
-                        v-bind="createNameProps"
-                        outlined
-                        :label="t('boatsList.name')"
-                        :disable="isSubmitting"
-                    />
-                    <q-input
-                        v-model.number="createCapacity"
-                        v-bind="createCapacityProps"
-                        outlined
-                        type="number"
-                        :label="t('boatsList.capacity')"
-                        :hint="t('boatsList.capacityHint')"
-                        :disable="isSubmitting"
-                    />
-                    <q-input
-                        v-model="createNotes"
-                        v-bind="createNotesProps"
-                        type="textarea"
-                        autogrow
-                        outlined
-                        :label="t('boatsList.notes')"
-                        :disable="isSubmitting"
-                    />
-                    <AppBoatTypeSelectField
-                        v-model="createBoatTypeId"
-                        v-bind="createBoatTypeIdProps"
-                        :program-id="programId"
-                        :label="t('boatsList.boatType')"
-                        :disable="isSubmitting"
-                    />
-                    <q-btn
-                        color="primary"
-                        type="submit"
-                        :label="t('boatsList.create')"
-                        :loading="isSubmitting"
-                        :disable="
-                            !meta.valid ||
+                    <q-input v-model="createName" v-bind="createNameProps" outlined :label="t('boatsList.name')"
+                        :disable="isSubmitting" />
+                    <q-input v-model.number="createCapacity" v-bind="createCapacityProps" outlined type="number"
+                        :label="t('boatsList.capacity')" :hint="t('boatsList.capacityHint')" :disable="isSubmitting" />
+                    <q-input v-model="createNotes" v-bind="createNotesProps" type="textarea" autogrow outlined
+                        :label="t('boatsList.notes')" :disable="isSubmitting" />
+                    <AppBoatTypeSelectField v-model="createBoatTypeId" v-bind="createBoatTypeIdProps"
+                        :program-id="programId" :label="t('boatsList.boatType')" :disable="isSubmitting" />
+                    <q-btn color="primary" type="submit" :label="t('boatsList.create')" :loading="isSubmitting"
+                        :disable="!meta.valid ||
                             isSubmitting ||
                             programId.length === 0
-                        "
-                        class="self-start"
-                    />
+                            " class="self-start" />
                 </AppFormStack>
             </q-form>
         </AppCardSection>
@@ -132,7 +97,7 @@ const onCreateSubmit = handleSubmit(async (values: BoatCreateFormValues) => {
             }
             const boatTypeId =
                 values.boatTypeId != null &&
-                String(values.boatTypeId).length > 0
+                    String(values.boatTypeId).length > 0
                     ? String(values.boatTypeId)
                     : null;
             await col.insert({

@@ -1,64 +1,35 @@
 <template>
     <AppEntityIndexPageLayout>
         <template #header>
-            <AppPageHeader
-                :title="t('templateDaysList.title')"
-                :description="t('templateDaysList.description')"
-            >
+            <AppPageHeader :title="t('templateDaysList.title')">
                 <template #actions>
-                    <q-btn
-                        color="primary"
-                        icon="add"
-                        :label="t('templateDaysList.addTemplateDay')"
-                        :to="{
-                            name: 'template-days.create',
-                            params: { programId },
-                        }"
-                    />
+                    <q-btn color="primary" icon="add" :label="t('templateDaysList.addTemplateDay')" :to="{
+                        name: 'template-days.create',
+                        params: { programId },
+                    }" />
                 </template>
             </AppPageHeader>
         </template>
 
         <AppEntityList>
-            <AppEmptyListRow
-                :show="templateDays.length === 0"
-                :message="t('templateDaysList.empty')"
-            />
-            <q-item
-                v-for="td in templateDays"
-                :key="String(td.id)"
-                class="q-pa-md"
-            >
+            <AppEmptyListRow :show="templateDays.length === 0" :message="t('templateDaysList.empty')" />
+            <q-item v-for="td in templateDays" :key="String(td.id)" class="q-pa-md">
                 <q-item-section>
                     <q-item-label class="text-h6">{{
                         td.name ?? "Untitled"
-                    }}</q-item-label>
+                        }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
                     <div class="row q-gutter-xs">
-                        <q-btn
-                            flat
-                            round
-                            dense
-                            icon="edit"
-                            :aria-label="t('common.edit')"
-                            :to="{
-                                name: 'template-days.edit',
-                                params: {
-                                    programId: programId,
-                                    templateDayId: String(td.id),
-                                },
-                            }"
-                        />
-                        <q-btn
-                            flat
-                            round
-                            dense
-                            icon="delete"
-                            color="negative"
-                            :aria-label="t('templateDaysList.delete')"
-                            @click="confirmDeleteTemplateDay(td)"
-                        />
+                        <q-btn flat round dense icon="edit" :aria-label="t('common.edit')" :to="{
+                            name: 'template-days.edit',
+                            params: {
+                                programId: programId,
+                                templateDayId: String(td.id),
+                            },
+                        }" />
+                        <q-btn flat round dense icon="delete" color="negative"
+                            :aria-label="t('templateDaysList.delete')" @click="confirmDeleteTemplateDay(td)" />
                     </div>
                 </q-item-section>
             </q-item>

@@ -47,7 +47,6 @@
                 ref="bannerUploadField"
                 :label="t('productsList.image')"
                 :hint="t('productsList.imageHint')"
-                dense
                 :disabled="fieldsDisabled"
                 accept="image/jpeg,image/png,image/webp"
                 :existing-image-url="existingBannerUrl"

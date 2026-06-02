@@ -10,15 +10,10 @@
             :disable="isSubmitting"
         />
 
-        <div v-if="isEditMode && bannerPreviewUrl.length > 0" class="text-caption text-grey-7">
-            {{ t('boatTypesList.existingImages') }}
-        </div>
-
         <AppImageUploadField
             ref="bannerUploadField"
             :label="t('boatTypesList.images')"
             :hint="isEditMode ? t('boatTypesList.imagesEditHint') : t('boatTypesList.imagesCreateHint')"
-            dense
             :disabled="isSubmitting"
             accept="image/jpeg,image/png,image/webp"
             :existing-image-url="bannerPreviewUrl"

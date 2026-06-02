@@ -1,90 +1,43 @@
 <template>
     <AppEntityIndexPageLayout>
         <template #header>
-            <AppPageHeader
-                :title="t('tripsCalendar.title')"
-                :description="t('tripsCalendar.description')"
-            >
+            <AppPageHeader :title="t('tripsCalendar.title')">
                 <template #actions>
-                    <q-btn
-                        color="primary"
-                        icon="add"
-                        :label="t('tripsList.addTrip')"
-                        @click="tripModalRef?.openCreateModal()"
-                    />
+                    <q-btn color="primary" icon="add" :label="t('tripsList.addTrip')"
+                        @click="tripModalRef?.openCreateModal()" />
                 </template>
             </AppPageHeader>
         </template>
 
         <div class="trips-calendar-toolbar row items-center no-wrap q-mb-sm q-gutter-xs">
             <template v-if="tripsViewMode !== 'list'">
-                <q-btn
-                    flat
-                    round
-                    dense
-                    icon="chevron_left"
-                    :aria-label="t('tripsCalendar.prev')"
-                    :disable="!canCalendarPrev"
-                    @click="calendarPrev"
-                />
-                <q-btn
-                    flat
-                    dense
-                    no-caps
-                    :label="t('tripsCalendar.goToday')"
-                    @click="calendarToday"
-                />
-                <q-btn
-                    flat
-                    round
-                    dense
-                    icon="chevron_right"
-                    :aria-label="t('tripsCalendar.next')"
-                    :disable="!canCalendarNext"
-                    @click="calendarNext"
-                />
-                <div
-                    class="col text-center text-subtitle1 text-weight-medium ellipsis"
-                >
+                <q-btn flat round dense icon="chevron_left" :aria-label="t('tripsCalendar.prev')"
+                    :disable="!canCalendarPrev" @click="calendarPrev" />
+                <q-btn flat dense no-caps :label="t('tripsCalendar.goToday')" @click="calendarToday" />
+                <q-btn flat round dense icon="chevron_right" :aria-label="t('tripsCalendar.next')"
+                    :disable="!canCalendarNext" @click="calendarNext" />
+                <div class="col text-center text-subtitle1 text-weight-medium ellipsis">
                     {{ calendarTitle }}
                 </div>
             </template>
             <div v-else class="col" />
-            <q-btn-toggle
-                v-model="tripsViewMode"
-                no-caps
-                unelevated
-                toggle-color="primary"
-                color="grey-3"
-                text-color="grey-8"
-                :options="viewToggleOptions"
-            />
+            <q-btn-toggle v-model="tripsViewMode" no-caps unelevated toggle-color="primary" color="grey-3"
+                text-color="grey-8" :options="viewToggleOptions" />
         </div>
 
         <AppEntityList v-if="tripsViewMode === 'list'">
-            <AppEmptyListRow
-                :show="trips.length === 0"
-                :message="t('tripsList.empty')"
-            />
-            <q-item
-                v-for="tr in trips"
-                :key="String(tr.id)"
-                class="q-pa-md"
-            >
+            <AppEmptyListRow :show="trips.length === 0" :message="t('tripsList.empty')" />
+            <q-item v-for="tr in trips" :key="String(tr.id)" class="q-pa-md">
                 <q-item-section v-if="tripListProductImageUrl(tr).length > 0" avatar>
                     <q-avatar rounded size="48px">
-                        <q-img
-                            :src="tripListProductImageUrl(tr)"
-                            ratio="1"
-                            fit="cover"
-                            :alt="t('productsList.image')"
-                        />
+                        <q-img :src="tripListProductImageUrl(tr)" ratio="1" fit="cover"
+                            :alt="t('productsList.image')" />
                     </q-avatar>
                 </q-item-section>
                 <q-item-section>
                     <q-item-label class="text-h6">{{
                         productDisplayName(tr)
-                    }}</q-item-label>
+                        }}</q-item-label>
                     <q-item-label caption>
                         {{ t("tripsList.scheduledDeparture") }}:
                         {{ formatDeparture(tr) }}
@@ -102,70 +55,35 @@
                     </q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                    <q-btn
-                        color="primary"
-                        outline
-                        dense
-                        :label="t('common.edit')"
-                        @click="tripModalRef?.openEditModal(String(tr.id))"
-                    />
+                    <q-btn color="primary" outline dense :label="t('common.edit')"
+                        @click="tripModalRef?.openEditModal(String(tr.id))" />
                 </q-item-section>
             </q-item>
         </AppEntityList>
 
         <div v-if="tripsViewMode !== 'list'" class="trips-calendar">
-            <QCalendarDay
-                v-if="tripsViewMode !== 'month'"
-                ref="dayCalendarRef"
-                v-model="selectedDateStr"
-                :view="tripsViewMode === 'day' ? 'day' : 'week'"
-                bordered
-                :locale="dateLocale"
-                :weekdays="calendarWeekdays"
-                hour24-format
-                interval-minutes="30"
-                interval-count="48"
-                interval-height="22"
-                date-header="stacked"
-                column-header-after
-                :use-navigation="false"
-                class="trips-calendar-surface"
-                @click-time="onDayCalendarClickTime"
-            >
+            <QCalendarDay v-if="tripsViewMode !== 'month'" ref="dayCalendarRef" v-model="selectedDateStr"
+                :view="tripsViewMode === 'day' ? 'day' : 'week'" bordered :locale="dateLocale"
+                :weekdays="calendarWeekdays" hour24-format interval-minutes="30" interval-count="48"
+                interval-height="22" date-header="stacked" column-header-after :use-navigation="false"
+                class="trips-calendar-surface" @click-time="onDayCalendarClickTime">
                 <template #column-header-after="{ scope }">
-                    <div
-                        v-if="isValidServiceDateYmd(scope.timestamp.date)"
-                        class="trips-cal-col-header-after q-px-xs q-pb-xs"
-                    >
-                        <AppTripsCalendarDayHeaderActions
-                            :disabled="programId.length === 0"
-                            :template-days="templateDayMenuOptions"
-                            @apply="
+                    <div v-if="isValidServiceDateYmd(scope.timestamp.date)"
+                        class="trips-cal-col-header-after q-px-xs q-pb-xs">
+                        <AppTripsCalendarDayHeaderActions :disabled="programId.length === 0"
+                            :template-days="templateDayMenuOptions" @apply="
                                 onApplyTemplateDay($event, scope.timestamp.date)
-                            "
-                            @clear-unbooked="
+                                " @clear-unbooked="
                                 confirmClearUnbookedForDay(scope.timestamp.date)
-                            "
-                        />
+                                " />
                     </div>
                 </template>
                 <template #day-body="{ scope }">
                     <div class="trips-cal-day-body">
-                        <div
-                            v-for="ev in eventsForDay(scope.timestamp.date)"
-                            :key="ev.id"
-                            class="trips-cal-event-wrap"
-                            :style="eventPositionStyle(scope, ev)"
-                        >
-                            <q-btn
-                                dense
-                                no-caps
-                                padding="xs sm"
-                                outline
-                                color="primary"
-                                class="trips-cal-event-btn full-width text-left"
-                                @click.stop="onTripClick(ev.id)"
-                            >
+                        <div v-for="ev in eventsForDay(scope.timestamp.date)" :key="ev.id" class="trips-cal-event-wrap"
+                            :style="eventPositionStyle(scope, ev)">
+                            <q-btn dense no-caps padding="xs sm" outline color="primary"
+                                class="trips-cal-event-btn full-width text-left" @click.stop="onTripClick(ev.id)">
                                 <span class="ellipsis block">{{ ev.title }}</span>
                             </q-btn>
                         </div>
@@ -173,33 +91,14 @@
                 </template>
             </QCalendarDay>
 
-            <QCalendarMonth
-                v-else
-                ref="monthCalendarRef"
-                v-model="selectedDateStr"
-                bordered
-                :locale="dateLocale"
-                :weekdays="calendarWeekdays"
-                :use-navigation="false"
-                class="trips-calendar-surface"
-                @click-day="onMonthCalendarClickDay"
-            >
+            <QCalendarMonth v-else ref="monthCalendarRef" v-model="selectedDateStr" bordered :locale="dateLocale"
+                :weekdays="calendarWeekdays" :use-navigation="false" class="trips-calendar-surface"
+                @click-day="onMonthCalendarClickDay">
                 <template #day="{ scope }">
-                    <div
-                        v-if="!scope.outside"
-                        class="trips-cal-month-day column q-gutter-xs q-pa-xs"
-                    >
-                        <q-btn
-                            v-for="ev in eventsForDay(scope.timestamp.date)"
-                            :key="ev.id"
-                            dense
-                            no-caps
-                            size="sm"
-                            outline
-                            color="primary"
-                            class="trips-cal-month-event full-width text-left"
-                            @click.stop="onTripClick(ev.id)"
-                        >
+                    <div v-if="!scope.outside" class="trips-cal-month-day column q-gutter-xs q-pa-xs">
+                        <q-btn v-for="ev in eventsForDay(scope.timestamp.date)" :key="ev.id" dense no-caps size="sm"
+                            outline color="primary" class="trips-cal-month-event full-width text-left"
+                            @click.stop="onTripClick(ev.id)">
                             <span class="ellipsis block">{{ ev.title }}</span>
                         </q-btn>
                     </div>
@@ -981,9 +880,9 @@ async function applyTemplateDayFromSlots(
             message:
                 skippedCount > 0
                     ? t("tripsCalendar.applyTemplateDayPartialSkipped", {
-                          created: createdCount,
-                          skipped: skippedCount,
-                      })
+                        created: createdCount,
+                        skipped: skippedCount,
+                    })
                     : t("tripsCalendar.applyTemplateDayEmptySlots"),
         });
         return;

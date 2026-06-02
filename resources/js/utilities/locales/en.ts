@@ -48,6 +48,13 @@ export default {
         validationRequired: "This field is required.",
         validationEmail: "Enter a valid email address.",
     },
+    imageUploadField: {
+        emptyHint: "Drop an image here or click to upload",
+        replace: "Replace",
+        remove: "Remove",
+        clear: "Clear selection",
+        invalidType: "Choose a JPEG, PNG, or WebP image.",
+    },
     setup: {
         title: "First-time setup",
         subtitle: "Create your first administrator account.",
@@ -62,15 +69,11 @@ export default {
 
     programsEdit: {
         title: "Edit program",
-        subtitle:
-            "Update details, URL slug, dates, and public visibility. The Archived tab lists programs whose end date is before today. Changes sync through PowerSync; new images upload to the server.",
         submit: "Save changes",
         success: "Program updated.",
         notFound:
             "This program could not be loaded. It may have been removed or you may not have access.",
         backToList: "Back to programs",
-        currentBannerCaption:
-            "Current program banner. Choose a new file above to replace it.",
         startDate: "Program start date",
         endDate: "Program end date",
         bookingQuestions: "Additional booking questions",
@@ -157,14 +160,6 @@ export default {
         rowPendingSync: "Pending server sync",
         outboxCommitFailed:
             "Could not sync a pending change to the server yet. Your edit is still queued locally; you can try again.",
-    },
-    legacyDashboard: {
-        featureRichDescription:
-            "This application bundle is intentionally feature-rich and can grow independently from the public site.",
-        operationsTitle: "Operations",
-        operationsSubtitle: "Manage crossings, boats, and capacity.",
-        analyticsTitle: "Analytics",
-        analyticsSubtitle: "Track bookings and conversion trends.",
     },
     publicHome: {
         description: "Browse programs and find your next adventure.",
