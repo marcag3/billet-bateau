@@ -1,75 +1,28 @@
 <template>
     <div class="app-image-upload-field q-gutter-y-sm">
-        <div
-            v-if="showExistingRemotePreview"
-            class="row q-col-gutter-sm items-start"
-        >
+        <div v-if="showExistingRemotePreview" class="row q-col-gutter-sm items-start">
             <div class="col-auto">
-                <q-card
-                    flat
-                    bordered
-                    class="relative-position app-image-upload-field__thumb"
-                    :style="thumbCardStyle"
-                >
-                    <q-img
-                        :src="existingImageUrl"
-                        :ratio="previewRatio"
-                        fit="cover"
-                        class="app-image-upload-field__thumb-img"
-                    />
-                    <q-btn
-                        v-if="allowClearExisting"
-                        flat
-                        round
-                        dense
-                        icon="close"
-                        color="negative"
-                        size="sm"
-                        class="absolute-top-right q-ma-xs"
-                        :loading="clearExistingLoading"
-                        :disable="disabled || isUploading || clearExistingLoading"
-                        :aria-label="clearExistingAriaLabel"
-                        @click="emit('clear-existing')"
-                    />
-                    <q-card-section
-                        v-if="existingImageCaption.length > 0"
-                        class="text-caption text-grey-7"
-                    >
+                <q-card flat bordered class="relative-position app-image-upload-field__thumb" :style="thumbCardStyle">
+                    <q-img :src="existingImageUrl" :ratio="previewRatio" fit="cover"
+                        class="app-image-upload-field__thumb-img" />
+                    <q-btn v-if="allowClearExisting" flat round dense icon="close" color="negative" size="sm"
+                        class="absolute-top-right q-ma-xs" :loading="clearExistingLoading"
+                        :disable="disabled || isUploading || clearExistingLoading" :aria-label="clearExistingAriaLabel"
+                        @click="emit('clear-existing')" />
+                    <q-card-section v-if="existingImageCaption.length > 0" class="text-caption text-grey-7">
                         {{ existingImageCaption }}
                     </q-card-section>
                 </q-card>
             </div>
         </div>
 
-        <q-file
-            v-model="fileModel"
-            outlined
-            :dense="dense"
-            :clearable="clearable"
-            :label="label"
-            :hint="hint"
-            :accept="accept"
-            :disable="disabled || isUploading"
-            :loading="isUploading"
-            @clear="onFileClear"
-        />
+        <q-file v-model="fileModel" outlined :dense="dense" :clearable="clearable" :label="label" :hint="hint"
+            :accept="accept" :disable="disabled || isUploading" :loading="isUploading" @clear="onFileClear" />
 
-        <q-card
-            v-if="localPreviewUrl.length > 0"
-            flat
-            bordered
-            class="app-image-upload-field__preview-card"
-            :style="thumbCardStyle"
-        >
-            <q-img
-                :src="localPreviewUrl"
-                :ratio="previewRatio"
-                fit="cover"
-            />
-            <q-card-section
-                v-if="previewCaption.length > 0"
-                class="text-caption text-grey-7"
-            >
+        <q-card v-if="localPreviewUrl.length > 0" flat bordered class="app-image-upload-field__preview-card"
+            :style="thumbCardStyle">
+            <q-img :src="localPreviewUrl" :ratio="previewRatio" fit="cover" />
+            <q-card-section v-if="previewCaption.length > 0" class="text-caption text-grey-7">
                 {{ previewCaption }}
             </q-card-section>
         </q-card>
@@ -240,9 +193,11 @@ defineExpose({
 .app-image-upload-field__thumb {
     width: 100%;
 }
+
 .app-image-upload-field__thumb-img {
     width: 100%;
 }
+
 .app-image-upload-field__preview-card {
     overflow: hidden;
 }

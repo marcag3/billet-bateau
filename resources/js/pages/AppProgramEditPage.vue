@@ -136,8 +136,7 @@
             </q-form>
         </AppCardSection>
 
-        <AppAlertBanner v-else-if="hasBootstrapped && !canInviteAdmins && !showNotFound" variant="info"
-            class="q-mt-lg">
+        <AppAlertBanner v-else-if="hasBootstrapped && !canInviteAdmins && !showNotFound" variant="info" class="q-mt-lg">
             {{ t("programsInvite.notOwner") }}
         </AppAlertBanner>
     </q-page>
