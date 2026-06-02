@@ -14,39 +14,6 @@ class ProgramInvitationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guest_cannot_fetch_invitation_eligibility(): void
-    {
-        $owner = User::factory()->create();
-        $program = Program::factory()->withOwner($owner)->create();
-
-        $this->getJson("/api/programs/{$program->id}/invitation-eligibility")
-            ->assertUnauthorized();
-    }
-
-    public function test_owner_eligibility_reports_can_invite(): void
-    {
-        $owner = User::factory()->create();
-        $program = Program::factory()->withOwner($owner)->create();
-
-        $this->actingAs($owner)
-            ->getJson("/api/programs/{$program->id}/invitation-eligibility")
-            ->assertOk()
-            ->assertJsonPath('data.can_invite_admins', true);
-    }
-
-    public function test_admin_eligibility_reports_cannot_invite(): void
-    {
-        $owner = User::factory()->create();
-        $admin = User::factory()->create();
-        $program = Program::factory()->withOwner($owner)->create();
-        $program->users()->attach((string) $admin->getAuthIdentifier(), ['role' => 'admin']);
-
-        $this->actingAs($admin)
-            ->getJson("/api/programs/{$program->id}/invitation-eligibility")
-            ->assertOk()
-            ->assertJsonPath('data.can_invite_admins', false);
-    }
-
     public function test_non_owner_cannot_create_invitation(): void
     {
         Notification::fake();

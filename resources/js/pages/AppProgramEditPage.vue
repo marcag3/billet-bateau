@@ -117,7 +117,7 @@
             </q-form>
         </AppCardSection>
 
-        <AppCardSection v-if="eligibilityLoaded && canInviteAdmins && !showNotFound"
+        <AppCardSection v-if="hasBootstrapped && canInviteAdmins && !showNotFound"
             :label="t('programsInvite.editSectionTitle')" class="q-mt-lg">
             <p class="text-body2 text-grey-8">
                 {{ t("programsInvite.editSectionSubtitle") }}
@@ -136,7 +136,7 @@
             </q-form>
         </AppCardSection>
 
-        <AppAlertBanner v-else-if="eligibilityLoaded && !canInviteAdmins && !showNotFound" variant="info"
+        <AppAlertBanner v-else-if="hasBootstrapped && !canInviteAdmins && !showNotFound" variant="info"
             class="q-mt-lg">
             {{ t("programsInvite.notOwner") }}
         </AppAlertBanner>
@@ -160,11 +160,13 @@ import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 
 const powersync = getAppPowerSyncContext();
 import type { ProgramOutput } from "../powersync/programs.collection";
+import type { ProgramUserOutput } from "../powersync/program-user.collection";
 import {
     normalizeAddressRowFields,
 } from "../utilities/program-helpers";
 import { mediaObjectPublicUrl } from "../utilities/media-url";
 import { parseProgramBookingQuestions } from "../utilities/program-booking-questions";
+import { canInviteProgramAdmins } from "../utilities/program-membership";
 import { presignUpload } from "../actions/App/Http/Controllers/Api/PresignUploadController";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
@@ -174,17 +176,15 @@ import AppFormStack from "../components/ui/AppFormStack.vue";
 import AppTextRepeaterField from "../components/ui/AppTextRepeaterField.vue";
 import AppImageUploadField from "../components/molecules/AppImageUploadField.vue";
 import {
-    fetchInvitationEligibility,
     sendProgramAdminInvitation,
 } from "../models/programs/program-invitations.api";
-import { useAuthStore } from "../store/auth.store";
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const $q = useQuasar();
-const authStore = useAuthStore();
 const programsCollection = powersync.collections.programs;
+const programUsersCollection = powersync.collections.program_user;
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const { data: programs } = useLiveQuery(
@@ -197,10 +197,18 @@ const { data: programs } = useLiveQuery(
     [programsCollection, programId],
 );
 
+const { data: programMemberships } = useLiveQuery(
+    (queryBuilder) => {
+        const col = programUsersCollection.value;
+        const pid = programId.value;
+        if (!col || pid.length === 0) return undefined;
+        return queryBuilder.from({ m: col }).where(({ m }) => eq(m.program_id, pid));
+    },
+    [programUsersCollection, programId],
+);
+
 const errorMessage = ref("");
 
-const eligibilityLoaded = ref(false);
-const canInviteAdmins = ref(false);
 const inviteEmail = ref("");
 const inviteSubmitting = ref(false);
 const inviteError = ref("");
@@ -224,6 +232,25 @@ const currentProgram = computed<ProgramOutput | null>(() => {
     });
     return row ? (row as unknown as ProgramOutput) : null;
 });
+
+const currentMembershipRole = computed((): string | null => {
+    const row = (programMemberships.value ?? []).find((candidateRow) => {
+        if (candidateRow == null) {
+            return false;
+        }
+        const membership = candidateRow as unknown as ProgramUserOutput;
+        return String(membership.program_id) === programId.value;
+    });
+    if (row == null) {
+        return null;
+    }
+    const membership = row as unknown as ProgramUserOutput;
+    return membership.role ?? null;
+});
+
+const canInviteAdmins = computed(() =>
+    canInviteProgramAdmins(currentMembershipRole.value),
+);
 
 const showNotFound = computed(() => {
     if (!hasBootstrapped.value) {
@@ -367,41 +394,10 @@ function toProgramDraftPatch(values: ProgramEditFormValues, bookingQuestions: st
     };
 }
 
-watch(
-    [
-        programId,
-        currentProgram,
-        hasBootstrapped,
-        () => authStore.isAuthenticated,
-    ],
-    async () => {
-        eligibilityLoaded.value = false;
-        canInviteAdmins.value = false;
-        inviteSuccess.value = false;
-        inviteError.value = "";
-
-        const id = programId.value;
-        if (
-            !authStore.isAuthenticated ||
-            id.length === 0 ||
-            !hasBootstrapped.value ||
-            currentProgram.value === null
-        ) {
-            eligibilityLoaded.value = true;
-            return;
-        }
-
-        try {
-            const eligibility = await fetchInvitationEligibility(id);
-            canInviteAdmins.value = eligibility.can_invite_admins;
-        } catch {
-            canInviteAdmins.value = false;
-        } finally {
-            eligibilityLoaded.value = true;
-        }
-    },
-    { immediate: true },
-);
+watch(programId, () => {
+    inviteSuccess.value = false;
+    inviteError.value = "";
+});
 
 watch(
     [programId, currentProgram],

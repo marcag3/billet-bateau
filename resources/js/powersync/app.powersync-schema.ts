@@ -22,6 +22,13 @@ const programsTable = new Table({
     banner_uploaded_at: column.text,
 });
 
+const programUserTable = new Table({
+    id: column.text,
+    program_id: column.text,
+    user_id: column.text,
+    role: column.text,
+});
+
 const boatTypesTable = new Table({
     id: column.text,
     program_id: column.text,
@@ -176,6 +183,7 @@ const voyageGuideTable = new Table({
 
 export const appPowerSyncSchema = new Schema({
     programs: programsTable,
+    program_user: programUserTable,
     boat_types: boatTypesTable,
     boats: boatsTable,
     products: productsTable,
@@ -197,6 +205,9 @@ export const appPowerSyncSchema = new Schema({
 
 /** @type {import('@powersync/web').Table} */
 export const appProgramsPowerSyncTable = appPowerSyncSchema.props.programs;
+
+/** @type {import('@powersync/web').Table} */
+export const appProgramUserPowerSyncTable = appPowerSyncSchema.props.program_user;
 
 /** @type {import('@powersync/web').Table} */
 export const appBoatTypesPowerSyncTable = appPowerSyncSchema.props.boat_types;

@@ -1,5 +1,6 @@
 import type { PowerSyncDatabase } from "@powersync/web";
 import { createProgramsCollection } from "./programs.collection";
+import { createProgramUserCollection } from "./program-user.collection";
 import { createBoatTypesCollection } from "./boat-types.collection";
 import { createTicketTypesCollection } from "./ticket-types.collection";
 import { createBoatsCollection } from "./boats.collection";
@@ -45,6 +46,8 @@ const collectionFactories: {
             },
             onLoad,
         ),
+    program_user: (db, onError, onLoad) =>
+        createProgramUserCollection(db, onError, onLoad),
     boat_types: (db, onError, onLoad) =>
         createBoatTypesCollection(db, onError, onLoad),
     boats: (db, onError, onLoad) => createBoatsCollection(db, onError, onLoad),

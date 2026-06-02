@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { boatsSchema } from '../../powersync/boats.collection';
 import { programSchema } from '../../powersync/programs.collection';
+import { programUserSchema } from '../../powersync/program-user.collection';
 import { productsSchema } from '../../powersync/products.collection';
 import { tripsSchema } from '../../powersync/trips.collection';
 
@@ -29,6 +30,17 @@ describe('PowerSync collection Zod schemas', () => {
         });
         expect(parsed.id).toBe('01HQABCDEFGHJKMNPQRSTVWXYZ');
         expect(parsed.name).toBe('Dockside');
+    });
+
+    it('parses program_user rows with composite id alias', () => {
+        const parsed = programUserSchema.parse({
+            id: '01HQBBBBBBBBBBBBBBBBBBBBBB.01HQCCCCCCCCCCCCCCCCCCCCCC',
+            program_id: '01HQBBBBBBBBBBBBBBBBBBBBBB',
+            user_id: '01HQCCCCCCCCCCCCCCCCCCCCCC',
+            role: 'owner',
+        });
+        expect(parsed.role).toBe('owner');
+        expect(parsed.program_id).toBe('01HQBBBBBBBBBBBBBBBBBBBBBB');
     });
 
     it('parses boat rows without timestamp columns', () => {

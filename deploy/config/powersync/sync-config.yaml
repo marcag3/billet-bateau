@@ -49,6 +49,14 @@ streams:
         FROM programs
         WHERE id IN accessible_program_ids
       - |
+        SELECT
+          program_id || '.' || user_id AS id,
+          program_id,
+          user_id,
+          role
+        FROM program_user
+        WHERE user_id = auth.user_id()
+      - |
         SELECT id, name, staff_user_id
         FROM guides
 

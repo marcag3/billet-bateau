@@ -1,5 +1,6 @@
 import { ref, shallowRef, type Ref, type ShallowRef } from "vue";
 import type { PowerSyncDatabase } from "@powersync/web";
+import type { createProgramUserCollection } from "./program-user.collection";
 import type { createProgramsCollection } from "./programs.collection";
 import type { createBoatTypesCollection } from "./boat-types.collection";
 import type { createTicketTypesCollection } from "./ticket-types.collection";
@@ -20,13 +21,14 @@ import type { createVoyageBoatCollection } from "./voyage-boat.collection";
 import type { createVoyageGuideCollection } from "./voyage-guide.collection";
 import { translate } from "../utilities/i18n";
 
-export const DB_FILENAME = "billbateau-app-v24.db";
+export const DB_FILENAME = "billbateau-app-v26.db";
 
 export const loadFailedMessage = translate("sync.unableLoadSync");
 export const persistenceLimitedMessage = translate("sync.persistenceLimited");
 
 export type PowerSyncCollectionKey =
     | "programs"
+    | "program_user"
     | "boat_types"
     | "boats"
     | "products"
@@ -51,6 +53,7 @@ export type PowerSyncCollectionRefs = {
 
 type PowerSyncCollectionInstanceMap = {
     programs: ReturnType<typeof createProgramsCollection>;
+    program_user: ReturnType<typeof createProgramUserCollection>;
     boat_types: ReturnType<typeof createBoatTypesCollection>;
     boats: ReturnType<typeof createBoatsCollection>;
     products: ReturnType<typeof createProductsCollection>;
@@ -75,6 +78,7 @@ type PowerSyncCollectionInstance<K extends PowerSyncCollectionKey> =
 
 export const collectionRefs: PowerSyncCollectionRefs = {
     programs: shallowRef<PowerSyncCollectionInstance<"programs"> | null>(null),
+    program_user: shallowRef<PowerSyncCollectionInstance<"program_user"> | null>(null),
     boat_types: shallowRef<PowerSyncCollectionInstance<"boat_types"> | null>(null),
     boats: shallowRef<PowerSyncCollectionInstance<"boats"> | null>(null),
     products: shallowRef<PowerSyncCollectionInstance<"products"> | null>(

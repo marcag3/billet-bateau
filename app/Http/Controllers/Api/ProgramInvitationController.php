@@ -17,22 +17,6 @@ use Illuminate\Validation\ValidationException;
 
 class ProgramInvitationController extends Controller
 {
-    public function eligibility(string $programId): JsonResponse
-    {
-        $program = Program::query()->findOrFail($programId);
-
-        $this->authorize('view', $program);
-
-        $user = auth()->user();
-        assert($user !== null);
-
-        return response()->json([
-            'data' => [
-                'can_invite_admins' => $program->userIsOwner((string) $user->getAuthIdentifier()),
-            ],
-        ]);
-    }
-
     public function store(StoreProgramInvitationRequest $request, string $programId): JsonResponse
     {
         $program = Program::query()->findOrFail($programId);
