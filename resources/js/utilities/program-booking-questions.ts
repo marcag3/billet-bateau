@@ -25,3 +25,16 @@ export function parseProgramBookingQuestions(raw: unknown): string[] {
         return [];
     }
 }
+
+/**
+ * Normalizes repeater rows into a unique, trimmed question list for persistence.
+ */
+export function parseBookingQuestionsInput(raw: string[]): string[] {
+    return Array.from(
+        new Set(
+            raw
+                .map((line) => line.trim())
+                .filter((line) => line.length > 0),
+        ),
+    );
+}

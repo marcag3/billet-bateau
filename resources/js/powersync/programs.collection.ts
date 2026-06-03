@@ -1,6 +1,7 @@
 import { createAppPowerSyncCollection } from './collection-defaults';
 import { powerSyncCollectionOptions } from '@tanstack/powersync-db-collection';
 import { z } from 'zod';
+import { powerSyncIntegerBoolean } from '../validation/zod-fields';
 import { appProgramsPowerSyncTable } from './app.powersync-schema';
 
 export const programSchema = z.object({
@@ -17,7 +18,7 @@ export const programSchema = z.object({
         .regex(/^#[0-9a-fA-F]{6}$/, "Theme color must be a valid hex color (e.g. #FF5733)")
         .nullable()
         .default(null),
-    is_active: z.number().int().transform((v) => v === 1).nullable().default(true),
+    is_active: powerSyncIntegerBoolean(true),
     slug: z.string()
         .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be URL-safe (e.g. "my-program")')
         .nullable()

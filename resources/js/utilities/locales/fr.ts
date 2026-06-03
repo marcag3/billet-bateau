@@ -150,6 +150,8 @@ export default {
         images: "Images",
         submit: "Creer le programme",
         success: "Programme cree.",
+        bannerUploadFailed:
+            "L'image du programme n'a pas pu etre televersee. Les autres modifications ont ete enregistrees; reessayez le televersement.",
         validationRequired: "Ce champ est requis.",
         validationHex: "Utilisez une couleur hexadecimale #RRGGBB.",
         validationDateYmd: "Utilisez une date au format AAAA-MM-JJ.",

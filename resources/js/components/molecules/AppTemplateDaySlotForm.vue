@@ -1,6 +1,6 @@
 <template>
     <q-form @submit.prevent="onFormSubmit">
-        <AppFormStack>
+        <div class="column q-gutter-y-md">
             <q-input
                 ref="slotDepartureTimeInputRef"
                 :model-value="modelValue.departureTime"
@@ -197,7 +197,7 @@
                     :disable="isSavingSlot || isDeletingSlot"
                 />
             </div>
-        </AppFormStack>
+        </div>
     </q-form>
 </template>
 
@@ -205,7 +205,6 @@
 import { computed, nextTick, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { SlotFormState } from "../../models/template-day-slots/template-day-slot-form";
-import AppFormStack from "../ui/AppFormStack.vue";
 import AppBoatTypeSelectField from "../ui/AppBoatTypeSelectField.vue";
 import AppWaterRouteSelectField from "../organisms/AppWaterRouteSelectField.vue";
 

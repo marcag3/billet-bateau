@@ -11,12 +11,12 @@
         <template v-if="currentTemplateDay">
             <AppCardSection :label="t('templateDaysList.detailsSection')">
                 <q-form @submit.prevent="onSaveNameSubmit">
-                    <AppFormStack>
+                    <div class="column q-gutter-y-md">
                         <q-input v-model="editName" outlined :label="t('templateDaysList.name')"
                             :disable="isSavingName" />
                         <q-btn color="primary" type="submit" :label="t('templateDaysList.saveChanges')"
                             :loading="isSavingName" :disable="isSavingName" class="self-start" />
-                    </AppFormStack>
+                    </div>
                 </q-form>
             </AppCardSection>
 
@@ -100,7 +100,6 @@ import { useProgramBoatTypes } from "../composables/useProgramBoatTypes";
 import { useProgramWaterRoutes } from "../composables/useProgramWaterRoutes";
 import AppEntityEditPageLayout from "../layouts/AppEntityEditPageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
-import AppFormStack from "../components/ui/AppFormStack.vue";
 import AppTemplateDaySlotForm from "../components/molecules/AppTemplateDaySlotForm.vue";
 import {
     isValidCalendarDateYmd,

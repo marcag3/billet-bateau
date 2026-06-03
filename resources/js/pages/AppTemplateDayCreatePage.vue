@@ -5,12 +5,12 @@
 
         <AppCardSection :label="t('templateDaysList.addNew')">
             <q-form @submit.prevent="onCreateSubmit">
-                <AppFormStack>
+                <div class="column q-gutter-y-md">
                     <q-input v-model="createName" outlined :label="t('templateDaysList.name')"
                         :disable="isSubmitting" />
                     <q-btn color="primary" type="submit" :label="t('templateDaysList.create')" :loading="isSubmitting"
                         :disable="isSubmitting || programId.length === 0" class="self-start" />
-                </AppFormStack>
+                </div>
             </q-form>
         </AppCardSection>
     </AppEntityCreatePageLayout>
@@ -24,8 +24,6 @@ import { createTemplateDayRow } from "../models/template-days/template-days.mode
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import AppEntityCreatePageLayout from "../layouts/AppEntityCreatePageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
-import AppFormStack from "../components/ui/AppFormStack.vue";
-
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();

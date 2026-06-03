@@ -94,3 +94,21 @@ export function powerSyncNullableIsoDate() {
         .nullable()
         .default(null);
 }
+
+/**
+ * Boolean stored as INTEGER (0/1) in PowerSync SQLite.
+ * Accepts sync/insert input (number) and in-memory rows (boolean) after deserialization.
+ */
+export function powerSyncIntegerBoolean(defaultValue: boolean) {
+    const sqliteBoolean = z
+        .number()
+        .int()
+        .transform((v) => v === 1)
+        .nullable()
+        .default(defaultValue);
+
+    return z.preprocess(
+        (raw) => (typeof raw === 'boolean' ? (raw ? 1 : 0) : raw),
+        sqliteBoolean,
+    ) as unknown as typeof sqliteBoolean;
+}

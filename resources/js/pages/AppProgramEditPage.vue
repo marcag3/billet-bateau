@@ -14,102 +14,29 @@
                 {{ errorMessage }}
             </AppAlertBanner>
 
-            <q-form @submit.prevent="onFormSubmit">
-                <AppFormStack>
-                    <q-input v-model="name" v-bind="nameProps" outlined label-slot :disable="isSubmitting">
-                        <template #label>
-                            {{ t("programsCreate.name") }}
-                            <span class="text-negative" aria-hidden="true">*</span>
-                        </template>
-                    </q-input>
-
-                    <q-input v-model="description" v-bind="descriptionProps" type="textarea" outlined autogrow
-                        :label="t('programsCreate.description')" :disable="isSubmitting" />
-
-                    <q-input v-model="themeColor" v-bind="themeColorProps" outlined label-slot :disable="isSubmitting">
-                        <template #label>
-                            {{ t("programsCreate.themeColor") }}
-                            <span class="text-negative" aria-hidden="true">*</span>
-                        </template>
-                        <template #append>
-                            <q-icon name="colorize" class="cursor-pointer">
-                                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                                    <q-color v-model="themeColor" format-model="hex" default-view="palette" />
-                                </q-popup-proxy>
-                            </q-icon>
-                        </template>
-                    </q-input>
-
-                    <q-input v-model="slug" v-bind="slugProps" outlined :label="t('programsList.slug')"
-                        :hint="t('programsList.slugHint')" :disable="isSubmitting" />
-
-                    <AppFormRow>
-                        <div class="col-12 col-sm-6">
-                            <q-input v-model="startDate" v-bind="startDateProps" type="date" outlined label-slot
-                                :disable="isSubmitting">
-                                <template #label>
-                                    {{ t("programsEdit.startDate") }}
-                                    <span class="text-negative" aria-hidden="true">*</span>
-                                </template>
-                            </q-input>
-                        </div>
-                        <div class="col-12 col-sm-6">
-                            <q-input v-model="endDate" v-bind="endDateProps" type="date" outlined label-slot
-                                :disable="isSubmitting">
-                                <template #label>
-                                    {{ t("programsEdit.endDate") }}
-                                    <span class="text-negative" aria-hidden="true">*</span>
-                                </template>
-                            </q-input>
-                        </div>
-                    </AppFormRow>
-
-                    <AppTextRepeaterField v-model="bookingQuestionRows" :label="t('programsEdit.bookingQuestions')"
-                        :hint="t('programsEdit.bookingQuestionsHint')"
-                        :item-label-template="t('programsEdit.bookingQuestionLabel')"
-                        :add-label="t('programsEdit.addBookingQuestion')"
-                        :remove-label="t('programsEdit.removeBookingQuestion')" :disabled="isSubmitting">
-                        <template #fields="{ value, setValue, label, disabled }">
-                            <q-input :model-value="value" outlined :disable="disabled" :label="label"
-                                @update:model-value="setValue" />
-                        </template>
-                    </AppTextRepeaterField>
-
-                    <q-toggle v-model="isActive" v-bind="isActiveProps" :label="t('programsList.isActive')"
-                        :disable="isSubmitting" />
-
-                    <q-expansion-item :label="t('programsCreate.addressOptional')" icon="place"
-                        class="bg-grey-1 rounded-borders" dense-toggle :disable="isSubmitting">
-                        <div class="q-pa-md q-gutter-y-md">
-                            <q-input v-model="line1" v-bind="line1Props" outlined :label="t('programsCreate.line1')"
-                                :disable="isSubmitting" />
-                            <q-input v-model="line2" v-bind="line2Props" outlined :label="t('programsCreate.line2')"
-                                :disable="isSubmitting" />
-                            <AppFormRow gutter="sm">
-                                <div class="col-12 col-sm-6">
-                                    <q-input v-model="city" v-bind="cityProps" outlined
-                                        :label="t('programsCreate.city')" :disable="isSubmitting" />
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <q-input v-model="postalCode" v-bind="postalCodeProps" outlined
-                                        :label="t('programsCreate.postalCode')" :disable="isSubmitting" />
-                                </div>
-                            </AppFormRow>
-                            <q-input v-model="country" v-bind="countryProps" outlined
-                                :label="t('programsCreate.country')" :disable="isSubmitting" />
-                        </div>
-                    </q-expansion-item>
-
-                    <AppImageUploadField ref="imageUploadField" :label="t('programsCreate.images')"
-                        :disabled="isSubmitting" accept="image/jpeg,image/png,image/webp"
-                        :existing-image-url="currentProgramBannerUrl" :presign-url="presignUpload.url()" />
-
+            <AppProgramForm
+                mode="edit"
+                :program-id="programId"
+                :seed="formSeed"
+                :booking-question-seed="bookingQuestionSeed"
+                :existing-banner-url="currentProgramBannerUrl"
+                :disabled="showNotFound"
+                :submit-fn="onUpdateProgram"
+                @submitted="onProgramUpdated"
+                @banner-uploaded="onBannerUploaded"
+            >
+                <template #actions="{ isSubmitting: formSubmitting, fieldsDisabled }">
                     <div class="row q-gutter-sm">
-                        <q-btn color="primary" type="submit" :loading="isSubmitting"
-                            :disable="isSubmitting || showNotFound" :label="t('programsEdit.submit')" />
+                        <q-btn
+                            color="primary"
+                            type="submit"
+                            :loading="formSubmitting"
+                            :disable="fieldsDisabled || showNotFound"
+                            :label="t('programsEdit.submit')"
+                        />
                     </div>
-                </AppFormStack>
-            </q-form>
+                </template>
+            </AppProgramForm>
         </AppCardSection>
 
         <AppCardSection v-if="hasBootstrapped && canInviteAdmins && !showNotFound"
@@ -138,37 +65,28 @@
 </template>
 
 <script setup lang="ts">
-import { useForm } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useQuasar } from "quasar";
-import { computed, ref, watch, nextTick } from "vue";
+import { computed, ref, watch } from "vue";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
+import type { ProgramEditFormValues } from "../models/programs/programs.validation";
 import {
-    createProgramEditFormSchema,
-    type ProgramEditFormValues,
-} from "../models/programs/programs.validation";
-import { createQuasarFieldBinder } from "../validation/quasar-vee-fields";
+    programToFormValues,
+    toProgramDraftPatch,
+} from "../models/programs/program-form";
+import type { ProgramFormSubmitPayload } from "../models/programs/program-form";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
-
-const powersync = getAppPowerSyncContext();
 import type { ProgramOutput } from "../powersync/programs.collection";
 import type { ProgramUserOutput } from "../powersync/program-user.collection";
-import {
-    normalizeAddressRowFields,
-} from "../utilities/program-helpers";
 import { programBannerPreviewUrlFromObjectKey } from "../utilities/program-banner-url";
 import { parseProgramBookingQuestions } from "../utilities/program-booking-questions";
 import { canInviteProgramAdmins } from "../utilities/program-membership";
-import { presignUpload } from "../actions/App/Http/Controllers/Api/PresignUploadController";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
-import AppFormRow from "../components/ui/AppFormRow.vue";
-import AppFormStack from "../components/ui/AppFormStack.vue";
-import AppTextRepeaterField from "../components/ui/AppTextRepeaterField.vue";
-import AppImageUploadField from "../components/molecules/AppImageUploadField.vue";
+import AppProgramForm from "../components/molecules/AppProgramForm.vue";
 import {
     sendProgramAdminInvitation,
 } from "../models/programs/program-invitations.api";
@@ -176,6 +94,7 @@ import {
 const { t } = useI18n();
 const route = useRoute();
 const $q = useQuasar();
+const powersync = getAppPowerSyncContext();
 const programsCollection = powersync.collections.programs;
 const programUsersCollection = powersync.collections.program_user;
 const programId = computed(() => String(route.params.programId ?? "").trim());
@@ -207,9 +126,6 @@ const inviteSubmitting = ref(false);
 const inviteError = ref("");
 const inviteSuccess = ref(false);
 
-const imageUploadField = ref<InstanceType<typeof AppImageUploadField> | null>(
-    null,
-);
 const hasBootstrapped = powersync.hasBootstrappedCollection;
 const currentProgram = computed<ProgramOutput | null>(() => {
     const id = programId.value;
@@ -255,6 +171,7 @@ const showNotFound = computed(() => {
     }
     return currentProgram.value == null;
 });
+
 const currentProgramBannerUrlRemote = ref("");
 const currentProgramBannerUrlFromReplica = computed(() => {
     const p = currentProgram.value;
@@ -271,154 +188,32 @@ const currentProgramBannerUrl = computed(() => {
     return currentProgramBannerUrlFromReplica.value;
 });
 
-const programEditSchema = createProgramEditFormSchema(t);
-const { handleSubmit, defineField, isSubmitting, meta, resetForm } =
-    useForm<ProgramEditFormValues>({
-        validationSchema: programEditSchema,
-        initialValues: {
-            name: "",
-            description: "",
-            themeColor: "#08758A",
-            slug: "",
-            isActive: true,
-            startDate: "",
-            endDate: "",
-            bookingQuestionsText: "",
-            address: {
-                line_1: "",
-                line_2: "",
-                city: "",
-                postal_code: "",
-                country: "",
-            },
-        } satisfies ProgramEditFormValues,
-    });
+const formSeed = computed((): ProgramEditFormValues | null => {
+    const p = currentProgram.value;
+    if (p == null) {
+        return null;
+    }
+    return programToFormValues(p);
+});
 
-const quasarField = createQuasarFieldBinder(defineField);
-
-const [name, nameProps] = quasarField("name");
-const [description, descriptionProps] = quasarField("description");
-const [themeColor, themeColorProps] = quasarField("themeColor");
-const [slug, slugProps] = quasarField("slug");
-const [startDate, startDateProps] = quasarField("startDate");
-const [endDate, endDateProps] = quasarField("endDate");
-const [isActive, isActiveProps] = quasarField("isActive");
-const [line1, line1Props] = quasarField("address.line_1");
-const [line2, line2Props] = quasarField("address.line_2");
-const [city, cityProps] = quasarField("address.city");
-const [postalCode, postalCodeProps] = quasarField("address.postal_code");
-const [country, countryProps] = quasarField("address.country");
-const bookingQuestionRows = ref<string[]>([""]);
-
-function programToFormValues(p: ProgramOutput): ProgramEditFormValues {
-    return {
-        name: String(p.name ?? "").trim(),
-        description: typeof p.description === "string" ? p.description : "",
-        themeColor:
-            typeof p.theme_color === "string" && p.theme_color.length > 0
-                ? String(p.theme_color).trim()
-                : "#08758A",
-        slug: String(p.slug ?? "")
-            .trim()
-            .toLowerCase(),
-        startDate:
-            typeof p.start_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.start_date)
-                ? p.start_date
-                : "",
-        endDate:
-            typeof p.end_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.end_date)
-                ? p.end_date
-                : "",
-        bookingQuestionsText: parseProgramBookingQuestions(p.booking_questions).join("\n"),
-        isActive: p.is_active ?? true,
-        address: {
-            line_1: typeof p.line_1 === "string" ? String(p.line_1) : "",
-            line_2: typeof p.line_2 === "string" ? String(p.line_2) : "",
-            city: typeof p.city === "string" ? String(p.city) : "",
-            postal_code:
-                typeof p.postal_code === "string" ? String(p.postal_code) : "",
-            country: typeof p.country === "string" ? String(p.country) : "",
-        },
-    } satisfies ProgramEditFormValues;
-}
-
-type ProgramDraftPatch = {
-    name: string;
-    description: string | null;
-    theme_color: string;
-    slug: string;
-    is_active: number;
-    start_date: string;
-    end_date: string;
-    booking_questions: string;
-    line_1: string | null;
-    line_2: string | null;
-    city: string | null;
-    postal_code: string | null;
-    country: string | null;
-};
-
-function parseBookingQuestionsInput(raw: string[]): string[] {
-    return Array.from(
-        new Set(
-            raw
-                .map((line) => line.trim())
-                .filter((line) => line.length > 0),
-        ),
-    );
-}
-
-function toProgramDraftPatch(values: ProgramEditFormValues, bookingQuestions: string[]): ProgramDraftPatch {
-    const addressFields = normalizeAddressRowFields({ ...values.address });
-    return {
-        name: values.name,
-        description: values.description.length > 0 ? values.description : null,
-        theme_color: values.themeColor,
-        slug: values.slug,
-        is_active: values.isActive ? 1 : 0,
-        start_date: values.startDate,
-        end_date: values.endDate,
-        booking_questions: JSON.stringify(bookingQuestions),
-        line_1: addressFields.line_1,
-        line_2: addressFields.line_2,
-        city: addressFields.city,
-        postal_code: addressFields.postal_code,
-        country: addressFields.country,
-    };
-}
+const bookingQuestionSeed = computed((): string[] | null => {
+    const p = currentProgram.value;
+    if (p == null) {
+        return null;
+    }
+    const parsed = parseProgramBookingQuestions(p.booking_questions);
+    return parsed.length > 0 ? parsed : [""];
+});
 
 watch(programId, () => {
     inviteSuccess.value = false;
     inviteError.value = "";
+    currentProgramBannerUrlRemote.value = "";
 });
 
-watch(
-    [programId, currentProgram],
-    async ([id, p], previousTuple) => {
-        if (id.length === 0) {
-            return;
-        }
-        if (!p) {
-            return;
-        }
-        const previousId = Array.isArray(previousTuple)
-            ? String(previousTuple[0] ?? "")
-            : "";
-        const routeChanged = id !== previousId;
-        if (meta.value.dirty && !routeChanged) {
-            return;
-        }
-        const parsedBookingQuestions = parseProgramBookingQuestions(p.booking_questions);
-        bookingQuestionRows.value = parsedBookingQuestions.length > 0 ? parsedBookingQuestions : [""];
-        resetForm({
-            values: programToFormValues(p),
-        });
-        currentProgramBannerUrlRemote.value = "";
-        await nextTick();
-        imageUploadField.value?.clearSelection();
-    },
-    { immediate: true },
-);
+function onBannerUploaded(publicUrl: string): void {
+    currentProgramBannerUrlRemote.value = publicUrl;
+}
 
 async function onInviteSubmit() {
     inviteError.value = "";
@@ -449,11 +244,15 @@ async function onInviteSubmit() {
     }
 }
 
-const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
+async function onUpdateProgram({
+    values,
+    bookingQuestions,
+}: ProgramFormSubmitPayload): Promise<string> {
     errorMessage.value = "";
+
     const id = programId.value;
     if (id.length === 0 || showNotFound.value) {
-        return;
+        throw new Error(t("programsEdit.notFound"));
     }
 
     try {
@@ -461,37 +260,25 @@ const onFormSubmit = handleSubmit(async (values: ProgramEditFormValues) => {
         if (!col) {
             throw new Error("Programs collection is not ready.");
         }
-        const bookingQuestions = parseBookingQuestionsInput(bookingQuestionRows.value);
-        const patch = toProgramDraftPatch(values, bookingQuestions);
 
-        const uploadResult = await imageUploadField.value?.uploadIfNeeded();
-
-        const bannerPatch =
-            uploadResult != null
-                ? {
-                    banner_object_key: uploadResult.objectKey,
-                    banner_mime_type: uploadResult.mimeType,
-                    banner_size_bytes: uploadResult.sizeBytes,
-                    banner_etag: uploadResult.etag,
-                    banner_uploaded_at: new Date().toISOString(),
-                }
-                : {};
+        const formValues = values as ProgramEditFormValues;
+        const patch = toProgramDraftPatch(formValues, bookingQuestions);
 
         col.update(id, (draft) => {
-            Object.assign(draft, patch, bannerPatch);
+            Object.assign(draft, patch);
         });
 
         void powersync.refreshOutboxSnapshot();
 
-        if (uploadResult != null && uploadResult.publicUrl.length > 0) {
-            currentProgramBannerUrlRemote.value = uploadResult.publicUrl;
-        }
-        void powersync.refreshOutboxSnapshot();
-
-        $q.notify({ type: "positive", message: t("programsEdit.success") });
+        return id;
     } catch (error) {
         errorMessage.value =
             error instanceof Error ? error.message : String(error);
+        throw error;
     }
-});
+}
+
+function onProgramUpdated(): void {
+    $q.notify({ type: "positive", message: t("programsEdit.success") });
+}
 </script>

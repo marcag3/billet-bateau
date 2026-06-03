@@ -145,6 +145,8 @@ export default {
         images: "Images",
         submit: "Create program",
         success: "Program created.",
+        bannerUploadFailed:
+            "The program image could not be uploaded. Your other changes were saved; try uploading again.",
         validationRequired: "This field is required.",
         validationHex: "Use a hex color like #RRGGBB.",
         validationDateYmd: "Use a calendar date YYYY-MM-DD.",

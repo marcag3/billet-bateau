@@ -6,7 +6,7 @@ import {
     zLowercaseSlug,
     zRequiredTrimmedString,
 } from '../../validation/zod-fields';
-import { normalizeThemeColor } from '../../utilities/program-helpers';
+import { defaultProgramDateRange, normalizeThemeColor } from '../../utilities/program-helpers';
 import { foldUnicodeForProgramSlug } from '../../utilities/program-slug';
 
 export type Translator = (key: string) => string;
@@ -74,6 +74,26 @@ function createProgramCreateZodSchema(t: Translator) {
 
 export type ProgramCreateFormValues = z.infer<ReturnType<typeof createProgramCreateZodSchema>>;
 
+export function createEmptyProgramCreateFormValues(): ProgramCreateFormValues {
+    const range = defaultProgramDateRange();
+    return {
+        name: '',
+        description: '',
+        themeColor: '#08758A',
+        isActive: true,
+        startDate: range.startDate,
+        endDate: range.endDate,
+        bookingQuestionsText: '',
+        address: {
+            line_1: '',
+            line_2: '',
+            city: '',
+            postal_code: '',
+            country: '',
+        },
+    };
+}
+
 /**
  * Program create form — shapes align with createProgramWithOptionalAddress and address models.
  */
@@ -110,6 +130,15 @@ export function createProgramEditZodSchema(t: Translator) {
 }
 
 export type ProgramEditFormValues = z.infer<ReturnType<typeof createProgramEditZodSchema>>;
+
+export function createEmptyProgramEditFormValues(): ProgramEditFormValues {
+    return {
+        ...createEmptyProgramCreateFormValues(),
+        slug: '',
+        startDate: '',
+        endDate: '',
+    };
+}
 
 /**
  * Program edit form — aligns with updateProgramWithOptionalAddress.

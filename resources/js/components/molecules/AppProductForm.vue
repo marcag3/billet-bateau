@@ -1,6 +1,6 @@
 <template>
     <q-form @submit="onValidSubmit">
-        <AppFormStack>
+        <div class="column q-gutter-y-md">
             <q-input
                 v-model="name"
                 v-bind="nameProps"
@@ -68,7 +68,7 @@
                 :is-submitting="isSubmitting"
                 :fields-disabled="fieldsDisabled"
             />
-        </AppFormStack>
+        </div>
     </q-form>
 </template>
 
@@ -86,7 +86,6 @@ import { useNotifyErrorFromCatch } from "../../composables/useNotifyErrorFromCat
 import { createQuasarFieldBinder } from "../../validation/quasar-vee-fields";
 import { getAppPowerSyncContext } from "../../powersync/app-powersync.runtime";
 import { mediaObjectPublicUrl } from "../../utilities/media-url";
-import AppFormStack from "../ui/AppFormStack.vue";
 import AppBoatTypeSelectField from "../ui/AppBoatTypeSelectField.vue";
 import AppWaterRouteSelectField from "../organisms/AppWaterRouteSelectField.vue";
 import AppImageUploadField from "./AppImageUploadField.vue";

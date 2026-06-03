@@ -6,13 +6,13 @@
     >
         <div
             v-if="label"
-            class="text-subtitle2 q-mb-sm"
+            class="text-subtitle2 q-mb-md"
         >
             {{ label }}
         </div>
         <div
             v-else-if="$slots.label"
-            class="text-subtitle2 q-mb-sm"
+            class="text-subtitle2 q-mb-md"
         >
             <slot name="label" />
         </div>

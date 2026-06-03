@@ -1,6 +1,6 @@
 <template>
     <q-form @submit="onValidSubmit">
-        <AppFormStack>
+        <div class="column q-gutter-y-md">
             <q-input
                 v-model="title"
                 v-bind="titleProps"
@@ -25,7 +25,7 @@
                 :label="t('ticketTypesList.payWhatYouCan')"
                 :disable="fieldsDisabled"
             />
-            <AppFormRow>
+            <div class="row">
                 <div class="col-12 col-sm-6">
                     <q-input
                         v-model.number="minPerPurchase"
@@ -49,8 +49,8 @@
                         @update:model-value="onMaxPerPurchaseInput"
                     />
                 </div>
-            </AppFormRow>
-            <AppFormRow>
+            </div>
+            <div class="row">
                 <div class="col-12 col-sm-6">
                     <q-select
                         v-model="dependsOnTicketTypeId"
@@ -81,14 +81,14 @@
                         @update:model-value="onMaxPerReferenceTicketInput"
                     />
                 </div>
-            </AppFormRow>
+            </div>
             <slot
                 name="actions"
                 :meta="meta"
                 :is-submitting="isSubmitting"
                 :fields-disabled="fieldsDisabled"
             />
-        </AppFormStack>
+        </div>
     </q-form>
 </template>
 
@@ -102,9 +102,6 @@ import {
     type TicketTypeFormValues,
 } from "../../models/ticket-types/ticket-types.validation";
 import { createQuasarFieldBinder } from "../../validation/quasar-vee-fields";
-import AppFormStack from "../ui/AppFormStack.vue";
-import AppFormRow from "../ui/AppFormRow.vue";
-
 const props = defineProps<{
     /**
      * When set, merges into form values (edit prefill).

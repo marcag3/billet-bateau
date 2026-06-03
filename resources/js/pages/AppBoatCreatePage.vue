@@ -3,7 +3,7 @@
         :back-label="t('boatsList.backToList')">
         <AppCardSection :label="t('boatsList.addNew')">
             <q-form @submit.prevent="onCreateSubmit">
-                <AppFormStack>
+                <div class="column q-gutter-y-md">
                     <q-input v-model="createName" v-bind="createNameProps" outlined :label="t('boatsList.name')"
                         :disable="isSubmitting" />
                     <q-input v-model.number="createCapacity" v-bind="createCapacityProps" outlined type="number"
@@ -17,7 +17,7 @@
                             isSubmitting ||
                             programId.length === 0
                             " class="self-start" />
-                </AppFormStack>
+                </div>
             </q-form>
         </AppCardSection>
     </AppEntityCreatePageLayout>
@@ -41,7 +41,6 @@ const powersync = getAppPowerSyncContext();
 import { useNotifyAsyncAction } from "../composables/useNotifyAsyncAction";
 import AppEntityCreatePageLayout from "../layouts/AppEntityCreatePageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
-import AppFormStack from "../components/ui/AppFormStack.vue";
 import AppBoatTypeSelectField from "../components/ui/AppBoatTypeSelectField.vue";
 
 const { t } = useI18n();

@@ -36,7 +36,7 @@
 
         <AppCardSection v-else-if="currentBoat" :label="formSectionLabel">
             <q-form @submit.prevent="onSaveSubmit">
-                <AppFormStack>
+                <div class="column q-gutter-y-md">
                     <q-input v-model="editName" v-bind="editNameProps" outlined :label="t('boatsList.name')"
                         :disable="isSubmitting || isDeleting" />
                     <q-input v-model.number="editCapacity" v-bind="editCapacityProps" outlined type="number"
@@ -53,7 +53,7 @@
                         <q-btn flat color="negative" icon="delete" :label="t('boatsList.delete')"
                             :disable="isSubmitting || isDeleting" @click="confirmDelete" />
                     </div>
-                </AppFormStack>
+                </div>
             </q-form>
         </AppCardSection>
     </AppEntityEditPageLayout>
@@ -81,7 +81,6 @@ import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch"
 import { parseOptionalNonNegativeInt } from "../validation/zod-fields";
 import AppEntityEditPageLayout from "../layouts/AppEntityEditPageLayout.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
-import AppFormStack from "../components/ui/AppFormStack.vue";
 import AppBoatTypeSelectField from "../components/ui/AppBoatTypeSelectField.vue";
 
 const { t } = useI18n();

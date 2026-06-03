@@ -1,6 +1,6 @@
 <template>
     <q-form class="q-gutter-md" @submit="onSubmit">
-        <AppFormStack>
+        <div class="column q-gutter-y-md">
             <q-input
                 v-model="name"
                 v-bind="nameProps"
@@ -27,7 +27,7 @@
                 :hint="t('waterRoutesList.traceHint')"
                 :disable="isSubmitting"
             />
-        </AppFormStack>
+        </div>
 
         <div class="row justify-end q-gutter-sm">
             <q-btn
@@ -66,7 +66,6 @@ import { getAppPowerSyncContext } from '../../powersync/app-powersync.runtime';
 import type { WaterRouteOutput } from '../../powersync/water-routes.collection';
 import { useNotifyErrorFromCatch } from '../../composables/useNotifyErrorFromCatch';
 import { isPersistableLineStringGeoJson } from '../../utilities/geojson-line-string';
-import AppFormStack from '../ui/AppFormStack.vue';
 import AppPolylineTraceField from './AppPolylineTraceField.vue';
 
 const props = defineProps<{

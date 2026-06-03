@@ -1,6 +1,6 @@
 <template>
     <q-form @submit="onValidSubmit">
-        <AppFormStack>
+        <div class="column q-gutter-y-md">
             <q-input
                 v-model="scheduledDepartureDate"
                 v-bind="scheduledDepartureDateProps"
@@ -31,7 +31,7 @@
                 :is-submitting="isSubmitting"
                 :fields-disabled="fieldsDisabled"
             />
-        </AppFormStack>
+        </div>
     </q-form>
 </template>
 
@@ -44,7 +44,6 @@ import {
     type TripUpsertFormValues,
 } from "../../models/trips/trips.validation";
 import { createQuasarFieldBinder } from "../../validation/quasar-vee-fields";
-import AppFormStack from "../ui/AppFormStack.vue";
 import AppProductSelectField from "../organisms/AppProductSelectField.vue";
 
 const props = defineProps<{

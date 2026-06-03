@@ -30,6 +30,32 @@ describe('PowerSync collection Zod schemas', () => {
         });
         expect(parsed.id).toBe('01HQABCDEFGHJKMNPQRSTVWXYZ');
         expect(parsed.name).toBe('Dockside');
+        expect(parsed.is_active).toBe(true);
+    });
+
+    it('parses program is_active from in-memory boolean rows', () => {
+        const parsed = programSchema.parse({
+            id: '01HQABCDEFGHJKMNPQRSTVWXYZ',
+            name: 'Dockside',
+            description: null,
+            theme_color: '#08758A',
+            is_active: true,
+            slug: 'dockside',
+            booking_questions: '[]',
+            start_date: '2026-06-01',
+            end_date: '2026-09-30',
+            line_1: null,
+            line_2: null,
+            city: null,
+            postal_code: null,
+            country: null,
+            banner_object_key: null,
+            banner_mime_type: null,
+            banner_size_bytes: null,
+            banner_etag: null,
+            banner_uploaded_at: null,
+        });
+        expect(parsed.is_active).toBe(true);
     });
 
     it('parses program_user rows with composite id alias', () => {
