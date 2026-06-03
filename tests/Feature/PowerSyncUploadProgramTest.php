@@ -49,7 +49,7 @@ class PowerSyncUploadProgramTest extends TestCase
         $this->assertDatabaseHas('program_user', [
             'program_id' => $id,
             'user_id' => $user->getAuthIdentifier(),
-            'role' => 'admin',
+            'role' => 'owner',
         ]);
     }
 
@@ -119,7 +119,7 @@ class PowerSyncUploadProgramTest extends TestCase
         $this->assertDatabaseHas('program_user', [
             'program_id' => $programId,
             'user_id' => $user->getAuthIdentifier(),
-            'role' => 'admin',
+            'role' => 'owner',
         ]);
     }
 

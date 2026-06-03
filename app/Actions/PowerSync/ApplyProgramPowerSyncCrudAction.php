@@ -9,6 +9,7 @@ use App\Data\PowerSync\Programs\ProgramPutData;
 use App\Data\PowerSync\Programs\ProgramPutPayloadResolver;
 use App\Data\PowerSync\Programs\ProgramResolvedPutData;
 use App\Data\PowerSync\Values\SlugNormalizer;
+use App\Enums\ProgramRole;
 use App\Models\Program;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -100,7 +101,9 @@ final class ApplyProgramPowerSyncCrudAction
         );
 
         if ($existing === null) {
-            Program::query()->whereKey($id)->first()?->users()->syncWithoutDetaching([$userId]);
+            Program::query()->whereKey($id)->first()?->users()->syncWithoutDetaching([
+                $userId => ['role' => ProgramRole::Owner->value],
+            ]);
         }
 
         $newKey = Program::query()->whereKey($id)->value('banner_object_key');
