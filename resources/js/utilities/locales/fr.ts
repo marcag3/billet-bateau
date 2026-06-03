@@ -3,6 +3,7 @@ export default {
         newProgram: "Nouveau programme",
         programs: "Programmes",
         boats: "Bateaux",
+        guides: "Guides",
         products: "Produits",
         boatTypes: "Types de bateau",
         trips: "Sorties",
@@ -290,6 +291,31 @@ export default {
             "Choisissez le programme auquel rattacher cette liste. Les bateaux se synchronisent pour ce programme seulement.",
         noProgramsForBoats:
             "Créez d'abord un programme, puis sélectionnez-le pour gérer ses bateaux.",
+    },
+    guidesList: {
+        title: "Guides",
+        description:
+            "Guides disponibles au démarrage d'un départ dans le panneau de contrôle. Les changements se synchronisent via PowerSync.",
+        addGuide: "Ajouter un guide",
+        addNew: "Ajouter un guide",
+        backToList: "Retour aux guides",
+        createPageTitle: "Ajouter un guide",
+        editPageTitle: "Modifier le guide",
+        name: "Nom",
+        nameRequired: "Le nom est obligatoire.",
+        create: "Créer le guide",
+        saveChanges: "Enregistrer",
+        delete: "Supprimer",
+        empty: "Aucun guide. Utilisez Ajouter un guide pour en créer un.",
+        notFound:
+            "Ce guide n'est pas dans la liste ou a peut-être été supprimé.",
+        created: "Guide enregistré.",
+        changesSaved: "Guide mis à jour.",
+        deleted: "Guide supprimé.",
+        deleteConfirmTitle: "Supprimer le guide ?",
+        deleteConfirmMessage:
+            'Supprimer « {name} » ? Cette action est irréversible.',
+        errorGeneric: "Une erreur s'est produite. Veuillez réessayer.",
     },
     tripsList: {
         title: "Sorties",

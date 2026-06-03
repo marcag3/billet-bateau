@@ -39,12 +39,12 @@ Local-first **program operations + public booking** platform for seasonal boat a
 | ------------------------------------ | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | **Public catalog**                   | Done                   | `GET /api/public/programs`, program detail by `slug`                                                                   |
 | **Public booking (no payment)**      | Done                   | Trip → tickets → contact; capacity, ticket min/max, dependency ratio, custom questions; confirmation email (EN/FR)     |
-| **Program edit context**             | Done                   | Program, boats, **products** (catalog SKU: boat type + _parcours_ + media), ticket types, template days, trip calendar |
+| **Program edit context**             | Done                   | Program, boats, guides, **products** (catalog SKU: boat type + _parcours_ + media), ticket types, template days, trip calendar |
 | **_Parcours_ (water routes)**        | Done                   | Leaflet polyline editor in product/water-route dialogs; PowerSync sync + uplink                                        |
-| **PowerSync (sync + uplink)**        | Mostly done            | See [Synced data](#synced-data) — `check_ins` and guide **writes** not wired                                           |
+| **PowerSync (sync + uplink)**        | Mostly done            | See [Synced data](#synced-data) — `check_ins` uplink not wired; guides uplink + edit-context CRUD done                  |
 | **Control context (ops + check-in)** | In progress            | Day board, _Départ_, manifest, walk-ins — **missing:** QR check-in, manual check-in button, `check_ins` workflow       |
 | **Check-in context (separate)**      | **Dropped v1**         | Do not ship; hide nav links if needed — all check-in in Control                                                        |
-| **Guides**                           | **Blocked for launch** | Synced read-only; need edit-context CRUD + uplink                                                                      |
+| **Guides**                           | Done                   | Edit-context list/create/edit; PowerSync sync + uplink (`guides`)                                                      |
 | **`check_ins` + QR**                 | **Blocked for launch** | DB exists; not in PowerSync; no QR encode/scan on booking reference yet                                                |
 | **HTTP voyage API**                  | Not in v1              | Voyage lifecycle via PowerSync upload                                                                                  |
 | **i18n**                             | Mostly done            | EN/FR via vue-i18n + Laravel JSON lang; finish any new control/guide screens as they ship                              |
@@ -60,7 +60,7 @@ Priority order for **staging → production** next week:
 | 2   | **`check_ins` PowerSync** — add to `sync-config.yaml`, client collection, `ApplyCheckInPowerSyncCrudAction`, tests                      | Backend    |
 | 3   | **Control: manual check-in** — pick booking on trip card → create `check_ins` + manifest `passengers` from `booking_tickets`            | Frontend   |
 | 4   | **Control: QR check-in** — booking reference in confirmation (email/UI); scanner on control board resolves booking → same check-in path | Full stack |
-| 5   | **Guides CRUD** — edit-context list/create/edit, uplink `guides`, EN/FR copy                                                          | Full stack |
+| 5   | ~~**Guides CRUD**~~ — edit-context list/create/edit, uplink `guides`, EN/FR copy                                                        | Full stack |
 | 6   | **Hide check-in context** — remove/hide `checkin-context` nav; document two-context v1                                                  | Frontend   |
 | 7   | **i18n sweep** — control, guides, check-in: add keys to `en.ts` / `fr.ts` for any new screens                                         | Frontend   |
 | 8   | **E2E dry run** — public book → control board → QR or manual check-in → _Départ_ → arrive; offline replay                               | QA         |

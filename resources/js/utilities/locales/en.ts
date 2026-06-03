@@ -3,6 +3,7 @@ export default {
         newProgram: "New program",
         programs: "Programs",
         boats: "Boats",
+        guides: "Guides",
         products: "Products",
         boatTypes: "Boat types",
         trips: "Trips",
@@ -279,6 +280,30 @@ export default {
             "Pick which program this boat list belongs to. Boats sync for that program only.",
         noProgramsForBoats:
             "Create a program first, then choose it here to manage boats for that roster.",
+    },
+    guidesList: {
+        title: "Guides",
+        description:
+            "Staff guides available when starting a départ on the control board. Changes sync through PowerSync.",
+        addGuide: "Add guide",
+        addNew: "Add guide",
+        backToList: "Back to guides",
+        createPageTitle: "Add guide",
+        editPageTitle: "Edit guide",
+        name: "Name",
+        nameRequired: "Name is required.",
+        create: "Create guide",
+        saveChanges: "Save",
+        delete: "Delete",
+        empty: "No guides yet. Use Add guide to create one.",
+        notFound:
+            "This guide is not in the roster or may have been removed.",
+        created: "Guide saved.",
+        changesSaved: "Guide updated.",
+        deleted: "Guide removed.",
+        deleteConfirmTitle: "Delete guide?",
+        deleteConfirmMessage: 'Remove "{name}"? This cannot be undone.',
+        errorGeneric: "Something went wrong. Please try again.",
     },
     tripsList: {
         title: "Trips",
