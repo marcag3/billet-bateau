@@ -17,12 +17,18 @@ import { i18n, syncQuasarLanguageWithI18n } from "./utilities/i18n";
 import { APP_AUTH_EXPIRED_EVENT } from "./utilities/events";
 import { initSentry } from "./sentry";
 import {
+    registerAppServiceWorker,
+    registerLazyChunkReloadHandlers,
+} from "./utilities/app-update";
+import {
     notifyServiceWorkerOfMediaConfig,
     refreshAppMediaConfigFromNetwork,
 } from "./utilities/media-config";
 
-const APP_SW_URL = "/app-sw.js";
-const APP_SW_SCOPE = "/app/";
+registerLazyChunkReloadHandlers(router);
+registerAppServiceWorker(() => {
+    notifyServiceWorkerOfMediaConfig();
+});
 
 // Vee-validate: single global policy for all forms (override per `useForm` if needed).
 configure({
@@ -78,14 +84,5 @@ if (import.meta.env.PROD && "serviceWorker" in navigator) {
         void refreshAppMediaConfigFromNetwork().then(() => {
             notifyServiceWorkerOfMediaConfig();
         });
-
-        navigator.serviceWorker
-            .register(APP_SW_URL, { scope: APP_SW_SCOPE })
-            .then(() => {
-                notifyServiceWorkerOfMediaConfig();
-            })
-            .catch((error) => {
-                console.error("App service worker registration failed:", error);
-            });
     });
 }

@@ -66,6 +66,7 @@ export default defineConfig(({ mode }) => {
                 filename: 'app-sw.js',
                 injectRegister: false,
                 registerType: 'autoUpdate',
+                scope: '/app/',
                 manifestFilename: 'app.webmanifest',
                 manifest: {
                     id: '/app/',

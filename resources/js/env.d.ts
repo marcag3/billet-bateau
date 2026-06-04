@@ -1,8 +1,9 @@
 /// <reference types="vite/client" />
+/// <reference types="vite-plugin-pwa/vanillajs" />
 
-import 'vue-router';
+import "vue-router";
 
-declare module 'vue-router' {
+declare module "vue-router" {
     interface RouteMeta {
         /** Guest-only or auth-only flags use consistent naming. */
         requiresAuth?: boolean;
@@ -14,8 +15,12 @@ declare module 'vue-router' {
     }
 }
 
-declare module '*.vue' {
-    import type { DefineComponent } from 'vue';
-    const component: DefineComponent<Record<string, unknown>, Record<string, unknown>, unknown>;
+declare module "*.vue" {
+    import type { DefineComponent } from "vue";
+    const component: DefineComponent<
+        Record<string, unknown>,
+        Record<string, unknown>,
+        unknown
+    >;
     export default component;
 }
