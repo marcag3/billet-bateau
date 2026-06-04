@@ -72,6 +72,12 @@ export default {
         title: "Edit program",
         submit: "Save changes",
         success: "Program updated.",
+        delete: "Delete",
+        deleted: "Program removed.",
+        deleteConfirmTitle: "Delete program?",
+        deleteConfirmMessage:
+            'Remove "{name}" and all of its data? This cannot be undone.',
+        errorGeneric: "Something went wrong. Please try again.",
         notFound:
             "This program could not be loaded. It may have been removed or you may not have access.",
         backToList: "Back to programs",

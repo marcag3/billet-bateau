@@ -75,6 +75,12 @@ export default {
         title: "Modifier le programme",
         submit: "Enregistrer",
         success: "Programme mis a jour.",
+        delete: "Supprimer",
+        deleted: "Programme supprime.",
+        deleteConfirmTitle: "Supprimer le programme ?",
+        deleteConfirmMessage:
+            'Supprimer « {name} » et toutes ses donnees ? Cette action est irreversible.',
+        errorGeneric: "Une erreur est survenue. Veuillez reessayer.",
         notFound:
             "Impossible de charger ce programme. Il a peut-etre ete supprime ou vous n’y avez pas acces.",
         backToList: "Retour aux programmes",

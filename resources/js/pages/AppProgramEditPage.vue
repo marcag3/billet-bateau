@@ -31,8 +31,16 @@
                             color="primary"
                             type="submit"
                             :loading="formSubmitting"
-                            :disable="fieldsDisabled || showNotFound"
+                            :disable="fieldsDisabled || showNotFound || isDeleting"
                             :label="t('programsEdit.submit')"
+                        />
+                        <q-btn
+                            flat
+                            color="negative"
+                            icon="delete"
+                            :label="t('programsEdit.delete')"
+                            :disable="formSubmitting || fieldsDisabled || showNotFound || isDeleting"
+                            @click="confirmDelete"
                         />
                     </div>
                 </template>
@@ -66,7 +74,7 @@
 
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { computed, ref, watch } from "vue";
 import { useLiveQuery } from "@tanstack/vue-db";
@@ -90,10 +98,15 @@ import AppProgramForm from "../components/molecules/AppProgramForm.vue";
 import {
     sendProgramAdminInvitation,
 } from "../models/programs/program-invitations.api";
+import { useConfirmDialog } from "../composables/useConfirmDialog";
+import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 const $q = useQuasar();
+const { confirm } = useConfirmDialog();
+const { notifyError } = useNotifyErrorFromCatch();
 const powersync = getAppPowerSyncContext();
 const programsCollection = powersync.collections.programs;
 const programUsersCollection = powersync.collections.program_user;
@@ -120,6 +133,7 @@ const { data: programMemberships } = useLiveQuery(
 );
 
 const errorMessage = ref("");
+const isDeleting = ref(false);
 
 const inviteEmail = ref("");
 const inviteSubmitting = ref(false);
@@ -280,5 +294,46 @@ async function onUpdateProgram({
 
 function onProgramUpdated(): void {
     $q.notify({ type: "positive", message: t("programsEdit.success") });
+}
+
+function confirmDelete(): void {
+    const program = currentProgram.value;
+    if (program == null) {
+        return;
+    }
+
+    confirm({
+        title: t("programsEdit.deleteConfirmTitle"),
+        message: t("programsEdit.deleteConfirmMessage", {
+            name: String(program.name ?? ""),
+        }),
+        onOk: async () => {
+            const id = programId.value;
+            if (id.length === 0) {
+                return;
+            }
+
+            isDeleting.value = true;
+            try {
+                const col = programsCollection.value;
+                if (!col) {
+                    throw new Error("Programs collection is not ready.");
+                }
+
+                col.delete(id);
+                void powersync.refreshOutboxSnapshot();
+
+                $q.notify({
+                    type: "positive",
+                    message: t("programsEdit.deleted"),
+                });
+                await router.push({ name: "programs.list" });
+            } catch (error) {
+                notifyError(error, t("programsEdit.errorGeneric"));
+            } finally {
+                isDeleting.value = false;
+            }
+        },
+    });
 }
 </script>
