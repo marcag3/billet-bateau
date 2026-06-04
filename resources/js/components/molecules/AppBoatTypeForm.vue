@@ -17,8 +17,6 @@
             :disabled="isSubmitting"
             accept="image/jpeg,image/png,image/webp"
             :existing-image-url="bannerPreviewUrl"
-            :preview-max-width-px="88"
-            :preview-ratio="1"
             :presign-url="presignUpload.url()"
             :allow-clear-existing="isEditMode && bannerPreviewUrl.length > 0"
             :clear-existing-loading="isClearingBanner"
