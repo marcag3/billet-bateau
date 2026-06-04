@@ -1,73 +1,27 @@
 <template>
     <q-form @submit="onValidSubmit">
         <div class="column q-gutter-y-md">
-            <q-input
-                v-model="name"
-                v-bind="nameProps"
-                outlined
-                :label="t('productsList.name')"
-                :disable="fieldsDisabled"
-            />
-            <q-input
-                v-model="description"
-                v-bind="descriptionProps"
-                type="textarea"
-                outlined
-                autogrow
-                :label="t('productsList.productDescription')"
-                :hint="t('productsList.productDescriptionHint')"
-                :disable="fieldsDisabled"
-            />
-            <q-input
-                v-model.number="capacity"
-                v-bind="capacityProps"
-                outlined
-                type="number"
-                :label="t('productsList.capacity')"
-                :hint="t('productsList.capacityHint')"
-                :disable="fieldsDisabled"
-            />
-            <AppBoatTypeSelectField
-                v-model="boatTypeId"
-                v-bind="boatTypeIdProps"
-                :program-id="programId"
-                :label="t('productsList.boatType')"
-                :disable="fieldsDisabled"
-            />
-            <AppWaterRouteSelectField
-                v-model="waterRouteId"
-                v-bind="waterRouteIdProps"
-                :program-id="programId"
-                :label="t('productsList.waterRoute')"
-                :disable="fieldsDisabled"
-            />
+            <q-input v-model="name" v-bind="nameProps" outlined :label="t('productsList.name')"
+                :disable="fieldsDisabled" />
+            <q-input v-model="description" v-bind="descriptionProps" type="textarea" outlined autogrow
+                :label="t('productsList.productDescription')" :hint="t('productsList.productDescriptionHint')"
+                :disable="fieldsDisabled" />
+            <q-input v-model.number="capacity" v-bind="capacityProps" outlined type="number"
+                :label="t('productsList.capacity')" :hint="t('productsList.capacityHint')" :disable="fieldsDisabled" />
+            <AppBoatTypeSelectField v-model="boatTypeId" v-bind="boatTypeIdProps" :program-id="programId"
+                :label="t('productsList.boatType')" :disable="fieldsDisabled" />
+            <AppWaterRouteSelectField v-model="waterRouteId" v-bind="waterRouteIdProps" :program-id="programId"
+                :label="t('productsList.waterRoute')" :disable="fieldsDisabled" />
 
-            <AppImageUploadField
-                v-if="programId.trim().length > 0"
-                ref="bannerUploadField"
-                :label="t('productsList.image')"
-                :hint="t('productsList.imageHint')"
-                :disabled="fieldsDisabled"
-                accept="image/jpeg,image/png,image/webp"
-                :existing-image-url="existingBannerUrl"
-                :preview-max-width-px="88"
-                :preview-ratio="1"
-                :presign-url="presignUpload.url()"
-                :allow-clear-existing="
-                    persistedProductId.trim().length > 0 &&
+            <AppImageUploadField v-if="programId.trim().length > 0" ref="bannerUploadField"
+                :label="t('productsList.image')" :hint="t('productsList.imageHint')" :disabled="fieldsDisabled"
+                accept="image/jpeg,image/png,image/webp" :existing-image-url="existingBannerUrl" :preview-ratio="1"
+                :presign-url="presignUpload.url()" :allow-clear-existing="persistedProductId.trim().length > 0 &&
                     existingBannerUrl.length > 0
-                "
-                :clear-existing-loading="isClearingBanner"
-                :clear-existing-aria-label="t('productsList.imageRemove')"
-                @clear-existing="onRemovePersistedBanner"
-            />
+                    " :clear-existing-loading="isClearingBanner" :clear-existing-aria-label="t('productsList.imageRemove')"
+                @clear-existing="onRemovePersistedBanner" />
 
-            <slot
-                name="actions"
-                :meta="meta"
-                :is-submitting="isSubmitting"
-                :fields-disabled="fieldsDisabled"
-            />
+            <slot name="actions" :meta="meta" :is-submitting="isSubmitting" :fields-disabled="fieldsDisabled" />
         </div>
     </q-form>
 </template>

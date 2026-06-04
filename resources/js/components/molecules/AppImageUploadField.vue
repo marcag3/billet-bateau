@@ -7,70 +7,76 @@
         <q-card
             flat
             bordered
-            class="relative cursor-pointer"
+            class="relative self-start"
             :class="[
                 !hasPreview && 'border-dashed',
                 isDragOver && 'bg-blue-1',
-                (disabled || isUploading) && 'cursor-not-allowed opacity-70',
+                (disabled || isUploading) && 'opacity-70',
             ]"
             :style="cardStyle"
-            role="button"
-            tabindex="0"
-            :aria-label="dropzoneAriaLabel"
-            @click="onDropzoneClick"
-            @keydown.enter.prevent="onDropzoneKeydown"
-            @keydown.space.prevent="onDropzoneKeydown"
             @dragover.prevent="onDragOver"
             @dragleave.prevent="isDragOver = false"
             @drop.prevent="onDrop"
         >
-            <q-img
-                v-if="hasPreview"
-                :src="displayPreviewUrl"
-                :ratio="previewRatio"
-                :fit="compactPreview ? 'cover' : 'contain'"
-                :style="compactPreview ? undefined : previewStyle"
-                class="block"
-            />
-
-            <div
-                v-else
-                class="column items-center justify-center q-pa-md text-center"
-                :style="emptyStateStyle"
+            <q-card-section
+                class="q-pa-none cursor-pointer"
+                :class="(disabled || isUploading) && 'cursor-not-allowed'"
+                role="button"
+                tabindex="0"
+                :aria-label="dropzoneAriaLabel"
+                @click="onDropzoneClick"
+                @keydown.enter.prevent="onDropzoneKeydown"
+                @keydown.space.prevent="onDropzoneKeydown"
             >
-                <q-icon name="image" size="md" color="grey-6" />
-                <div class="text-body2 q-mt-sm">{{ t('imageUploadField.emptyHint') }}</div>
-                <div v-if="hint.length > 0" class="text-caption text-grey-7 q-mt-xs">
-                    {{ hint }}
+                <q-img
+                    v-if="hasPreview"
+                    :src="displayPreviewUrl"
+                    :ratio="previewRatio"
+                    :fit="compactPreview ? 'cover' : 'contain'"
+                    :style="compactPreview ? undefined : previewStyle"
+                />
+
+                <div
+                    v-else
+                    class="column items-center justify-center q-pa-md text-center"
+                    :style="emptyStateStyle"
+                >
+                    <q-icon name="image" size="md" color="grey-6" />
+                    <div class="text-body2 q-mt-sm">{{ t('imageUploadField.emptyHint') }}</div>
+                    <div v-if="hint.length > 0" class="text-caption text-grey-7 q-mt-xs">
+                        {{ hint }}
+                    </div>
                 </div>
-            </div>
+            </q-card-section>
+
+            <q-card-section v-if="showActions" class="q-pt-sm q-pb-sm" @click.stop>
+                <div class="row q-gutter-sm">
+                    <q-btn
+                        flat
+                        dense
+                        no-caps
+                        color="primary"
+                        :label="t('imageUploadField.replace')"
+                        :disable="disabled || isUploading"
+                        @click="openFilePicker"
+                    />
+                    <q-btn
+                        v-if="showRemoveAction"
+                        flat
+                        dense
+                        no-caps
+                        color="negative"
+                        :label="removeActionLabel"
+                        :loading="clearExistingLoading"
+                        :disable="disabled || isUploading || clearExistingLoading"
+                        @click="onRemove"
+                    />
+                </div>
+            </q-card-section>
         </q-card>
 
         <div v-if="fieldError.length > 0" class="text-negative text-caption" role="alert">
             {{ fieldError }}
-        </div>
-
-        <div v-if="showActions" class="row q-gutter-sm">
-            <q-btn
-                flat
-                dense
-                no-caps
-                color="primary"
-                :label="t('imageUploadField.replace')"
-                :disable="disabled || isUploading"
-                @click.stop="openFilePicker"
-            />
-            <q-btn
-                v-if="showRemoveAction"
-                flat
-                dense
-                no-caps
-                color="negative"
-                :label="removeActionLabel"
-                :loading="clearExistingLoading"
-                :disable="disabled || isUploading || clearExistingLoading"
-                @click.stop="onRemove"
-            />
         </div>
 
         <q-file
@@ -81,6 +87,18 @@
             :max-files="1"
             :disable="disabled || isUploading"
             @update:model-value="onFileModelUpdated"
+        />
+
+        <AppImageCropDialog
+            v-if="croppable"
+            v-model="cropDialogOpen"
+            :image-url="cropSourceUrl ?? ''"
+            :source-file="cropSourceFile"
+            :aspect-ratio="previewRatio"
+            :file-name="cropSourceFileName"
+            :mime-type="cropSourceMimeType"
+            @apply="onCropApplied"
+            @cancel="onCropCancelled"
         />
     </div>
 </template>
@@ -93,6 +111,7 @@ import { fileMatchesAccept } from '../../utilities/image-accept';
 import { normalizeImageFiles } from '../../utilities/image-files';
 import type { ImageDirectUploadResult } from '../../utilities/image-uploader';
 import { uploadImageViaPresignedPut } from '../../utilities/image-uploader';
+import AppImageCropDialog from './AppImageCropDialog.vue';
 
 const props = withDefaults(
     defineProps<{
@@ -109,6 +128,7 @@ const props = withDefaults(
         allowClearExisting?: boolean;
         clearExistingLoading?: boolean;
         clearExistingAriaLabel?: string;
+        croppable?: boolean;
     }>(),
     {
         hint: '',
@@ -123,6 +143,7 @@ const props = withDefaults(
         allowClearExisting: false,
         clearExistingLoading: false,
         clearExistingAriaLabel: '',
+        croppable: true,
     },
 );
 
@@ -142,6 +163,11 @@ const pendingPreviewUrl = ref<string | null>(null);
 const isUploading = ref(false);
 const isDragOver = ref(false);
 const fieldError = ref('');
+const cropDialogOpen = ref(false);
+const cropSourceUrl = ref<string | null>(null);
+const cropSourceFile = ref<File | null>(null);
+const cropSourceFileName = ref('image.jpg');
+const cropSourceMimeType = ref('image/jpeg');
 
 const compactPreview = computed(
     () => typeof props.previewMaxWidthPx === 'number' && props.previewMaxWidthPx > 0,
@@ -151,7 +177,9 @@ const cardStyle = computed(() => {
     const style: Record<string, string> = {};
     const width = props.previewMaxWidthPx;
     if (typeof width === 'number' && width > 0) {
-        style.maxWidth = `${String(width)}px`;
+        const widthPx = `${String(width)}px`;
+        style.maxWidth = widthPx;
+        style.width = widthPx;
     }
 
     return style;
@@ -234,6 +262,19 @@ function revokePendingPreview(): void {
     }
 }
 
+function revokeCropSourceUrl(): void {
+    if (cropSourceUrl.value != null) {
+        URL.revokeObjectURL(cropSourceUrl.value);
+        cropSourceUrl.value = null;
+    }
+}
+
+function closeCropDialog(): void {
+    cropDialogOpen.value = false;
+    revokeCropSourceUrl();
+    cropSourceFile.value = null;
+}
+
 function clearPendingSelection(): void {
     pendingUploadFile.value = null;
     revokePendingPreview();
@@ -280,7 +321,28 @@ function ingestFile(file: File): void {
     }
 
     clearFieldError();
+    fileModel.value = null;
+
+    if (!props.croppable) {
+        setPendingFile(file);
+        return;
+    }
+
+    closeCropDialog();
+    cropSourceFile.value = file;
+    cropSourceFileName.value = file.name;
+    cropSourceMimeType.value = file.type.length > 0 ? file.type : 'image/jpeg';
+    cropSourceUrl.value = URL.createObjectURL(file);
+    cropDialogOpen.value = true;
+}
+
+function onCropApplied(file: File): void {
+    closeCropDialog();
     setPendingFile(file);
+}
+
+function onCropCancelled(): void {
+    closeCropDialog();
     fileModel.value = null;
 }
 
@@ -366,6 +428,7 @@ function clearSelection(): void {
 }
 
 onBeforeUnmount(() => {
+    closeCropDialog();
     clearPendingSelection();
 });
 

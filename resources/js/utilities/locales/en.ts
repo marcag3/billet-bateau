@@ -55,6 +55,9 @@ export default {
         remove: "Remove",
         clear: "Clear selection",
         invalidType: "Choose a JPEG, PNG, or WebP image.",
+        cropTitle: "Crop image",
+        cropZoom: "Zoom",
+        cropApply: "Use image",
     },
     setup: {
         title: "First-time setup",

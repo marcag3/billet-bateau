@@ -47,6 +47,7 @@ describe('AppImageUploadField', () => {
             props: {
                 label: 'Upload',
                 presignUrl: '/api/presign',
+                croppable: false,
                 ...extraProps,
             },
             global: {
@@ -115,6 +116,24 @@ describe('AppImageUploadField', () => {
         expect(uploadImageViaPresignedPut).not.toHaveBeenCalled();
     });
 
+    it('renders action buttons below the preview image', async () => {
+        const mounted = mountField({
+            existingImageUrl: 'https://cdn.test/existing.webp',
+            previewMaxWidthPx: 88,
+            previewRatio: 1,
+            allowClearExisting: true,
+        });
+
+        const cardSections = mounted.findAllComponents({ name: 'QCardSection' });
+        expect(cardSections).toHaveLength(2);
+
+        const previewBottom = cardSections[0]!.element.getBoundingClientRect().bottom;
+        const actionsTop = cardSections[1]!.element.getBoundingClientRect().top;
+
+        expect(actionsTop).toBeGreaterThanOrEqual(previewBottom - 1);
+        expect(cardSections[1]!.text()).toContain('imageUploadField.replace');
+    });
+
     it('emits clear-existing when removing an existing remote image', async () => {
         const mounted = mountField({
             existingImageUrl: 'https://cdn.test/existing.webp',
@@ -129,5 +148,18 @@ describe('AppImageUploadField', () => {
         await removeButton!.trigger('click');
 
         expect(mounted.emitted('clear-existing')).toBeTruthy();
+    });
+
+    it('opens the crop dialog after selecting a file when croppable', async () => {
+        const mounted = mountField({ croppable: true });
+        const selectedFile = new File(['binary'], 'photo.jpg', { type: 'image/jpeg' });
+
+        const qFile = mounted.findComponent({ name: 'QFile' });
+        qFile.vm.$emit('update:modelValue', selectedFile);
+        await flushPromises();
+
+        expect(createObjectUrl).toHaveBeenCalledWith(selectedFile);
+        expect(mounted.findComponent({ name: 'AppImageCropDialog' }).exists()).toBe(true);
+        expect(uploadImageViaPresignedPut).not.toHaveBeenCalled();
     });
 });
