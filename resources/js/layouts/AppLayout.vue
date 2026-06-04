@@ -49,7 +49,10 @@
 
                     <q-separator class="q-my-sm" />
 
-                    <div :id="APP_PROGRAM_MAIN_NAV_TELEPORT_ID" />
+                    <div
+                        :id="APP_PROGRAM_MAIN_NAV_TELEPORT_ID"
+                        ref="programMainNavTarget"
+                    />
                 </q-list>
             </q-scroll-area>
             <q-img class="absolute-top" src="/icons/logo.jpg" alt="Brand logo" style="height: 150px">
@@ -82,14 +85,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useAuthStore } from "../store/auth.store";
 import { useAppLayoutStore } from "../store/app-layout.store";
 import { useProgramWorkspaceLayout } from "../composables/useProgramWorkspaceLayout";
-import { APP_PROGRAM_MAIN_NAV_TELEPORT_ID } from "../utilities/app-layout-nav";
+import {
+    APP_PROGRAM_MAIN_NAV_TELEPORT_ID,
+    provideAppProgramMainNavTarget,
+} from "../utilities/app-layout-nav";
 import AppOutboxToolbarMenu from "../components/AppOutboxToolbarMenu.vue";
 import AppLanguageSwitcher from "../components/AppLanguageSwitcher.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
@@ -100,6 +106,10 @@ const authStore = useAuthStore();
 const layoutStore = useAppLayoutStore();
 const { t, locale } = useI18n();
 const leftDrawerOpen = ref(false);
+const programMainNavTarget = useTemplateRef<HTMLElement>(
+    "programMainNavTarget",
+);
+provideAppProgramMainNavTarget(programMainNavTarget);
 
 const baseDocumentTitle = typeof document !== "undefined" ? document.title : "";
 

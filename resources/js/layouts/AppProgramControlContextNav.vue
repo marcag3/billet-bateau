@@ -1,5 +1,9 @@
 <template>
-    <Teleport :to="teleportTo">
+    <Teleport
+        :to="teleportTo"
+        :disabled="teleportDisabled"
+        :key="teleportTargetKey"
+    >
         <template v-if="programId.length > 0">
             <q-item
                 key="control-home"
@@ -22,12 +26,13 @@
 import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { APP_PROGRAM_MAIN_NAV_TELEPORT_ID } from "../utilities/app-layout-nav";
+import { useAppProgramMainNavTeleport } from "../utilities/app-layout-nav";
 
 const route = useRoute();
 const { t } = useI18n();
 
-const teleportTo = computed(() => `#${APP_PROGRAM_MAIN_NAV_TELEPORT_ID}`);
+const { teleportTo, teleportDisabled, teleportTargetKey } =
+    useAppProgramMainNavTeleport();
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
 </script>
