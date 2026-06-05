@@ -7,8 +7,9 @@
         <q-card
             flat
             bordered
-            class="relative self-start"
+            class="relative"
             :class="[
+                compactPreview ? 'self-start' : 'w-full',
                 !hasPreview && 'border-dashed',
                 isDragOver && 'bg-blue-1',
                 (disabled || isUploading) && 'opacity-70',
@@ -33,12 +34,14 @@
                     :src="displayPreviewUrl"
                     :ratio="previewRatio"
                     :fit="compactPreview ? 'cover' : 'contain'"
+                    :class="!compactPreview && 'w-full'"
                     :style="compactPreview ? undefined : previewStyle"
                 />
 
                 <div
                     v-else
                     class="column items-center justify-center q-pa-md text-center"
+                    :class="!compactPreview && 'w-full'"
                     :style="emptyStateStyle"
                 >
                     <q-icon name="image" size="md" color="grey-6" />
@@ -174,20 +177,20 @@ const compactPreview = computed(
 );
 
 const cardStyle = computed(() => {
-    const style: Record<string, string> = {};
     const width = props.previewMaxWidthPx;
-    if (typeof width === 'number' && width > 0) {
-        const widthPx = `${String(width)}px`;
-        style.maxWidth = widthPx;
-        style.width = widthPx;
+    if (typeof width !== 'number' || width <= 0) {
+        return undefined;
     }
 
-    return style;
+    const widthPx = `${String(width)}px`;
+    return {
+        maxWidth: widthPx,
+        width: widthPx,
+    };
 });
 
 const previewStyle = computed(() => ({
     height: `${String(props.previewMaxHeightPx)}px`,
-    width: '100%',
 }));
 
 const emptyStateStyle = computed(() => {
@@ -198,7 +201,6 @@ const emptyStateStyle = computed(() => {
 
     return {
         height: `${String(props.previewMaxHeightPx)}px`,
-        width: '100%',
     };
 });
 

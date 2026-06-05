@@ -1,62 +1,33 @@
 <template>
-    <AppMapSelect
-        :model-value="modelValue"
-        :options="optionItems"
-        :label="label"
-        :disable="disable"
-        v-bind="$attrs"
-        @update:model-value="onModelValueUpdate"
-    >
+    <AppMapSelect :model-value="modelValue" :options="optionItems" :label="label" :disable="disable" v-bind="$attrs"
+        @update:model-value="onModelValueUpdate">
         <template #option="{ itemProps, opt }">
             <q-item v-bind="itemProps">
                 <q-item-section>
                     <q-item-label>{{ opt.label }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                    <q-btn
-                        flat
-                        round
-                        dense
-                        icon="edit"
-                        @click.stop="() => onRename(opt)"
-                    />
-                    <q-btn
-                        v-if="opt.unused"
-                        flat
-                        round
-                        dense
-                        icon="delete"
-                        color="negative"
-                        @click.stop="() => onDelete(opt)"
-                    />
+                    <q-btn flat round dense icon="edit" @click.stop="() => onRename(opt)" />
+                    <q-btn v-if="opt.unused" flat round dense icon="delete" color="negative"
+                        @click.stop="() => onDelete(opt)" />
                 </q-item-section>
             </q-item>
         </template>
 
         <template #after>
-            <q-btn
-                flat
-                round
-                dense
-                icon="add"
-                @click="openBoatTypeFormCreate"
-            />
+            <q-btn flat round dense icon="add" @click="openBoatTypeFormCreate" />
         </template>
     </AppMapSelect>
 
     <q-dialog v-model="boatTypeFormDialogOpen" persistent>
-        <q-card v-if="boatTypeFormDialogOpen" style="min-width: 320px">
+        <q-card v-if="boatTypeFormDialogOpen" class="w-full md:w-[560px]">
             <q-card-section>
                 <div class="text-h6">{{ boatTypeFormDialogTitle }}</div>
             </q-card-section>
             <q-card-section>
-                <AppBoatTypeForm
-                    :program-id="programId"
-                    :boat-type-id="boatTypeFormBoatTypeId"
-                    :initial-name="boatTypeFormInitialName"
-                    @cancel="closeBoatTypeFormDialog"
-                    @success="onBoatTypeFormSuccess"
-                />
+                <AppBoatTypeForm :program-id="programId" :boat-type-id="boatTypeFormBoatTypeId"
+                    :initial-name="boatTypeFormInitialName" @cancel="closeBoatTypeFormDialog"
+                    @success="onBoatTypeFormSuccess" />
             </q-card-section>
         </q-card>
     </q-dialog>
