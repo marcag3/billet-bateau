@@ -1,8 +1,8 @@
 <template>
-    <q-page class="q-pa-md column min-h-0">
-        <AppPageHeader :title="t('programsControl.title')" class="q-mb-sm" />
+    <q-page class="app-control-panel-page q-pa-md column min-h-0">
+        <AppPageHeader :title="t('programsControl.title')" class="q-mb-sm shrink-0" />
 
-        <AppControlPanelDayToolbar v-model:selected-date-ymd="selectedDateYmd"
+        <AppControlPanelDayToolbar v-model:selected-date-ymd="selectedDateYmd" class="shrink-0"
             v-model:show-finished-trips="showFinishedTrips" :stats="dayStats" :trip-date-ymds="tripDateYmds"
             :program-start-date-ymd="programDateBounds.startYmd" :program-end-date-ymd="programDateBounds.endYmd"
             @prev-day="shiftSelectedDay(-1)" @next-day="shiftSelectedDay(1)" @go-today="goToToday" />
@@ -12,7 +12,7 @@
         </p>
 
         <q-virtual-scroll v-else ref="tripLaneRef" v-touch-pan.mouse.horizontal="onTripLanePan" :items="visibleTripCards"
-            virtual-scroll-horizontal :virtual-scroll-item-size="tripCardItemSize" :style="tripLaneStyle"
+            virtual-scroll-horizontal :virtual-scroll-item-size="tripCardItemSize"
             class="col w-full max-w-full min-h-0 snap-x snap-mandatory" v-slot="{ item }">
             <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" @open-depart="openDepartModal(item)"
                 @arrive="confirmArrive(item)" @open-walk-in="openWalkInModal(item)"
@@ -72,7 +72,7 @@ const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const tripLaneRef = ref<ComponentPublicInstance | null>(null);
 
-const { tripCardItemSize, tripLaneStyle } = useControlPanelTripLaneLayout();
+const { tripCardItemSize } = useControlPanelTripLaneLayout(tripLaneRef);
 const { onTripLanePan } = useControlPanelTripLanePan(tripLaneRef);
 
 const {
@@ -288,3 +288,11 @@ function onUndoCheckInBooking(
     void undoCheckInForBooking(bookingId, card.passengers);
 }
 </script>
+
+<style scoped>
+.app-control-panel-page {
+    height: calc(100dvh - 50px);
+    max-height: calc(100dvh - 50px);
+    overflow: hidden;
+}
+</style>

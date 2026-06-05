@@ -1,44 +1,69 @@
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-
-/** Space for page header, day toolbar, and padding below the trip lane. */
-const TRIP_LANE_CHROME_PX = 220;
+import {
+    computed,
+    onUnmounted,
+    ref,
+    watch,
+    type ComponentPublicInstance,
+    type Ref,
+} from 'vue';
 
 const MIN_TRIP_LANE_HEIGHT_PX = 400;
 
-const DEFAULT_VIEWPORT_HEIGHT_PX = 800;
+/** Horizontal virtual-scroll item width from lane height (trip card aspect 5:12). */
+export function computeTripCardItemSize(tripLaneHeightPx: number): number {
+    return Math.round(Math.max(MIN_TRIP_LANE_HEIGHT_PX, tripLaneHeightPx) * (5 / 12));
+}
 
-export function useControlPanelTripLaneLayout() {
-    const viewportHeightPx = ref(
-        typeof window !== 'undefined' ? window.innerHeight : DEFAULT_VIEWPORT_HEIGHT_PX,
-    );
+function resolveLaneElement(instance: ComponentPublicInstance | null): HTMLElement | null {
+    const root = instance?.$el;
+    return root instanceof HTMLElement ? root : null;
+}
 
-    function syncViewportHeight(): void {
-        viewportHeightPx.value = window.innerHeight;
+export function useControlPanelTripLaneLayout(
+    tripLaneRef: Ref<ComponentPublicInstance | null>,
+) {
+    const tripLaneHeightPx = ref(MIN_TRIP_LANE_HEIGHT_PX);
+    let observer: ResizeObserver | null = null;
+
+    function disconnectObserver(): void {
+        observer?.disconnect();
+        observer = null;
     }
 
-    onMounted(() => {
-        syncViewportHeight();
-        window.addEventListener('resize', syncViewportHeight, { passive: true });
-    });
+    function syncLaneHeight(element: HTMLElement): void {
+        const nextHeight = Math.max(MIN_TRIP_LANE_HEIGHT_PX, Math.round(element.clientHeight));
+        if (nextHeight !== tripLaneHeightPx.value) {
+            tripLaneHeightPx.value = nextHeight;
+        }
+    }
+
+    watch(
+        tripLaneRef,
+        (instance) => {
+            disconnectObserver();
+
+            const element = resolveLaneElement(instance);
+            if (element == null) {
+                tripLaneHeightPx.value = MIN_TRIP_LANE_HEIGHT_PX;
+                return;
+            }
+
+            syncLaneHeight(element);
+            observer = new ResizeObserver(() => {
+                syncLaneHeight(element);
+            });
+            observer.observe(element);
+        },
+        { immediate: true },
+    );
 
     onUnmounted(() => {
-        window.removeEventListener('resize', syncViewportHeight);
+        disconnectObserver();
     });
 
-    const tripLaneHeightPx = computed(() =>
-        Math.max(MIN_TRIP_LANE_HEIGHT_PX, viewportHeightPx.value - TRIP_LANE_CHROME_PX),
-    );
-
-    const tripCardItemSize = computed(() =>
-        Math.round(tripLaneHeightPx.value * (5 / 12)),
-    );
-
-    const tripLaneStyle = computed(() => ({
-        height: `${tripLaneHeightPx.value}px`,
-    }));
+    const tripCardItemSize = computed(() => computeTripCardItemSize(tripLaneHeightPx.value));
 
     return {
         tripCardItemSize,
-        tripLaneStyle,
     };
 }

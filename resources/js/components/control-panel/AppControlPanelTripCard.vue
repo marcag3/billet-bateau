@@ -3,11 +3,11 @@
         <div class="shrink-0 mt-10">
             <div class="text-center">
                 <div class="text-h6">{{ departureTimeLabel }}</div>
-                <div class="text-subtitle1">{{ productTitle }}</div>
                 <div class="text-body1">{{ passengerCount }}/{{ totalSeatsLabel }}</div>
                 <div class="text-body2" :style="tripDisplayStatusStyle">
                     {{ tripDisplayStatusLabel }}
                 </div>
+                <div class="text-subtitle1">{{ productTitle }}</div>
             </div>
         </div>
 
