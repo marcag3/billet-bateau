@@ -11,8 +11,8 @@
             {{ emptyDayMessage }}
         </p>
 
-        <q-virtual-scroll v-else ref="tripLaneRef" v-touch-pan.mouse.horizontal="onTripLanePan" :items="visibleTripCards"
-            virtual-scroll-horizontal :virtual-scroll-item-size="tripCardItemSize"
+        <q-virtual-scroll v-else ref="tripLaneRef" v-touch-pan.mouse.horizontal="onTripLanePan"
+            :items="visibleTripCards" virtual-scroll-horizontal :virtual-scroll-item-size="tripCardItemSize"
             class="col w-full max-w-full min-h-0 snap-x snap-mandatory" v-slot="{ item }">
             <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" @open-depart="openDepartModal(item)"
                 @arrive="confirmArrive(item)" @open-walk-in="openWalkInModal(item)"

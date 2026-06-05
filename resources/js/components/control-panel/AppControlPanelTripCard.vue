@@ -1,13 +1,15 @@
 <template>
     <div class="relative snap-start shrink-0 h-full w-auto aspect-[5/12] overflow-hidden flex flex-col">
-        <div class="shrink-0 mt-10">
-            <div class="text-center">
+        <div class="shrink-0 mt-10 w-full min-w-0 px-14">
+            <div class="text-center min-w-0">
                 <div class="text-h6">{{ departureTimeLabel }}</div>
-                <div class="text-body1">{{ passengerCount }}/{{ totalSeatsLabel }}</div>
-                <div class="text-body2" :style="tripDisplayStatusStyle">
+                <div class="text-h6">{{ passengerCount }}/{{ totalSeatsLabel }}</div>
+                <div class="text-h6" :style="tripDisplayStatusStyle">
                     {{ tripDisplayStatusLabel }}
                 </div>
-                <div class="text-subtitle1">{{ productTitle }}</div>
+                <div class="text-body2 ellipsis block max-w-full mx-auto" :title="productTitle">
+                    {{ productTitle }}
+                </div>
             </div>
         </div>
 
