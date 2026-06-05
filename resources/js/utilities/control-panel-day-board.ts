@@ -72,6 +72,42 @@ export function controlPanelStatChipStyle(
     return { color };
 }
 
+export function hasControlPanelTripDeparted(
+    voyage: { status: string } | null,
+): boolean {
+    if (voyage == null) {
+        return false;
+    }
+    const status = String(voyage.status ?? '').trim();
+    return (
+        status === 'underway' ||
+        status === 'completed' ||
+        status === 'cancelled'
+    );
+}
+
+export function resolveControlPanelDepartedAssignmentLabels(
+    boatIds: readonly string[],
+    guideIds: readonly string[],
+    boatNamesById: Readonly<Record<string, string>>,
+    guideNamesById: Readonly<Record<string, string>>,
+): { boatLabel: string; guideLabel: string } {
+    const namesForIds = (
+        ids: readonly string[],
+        namesById: Readonly<Record<string, string>>,
+    ): string => {
+        const labels = ids
+            .map((id) => String(namesById[id] ?? '').trim())
+            .filter((label) => label.length > 0);
+        return labels.length > 0 ? labels.join(', ') : '—';
+    };
+
+    return {
+        boatLabel: namesForIds(boatIds, boatNamesById),
+        guideLabel: namesForIds(guideIds, guideNamesById),
+    };
+}
+
 export function isControlPanelTripFinished(
     voyage: { status: string } | null,
 ): boolean {

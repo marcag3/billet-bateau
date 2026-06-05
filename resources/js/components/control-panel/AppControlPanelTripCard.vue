@@ -52,6 +52,15 @@
             </q-scroll-area>
         </div>
 
+        <div v-if="showDepartedAssignment" class="shrink-0 mx-10 mb-8 text-center min-w-0">
+            <div class="text-body2 ellipsis block max-w-full" :title="departedGuideLabel">
+                {{ departedGuideLabel }}
+            </div>
+            <div class="text-body2 ellipsis block max-w-full" :title="departedBoatLabel">
+                {{ departedBoatLabel }}
+            </div>
+        </div>
+
         <svg class="absolute inset-0 pointer-events-none" :style="tripDisplayStatusStyle" viewBox="0 0 200 480"
             xmlns="http://www.w3.org/2000/svg">
             <path
@@ -74,12 +83,16 @@ import {
 } from '../../utilities/control-panel-manifest';
 import {
     controlPanelTripDisplayStatusColor,
+    hasControlPanelTripDeparted,
+    resolveControlPanelDepartedAssignmentLabels,
     resolveControlPanelTripDisplayStatus,
     type ControlPanelTripDisplayStatus,
 } from '../../utilities/control-panel-day-board';
 
 const props = defineProps<{
     card: ControlPanelTripCardModel;
+    boatNamesById?: Readonly<Record<string, string>>;
+    guideNamesById?: Readonly<Record<string, string>>;
 }>();
 
 const emit = defineEmits<{
@@ -188,6 +201,23 @@ const showDepart = computed(
 );
 
 const showArrive = computed(() => voyageStatus.value === 'underway');
+
+const showDepartedAssignment = computed(() =>
+    hasControlPanelTripDeparted(props.card.voyage),
+);
+
+const departedAssignmentLabels = computed(() =>
+    resolveControlPanelDepartedAssignmentLabels(
+        props.card.initialBoatIds,
+        props.card.initialGuideIds,
+        props.boatNamesById ?? {},
+        props.guideNamesById ?? {},
+    ),
+);
+
+const departedGuideLabel = computed(() => departedAssignmentLabels.value.guideLabel);
+
+const departedBoatLabel = computed(() => departedAssignmentLabels.value.boatLabel);
 
 function manifestItemCanCheckIn(item: ManifestOccupiedSlot): boolean {
     return (

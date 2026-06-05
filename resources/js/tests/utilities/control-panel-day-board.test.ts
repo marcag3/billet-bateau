@@ -5,9 +5,11 @@ import {
     CONTROL_PANEL_STATUS_COLOR,
     controlPanelStatChipStyle,
     controlPanelTripDisplayStatusColor,
+    hasControlPanelTripDeparted,
     normalizeCalendarYmd,
     parseRouteDateYmdOrToday,
     isControlPanelTripFinished,
+    resolveControlPanelDepartedAssignmentLabels,
     resolveControlPanelTripDisplayStatus,
     todayLocalDateYmd,
     voyageArrivedOnDateYmd,
@@ -188,5 +190,34 @@ describe('control-panel-day-board', () => {
         expect(resolveControlPanelTripDisplayStatus({ status: 'underway' })).toBe('on_water');
         expect(resolveControlPanelTripDisplayStatus({ status: 'completed' })).toBe('returned');
         expect(resolveControlPanelTripDisplayStatus({ status: 'cancelled' })).toBe('cancelled');
+    });
+
+    it('hasControlPanelTripDeparted is true after departure has started', () => {
+        expect(hasControlPanelTripDeparted(null)).toBe(false);
+        expect(hasControlPanelTripDeparted({ status: 'draft' })).toBe(false);
+        expect(hasControlPanelTripDeparted({ status: 'ready' })).toBe(false);
+        expect(hasControlPanelTripDeparted({ status: 'underway' })).toBe(true);
+        expect(hasControlPanelTripDeparted({ status: 'completed' })).toBe(true);
+        expect(hasControlPanelTripDeparted({ status: 'cancelled' })).toBe(true);
+    });
+
+    it('resolveControlPanelDepartedAssignmentLabels joins boat and guide names', () => {
+        expect(
+            resolveControlPanelDepartedAssignmentLabels(
+                ['boat-a', 'boat-b'],
+                ['guide-x'],
+                { 'boat-a': 'Alpha', 'boat-b': 'Beta' },
+                { 'guide-x': 'Alex' },
+            ),
+        ).toEqual({
+            boatLabel: 'Alpha, Beta',
+            guideLabel: 'Alex',
+        });
+        expect(
+            resolveControlPanelDepartedAssignmentLabels([], [], {}, {}),
+        ).toEqual({
+            boatLabel: '—',
+            guideLabel: '—',
+        });
     });
 });

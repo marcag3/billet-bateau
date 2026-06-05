@@ -14,7 +14,8 @@
         <q-virtual-scroll v-else ref="tripLaneRef" v-touch-pan.mouse.horizontal="onTripLanePan"
             :items="visibleTripCards" virtual-scroll-horizontal :virtual-scroll-item-size="tripCardItemSize"
             class="col w-full max-w-full min-h-0 snap-x snap-mandatory" v-slot="{ item }">
-            <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" @open-depart="openDepartModal(item)"
+            <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" :boat-names-by-id="boatNamesById"
+                :guide-names-by-id="guideNamesById" @open-depart="openDepartModal(item)"
                 @arrive="confirmArrive(item)" @open-walk-in="openWalkInModal(item)"
                 @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)"
                 @undo-check-in-booking="(bookingId) => onUndoCheckInBooking(item, bookingId)"
@@ -165,6 +166,30 @@ const guideOptions = computed((): ControlPanelSelectOption[] => {
         value: String(g.id),
         label: String(g.name ?? ""),
     }));
+});
+
+const boatNamesById = computed((): Record<string, string> => {
+    const names: Record<string, string> = {};
+    for (const boat of (boatsRaw.value ?? []) as Record<string, unknown>[]) {
+        const id = String(boat.id ?? "").trim();
+        if (id.length === 0) {
+            continue;
+        }
+        names[id] = String(boat.name ?? "").trim() || "—";
+    }
+    return names;
+});
+
+const guideNamesById = computed((): Record<string, string> => {
+    const names: Record<string, string> = {};
+    for (const guide of (guidesRaw.value ?? []) as Record<string, unknown>[]) {
+        const id = String(guide.id ?? "").trim();
+        if (id.length === 0) {
+            continue;
+        }
+        names[id] = String(guide.name ?? "").trim() || "—";
+    }
+    return names;
 });
 
 const ticketTypeOptions = computed((): ControlPanelSelectOption[] => {
