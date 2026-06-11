@@ -64,6 +64,7 @@ export default defineConfig(({ mode }) => {
                 strategies: 'injectManifest',
                 srcDir: 'resources/js/service-worker',
                 filename: 'app-sw.js',
+                // Built to public/build/; npm run build copies to /app-sw.js so scope /app/ is valid.
                 injectRegister: false,
                 registerType: 'autoUpdate',
                 scope: '/app/',

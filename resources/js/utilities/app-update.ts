@@ -1,7 +1,8 @@
 import type { Router } from "vue-router";
-import { registerSW } from "virtual:pwa-register";
 
 const CHUNK_RELOAD_GUARD_KEY = "app:chunk-reload";
+export const APP_SERVICE_WORKER_SCRIPT_URL = "/app-sw.js";
+export const APP_SERVICE_WORKER_SCOPE = "/app/";
 
 export function clearChunkReloadGuard(): void {
     sessionStorage.removeItem(CHUNK_RELOAD_GUARD_KEY);
@@ -67,23 +68,38 @@ function checkForServiceWorkerUpdate(): void {
     });
 }
 
+function listenForServiceWorkerUpdates(): void {
+    let refreshing = false;
+    const hadController = Boolean(navigator.serviceWorker.controller);
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (!hadController || refreshing) {
+            return;
+        }
+
+        refreshing = true;
+        window.location.reload();
+    });
+}
+
 export function registerAppServiceWorker(onRegistered?: () => void): void {
     if (!import.meta.env.PROD || !("serviceWorker" in navigator)) {
         return;
     }
 
-    registerSW({
-        onRegisteredSW(_swScriptUrl, registration) {
-            onRegistered?.();
+    listenForServiceWorkerUpdates();
 
-            if (registration) {
-                void registration.update();
-            }
-        },
-        onRegisterError(error) {
+    void navigator.serviceWorker
+        .register(APP_SERVICE_WORKER_SCRIPT_URL, {
+            scope: APP_SERVICE_WORKER_SCOPE,
+        })
+        .then((registration) => {
+            onRegistered?.();
+            void registration.update();
+        })
+        .catch((error: unknown) => {
             console.error("App service worker registration failed:", error);
-        },
-    });
+        });
 
     window.addEventListener("focus", checkForServiceWorkerUpdate);
     document.addEventListener("visibilitychange", () => {

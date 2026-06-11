@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+    APP_SERVICE_WORKER_SCOPE,
+    APP_SERVICE_WORKER_SCRIPT_URL,
     handleLazyChunkLoadError,
     isLazyChunkLoadError,
+    registerAppServiceWorker,
 } from "../../utilities/app-update";
 
 const CHUNK_RELOAD_GUARD_KEY = "app:chunk-reload";
@@ -73,6 +76,46 @@ describe("app-update", () => {
                 ),
             ).toBe(true);
             expect(reload).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("registerAppServiceWorker", () => {
+        afterEach(() => {
+            vi.unstubAllEnvs();
+            vi.unstubAllGlobals();
+            vi.restoreAllMocks();
+        });
+
+        it("registers the copied root service worker with app scope", async () => {
+            vi.stubEnv("PROD", true);
+
+            const register = vi.fn().mockResolvedValue({
+                update: vi.fn(),
+            });
+            const addEventListener = vi.fn();
+
+            vi.stubGlobal("navigator", {
+                serviceWorker: {
+                    controller: null,
+                    register,
+                    addEventListener,
+                    ready: Promise.resolve({ update: vi.fn() }),
+                },
+            });
+            vi.stubGlobal("window", {
+                addEventListener: vi.fn(),
+            });
+            vi.stubGlobal("document", {
+                addEventListener: vi.fn(),
+            });
+
+            registerAppServiceWorker();
+
+            await Promise.resolve();
+
+            expect(register).toHaveBeenCalledWith(APP_SERVICE_WORKER_SCRIPT_URL, {
+                scope: APP_SERVICE_WORKER_SCOPE,
+            });
         });
     });
 });
