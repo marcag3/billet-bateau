@@ -9,6 +9,7 @@ const APP_MEDIA_CACHE = `app-media-${APP_CACHE_VERSION}`;
 const APP_SHELL_URLS = ['/app', '/app/'];
 const STATIC_FILE_PATTERN = /\.(?:css|js|mjs|ico|png|jpe?g|svg|webp|woff2?|ttf)$/i;
 const AUTH_PATH_PATTERN = /^\/(?:login|logout|register|password\/?|sanctum\/csrf-cookie)/;
+const SERVICE_WORKER_SCRIPT_PATHS = new Set(['/app/sw.js', '/app-sw.js']);
 
 const SW_CONFIG_PATH = '/app/sw-config.json';
 const SW_META_CACHE = 'sw-meta-v1';
@@ -115,6 +116,21 @@ self.addEventListener('activate', (event) => {
                     return caches.delete(cacheName);
                 }),
             );
+
+            const staticCache = await caches.open(APP_STATIC_CACHE);
+            const cachedRequests = await staticCache.keys();
+
+            await Promise.all(
+                cachedRequests.map((request) => {
+                    const pathname = new URL(request.url).pathname;
+
+                    if (!SERVICE_WORKER_SCRIPT_PATHS.has(pathname)) {
+                        return null;
+                    }
+
+                    return staticCache.delete(request);
+                }),
+            );
         })(),
     );
 });
@@ -162,7 +178,8 @@ self.addEventListener('fetch', (event) => {
     const bypassRuntimeCaching =
         url.pathname.startsWith('/api/') ||
         url.pathname.startsWith('/powersync/') ||
-        AUTH_PATH_PATTERN.test(url.pathname);
+        AUTH_PATH_PATTERN.test(url.pathname) ||
+        SERVICE_WORKER_SCRIPT_PATHS.has(url.pathname);
 
     if (bypassRuntimeCaching) {
         event.respondWith(fetch(request));

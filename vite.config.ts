@@ -63,8 +63,8 @@ export default defineConfig(({ mode }) => {
             VitePWA({
                 strategies: 'injectManifest',
                 srcDir: 'resources/js/service-worker',
-                filename: 'app-sw.js',
-                // Built to public/build/; npm run build copies to /app-sw.js so scope /app/ is valid.
+                filename: 'sw.js',
+                // Built to public/build/; npm run build copies to /app/sw.js under the /app/ scope.
                 injectRegister: false,
                 registerType: 'autoUpdate',
                 scope: '/app/',

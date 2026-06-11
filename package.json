@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build && cp public/build/app-sw.js public/app-sw.js",
+        "build": "vite build && mkdir -p public/app && cp public/build/sw.js public/app/sw.js",
         "dev": "vite",
         "test": "vitest",
         "typecheck": "vue-tsc --noEmit -p tsconfig.typecheck.json",
