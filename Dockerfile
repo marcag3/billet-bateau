@@ -131,6 +131,7 @@ COPY --chmod=755 ./deploy/entrypoint.d/ /etc/entrypoint.d/
 COPY --chown=www-data:www-data . .
 COPY --from=composer_deps /var/www/html/vendor/ ./vendor
 COPY --from=frontend_assets /var/www/html/public/build ./public/build
+COPY --from=frontend_assets /var/www/html/public/app-sw.js ./public/app-sw.js
 
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev
 
