@@ -4,6 +4,14 @@
         :subtitle="t('auth.authenticateWorkspace')"
         :error-message="errorMessage"
     >
+        <AppAlertBanner
+            v-if="showPasswordResetSuccess"
+            variant="info"
+            class="q-mb-md"
+        >
+            {{ t('auth.passwordResetSuccess') }}
+        </AppAlertBanner>
+
         <q-form
             class="q-gutter-md"
             @submit.prevent="submitLogin"
@@ -45,6 +53,15 @@
                 class="full-width"
             />
         </q-form>
+
+        <div class="text-center q-mt-md">
+            <router-link
+                class="text-primary"
+                :to="{ name: 'forgot-password' }"
+            >
+                {{ t('auth.forgotPasswordLink') }}
+            </router-link>
+        </div>
     </AppAuthFormLayout>
 </template>
 
@@ -52,10 +69,11 @@
 import { useForm } from 'vee-validate';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { createLoginFormSchema, type LoginFormValues } from '../models/auth.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useAuthStore } from '../store/auth.store';
+import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
 import AppAuthFormLayout from '../components/ui/AppAuthFormLayout.vue';
 
 const authStore = useAuthStore();
@@ -65,6 +83,7 @@ const { t } = useI18n();
 
 const remember = ref(true);
 const errorMessage = ref('');
+const showPasswordResetSuccess = computed(() => route.query.reset === 'success');
 
 const validationSchema = createLoginFormSchema(t);
 const { handleSubmit, defineField, isSubmitting } = useForm<LoginFormValues>({

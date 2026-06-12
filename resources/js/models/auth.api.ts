@@ -1,6 +1,10 @@
 import { translate } from '../utilities/i18n';
 import { csrfCookie } from '../routes/sanctum';
 import { status as setupStatus, store as setupStore } from '../routes/setup';
+import {
+    reset as passwordReset,
+    sendLink as passwordSendLink,
+} from '../actions/App/Http/Controllers/Auth/PasswordResetController';
 import { destroy as sessionDestroy, me as sessionMe, store as sessionStore } from '../actions/App/Http/Controllers/Auth/SessionController';
 import {
     buildJsonHeaders,
@@ -166,4 +170,70 @@ export async function logout() {
             { includeRequestedWith: true },
         ),
     });
+}
+
+export async function requestPasswordReset({ email }) {
+    await ensureCsrfCookie();
+
+    const response = await fetchWith419Retry(passwordSendLink.url(), {
+        method: 'POST',
+        headers: buildJsonHeaders(
+            {
+                'Content-Type': 'application/json',
+                ...getCsrfHeaders(),
+            },
+            { includeRequestedWith: true },
+        ),
+        body: JSON.stringify({ email }),
+    });
+
+    const payload = await parseJsonPayload(response);
+
+    if (!response.ok) {
+        const p = payload as LaravelErrorPayload;
+        const message = p.message ?? p.errors?.email?.[0] ?? translate('auth.forgotPassword.unableSend');
+        throw new Error(message);
+    }
+
+    return (payload as { message?: string }).message ?? translate('auth.forgotPassword.success');
+}
+
+export async function resetPassword({
+    token,
+    email,
+    password,
+    passwordConfirmation,
+}) {
+    await ensureCsrfCookie();
+
+    const response = await fetchWith419Retry(passwordReset.url(), {
+        method: 'POST',
+        headers: buildJsonHeaders(
+            {
+                'Content-Type': 'application/json',
+                ...getCsrfHeaders(),
+            },
+            { includeRequestedWith: true },
+        ),
+        body: JSON.stringify({
+            token,
+            email,
+            password,
+            password_confirmation: passwordConfirmation,
+        }),
+    });
+
+    const payload = await parseJsonPayload(response);
+
+    if (!response.ok) {
+        const p = payload as LaravelErrorPayload;
+        const message =
+            p.message ??
+            p.errors?.email?.[0] ??
+            p.errors?.password?.[0] ??
+            translate('auth.resetPassword.unableReset');
+        throw new Error(message);
+    }
+
+    return (payload as { message?: string }).message ?? translate('auth.resetPassword.success');
 }

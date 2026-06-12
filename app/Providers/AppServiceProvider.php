@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use App\Services\PowerSyncTokenIssuer;
 use App\Support\ObjectStorage\ObjectStorage;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Support\Facades\Date;
@@ -42,5 +44,9 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->isProduction()) {
             URL::forceScheme('https');
         }
+
+        ResetPassword::createUrlUsing(fn (User $user, string $token): string => url(
+            '/app/reset-password?token='.$token.'&email='.urlencode($user->getEmailForPasswordReset()),
+        ));
     }
 }

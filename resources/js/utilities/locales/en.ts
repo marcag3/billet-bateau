@@ -48,6 +48,30 @@ export default {
         unableCompleteSetup: "Unable to complete setup.",
         validationRequired: "This field is required.",
         validationEmail: "Enter a valid email address.",
+        passwordResetSuccess:
+            "Your password has been reset. Sign in with your new password.",
+        forgotPasswordLink: "Forgot password?",
+        forgotPassword: {
+            title: "Forgot password",
+            subtitle: "Enter your email and we will send you a reset link.",
+            submit: "Send reset link",
+            success:
+                "If an account exists for that email, we sent a password reset link.",
+            backToSignIn: "Back to sign in",
+            unableSend: "Unable to send the reset link. Please try again.",
+        },
+        resetPassword: {
+            title: "Reset password",
+            subtitle: "Choose a new password for your account.",
+            password: "New password",
+            passwordConfirmation: "Confirm new password",
+            submit: "Reset password",
+            success: "Your password has been reset.",
+            invalidLink: "This reset link is invalid or incomplete.",
+            requestNewLink: "Request a new reset link",
+            passwordMismatch: "Passwords do not match.",
+            unableReset: "Unable to reset your password. Please try again.",
+        },
     },
     imageUploadField: {
         emptyHint: "Drop an image here or click to upload",

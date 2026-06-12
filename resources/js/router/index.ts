@@ -190,6 +190,22 @@ const routes: RouteRecordRaw[] = [
         },
     },
     {
+        path: "/forgot-password",
+        name: "forgot-password",
+        component: () => import("../pages/AppForgotPasswordPage.vue"),
+        meta: {
+            guestOnly: true,
+        },
+    },
+    {
+        path: "/reset-password",
+        name: "reset-password",
+        component: () => import("../pages/AppResetPasswordPage.vue"),
+        meta: {
+            guestOnly: true,
+        },
+    },
+    {
         path: "/",
         redirect: "/programs",
     },

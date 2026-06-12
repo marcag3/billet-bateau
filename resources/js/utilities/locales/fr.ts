@@ -50,6 +50,33 @@ export default {
         unableCompleteSetup: "Impossible de terminer la configuration.",
         validationRequired: "Ce champ est requis.",
         validationEmail: "Entrez une adresse e-mail valide.",
+        passwordResetSuccess:
+            "Votre mot de passe a ete reinitialise. Connectez-vous avec votre nouveau mot de passe.",
+        forgotPasswordLink: "Mot de passe oublie ?",
+        forgotPassword: {
+            title: "Mot de passe oublie",
+            subtitle:
+                "Entrez votre e-mail et nous vous enverrons un lien de reinitialisation.",
+            submit: "Envoyer le lien",
+            success:
+                "Si un compte existe pour cet e-mail, nous avons envoye un lien de reinitialisation.",
+            backToSignIn: "Retour a la connexion",
+            unableSend:
+                "Impossible d'envoyer le lien de reinitialisation. Veuillez reessayer.",
+        },
+        resetPassword: {
+            title: "Reinitialiser le mot de passe",
+            subtitle: "Choisissez un nouveau mot de passe pour votre compte.",
+            password: "Nouveau mot de passe",
+            passwordConfirmation: "Confirmer le nouveau mot de passe",
+            submit: "Reinitialiser le mot de passe",
+            success: "Votre mot de passe a ete reinitialise.",
+            invalidLink: "Ce lien de reinitialisation est invalide ou incomplet.",
+            requestNewLink: "Demander un nouveau lien",
+            passwordMismatch: "Les mots de passe ne correspondent pas.",
+            unableReset:
+                "Impossible de reinitialiser votre mot de passe. Veuillez reessayer.",
+        },
     },
     imageUploadField: {
         emptyHint: "Deposez une image ici ou cliquez pour televerser",

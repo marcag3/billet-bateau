@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AppServiceWorkerConfigController;
 use App\Http\Controllers\Auth\InstallController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\ProgramInvitationAcceptController;
 use App\Http\Controllers\Auth\SessionController;
 use App\Http\Middleware\EnsureApplicationIsInstalled;
@@ -38,7 +39,20 @@ Route::middleware('guest')->group(function (): void {
             return view('app');
         })->name('app.login');
 
+        Route::get('/app/forgot-password', function () {
+            return view('app');
+        })->name('app.forgot-password');
+
+        Route::get('/app/reset-password', function () {
+            return view('app');
+        })->name('app.reset-password');
+
         Route::post('/login', [SessionController::class, 'store'])->name('login');
+
+        Route::middleware('throttle:6,1')->group(function (): void {
+            Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->name('password.email');
+            Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
+        });
     });
 });
 
