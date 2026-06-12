@@ -69,17 +69,6 @@
         <AppAlertBanner v-else-if="hasBootstrapped && !canInviteAdmins && !showNotFound" variant="info" class="q-mt-lg">
             {{ t("programsInvite.notOwner") }}
         </AppAlertBanner>
-
-        <AppCardSection
-            v-if="!showNotFound"
-            label="Invite eligibility (debug)"
-            class="q-mt-lg"
-        >
-            <p class="text-caption text-grey-7 q-mb-sm">
-                Temporary diagnostics for local PowerSync membership vs server owner checks.
-            </p>
-            <pre class="invite-eligibility-debug text-caption q-ma-none">{{ inviteEligibilityDebugText }}</pre>
-        </AppCardSection>
     </q-page>
 </template>
 
@@ -97,10 +86,6 @@ import {
 } from "../models/programs/program-form";
 import type { ProgramFormSubmitPayload } from "../models/programs/program-form";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
-import {
-    DB_FILENAME,
-    powerSyncConnectorConnected,
-} from "../powersync/powersync-runtime-state";
 import type { ProgramOutput } from "../powersync/programs.collection";
 import type { ProgramUserOutput } from "../powersync/program-user.collection";
 import { programBannerPreviewUrlFromObjectKey } from "../utilities/program-banner-url";
@@ -147,15 +132,6 @@ const { data: programMemberships } = useLiveQuery(
     [programUsersCollection, programId],
 );
 
-const { data: allProgramMemberships } = useLiveQuery(
-    (queryBuilder) => {
-        const col = programUsersCollection.value;
-        if (!col) return undefined;
-        return queryBuilder.from({ m: col });
-    },
-    [programUsersCollection],
-);
-
 const errorMessage = ref("");
 const isDeleting = ref(false);
 
@@ -165,9 +141,6 @@ const inviteError = ref("");
 const inviteSuccess = ref(false);
 
 const hasBootstrapped = powersync.hasBootstrappedCollection;
-const initialUserScopeSyncComplete = powersync.initialUserScopeSyncComplete;
-const persistenceUnavailable = powersync.persistenceUnavailable;
-const currentUserIdRef = powersync.currentUserIdRef;
 const currentProgram = computed<ProgramOutput | null>(() => {
     const id = programId.value;
     if (id.length === 0) {
@@ -201,75 +174,6 @@ const currentMembershipRole = computed((): string | null => {
 const canInviteAdmins = computed(() =>
     canInviteProgramAdmins(currentMembershipRole.value),
 );
-
-function serializeProgramUserRows(
-    rows: readonly unknown[] | undefined,
-): ProgramUserOutput[] {
-    return (rows ?? [])
-        .filter((row): row is NonNullable<typeof row> => row != null)
-        .map((row) => row as unknown as ProgramUserOutput)
-        .map((row) => ({
-            id: String(row.id ?? ""),
-            program_id: row.program_id == null ? null : String(row.program_id),
-            user_id: row.user_id == null ? null : String(row.user_id),
-            role: row.role == null ? null : String(row.role),
-        }));
-}
-
-const userScopeSyncStatus = computed(() => {
-    const db = powersync.powerSyncDbRef.value;
-    if (db == null) {
-        return null;
-    }
-
-    try {
-        const status = db.currentStatus.statusForPriority(1);
-        return {
-            hasSynced: status.hasSynced === true,
-            downloading: status.downloading === true,
-            uploading: status.uploading === true,
-        };
-    } catch {
-        return null;
-    }
-});
-
-const inviteEligibilityDebugText = computed((): string => {
-    const membershipsForProgram = serializeProgramUserRows(
-        programMemberships.value,
-    );
-    const allMemberships = serializeProgramUserRows(allProgramMemberships.value);
-    const membershipForCurrentUser = allMemberships.find(
-        (row) =>
-            row.program_id === programId.value &&
-            row.user_id === currentUserIdRef.value,
-    );
-
-    return JSON.stringify(
-        {
-            programId: programId.value,
-            currentUserId: currentUserIdRef.value,
-            hasBootstrapped: hasBootstrapped.value,
-            initialUserScopeSyncComplete: initialUserScopeSyncComplete.value,
-            persistenceUnavailable: persistenceUnavailable.value,
-            powerSyncConnectorConnected,
-            dbFilename: DB_FILENAME,
-            programsCollectionReady: programsCollection.value != null,
-            programUserCollectionReady: programUsersCollection.value != null,
-            userScopeSyncStatus: userScopeSyncStatus.value,
-            powersyncErrorMessage: powersync.errorMessage.value,
-            localProgramFound: currentProgram.value != null,
-            canInviteAdmins: canInviteAdmins.value,
-            currentMembershipRole: currentMembershipRole.value,
-            membershipForCurrentUser,
-            programMembershipsForProgram: membershipsForProgram,
-            allLocalProgramUserRows: allMemberships,
-            allLocalProgramUserRowCount: allMemberships.length,
-        },
-        null,
-        2,
-    );
-});
 
 const showNotFound = computed(() => {
     if (!hasBootstrapped.value) {
@@ -433,11 +337,3 @@ function confirmDelete(): void {
     });
 }
 </script>
-
-<style scoped>
-.invite-eligibility-debug {
-    white-space: pre-wrap;
-    word-break: break-word;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-</style>
