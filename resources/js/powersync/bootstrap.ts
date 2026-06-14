@@ -6,8 +6,8 @@ import { appPowerSyncSchema } from "./app.powersync-schema";
 import { wirePowerSyncCollections } from "./collections.registry";
 import {
     formatPowerSyncUploadError,
-    isBenignPowerSyncUploadFailure,
     refreshOutboxSnapshot,
+    resolveOutboxCommitError,
 } from "./outbox";
 import {
     attachProgramScopeStreamSubscription,
@@ -18,6 +18,13 @@ import type { SyncStatus } from "@powersync/common";
 import * as runtimeState from "./powersync-runtime-state";
 import { isProgramScopePrioritySynced } from "./program-scope-sync-status";
 import { isUserScopePrioritySynced } from "./user-scope-sync-status";
+import {
+    applySyncHealthFromStatus,
+    markSyncHealthUnavailable,
+    publishSyncHealthSnapshot,
+    resetSyncHealthSnapshot,
+    trackBrowserOnlineForSyncHealth,
+} from "./sync-health-state";
 
 async function resolveAuthenticatedUserId(): Promise<string> {
     const authStore = useAuthStore();
@@ -40,16 +47,42 @@ async function resolveAuthenticatedUserId(): Promise<string> {
     return String(u.id);
 }
 
+function applyReadinessFromStatus(status: SyncStatus): void {
+    if (isUserScopePrioritySynced(status)) {
+        runtimeState.initialUserScopeSyncComplete.value = true;
+    }
+    if (isProgramScopePrioritySynced(status)) {
+        runtimeState.initialProgramScopeSyncComplete.value = true;
+    }
+}
+
+function handlePowerSyncStatusChanged(status: SyncStatus): void {
+    applySyncHealthFromStatus(status);
+    applyReadinessFromStatus(status);
+
+    const uploadError = status.dataFlowStatus?.uploadError;
+    const formatted = formatPowerSyncUploadError(uploadError);
+    runtimeState.outboxCommitError.value = resolveOutboxCommitError(
+        uploadError,
+        formatted,
+    );
+    void refreshOutboxSnapshot();
+}
+
+function applyCurrentPowerSyncStatus(db: PowerSyncDatabase): void {
+    handlePowerSyncStatusChanged(db.currentStatus);
+}
+
 export async function bootstrapAppPowerSync(): Promise<void> {
+    trackBrowserOnlineForSyncHealth();
+
     if (
         runtimeState.hasBootstrappedCollection.value &&
         runtimeState.powerSyncDbRef.value
     ) {
         runtimeState.errorMessage.value = "";
-        runtimeState.initialUserScopeSyncComplete.value = true;
-        if (isProgramScopePrioritySynced(runtimeState.powerSyncDbRef.value.currentStatus)) {
-            runtimeState.initialProgramScopeSyncComplete.value = true;
-        }
+        publishSyncHealthSnapshot();
+        applyCurrentPowerSyncStatus(runtimeState.powerSyncDbRef.value);
         return;
     }
 
@@ -60,6 +93,8 @@ export async function bootstrapAppPowerSync(): Promise<void> {
 
     const promise = (async () => {
         try {
+            resetSyncHealthSnapshot();
+            trackBrowserOnlineForSyncHealth();
             runtimeState.setPowerSyncConnectorConnected(false);
             runtimeState.initialUserScopeSyncComplete.value = false;
             runtimeState.initialProgramScopeSyncComplete.value = false;
@@ -80,24 +115,7 @@ export async function bootstrapAppPowerSync(): Promise<void> {
 
             runtimeState.setPowerSyncStatusUnsubscribe(
                 db.registerListener({
-                    statusChanged: (status: SyncStatus) => {
-                        if (isUserScopePrioritySynced(status)) {
-                            runtimeState.initialUserScopeSyncComplete.value = true;
-                        }
-                        if (isProgramScopePrioritySynced(status)) {
-                            runtimeState.initialProgramScopeSyncComplete.value = true;
-                        }
-                        const uploadError = status.dataFlowStatus?.uploadError;
-                        const formatted = formatPowerSyncUploadError(uploadError);
-                        runtimeState.outboxCommitError.value =
-                            isBenignPowerSyncUploadFailure(
-                                uploadError,
-                                formatted,
-                            ) || formatted.length === 0
-                                ? ""
-                                : formatted;
-                        void refreshOutboxSnapshot();
-                    },
+                    statusChanged: handlePowerSyncStatusChanged,
                 }),
             );
 
@@ -109,12 +127,7 @@ export async function bootstrapAppPowerSync(): Promise<void> {
 
             await attachUserScopeStream(db);
 
-            if (isUserScopePrioritySynced(db.currentStatus)) {
-                runtimeState.initialUserScopeSyncComplete.value = true;
-            }
-            if (isProgramScopePrioritySynced(db.currentStatus)) {
-                runtimeState.initialProgramScopeSyncComplete.value = true;
-            }
+            applyCurrentPowerSyncStatus(db);
 
             runtimeState.setPowerSyncConnectorConnected(true);
 
@@ -123,6 +136,8 @@ export async function bootstrapAppPowerSync(): Promise<void> {
             runtimeState.hasBootstrappedCollection.value = true;
             runtimeState.errorMessage.value = "";
             runtimeState.persistenceUnavailable.value = false;
+            publishSyncHealthSnapshot();
+            applyCurrentPowerSyncStatus(db);
             await refreshOutboxSnapshot();
         } catch (error) {
             console.error("PowerSync bootstrap failed:", error);
@@ -157,6 +172,7 @@ export async function bootstrapAppPowerSync(): Promise<void> {
                 error instanceof Error
                     ? error.message
                     : runtimeState.loadFailedMessage;
+            markSyncHealthUnavailable(runtimeState.errorMessage.value);
         } finally {
             runtimeState.isLoading.value = false;
         }

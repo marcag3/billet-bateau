@@ -214,6 +214,36 @@ export default {
         rowPendingSync: "En attente du serveur",
         outboxCommitFailed:
             "La synchronisation d'une modification vers le serveur a echoue pour le moment. Votre modification reste en file localement ; vous pouvez reessayer.",
+        healthUnavailableTitle: "Synchronisation locale indisponible",
+        healthUnavailableHint:
+            "Redemarrez l'application ou verifiez les parametres de stockage du navigateur.",
+        healthOfflineTitle: "Vous etes hors ligne",
+        healthOfflineHint:
+            "Affichage des donnees enregistrees le {time}. Les modifications seront synchronisees au retour en ligne.",
+        healthOfflineHintNoTime:
+            "Affichage des donnees locales. Les modifications seront synchronisees au retour en ligne.",
+        healthConnectingTitle: "Connexion a la synchronisation…",
+        healthConnectingHint: "Tentative de connexion au serveur de synchronisation.",
+        healthStaleTitle: "Serveur de synchronisation inaccessible",
+        healthStaleHint:
+            "Affichage des donnees enregistrees le {time}. Les mises a jour des autres appareils n'apparaitront pas tant que la synchronisation n'est pas retablie.",
+        healthStaleHintNoTime:
+            "Affichage des donnees locales. Les mises a jour des autres appareils n'apparaitront pas tant que la synchronisation n'est pas retablie.",
+        healthBlockedTitle: "Impossible de synchroniser depuis le serveur",
+        healthBlockedHint:
+            "Le telechargement des donnees de l'espace de travail a echoue. Verifiez votre connexion et reessayez.",
+        healthDownloadError: "Erreur de telechargement",
+        toolbarTitle: "Etat de la synchronisation",
+        toolbarConnectionHeader: "Connexion",
+        toolbarPendingHeader: "Ecritures en attente",
+        toolbarLastSynced: "Derniere synchro {time}",
+        toolbarLastSyncedNever: "Pas encore synchronise",
+        toolbarStatusLive: "Synchronisation active",
+        toolbarStatusOffline: "Hors ligne",
+        toolbarStatusConnecting: "Connexion…",
+        toolbarStatusStale: "Donnees locales uniquement",
+        toolbarStatusBlocked: "Synchronisation bloquee",
+        toolbarStatusUnavailable: "Synchronisation indisponible",
     },
     publicHome: {
         description: "Parcourez les programmes et trouvez votre prochaine aventure.",

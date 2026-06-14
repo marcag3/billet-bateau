@@ -21,6 +21,9 @@ import {
     getActiveProgramIdRef,
     type PowerSyncCollectionRefs,
 } from "./powersync-runtime-state";
+import { syncHealthSnapshot } from "./sync-health-state";
+import type { SyncHealthSnapshot } from "./sync-health";
+import { useSyncHealth } from "../composables/useSyncHealth";
 
 export type AppPowerSyncContext = {
     collections: PowerSyncCollectionRefs;
@@ -30,6 +33,8 @@ export type AppPowerSyncContext = {
     bootstrapAppPowerSync: typeof bootstrapAppPowerSync;
     refreshOutboxSnapshot: typeof refreshOutboxSnapshot;
     useAppPowerSyncOutbox: typeof useAppPowerSyncOutbox;
+    useSyncHealth: typeof useSyncHealth;
+    syncHealthSnapshot: ShallowRef<SyncHealthSnapshot>;
     isLoading: Ref<boolean>;
     errorMessage: Ref<string>;
     programsDeserializationError: Ref<unknown>;
@@ -52,6 +57,8 @@ const appPowerSyncContext: AppPowerSyncContext = {
     bootstrapAppPowerSync,
     refreshOutboxSnapshot,
     useAppPowerSyncOutbox,
+    useSyncHealth,
+    syncHealthSnapshot,
     isLoading,
     errorMessage,
     programsDeserializationError,

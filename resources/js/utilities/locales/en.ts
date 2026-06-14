@@ -204,6 +204,35 @@ export default {
         rowPendingSync: "Pending server sync",
         outboxCommitFailed:
             "Could not sync a pending change to the server yet. Your edit is still queued locally; you can try again.",
+        healthUnavailableTitle: "Local sync is unavailable",
+        healthUnavailableHint: "Restart the app or check your browser storage settings.",
+        healthOfflineTitle: "You are offline",
+        healthOfflineHint:
+            "Showing saved data from {time}. Changes will sync when you are back online.",
+        healthOfflineHintNoTime:
+            "Showing locally saved data. Changes will sync when you are back online.",
+        healthConnectingTitle: "Connecting to sync…",
+        healthConnectingHint: "Trying to reach the sync server.",
+        healthStaleTitle: "Sync server unreachable",
+        healthStaleHint:
+            "Showing saved data from {time}. Updates from other devices will not appear until sync is restored.",
+        healthStaleHintNoTime:
+            "Showing locally saved data. Updates from other devices will not appear until sync is restored.",
+        healthBlockedTitle: "Unable to sync from server",
+        healthBlockedHint:
+            "Could not download workspace data. Check your connection and try again.",
+        healthDownloadError: "Download error",
+        toolbarTitle: "Sync status",
+        toolbarConnectionHeader: "Connection",
+        toolbarPendingHeader: "Pending writes",
+        toolbarLastSynced: "Last synced {time}",
+        toolbarLastSyncedNever: "Not synced yet",
+        toolbarStatusLive: "Live sync",
+        toolbarStatusOffline: "Offline",
+        toolbarStatusConnecting: "Connecting…",
+        toolbarStatusStale: "Saved data only",
+        toolbarStatusBlocked: "Sync blocked",
+        toolbarStatusUnavailable: "Sync unavailable",
     },
     publicHome: {
         description: "Browse programs and find your next adventure.",

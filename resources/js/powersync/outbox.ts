@@ -4,6 +4,8 @@ import {
     outboxPendingCount,
     powerSyncDbRef,
 } from "./powersync-runtime-state";
+import { isBenignUploadFailureForSyncHealth } from "./sync-health";
+import { syncHealthSnapshot } from "./sync-health-state";
 
 /**
  * @param uploadError
@@ -56,25 +58,32 @@ export function isBenignPowerSyncUploadFailure(
         return true;
     }
 
-    if (typeof navigator !== "undefined" && navigator.onLine === false) {
-        return true;
+    const snapshot = syncHealthSnapshot.value;
+
+    return isBenignUploadFailureForSyncHealth(formattedMessage, {
+        browserOnline: snapshot.browserOnline,
+        connected: snapshot.connected,
+        connectingSinceMs: snapshot.connectingSinceMs,
+        nowMs: Date.now(),
+    });
+}
+
+/**
+ * @param uploadError
+ * @param formattedMessage
+ */
+export function resolveOutboxCommitError(
+    uploadError: unknown,
+    formattedMessage: string,
+): string {
+    if (
+        isBenignPowerSyncUploadFailure(uploadError, formattedMessage) ||
+        formattedMessage.length === 0
+    ) {
+        return "";
     }
 
-    const text = formattedMessage.toLowerCase();
-
-    const benignFragments = [
-        "failed to fetch",
-        "networkerror",
-        "network request failed",
-        "load failed",
-        "net::err",
-        "the internet connection appears to be offline",
-        "aborted",
-        "abort",
-        "delaying due to previously encountered crud item",
-    ];
-
-    return benignFragments.some((fragment) => text.includes(fragment));
+    return formattedMessage;
 }
 
 export async function refreshOutboxSnapshot(): Promise<void> {

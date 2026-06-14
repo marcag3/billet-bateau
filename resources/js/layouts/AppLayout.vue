@@ -21,7 +21,7 @@
 
                 <q-space />
 
-                <AppOutboxToolbarMenu />
+                <AppSyncToolbarMenu />
 
                 <AppLanguageSwitcher on-dark-header />
 
@@ -91,6 +91,11 @@
                 </template>
             </AppAlertBanner>
 
+            <AppSyncHealthBanner
+                v-if="syncHealth.showBanner"
+                class="q-ma-md"
+            />
+
             <router-view />
         </q-page-container>
     </q-layout>
@@ -108,9 +113,13 @@ import {
     APP_PROGRAM_MAIN_NAV_TELEPORT_ID,
     provideAppProgramMainNavTarget,
 } from "../utilities/app-layout-nav";
-import AppOutboxToolbarMenu from "../components/AppOutboxToolbarMenu.vue";
+import AppSyncToolbarMenu from "../components/AppSyncToolbarMenu.vue";
+import AppSyncHealthBanner from "../components/AppSyncHealthBanner.vue";
 import AppLanguageSwitcher from "../components/AppLanguageSwitcher.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
+import { useSyncHealth } from "../composables/useSyncHealth";
+
+const syncHealth = useSyncHealth();
 
 const router = useRouter();
 const $q = useQuasar();
