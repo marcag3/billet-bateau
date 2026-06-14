@@ -64,7 +64,7 @@ export default defineConfig(({ mode }) => {
                 strategies: 'injectManifest',
                 srcDir: 'resources/js/service-worker',
                 filename: 'app-sw.js',
-                // Source: service-worker/app-sw.ts → public/build/app-sw.js; build copies to /app/sw.js.
+                // Source: service-worker/app-sw.ts → public/build/app-sw.js; served at /app/sw.js via Laravel.
                 injectRegister: false,
                 registerType: 'autoUpdate',
                 scope: '/app/',

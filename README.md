@@ -2,7 +2,7 @@
 
 Local-first **program operations + public booking** platform for seasonal boat activities. Staff use an offline-capable admin PWA (Quasar + TanStack DB + PowerSync); guests use a public catalog and checkout without payment in v1.
 
-**Stack:** Laravel 13 API · Vue 3 · Quasar · PostgreSQL + PostGIS · Redis · PowerSync · Garage (S3) · Docker Compose (Sail dev / `deploy/` prod).
+**Stack:** Laravel 13 API · Vue 3 · Quasar · PostgreSQL + PostGIS · Redis · PowerSync · RustFS (dev) / Cloudflare R2 (prod) · Docker Compose (Sail dev / `deploy/` prod).
 
 **Health (2026-05-31):** `191` PHPUnit tests passing. **Target launch:** week of 2026-06-07 (staging install in progress). Schema changes are **new migrations only** (live DB).
 
@@ -171,7 +171,7 @@ npm install && npm run dev
 
 Tests: `php artisan test --compact` (uses `DB_DATABASE=testing`; PostGIS extension required for geometry tests).
 
-PowerSync + Garage + Mailpit ports: see [Compose-only variables](#compose-only-not-laravel) below.
+PowerSync + RustFS + Mailpit ports: see [Compose-only variables](#compose-only-not-laravel) below.
 
 ---
 
@@ -179,28 +179,26 @@ PowerSync + Garage + Mailpit ports: see [Compose-only variables](#compose-only-n
 
 Production: Docker Compose under `deploy/` (`deploy/compose.yaml`, `deploy/.env.example`).
 
-PowerSync is **embedded in `PRODUCTION_IMAGE`** (`Dockerfile` copies the service from `journeyapps/powersync-service`). Config (`sync-config.yaml`, `service.yaml`) is baked at `/config/` in production. The `powersync` compose service uses the same image with `start -r unified`. Daily bucket compaction runs at 03:00 via `production-schedule` (`powersync:compact`). Dev (`compose.yaml`) bind-mounts `deploy/config/powersync` for live edits instead.
+PowerSync is **embedded in `PRODUCTION_IMAGE`** (`sync-config.yaml` and `service.yaml` are baked at `/config/`). The `powersync` service uses the same image with `start -r unified`. Daily bucket compaction runs at 03:00 via `production-schedule` (`powersync:compact`). Dev bind-mounts `deploy/config/powersync` for live edits.
 
-`deploy/compose.yaml` still bind-mounts `./config` for **Postgres init**, **Garage**, and **PostGIS schema** — checkout the repo at the same tag/ref as your images:
+**First install** (empty Postgres volume): copy the Postgres bootstrap script so `pgsql` can create the PowerSync role on init:
 
 ```bash
-# From deploy/ — example: clone or checkout at release tag
-git clone --depth 1 --branch main https://github.com/marcag3/billet-bateau.git /tmp/billet-bateau
-cp -r /tmp/billet-bateau/deploy/config ./config
+cd deploy
+mkdir -p config/pgsql
+cp /path/to/repo/deploy/config/pgsql/create-powersync-user.sh config/pgsql/
 ```
 
-Then `deploy/.env` from `deploy/.env.example`, set `PRODUCTION_IMAGE` and secrets (`openssl rand -hex 16`, `openssl rand -base64 48` for `POWERSYNC_JWT_SECRET`).
+Copy `deploy/.env.example` → `deploy/.env`, set `PRODUCTION_IMAGE`, R2 credentials, and secrets (`openssl rand -hex 16`, `openssl rand -base64 48` for `POWERSYNC_JWT_SECRET`).
 
 ```bash
-cd deploy && docker compose pull && docker compose up -d
+docker compose pull && docker compose up -d
 docker compose exec production php artisan migrate --force
 ```
 
-Garage bucket website + CORS (`AWS_CORS_ALLOWED_ORIGINS`) are applied when the `production` container starts (`deploy/entrypoint.d/60-startup.sh`). Re-run manually after changing CORS origins:
+**Later deploys:** pull the new image and restart — no config copy unless you are reprovisioning Postgres.
 
-```bash
-docker compose exec production php artisan storage:configure --no-interaction
-```
+**Object storage (R2):** create a bucket, enable public access (custom domain or `r2.dev`), set bucket CORS (`GET`, `HEAD`, `PUT`; expose `ETag`; your SPA origin). All object-storage settings live in `deploy/.env`.
 
 ### CI (`.github/workflows/build.yml`)
 
@@ -222,9 +220,10 @@ Copy `.env.example` → `.env` (Sail). Copy `deploy/.env.example` → `deploy/.e
 | `DB_DATABASE`              | ✓   | ✓          | Postgres container                  |
 | `DB_USERNAME`              | ✓   | ✓          |                                     |
 | `DB_PASSWORD`              | ✓   | ✓          |                                     |
-| `AWS_ACCESS_KEY_ID`        | ✓   | ✓          | Garage S3 (≥ 8 chars dev)           |
+| `AWS_ACCESS_KEY_ID`        | ✓   | ✓          | RustFS dev / R2 API token           |
 | `AWS_SECRET_ACCESS_KEY`    | ✓   | ✓          |                                     |
-| `AWS_URL`                  | ✓   | ✓          | Public object URL (Garage s3_web)   |
+| `AWS_URL`                  | ✓   | ✓          | Public object URL base              |
+| `AWS_ENDPOINT`             |     | ✓          | R2 S3 API (`https://…r2.cloudflarestorage.com`) |
 | `AWS_ENDPOINT_PUBLIC`      | ✓   | ✓          | Presigned upload host               |
 | `PRODUCTION_IMAGE`         |     | ✓          | `deploy/.env` only                  |
 | `APP_URL`                  |     | ✓          | HTTPS                               |
@@ -241,7 +240,7 @@ Usually omit from `.env`:
 | -------------- | -------------------- | ----------------------------------- |
 | `DB_HOST`      | `pgsql`              | `pgsql`                             |
 | `REDIS_HOST`   | `redis`              | `redis`                             |
-| `AWS_ENDPOINT` | `http://garage:3900` | default in `config/filesystems.php` |
+| `AWS_ENDPOINT` | `http://rustfs:9000` | R2 endpoint in `deploy/.env`        |
 | `MAIL_*`       | Mailpit              | —                                   |
 
 \*Also `production-schedule`, `production-queue`. PowerSync Postgres URIs default from `DB_*`.
@@ -262,7 +261,7 @@ Usually omit from `.env`:
 | `CACHE_STORE`                  | `redis`                 | `config/cache.php`       |
 | `FILESYSTEM_DISK`              | `s3`                    | `config/filesystems.php` |
 | `REDIS_HOST`                   | `127.0.0.1`             | `config/database.php`    |
-| `AWS_DEFAULT_REGION`           | `garage`                | `config/filesystems.php` |
+| `AWS_DEFAULT_REGION`           | `us-east-1` (dev) / `auto` (R2) | `config/filesystems.php` |
 | `AWS_BUCKET`                   | `app`                   | `config/filesystems.php` |
 | `AWS_USE_PATH_STYLE_ENDPOINT`  | `true`                  | `config/filesystems.php` |
 | `AWS_CORS_ALLOWED_ORIGINS`     | `*`                     | `config/filesystems.php` |
@@ -293,13 +292,13 @@ Root `compose.yaml` port forwards:
 | `FORWARD_DB_PORT`                | `5432`  |
 | `FORWARD_REDIS_PORT`             | `6379`  |
 | `FORWARD_POWERSYNC_PORT`         | `6080`  |
-| `FORWARD_GARAGE_PORT`            | `9000`  |
-| `FORWARD_GARAGE_WEB_PORT`        | `8900`  |
+| `FORWARD_RUSTFS_PORT`            | `9000`  |
+| `FORWARD_RUSTFS_CONSOLE_PORT`    | `9001`  |
 | `FORWARD_MAILPIT_PORT`           | `1025`  |
 | `FORWARD_MAILPIT_DASHBOARD_PORT` | `8025`  |
 | `WWWUSER` / `WWWGROUP`           | `1000`  |
 
-Production startup runs `storage:configure` (see `deploy/entrypoint.d/60-startup.sh`); set `AWS_CORS_ALLOWED_ORIGINS` to your SPA origin(s).
+Dev: `php artisan storage:configure` creates the RustFS bucket, public read policy, and CORS after `compose up` (also run from `.devcontainer/post-create.sh`). Console: `http://localhost:9001` (`rustfsadmin` / `rustfsadmin` unless overridden via `AWS_*`).
 
 Tests: `DB_DATABASE=testing`; DB created by `deploy/config/pgsql/create-testing-databases.sql` — run `CREATE EXTENSION postgis;` there if geometry tests fail.
 

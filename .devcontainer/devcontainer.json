@@ -8,17 +8,19 @@
         "pgsql",
         "redis",
         "powersync",
-        "garage",
+        "rustfs",
         "mailpit",
         "laravel.test"
     ],
-    "forwardPorts": [80, 5173, 5432, 6080, 8025],
+    "forwardPorts": [80, 5173, 5432, 6080, 8025, 9000, 9001],
     "portsAttributes": {
         "80": { "label": "Laravel" },
         "5173": { "label": "Vite" },
         "5432": { "label": "PostgreSQL" },
         "6080": { "label": "PowerSync" },
-        "8025": { "label": "Mailpit" }
+        "8025": { "label": "Mailpit" },
+        "9000": { "label": "RustFS S3" },
+        "9001": { "label": "RustFS Console" }
     },
     "initializeCommand": "docker run --rm -u \"$(id -u):$(id -g)\" -v \"$(pwd):/app\" -w /app composer:latest composer install --ignore-platform-reqs --no-scripts",
     "postCreateCommand": "bash .devcontainer/post-create.sh",

@@ -15,7 +15,7 @@ class StorageConfigureCommandTest extends TestCase
         $method->setAccessible(true);
 
         $this->assertTrue($method->invoke($command, [
-            'endpoint' => 'http://garage:3900',
+            'endpoint' => 'http://rustfs:9000',
             'use_path_style_endpoint' => false,
         ]));
 
@@ -25,21 +25,22 @@ class StorageConfigureCommandTest extends TestCase
         ]));
     }
 
-    public function test_storage_configure_dry_run_reports_garage_bucket_website_command(): void
+    public function test_storage_configure_dry_run_reports_bucket_policy_and_cors(): void
     {
         config([
             'filesystems.disks.s3.driver' => 's3',
             'filesystems.disks.s3.bucket' => 'app',
-            'filesystems.disks.s3.region' => 'garage',
-            'filesystems.disks.s3.endpoint' => 'http://garage:3900',
+            'filesystems.disks.s3.region' => 'us-east-1',
+            'filesystems.disks.s3.endpoint' => 'http://rustfs:9000',
             'filesystems.s3_cors_allowed_origins' => ['http://localhost:5173'],
         ]);
 
         $this->artisan('storage:configure --dry-run')
-            ->expectsOutput('S3 API bucket configuration dry run:')
+            ->expectsOutput('S3 bucket configuration dry run:')
             ->expectsOutput('bucket=app')
-            ->expectsOutput('endpoint=http://garage:3900')
-            ->expectsOutput('region=garage')
+            ->expectsOutput('endpoint=http://rustfs:9000')
+            ->expectsOutput('region=us-east-1')
+            ->expectsOutputToContain('s3:GetObject')
             ->expectsOutputToContain('localhost:5173')
             ->assertSuccessful();
     }

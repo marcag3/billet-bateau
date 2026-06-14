@@ -15,8 +15,6 @@ services:
                 condition: service_healthy
             redis:
                 condition: service_healthy
-            garage:
-                condition: service_healthy
         networks:
             - app
 
@@ -69,7 +67,6 @@ services:
             POSTGRES_USER: "${DB_USERNAME}"
             POSTGRES_PASSWORD: "${DB_PASSWORD}"
         volumes:
-            - "./config/schema:/schema"
             - "./config/pgsql/create-powersync-user.sh:/docker-entrypoint-initdb.d/20-create-powersync-user.sh:ro"
             - "pgsql:/var/lib/postgresql"
         networks:
@@ -126,30 +123,6 @@ services:
             retries: 3
             timeout: 5s
 
-    garage:
-        image: "dxflrs/garage:v2.3.0"
-        restart: unless-stopped
-        command: "/garage server --single-node --default-bucket"
-        environment:
-            GARAGE_DEFAULT_ACCESS_KEY: "${AWS_ACCESS_KEY_ID}"
-            GARAGE_DEFAULT_SECRET_KEY: "${AWS_SECRET_ACCESS_KEY}"
-            GARAGE_DEFAULT_BUCKET: "${AWS_BUCKET:-app}"
-        volumes:
-            - "./config/garage/garage.toml:/etc/garage.toml:ro"
-            - "garage-meta:/var/lib/garage/meta"
-            - "garage-data:/var/lib/garage/data"
-        networks:
-            - app
-        healthcheck:
-            test:
-                - CMD
-                - /garage
-                - -c
-                - /etc/garage.toml
-                - status
-            retries: 3
-            timeout: 5s
-
 networks:
     app:
         driver: bridge
@@ -158,8 +131,4 @@ volumes:
     pgsql:
         driver: local
     redis:
-        driver: local
-    garage-meta:
-        driver: local
-    garage-data:
         driver: local

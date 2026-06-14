@@ -9,10 +9,10 @@ use Illuminate\Console\Command;
 class ConfigureStorageCommand extends Command
 {
     protected $signature = 'storage:configure
-                            {--disk=s3 : Filesystem disk that holds the Garage bucket name}
-                            {--dry-run : Print the Garage command without running it}';
+                            {--disk=s3 : Filesystem disk that holds the S3 bucket name}
+                            {--dry-run : Print planned changes without running them}';
 
-    protected $description = 'Configure Garage website access and S3 CORS for the configured bucket.';
+    protected $description = 'Create the S3 bucket (if missing), public read policy, and CORS for browser uploads (local RustFS dev).';
 
     public function handle(): int
     {
@@ -33,19 +33,17 @@ class ConfigureStorageCommand extends Command
             return self::FAILURE;
         }
 
-        $websiteConfiguration = [
-            'IndexDocument' => ['Suffix' => 'index.html'],
-        ];
         $corsConfiguration = $this->corsConfiguration();
+        $publicReadPolicy = $this->publicReadPolicy($bucket);
         $endpoint = (string) ($config['endpoint'] ?? '');
         $region = (string) ($config['region'] ?? '');
 
         if ((bool) $this->option('dry-run')) {
-            $this->line('S3 API bucket configuration dry run:');
+            $this->line('S3 bucket configuration dry run:');
             $this->line('bucket='.$bucket);
             $this->line('endpoint='.($endpoint !== '' ? $endpoint : '(default AWS endpoint)'));
             $this->line('region='.($region !== '' ? $region : '(default us-east-1)'));
-            $this->line('website='.json_encode($websiteConfiguration));
+            $this->line('public_read_policy='.json_encode($publicReadPolicy));
             $this->line('cors='.json_encode($corsConfiguration));
 
             return self::SUCCESS;
@@ -53,9 +51,10 @@ class ConfigureStorageCommand extends Command
 
         try {
             $client = $this->s3Client($config);
-            $client->putBucketWebsite([
+            $this->ensureBucketExists($client, $bucket);
+            $client->putBucketPolicy([
                 'Bucket' => $bucket,
-                'WebsiteConfiguration' => $websiteConfiguration,
+                'Policy' => json_encode($publicReadPolicy, JSON_THROW_ON_ERROR),
             ]);
             $client->putBucketCors([
                 'Bucket' => $bucket,
@@ -67,9 +66,34 @@ class ConfigureStorageCommand extends Command
             return self::FAILURE;
         }
 
-        $this->info("Bucket [{$bucket}] website access and CORS configured.");
+        $this->info("Bucket [{$bucket}] public read policy and CORS configured.");
 
         return self::SUCCESS;
+    }
+
+    private function ensureBucketExists(S3Client $client, string $bucket): void
+    {
+        if ($client->doesBucketExist($bucket)) {
+            return;
+        }
+
+        $client->createBucket(['Bucket' => $bucket]);
+    }
+
+    /**
+     * @return array{Version: string, Statement: array<int, array{Effect: string, Principal: string, Action: array<int, string>, Resource: array<int, string>}>}
+     */
+    private function publicReadPolicy(string $bucket): array
+    {
+        return [
+            'Version' => '2012-10-17',
+            'Statement' => [[
+                'Effect' => 'Allow',
+                'Principal' => '*',
+                'Action' => ['s3:GetObject'],
+                'Resource' => ["arn:aws:s3:::{$bucket}/*"],
+            ]],
+        ];
     }
 
     /**
@@ -129,8 +153,7 @@ class ConfigureStorageCommand extends Command
     }
 
     /**
-     * Garage/MinIO custom endpoints require path-style URLs for bucket admin APIs.
-     * Virtual-hosted style resolves to hosts like `app.garage`, which do not exist on Docker networks.
+     * Custom S3 endpoints (RustFS, R2, MinIO) require path-style URLs for bucket admin APIs.
      *
      * @param  array<string, mixed>  $diskConfig
      */

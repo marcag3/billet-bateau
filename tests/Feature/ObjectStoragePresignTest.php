@@ -13,9 +13,9 @@ class ObjectStoragePresignTest extends TestCase
     public function test_temporary_put_url_forces_path_style_when_using_custom_presign_endpoint(): void
     {
         config([
-            'filesystems.disks.s3.endpoint' => 'http://garage.internal:3900',
+            'filesystems.disks.s3.endpoint' => 'http://rustfs.internal:9000',
             'filesystems.disks.s3.use_path_style_endpoint' => false,
-            'filesystems.s3_presign_endpoint' => 'http://garage.public:9000',
+            'filesystems.s3_presign_endpoint' => 'http://rustfs.public:9000',
         ]);
 
         $signedDisk = Mockery::mock(FilesystemAdapter::class);
@@ -28,7 +28,7 @@ class ObjectStoragePresignTest extends TestCase
                 return true;
             })
             ->andReturn([
-                'url' => 'http://garage.public:9000/app/uploads/test-image.png',
+                'url' => 'http://rustfs.public:9000/app/uploads/test-image.png',
                 'headers' => [
                     'x-amz-meta-test' => ['value'],
                 ],
@@ -38,7 +38,7 @@ class ObjectStoragePresignTest extends TestCase
         $filesystem->shouldReceive('build')
             ->once()
             ->withArgs(function (array $config): bool {
-                $this->assertSame('http://garage.public:9000', $config['endpoint'] ?? null);
+                $this->assertSame('http://rustfs.public:9000', $config['endpoint'] ?? null);
                 $this->assertTrue((bool) ($config['use_path_style_endpoint'] ?? false));
 
                 return true;
@@ -51,7 +51,7 @@ class ObjectStoragePresignTest extends TestCase
             'ContentType' => 'image/png',
         ]);
 
-        $this->assertSame('http://garage.public:9000/app/uploads/test-image.png', $signed['url']);
+        $this->assertSame('http://rustfs.public:9000/app/uploads/test-image.png', $signed['url']);
         $this->assertSame('value', $signed['headers']['x-amz-meta-test']);
     }
 }

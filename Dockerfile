@@ -141,7 +141,6 @@ COPY --chmod=755 ./deploy/entrypoint.d/ /etc/entrypoint.d/
 COPY --chown=www-data:www-data . .
 COPY --from=composer_deps /var/www/html/vendor/ ./vendor
 COPY --from=frontend_assets /var/www/html/public/build ./public/build
-COPY --from=frontend_assets /var/www/html/public/app/sw.js ./public/app/sw.js
 COPY --from=powersync_vendor /app /opt/powersync
 COPY --from=powersync_vendor /usr/local/bin/node /usr/local/bin/node
 COPY --chmod=755 deploy/config/powersync/entrypoint.sh /opt/powersync/entrypoint.sh

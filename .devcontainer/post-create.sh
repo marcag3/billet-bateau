@@ -42,7 +42,7 @@ for attempt in $(seq 1 30); do
         break
     fi
     if [[ "${attempt}" -eq 30 ]]; then
-        echo "Warning: storage:configure failed; run 'php artisan storage:configure' once Garage is reachable" >&2
+        echo "Warning: storage:configure failed; run 'php artisan storage:configure' once RustFS is reachable" >&2
     fi
     sleep 2
 done
