@@ -22,7 +22,12 @@ export default defineConfig(({ mode }) => {
         && Boolean(env.SENTRY_ORG)
         && Boolean(env.SENTRY_PROJECT);
 
+    const appBuildId = env.VITE_SENTRY_RELEASE || 'local';
+
     return {
+        define: {
+            __APP_BUILD_ID__: JSON.stringify(appBuildId),
+        },
         build: {
             sourcemap: sentryUploadEnabled ? 'hidden' : false,
         },

@@ -19,7 +19,7 @@ import { initSentry } from "./sentry";
 import {
     registerAppServiceWorker,
     registerLazyChunkReloadHandlers,
-} from "./utilities/app-update";
+} from "./pwa";
 import {
     notifyServiceWorkerOfMediaConfig,
     refreshAppMediaConfigFromNetwork,

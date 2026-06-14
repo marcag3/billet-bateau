@@ -2,15 +2,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
     APP_SERVICE_WORKER_SCOPE,
     APP_SERVICE_WORKER_SCRIPT_URL,
+} from "../../pwa/constants";
+import {
     handleLazyChunkLoadError,
     isLazyChunkLoadError,
-    registerAppServiceWorker,
-    shouldRegisterAppServiceWorker,
-} from "../../utilities/app-update";
+} from "../../pwa/stale-chunks";
 
 const CHUNK_RELOAD_GUARD_KEY = "app:chunk-reload";
 
-describe("app-update", () => {
+describe("pwa", () => {
     describe("isLazyChunkLoadError", () => {
         it("detects vite dynamic import failures", () => {
             expect(
@@ -66,10 +66,10 @@ describe("app-update", () => {
             expect(sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY)).toBe("1");
         });
 
-        it("does not reload again when the guard is already set", () => {
+        it("does not reload again when escalation already ran", async () => {
             const reload = vi.fn();
             vi.stubGlobal("location", { reload });
-            sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, "1");
+            sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, "2");
 
             expect(
                 handleLazyChunkLoadError(
@@ -78,47 +78,34 @@ describe("app-update", () => {
             ).toBe(true);
             expect(reload).not.toHaveBeenCalled();
         });
-    });
 
-    describe("shouldRegisterAppServiceWorker", () => {
-        afterEach(() => {
-            vi.unstubAllGlobals();
-            vi.restoreAllMocks();
-        });
-
-        it("returns false when a controller is already active", async () => {
+        it("escalates on second stale chunk error by clearing caches", async () => {
+            const reload = vi.fn();
+            const deleteCache = vi.fn().mockResolvedValue(true);
+            const keys = vi.fn().mockResolvedValue(["app-shell-old", "other"]);
+            vi.stubGlobal("location", { reload });
+            vi.stubGlobal("caches", { keys, delete: deleteCache });
             vi.stubGlobal("navigator", {
                 serviceWorker: {
-                    controller: {},
-                    getRegistration: vi.fn().mockResolvedValue(undefined),
-                },
-            });
-
-            await expect(shouldRegisterAppServiceWorker()).resolves.toBe(false);
-        });
-
-        it("returns false when a registration already exists", async () => {
-            vi.stubGlobal("navigator", {
-                serviceWorker: {
-                    controller: null,
                     getRegistration: vi.fn().mockResolvedValue({
-                        update: vi.fn(),
+                        update: vi.fn().mockResolvedValue(undefined),
                     }),
                 },
             });
+            sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, "1");
 
-            await expect(shouldRegisterAppServiceWorker()).resolves.toBe(false);
-        });
+            expect(
+                handleLazyChunkLoadError(
+                    new Error("Failed to fetch dynamically imported module"),
+                ),
+            ).toBe(true);
 
-        it("returns true when no controller or registration exists", async () => {
-            vi.stubGlobal("navigator", {
-                serviceWorker: {
-                    controller: null,
-                    getRegistration: vi.fn().mockResolvedValue(undefined),
-                },
+            await vi.waitFor(() => {
+                expect(reload).toHaveBeenCalledOnce();
             });
 
-            await expect(shouldRegisterAppServiceWorker()).resolves.toBe(true);
+            expect(deleteCache).toHaveBeenCalledWith("app-shell-old");
+            expect(sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY)).toBe("2");
         });
     });
 
@@ -126,7 +113,7 @@ describe("app-update", () => {
         afterEach(() => {
             vi.unstubAllEnvs();
             vi.unstubAllGlobals();
-            vi.restoreAllMocks();
+            vi.resetModules();
         });
 
         function stubServiceWorkerEnvironment({
@@ -163,44 +150,46 @@ describe("app-update", () => {
             return { register, getRegistration, existingRegistration };
         }
 
-        it("registers the scoped service worker when none exists", async () => {
+        async function loadRegisterModule() {
             vi.stubEnv("PROD", true);
+            return import("../../pwa/register");
+        }
 
+        it("registers the scoped service worker when none exists", async () => {
             const { register } = stubServiceWorkerEnvironment();
+            const { registerAppServiceWorker } = await loadRegisterModule();
 
             registerAppServiceWorker();
 
-            await Promise.resolve();
-            await Promise.resolve();
-
-            expect(register).toHaveBeenCalledWith(APP_SERVICE_WORKER_SCRIPT_URL, {
-                scope: APP_SERVICE_WORKER_SCOPE,
+            await vi.waitFor(() => {
+                expect(register).toHaveBeenCalledWith(
+                    APP_SERVICE_WORKER_SCRIPT_URL,
+                    { scope: APP_SERVICE_WORKER_SCOPE },
+                );
             });
         });
 
         it("skips register when a registration already exists", async () => {
-            vi.stubEnv("PROD", true);
-
             const update = vi.fn();
             const { register } = stubServiceWorkerEnvironment({
                 existingRegistration: { update },
             });
+            const { registerAppServiceWorker } = await loadRegisterModule();
 
             registerAppServiceWorker();
 
-            await Promise.resolve();
-            await Promise.resolve();
+            await vi.waitFor(() => {
+                expect(update).toHaveBeenCalled();
+            });
 
             expect(register).not.toHaveBeenCalled();
-            expect(update).toHaveBeenCalled();
         });
 
         it("skips register when a controller is already active", async () => {
-            vi.stubEnv("PROD", true);
-
             const { register } = stubServiceWorkerEnvironment({
                 controller: {},
             });
+            const { registerAppServiceWorker } = await loadRegisterModule();
 
             registerAppServiceWorker();
 
