@@ -29,6 +29,11 @@ services:
             AUTORUN_ENABLED: false
             DB_HOST: "pgsql"
             REDIS_HOST: "redis"
+            POWERSYNC_CONFIG_PATH: /config/service.yaml
+            NODE_OPTIONS: --max-old-space-size-percentage=80
+            PS_DATA_SOURCE_URI: "${POWERSYNC_DATA_SOURCE_URI:-postgresql://powersync:password@pgsql:5432/${DB_DATABASE}?sslmode=disable}"
+            PS_STORAGE_SOURCE_URI: "${POWERSYNC_STORAGE_SOURCE_URI:-postgresql://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/powersync_storage?sslmode=disable}"
+            PS_JWT_SECRET: "${POWERSYNC_JWT_SECRET:-powersync-local-poc-secret-32_bytes!}"
         depends_on:
             - production
         networks:
@@ -80,8 +85,10 @@ services:
 
     powersync:
         # Sync Streams (sync-config.yaml edition: 3) require PowerSync Service v1.20.0+.
-        image: "${POWERSYNC_IMAGE}"
+        image: "${PRODUCTION_IMAGE}"
         restart: unless-stopped
+        entrypoint: ["/bin/sh", "/opt/powersync/entrypoint.sh"]
+        command: ["start", "-r", "unified"]
         environment:
             POWERSYNC_CONFIG_PATH: /config/service.yaml
             NODE_OPTIONS: --max-old-space-size=1000

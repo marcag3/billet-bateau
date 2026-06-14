@@ -80,8 +80,15 @@ services:
         # Sync Streams (sync-config.yaml edition: 3) require PowerSync Service v1.20.0+.
         build:
             context: .
-            dockerfile: deploy/Dockerfile.powersync
+            dockerfile: Dockerfile
+            target: development
+            args:
+                WWWUSER: "${WWWUSER:-1000}"
+                WWWGROUP: "${WWWGROUP:-1000}"
+                NODE_VERSION: "${NODE_VERSION:-24}"
         restart: unless-stopped
+        entrypoint: ["/bin/sh", "/opt/powersync/entrypoint.sh"]
+        command: ["start", "-r", "unified"]
         volumes:
             - "./deploy/config/powersync:/config:ro"
         environment:

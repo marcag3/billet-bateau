@@ -55,13 +55,14 @@ Two sync streams in `deploy/config/powersync/sync-config.yaml`:
 
 **Common pitfall:** If `program_scope` is never subscribed, zero program-scoped data appears — even if PostgreSQL has it. Verify `activeProgramIdRef` is set and the `accessible_program_ids` CTE includes the user's programs.
 
-**Deploy:** Production PowerSync config is baked into `deploy/Dockerfile.powersync` (CI image). Dev bind-mounts `deploy/config/powersync` for live edits — restart PowerSync after sync-config changes (`docker compose restart powersync`).
+**Deploy:** Production embeds PowerSync in `PRODUCTION_IMAGE` (`Dockerfile` multi-stage copy from `journeyapps/powersync-service`). The `powersync` compose service uses the same image with `start -r unified`. Daily bucket compaction runs at 03:00 via `production-schedule` (`php artisan schedule:work` → `powersync:compact`). Dev bind-mounts `deploy/config/powersync` for live edits — restart PowerSync after sync-config changes (`docker compose restart powersync`).
 
 ### Where to Look
 
 | Concern                      | File                                                     |
 | ---------------------------- | -------------------------------------------------------- |
-| PowerSync image              | `deploy/Dockerfile.powersync`                            |
+| PowerSync runtime embed      | `Dockerfile` (`powersync_vendor` stage → `/opt/powersync`) |
+| PowerSync compact command    | `app/Console/Commands/PowerSyncCompactCommand.php`           |
 | Dev compose                  | `compose.yaml` (repo root)                               |
 | Prod compose                 | `deploy/compose.yaml`                                    |
 | Sync stream queries          | `deploy/config/powersync/sync-config.yaml`               |

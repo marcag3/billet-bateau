@@ -1,7 +1,0 @@
-ARG POWERSYNC_VERSION=1.22.0
-FROM journeyapps/powersync-service:${POWERSYNC_VERSION}
-
-COPY deploy/config/powersync/ /config/
-
-ENTRYPOINT ["/bin/sh", "/config/entrypoint.sh"]
-CMD ["start", "-r", "unified"]

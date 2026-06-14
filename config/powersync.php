@@ -19,4 +19,19 @@ return [
     'jwt_audience' => (string) env('POWERSYNC_JWT_AUDIENCE', 'powersync-dev'),
 
     'jwt_ttl_seconds' => (int) env('POWERSYNC_JWT_TTL_SECONDS', 300),
+
+    /**
+     * Embedded PowerSync service paths (production image).
+     */
+    'service_entry' => '/opt/powersync/service/lib/entry.js',
+
+    'entrypoint' => '/opt/powersync/entrypoint.sh',
+
+    'config_path' => (string) env('POWERSYNC_CONFIG_PATH', '/config/service.yaml'),
+
+    'data_source_uri' => env('PS_DATA_SOURCE_URI'),
+
+    'storage_source_uri' => env('PS_STORAGE_SOURCE_URI'),
+
+    'compact_node_options' => (string) env('POWERSYNC_COMPACT_NODE_OPTIONS', '--max-old-space-size-percentage=80'),
 ];

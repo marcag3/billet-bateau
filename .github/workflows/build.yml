@@ -39,12 +39,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Extract metadata (tags, labels) for PowerSync
-        id: meta_powersync
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-powersync
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
         with:
@@ -55,6 +49,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
+            POWERSYNC_VERSION=1.22.0
             VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
             VITE_SENTRY_RELEASE=${{ github.sha }}
             SENTRY_RELEASE=${{ github.sha }}
@@ -63,15 +58,6 @@ jobs:
             SENTRY_PROJECT=${{ secrets.SENTRY_VUE_PROJECT }}
           secrets: |
             sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
-
-      - name: Build and push PowerSync image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: deploy/Dockerfile.powersync
-          push: true
-          tags: ${{ steps.meta_powersync.outputs.tags }}
-          labels: ${{ steps.meta_powersync.outputs.labels }}
 
       - name: Create Sentry release (Laravel)
         if: github.ref_name == 'main'

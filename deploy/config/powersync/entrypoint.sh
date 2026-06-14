@@ -11,4 +11,4 @@ if [ -z "${PS_JWT_SECRET_B64URL:-}" ]; then
     export PS_JWT_SECRET_B64URL
 fi
 
-exec node /app/service/lib/entry.js "$@"
+exec node /opt/powersync/service/lib/entry.js "$@"

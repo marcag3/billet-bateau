@@ -1,4 +1,10 @@
 ############################################
+# PowerSync service runtime (vendor)
+############################################
+ARG POWERSYNC_VERSION=1.22.0
+FROM journeyapps/powersync-service:${POWERSYNC_VERSION} AS powersync_vendor
+
+############################################
 # Shared PHP runtime
 ############################################
 FROM serversideup/php:8.5-frankenphp AS base
@@ -60,6 +66,10 @@ FROM devtools AS development
 
 ARG WWWGROUP=1000
 ARG WWWUSER=1000
+
+COPY --from=powersync_vendor /app /opt/powersync
+COPY --from=powersync_vendor /usr/local/bin/node /usr/local/bin/node
+COPY --chmod=755 deploy/config/powersync/entrypoint.sh /opt/powersync/entrypoint.sh
 
 RUN groupadd --force -g "${WWWGROUP}" sail \
     && useradd -ms /bin/bash --no-user-group -g "${WWWGROUP}" -u "${WWWUSER}" sail \
@@ -132,6 +142,10 @@ COPY --chown=www-data:www-data . .
 COPY --from=composer_deps /var/www/html/vendor/ ./vendor
 COPY --from=frontend_assets /var/www/html/public/build ./public/build
 COPY --from=frontend_assets /var/www/html/public/app/sw.js ./public/app/sw.js
+COPY --from=powersync_vendor /app /opt/powersync
+COPY --from=powersync_vendor /usr/local/bin/node /usr/local/bin/node
+COPY --chmod=755 deploy/config/powersync/entrypoint.sh /opt/powersync/entrypoint.sh
+COPY deploy/config/powersync/ /config/
 
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev
 

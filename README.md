@@ -179,7 +179,7 @@ PowerSync + Garage + Mailpit ports: see [Compose-only variables](#compose-only-n
 
 Production: Docker Compose under `deploy/` (`deploy/compose.yaml`, `deploy/.env.example`).
 
-PowerSync config (`sync-config.yaml`, `service.yaml`) is **baked into the PowerSync image** at build time (`deploy/Dockerfile.powersync`), tagged alongside the Laravel image in CI. Set `POWERSYNC_IMAGE` to the same ref as `PRODUCTION_IMAGE` (with the `-powersync` suffix). Dev (`compose.yaml`) bind-mounts `deploy/config/powersync` for live edits instead.
+PowerSync is **embedded in `PRODUCTION_IMAGE`** (`Dockerfile` copies the service from `journeyapps/powersync-service`). Config (`sync-config.yaml`, `service.yaml`) is baked at `/config/` in production. The `powersync` compose service uses the same image with `start -r unified`. Daily bucket compaction runs at 03:00 via `production-schedule` (`powersync:compact`). Dev (`compose.yaml`) bind-mounts `deploy/config/powersync` for live edits instead.
 
 `deploy/compose.yaml` still bind-mounts `./config` for **Postgres init**, **Garage**, and **PostGIS schema** — checkout the repo at the same tag/ref as your images:
 
@@ -189,7 +189,7 @@ git clone --depth 1 --branch main https://github.com/marcag3/billet-bateau.git /
 cp -r /tmp/billet-bateau/deploy/config ./config
 ```
 
-Then `deploy/.env` from `deploy/.env.example`, set `PRODUCTION_IMAGE`, `POWERSYNC_IMAGE`, and secrets (`openssl rand -hex 16`, `openssl rand -base64 48` for `POWERSYNC_JWT_SECRET`).
+Then `deploy/.env` from `deploy/.env.example`, set `PRODUCTION_IMAGE` and secrets (`openssl rand -hex 16`, `openssl rand -base64 48` for `POWERSYNC_JWT_SECRET`).
 
 ```bash
 cd deploy && docker compose pull && docker compose up -d
@@ -204,7 +204,7 @@ docker compose exec production php artisan storage:configure --no-interaction
 
 ### CI (`.github/workflows/build.yml`)
 
-Push to `main` or `staging*` → Laravel production image and PowerSync image (same tags; PowerSync uses `-powersync` suffix) + Sentry release (Laravel + Vue) on `main`. Repository secrets: `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_LARAVEL_PROJECT`, `SENTRY_VUE_PROJECT`, `VITE_SENTRY_DSN`. Set `SENTRY_LARAVEL_DSN` in `deploy/.env`.
+Push to `main` or `staging*` → production image (Laravel + embedded PowerSync) + Sentry release (Laravel + Vue) on `main`. Repository secrets: `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_LARAVEL_PROJECT`, `SENTRY_VUE_PROJECT`, `VITE_SENTRY_DSN`. Set `SENTRY_LARAVEL_DSN` in `deploy/.env`.
 
 ---
 
@@ -227,7 +227,6 @@ Copy `.env.example` → `.env` (Sail). Copy `deploy/.env.example` → `deploy/.e
 | `AWS_URL`                  | ✓   | ✓          | Public object URL (Garage s3_web)   |
 | `AWS_ENDPOINT_PUBLIC`      | ✓   | ✓          | Presigned upload host               |
 | `PRODUCTION_IMAGE`         |     | ✓          | `deploy/.env` only                  |
-| `POWERSYNC_IMAGE`          |     | ✓          | Same ref as `PRODUCTION_IMAGE` (`-powersync` suffix) |
 | `APP_URL`                  |     | ✓          | HTTPS                               |
 | `SANCTUM_STATEFUL_DOMAINS` |     | ✓          | SPA host(s), comma-separated        |
 | `POWERSYNC_PUBLIC_URL`     |     | ✓          | Browser PowerSync URL               |
