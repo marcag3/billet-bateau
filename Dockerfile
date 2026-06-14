@@ -15,6 +15,9 @@ USER root
 
 RUN install-php-extensions intl gd exif
 
+COPY deploy/config/caddy/server-extra-directives /etc/caddy/server-extra-directives
+COPY --chmod=755 deploy/entrypoint.d/50-caddy-server-extra-directives.sh /etc/entrypoint.d/50-caddy-server-extra-directives.sh
+
 ############################################
 # Development tools (Sail-like all-in-one)
 ############################################

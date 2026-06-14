@@ -9,17 +9,17 @@ const SHELL_CACHE = `app-shell-${BUILD_ID}`;
 const MEDIA_CACHE = `app-media-${BUILD_ID}`;
 const META_CACHE = `app-meta-${BUILD_ID}`;
 
+const SW_MEDIA_CONFIG_PATH = '/app/sw-config.json';
 const APP_SHELL_URLS = ['/app', '/app/'];
 const OFFLINE_ICON_URLS = ['/icons/app-icon.svg'];
-const SW_CONFIG_PATH = '/app/sw-config.json';
 
 const AUTH_PATH_PATTERN = /^\/(?:login|logout|register|password\/?|sanctum\/csrf-cookie)/;
-const BYPASS_PATHS = new Set(['/app/sw.js', '/app-sw.js']);
+const BYPASS_PATHS = new Set(['/build/app-sw.js']);
 
 /** @type {Set<string>} */
 let trustedImageOrigins = new Set();
-/** @type {Promise<void>} */
-let originsReady = loadTrustedOrigins();
+/** @type {Promise<void> | undefined} */
+let mediaConfigReady;
 
 /**
  * @param {string[]} origins
@@ -30,11 +30,11 @@ function applyTrustedImageOrigins(origins) {
     );
 }
 
-async function loadTrustedOrigins() {
+async function loadMediaConfig() {
     const metaCache = await caches.open(META_CACHE);
 
     try {
-        const response = await fetch(SW_CONFIG_PATH, { cache: 'no-store' });
+        const response = await fetch(SW_MEDIA_CONFIG_PATH, { cache: 'no-store' });
 
         if (response.ok) {
             const data = await response.json();
@@ -42,7 +42,7 @@ async function loadTrustedOrigins() {
                 applyTrustedImageOrigins(data.trustedImageOrigins);
             }
 
-            await metaCache.put(SW_CONFIG_PATH, response.clone());
+            await metaCache.put(SW_MEDIA_CONFIG_PATH, response.clone());
 
             return;
         }
@@ -50,7 +50,7 @@ async function loadTrustedOrigins() {
         // offline — fall back to cached config below
     }
 
-    const cached = await metaCache.match(SW_CONFIG_PATH);
+    const cached = await metaCache.match(SW_MEDIA_CONFIG_PATH);
     if (cached == null) {
         return;
     }
@@ -63,6 +63,12 @@ async function loadTrustedOrigins() {
     } catch {
         // ignore invalid cache payload
     }
+}
+
+function ensureMediaConfigReady() {
+    mediaConfigReady ??= loadMediaConfig();
+
+    return mediaConfigReady;
 }
 
 /**
@@ -86,43 +92,84 @@ async function deleteStaleCaches(cacheNames) {
     );
 }
 
+async function cacheAppShell() {
+    const shellCache = await caches.open(SHELL_CACHE);
+
+    await Promise.all([
+        ...APP_SHELL_URLS.map((url) =>
+            shellCache.add(new Request(url, { cache: 'reload' })).catch(() => null),
+        ),
+        ...OFFLINE_ICON_URLS.map((url) => shellCache.add(url).catch(() => null)),
+    ]);
+}
+
+/**
+ * @param {FetchEvent} event
+ */
+async function respondWithCachedImage(event) {
+    const { request } = event;
+    const url = new URL(request.url);
+
+    await ensureMediaConfigReady();
+
+    if (!trustedImageOrigins.has(url.origin)) {
+        return fetch(request);
+    }
+
+    const mediaCache = await caches.open(MEDIA_CACHE);
+    const cached = await mediaCache.match(request);
+
+    if (cached) {
+        return cached;
+    }
+
+    const networkResponse = await fetch(request);
+
+    if (networkResponse.ok) {
+        mediaCache.put(request, networkResponse.clone());
+    }
+
+    return networkResponse;
+}
+
+/**
+ * @param {FetchEvent} event
+ */
+async function respondWithAppShell(event) {
+    const { request } = event;
+    const shellCache = await caches.open(SHELL_CACHE);
+
+    try {
+        const networkResponse = await fetch(request, { cache: 'no-store' });
+
+        if (networkResponse.ok) {
+            shellCache.put('/app/', networkResponse.clone());
+        }
+
+        return networkResponse;
+    } catch {
+        return (
+            (await shellCache.match('/app/')) ||
+            (await shellCache.match('/app')) ||
+            fetch(request)
+        );
+    }
+}
+
+// Static assets: Workbox precache handles /build/** at install time.
 self.skipWaiting();
 clientsClaim();
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST || []);
 
-self.addEventListener('message', (event) => {
-    const data = event.data;
-    if (data?.type === 'SET_TRUSTED_ORIGINS' && Array.isArray(data.trustedImageOrigins)) {
-        applyTrustedImageOrigins(data.trustedImageOrigins);
-    }
-});
-
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        (async () => {
-            originsReady = loadTrustedOrigins();
-            await originsReady;
-
-            const shellCache = await caches.open(SHELL_CACHE);
-
-            await Promise.all([
-                ...APP_SHELL_URLS.map((url) =>
-                    shellCache.add(new Request(url, { cache: 'reload' })).catch(() => null),
-                ),
-                ...OFFLINE_ICON_URLS.map((url) =>
-                    shellCache.add(url).catch(() => null),
-                ),
-            ]);
-        })(),
-    );
+    event.waitUntil(cacheAppShell());
 });
 
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         (async () => {
-            originsReady = loadTrustedOrigins();
-            await originsReady;
+            await ensureMediaConfigReady();
             await deleteStaleCaches(await caches.keys());
         })(),
     );
@@ -142,30 +189,7 @@ self.addEventListener('fetch', (event) => {
             return;
         }
 
-        event.respondWith(
-            (async () => {
-                await originsReady;
-
-                if (!trustedImageOrigins.has(url.origin)) {
-                    return fetch(request);
-                }
-
-                const mediaCache = await caches.open(MEDIA_CACHE);
-                const cached = await mediaCache.match(request);
-
-                if (cached) {
-                    return cached;
-                }
-
-                const networkResponse = await fetch(request);
-
-                if (networkResponse.ok) {
-                    mediaCache.put(request, networkResponse.clone());
-                }
-
-                return networkResponse;
-            })(),
-        );
+        event.respondWith(respondWithCachedImage(event));
 
         return;
     }
@@ -181,26 +205,6 @@ self.addEventListener('fetch', (event) => {
     }
 
     if (request.mode === 'navigate' && url.pathname.startsWith('/app')) {
-        event.respondWith(
-            (async () => {
-                const shellCache = await caches.open(SHELL_CACHE);
-
-                try {
-                    const networkResponse = await fetch(request, { cache: 'no-store' });
-
-                    if (networkResponse.ok) {
-                        shellCache.put('/app/', networkResponse.clone());
-                    }
-
-                    return networkResponse;
-                } catch {
-                    return (
-                        (await shellCache.match('/app/')) ||
-                        (await shellCache.match('/app')) ||
-                        fetch(request)
-                    );
-                }
-            })(),
-        );
+        event.respondWith(respondWithAppShell(event));
     }
 });

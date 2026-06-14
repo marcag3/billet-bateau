@@ -17,18 +17,11 @@ import { i18n, syncQuasarLanguageWithI18n } from "./utilities/i18n";
 import { APP_AUTH_EXPIRED_EVENT } from "./utilities/events";
 import { initSentry } from "./sentry";
 import {
-    registerAppServiceWorker,
     registerLazyChunkReloadHandlers,
+    watchAuthenticatedServiceWorkerRegistration,
 } from "./pwa";
-import {
-    notifyServiceWorkerOfMediaConfig,
-    refreshAppMediaConfigFromNetwork,
-} from "./utilities/media-config";
 
 registerLazyChunkReloadHandlers(router);
-registerAppServiceWorker(() => {
-    notifyServiceWorkerOfMediaConfig();
-});
 
 // Vee-validate: single global policy for all forms (override per `useForm` if needed).
 configure({
@@ -70,19 +63,10 @@ window.addEventListener("online", () => {
 
 await authStore.initialize();
 
-await refreshAppMediaConfigFromNetwork();
-notifyServiceWorkerOfMediaConfig();
+watchAuthenticatedServiceWorkerRegistration(authStore);
 
 app.mount("#app-root");
 
 if (authStore.canAccessProtectedRoute()) {
     void bootstrapDomainModels();
-}
-
-if (import.meta.env.PROD && "serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-        void refreshAppMediaConfigFromNetwork().then(() => {
-            notifyServiceWorkerOfMediaConfig();
-        });
-    });
 }

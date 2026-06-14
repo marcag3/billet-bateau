@@ -199,4 +199,54 @@ describe("pwa", () => {
             expect(register).not.toHaveBeenCalled();
         });
     });
+
+    describe("watchAuthenticatedServiceWorkerRegistration", () => {
+        afterEach(() => {
+            vi.unstubAllEnvs();
+            vi.unstubAllGlobals();
+            vi.resetModules();
+        });
+
+        it("registers only when protected routes are accessible", async () => {
+            vi.stubEnv("PROD", true);
+
+            const register = vi.fn().mockResolvedValue({ update: vi.fn() });
+            vi.stubGlobal("navigator", {
+                serviceWorker: {
+                    controller: null,
+                    register,
+                    getRegistration: vi.fn().mockResolvedValue(undefined),
+                    addEventListener: vi.fn(),
+                    ready: Promise.resolve({ update: vi.fn() }),
+                },
+            });
+            vi.stubGlobal("window", {
+                addEventListener: vi.fn(),
+            });
+
+            const { ref } = await import("vue");
+            const { watchAuthenticatedServiceWorkerRegistration } = await import(
+                "../../pwa/auth-registration"
+            );
+
+            const canAccess = ref(false);
+            const authStore = {
+                canAccessProtectedRoute: () => canAccess.value,
+            };
+
+            watchAuthenticatedServiceWorkerRegistration(authStore);
+
+            await Promise.resolve();
+            expect(register).not.toHaveBeenCalled();
+
+            canAccess.value = true;
+
+            await vi.waitFor(() => {
+                expect(register).toHaveBeenCalledWith(
+                    APP_SERVICE_WORKER_SCRIPT_URL,
+                    { scope: APP_SERVICE_WORKER_SCOPE },
+                );
+            });
+        });
+    });
 });

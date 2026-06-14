@@ -27,4 +27,6 @@ Thumbs.db
 .spin.yml
 
 **/caddy
+!deploy/config/caddy/
+!deploy/config/caddy/**
 /frankenphp

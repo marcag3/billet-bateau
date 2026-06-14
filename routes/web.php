@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AppServiceWorkerConfigController;
-use App\Http\Controllers\AppServiceWorkerScriptController;
 use App\Http\Controllers\Auth\InstallController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\ProgramInvitationAcceptController;
@@ -12,9 +11,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['web', EnsureApplicationIsInstalled::class])->group(function (): void {
     Route::get('/app/sw-config.json', AppServiceWorkerConfigController::class)
         ->name('app.sw-config');
-
-    Route::get('/app/sw.js', AppServiceWorkerScriptController::class)
-        ->name('app.sw');
 
     Route::get('/app/invite/{token}', function () {
         return view('app');

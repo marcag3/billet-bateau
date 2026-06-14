@@ -81,7 +81,7 @@ export function registerLazyChunkReloadHandlers(router: Router): void {
     void router.isReady().then(clearChunkReloadGuard);
 }
 
-export function registerAppServiceWorker(onRegistered?: () => void): void {
+export function registerAppServiceWorker(): void {
     if (!isProductionServiceWorkerEnvironment()) {
         return;
     }
@@ -93,13 +93,11 @@ export function registerAppServiceWorker(onRegistered?: () => void): void {
         const existing = await getServiceWorkerRegistration();
 
         if (existing !== undefined) {
-            onRegistered?.();
             await existing.update();
             return;
         }
 
         if (navigator.serviceWorker.controller !== null) {
-            onRegistered?.();
             return;
         }
 
@@ -108,7 +106,6 @@ export function registerAppServiceWorker(onRegistered?: () => void): void {
                 APP_SERVICE_WORKER_SCRIPT_URL,
                 { scope: APP_SERVICE_WORKER_SCOPE },
             );
-            onRegistered?.();
             await registration.update();
         } catch (error: unknown) {
             console.error("App service worker registration failed:", error);
