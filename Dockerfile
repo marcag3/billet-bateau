@@ -72,6 +72,7 @@ ARG WWWUSER=1000
 
 COPY --from=powersync_vendor /app /opt/powersync
 COPY --from=powersync_vendor /usr/local/bin/node /usr/local/bin/node
+COPY --chmod=755 deploy/entrypoint.d/ /etc/entrypoint.d/
 COPY --chmod=755 deploy/config/powersync/entrypoint.sh /opt/powersync/entrypoint.sh
 
 RUN groupadd --force -g "${WWWGROUP}" sail \

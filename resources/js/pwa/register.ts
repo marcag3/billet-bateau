@@ -12,7 +12,11 @@ import {
 let updateTriggersAttached = false;
 
 function isProductionServiceWorkerEnvironment(): boolean {
-    return import.meta.env.PROD && "serviceWorker" in navigator;
+    return (
+        import.meta.env.PROD &&
+        "serviceWorker" in navigator &&
+        window.isSecureContext
+    );
 }
 
 async function getServiceWorkerRegistration(): Promise<

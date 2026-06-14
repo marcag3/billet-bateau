@@ -142,6 +142,7 @@ describe("pwa", () => {
             });
             vi.stubGlobal("window", {
                 addEventListener: vi.fn(),
+                isSecureContext: true,
             });
             vi.stubGlobal("document", {
                 addEventListener: vi.fn(),
@@ -222,6 +223,7 @@ describe("pwa", () => {
             });
             vi.stubGlobal("window", {
                 addEventListener: vi.fn(),
+                isSecureContext: true,
             });
 
             const { ref } = await import("vue");
