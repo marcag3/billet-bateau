@@ -25,6 +25,18 @@
 
                 <AppLanguageSwitcher on-dark-header />
 
+                <q-btn
+                    v-if="authStore.isAuthenticated"
+                    flat
+                    round
+                    dense
+                    color="grey-2"
+                    icon="manage_accounts"
+                    :aria-label="t('profile.openProfile')"
+                    :to="{ name: 'profile' }"
+                    class="q-ml-sm"
+                />
+
                 <q-btn v-if="authStore.isAuthenticated" flat color="grey-2" :label="t('common.logout')" class="q-ml-md"
                     style="min-width: 10rem" @click="logout" />
 

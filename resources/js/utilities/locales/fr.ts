@@ -646,6 +646,28 @@ export default {
         placeholderDescription:
             "Les flux d’enregistrement et d’arrivée seront disponibles ici.",
     },
+    profile: {
+        title: "Profil",
+        openProfile: "Ouvrir le profil",
+        profileSection: "Informations du compte",
+        passwordSection: "Changer le mot de passe",
+        name: "Nom",
+        email: "Courriel",
+        currentPassword: "Mot de passe actuel",
+        newPassword: "Nouveau mot de passe",
+        confirmPassword: "Confirmer le nouveau mot de passe",
+        saveProfile: "Enregistrer le profil",
+        changePassword: "Changer le mot de passe",
+        profileUpdated: "Votre profil a été mis à jour.",
+        passwordChanged: "Votre mot de passe a été modifié.",
+        unableUpdateProfile:
+            "Impossible de mettre à jour votre profil. Veuillez réessayer.",
+        unableChangePassword:
+            "Impossible de changer votre mot de passe. Veuillez réessayer.",
+        validationRequired: "Ce champ est obligatoire.",
+        validationEmail: "Entrez une adresse courriel valide.",
+        passwordMismatch: "Les mots de passe ne correspondent pas.",
+    },
     programsList: {
         title: "Programmes",
         loadingLocal: "Preparation des donnees locales…",

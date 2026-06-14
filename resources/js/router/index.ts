@@ -234,6 +234,14 @@ const routes: RouteRecordRaw[] = [
         },
     },
     {
+        path: "/profile",
+        name: "profile",
+        component: () => import("../pages/AppProfilePage.vue"),
+        meta: {
+            requiresAuth: true,
+        },
+    },
+    {
         path: "/invite/:token",
         name: "programs.inviteAccept",
         component: () => import("../pages/AppProgramInviteAcceptPage.vue"),
