@@ -119,16 +119,39 @@ describe("pwa", () => {
         function stubServiceWorkerEnvironment({
             controller = null,
             existingRegistration = undefined,
+            registrationScriptUrl = APP_SERVICE_WORKER_SCRIPT_URL,
         }: {
             controller?: object | null;
-            existingRegistration?: { update: ReturnType<typeof vi.fn> } | undefined;
+            existingRegistration?:
+                | {
+                      update: ReturnType<typeof vi.fn>;
+                      unregister?: ReturnType<typeof vi.fn>;
+                      active?: { scriptURL: string } | null;
+                      waiting?: { scriptURL: string } | null;
+                      installing?: { scriptURL: string } | null;
+                  }
+                | undefined;
+            registrationScriptUrl?: string;
         } = {}) {
             const register = vi.fn().mockResolvedValue({
                 update: vi.fn(),
             });
+            const registration = existingRegistration
+                ? {
+                      ...existingRegistration,
+                      active: existingRegistration.active ?? {
+                          scriptURL: `https://example.test${registrationScriptUrl}`,
+                      },
+                      waiting: existingRegistration.waiting ?? null,
+                      installing: existingRegistration.installing ?? null,
+                      unregister:
+                          existingRegistration.unregister ??
+                          vi.fn().mockResolvedValue(true),
+                  }
+                : undefined;
             const getRegistration = vi
                 .fn()
-                .mockResolvedValue(existingRegistration);
+                .mockResolvedValue(registration);
             const addEventListener = vi.fn();
 
             vi.stubGlobal("navigator", {
@@ -148,7 +171,7 @@ describe("pwa", () => {
                 addEventListener: vi.fn(),
             });
 
-            return { register, getRegistration, existingRegistration };
+            return { register, getRegistration, existingRegistration: registration };
         }
 
         async function loadRegisterModule() {
@@ -170,7 +193,7 @@ describe("pwa", () => {
             });
         });
 
-        it("skips register when a registration already exists", async () => {
+        it("updates when a registration already exists at the expected script", async () => {
             const update = vi.fn();
             const { register } = stubServiceWorkerEnvironment({
                 existingRegistration: { update },
@@ -186,7 +209,29 @@ describe("pwa", () => {
             expect(register).not.toHaveBeenCalled();
         });
 
-        it("skips register when a controller is already active", async () => {
+        it("re-registers when an existing registration uses a stale script url", async () => {
+            const update = vi.fn();
+            const unregister = vi.fn().mockResolvedValue(true);
+            const { register } = stubServiceWorkerEnvironment({
+                existingRegistration: { update, unregister },
+                registrationScriptUrl: "/app/sw.js",
+            });
+            const { registerAppServiceWorker } = await loadRegisterModule();
+
+            registerAppServiceWorker();
+
+            await vi.waitFor(() => {
+                expect(unregister).toHaveBeenCalled();
+                expect(register).toHaveBeenCalledWith(
+                    APP_SERVICE_WORKER_SCRIPT_URL,
+                    { scope: APP_SERVICE_WORKER_SCOPE },
+                );
+            });
+
+            expect(update).not.toHaveBeenCalled();
+        });
+
+        it("registers when a controller is active but no registration exists", async () => {
             const { register } = stubServiceWorkerEnvironment({
                 controller: {},
             });
@@ -194,10 +239,12 @@ describe("pwa", () => {
 
             registerAppServiceWorker();
 
-            await Promise.resolve();
-            await Promise.resolve();
-
-            expect(register).not.toHaveBeenCalled();
+            await vi.waitFor(() => {
+                expect(register).toHaveBeenCalledWith(
+                    APP_SERVICE_WORKER_SCRIPT_URL,
+                    { scope: APP_SERVICE_WORKER_SCOPE },
+                );
+            });
         });
     });
 

@@ -25,9 +25,61 @@ async function getServiceWorkerRegistration(): Promise<
     return navigator.serviceWorker.getRegistration(APP_SERVICE_WORKER_SCOPE);
 }
 
+function getServiceWorkerScriptPath(worker: ServiceWorker): string {
+    return new URL(worker.scriptURL).pathname;
+}
+
+function registrationHasExpectedScript(
+    registration: ServiceWorkerRegistration,
+): boolean {
+    const worker =
+        registration.active ??
+        registration.waiting ??
+        registration.installing;
+
+    if (worker === null) {
+        return true;
+    }
+
+    return (
+        getServiceWorkerScriptPath(worker) === APP_SERVICE_WORKER_SCRIPT_URL
+    );
+}
+
+async function ensureAppServiceWorker(): Promise<void> {
+    let registration = await getServiceWorkerRegistration();
+
+    if (
+        registration !== undefined &&
+        !registrationHasExpectedScript(registration)
+    ) {
+        await registration.unregister();
+        registration = undefined;
+    }
+
+    if (registration !== undefined) {
+        try {
+            await registration.update();
+            return;
+        } catch (error: unknown) {
+            console.error("App service worker update failed:", error);
+            await registration.unregister();
+        }
+    }
+
+    try {
+        const newRegistration = await navigator.serviceWorker.register(
+            APP_SERVICE_WORKER_SCRIPT_URL,
+            { scope: APP_SERVICE_WORKER_SCOPE },
+        );
+        await newRegistration.update();
+    } catch (error: unknown) {
+        console.error("App service worker registration failed:", error);
+    }
+}
+
 async function checkForServiceWorkerUpdate(): Promise<void> {
-    const registration = await getServiceWorkerRegistration();
-    await registration?.update();
+    await ensureAppServiceWorker();
 }
 
 function attachServiceWorkerUpdateTriggers(): void {
@@ -93,26 +145,5 @@ export function registerAppServiceWorker(): void {
     listenForServiceWorkerControllerChange();
     attachServiceWorkerUpdateTriggers();
 
-    void (async () => {
-        const existing = await getServiceWorkerRegistration();
-
-        if (existing !== undefined) {
-            await existing.update();
-            return;
-        }
-
-        if (navigator.serviceWorker.controller !== null) {
-            return;
-        }
-
-        try {
-            const registration = await navigator.serviceWorker.register(
-                APP_SERVICE_WORKER_SCRIPT_URL,
-                { scope: APP_SERVICE_WORKER_SCOPE },
-            );
-            await registration.update();
-        } catch (error: unknown) {
-            console.error("App service worker registration failed:", error);
-        }
-    })();
+    void ensureAppServiceWorker();
 }
