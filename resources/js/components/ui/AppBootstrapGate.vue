@@ -5,7 +5,7 @@
             rounded
             class="bg-red-1 text-negative q-mb-md"
         >
-            {{ errorMessage }}
+            {{ resolvedErrorMessage }}
         </q-banner>
         <q-inner-loading
             v-else-if="!ready && hasLoadingCopy"
@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, toValue } from "vue";
 
 const props = withDefaults(
     defineProps<{
@@ -55,8 +55,13 @@ const hasLoadingCopy = computed(
         (props.loadingTitle != null && props.loadingTitle !== "") ||
         (props.loadingSubcopy != null && props.loadingSubcopy !== ""),
 );
+const resolvedErrorMessage = computed(() => {
+    const message = toValue(props.errorMessage);
+    return typeof message === "string" ? message : "";
+});
+
 const hasErrorMessage = computed(
-    () => props.errorMessage != null && props.errorMessage.trim().length > 0,
+    () => resolvedErrorMessage.value.trim().length > 0,
 );
 </script>
 

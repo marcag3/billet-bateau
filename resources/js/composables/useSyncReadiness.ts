@@ -1,4 +1,4 @@
-import { computed, type Ref } from "vue";
+import { computed, reactive, type Ref } from "vue";
 import { useRoute } from "vue-router";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import { resolveRouteSyncStreams } from "../utilities/route-sync-streams";
@@ -73,8 +73,8 @@ export function useSyncReadiness(options: UseSyncReadinessOptions = {}) {
         );
     }
 
-    return {
-        errorMessage: powersync.errorMessage,
+    return reactive({
+        errorMessage: computed(() => powersync.errorMessage.value),
         requiredStreams,
         isBootstrapping,
         isContentPending,
@@ -82,5 +82,5 @@ export function useSyncReadiness(options: UseSyncReadinessOptions = {}) {
         contentLoadingTitleKey,
         contentLoadingHintKey,
         shouldShowEmpty,
-    };
+    });
 }
