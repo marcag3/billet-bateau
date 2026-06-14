@@ -196,6 +196,15 @@ export default {
             "La date de fin doit etre le meme jour ou apres la date de debut.",
     },
     sync: {
+        preparingLocal: "Preparation des donnees locales…",
+        preparingLocalHint:
+            "Configuration du stockage hors ligne et de la synchronisation. Un court instant seulement au premier lancement.",
+        syncingUserScope: "Synchronisation de vos programmes…",
+        syncingUserScopeHint:
+            "Recuperation de votre espace depuis le serveur.",
+        syncingProgramScope: "Chargement des donnees du programme…",
+        syncingProgramScopeHint:
+            "Synchronisation des bateaux, des sorties et des autres details de l'espace de travail.",
         syncRequestFailed: "La requete de synchronisation a echoue.",
         unableLoadSync: "Impossible de charger la synchronisation locale.",
         persistenceLimited:
@@ -670,12 +679,6 @@ export default {
     },
     programsList: {
         title: "Programmes",
-        loadingLocal: "Preparation des donnees locales…",
-        loadingLocalHint:
-            "Configuration du stockage hors ligne et de la synchronisation. Un court instant seulement au premier lancement.",
-        loadingPrograms: "Synchronisation de vos programmes…",
-        loadingProgramsHint:
-            "Recuperation de votre espace depuis le serveur.",
         empty: "Aucun programme pour l'instant. Utilisez le bouton ci-dessus pour en creer un.",
         emptyActive: "Aucun programme dans l’onglet Actifs.",
         emptyArchived: "Aucun programme archive.",

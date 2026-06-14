@@ -1,5 +1,5 @@
 <template>
-    <div class="relative-position">
+    <div class="relative-position" :class="{ 'app-bootstrap-gate--loading': !ready }">
         <q-banner
             v-if="!ready && hasErrorMessage"
             rounded
@@ -59,3 +59,9 @@ const hasErrorMessage = computed(
     () => props.errorMessage != null && props.errorMessage.trim().length > 0,
 );
 </script>
+
+<style scoped>
+.app-bootstrap-gate--loading {
+    min-height: 50vh;
+}
+</style>

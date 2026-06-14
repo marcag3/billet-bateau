@@ -16,6 +16,7 @@ import {
 } from "./streams";
 import type { SyncStatus } from "@powersync/common";
 import * as runtimeState from "./powersync-runtime-state";
+import { isProgramScopePrioritySynced } from "./program-scope-sync-status";
 import { isUserScopePrioritySynced } from "./user-scope-sync-status";
 
 async function resolveAuthenticatedUserId(): Promise<string> {
@@ -46,6 +47,9 @@ export async function bootstrapAppPowerSync(): Promise<void> {
     ) {
         runtimeState.errorMessage.value = "";
         runtimeState.initialUserScopeSyncComplete.value = true;
+        if (isProgramScopePrioritySynced(runtimeState.powerSyncDbRef.value.currentStatus)) {
+            runtimeState.initialProgramScopeSyncComplete.value = true;
+        }
         return;
     }
 
@@ -58,6 +62,7 @@ export async function bootstrapAppPowerSync(): Promise<void> {
         try {
             runtimeState.setPowerSyncConnectorConnected(false);
             runtimeState.initialUserScopeSyncComplete.value = false;
+            runtimeState.initialProgramScopeSyncComplete.value = false;
             runtimeState.currentUserIdRef.value =
                 await resolveAuthenticatedUserId();
 
@@ -78,6 +83,9 @@ export async function bootstrapAppPowerSync(): Promise<void> {
                     statusChanged: (status: SyncStatus) => {
                         if (isUserScopePrioritySynced(status)) {
                             runtimeState.initialUserScopeSyncComplete.value = true;
+                        }
+                        if (isProgramScopePrioritySynced(status)) {
+                            runtimeState.initialProgramScopeSyncComplete.value = true;
                         }
                         const uploadError = status.dataFlowStatus?.uploadError;
                         const formatted = formatPowerSyncUploadError(uploadError);
@@ -104,6 +112,9 @@ export async function bootstrapAppPowerSync(): Promise<void> {
             if (isUserScopePrioritySynced(db.currentStatus)) {
                 runtimeState.initialUserScopeSyncComplete.value = true;
             }
+            if (isProgramScopePrioritySynced(db.currentStatus)) {
+                runtimeState.initialProgramScopeSyncComplete.value = true;
+            }
 
             runtimeState.setPowerSyncConnectorConnected(true);
 
@@ -118,6 +129,7 @@ export async function bootstrapAppPowerSync(): Promise<void> {
             runtimeState.setBootstrapPromise(null);
             runtimeState.hasBootstrappedCollection.value = false;
             runtimeState.initialUserScopeSyncComplete.value = false;
+            runtimeState.initialProgramScopeSyncComplete.value = false;
             runtimeState.setPowerSyncConnectorConnected(false);
 
             detachAllPowerSyncStreams();

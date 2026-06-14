@@ -10,6 +10,8 @@ declare module "vue-router" {
         guestOnly?: boolean;
         /** Program-scoped sync + workspace shell. */
         requiresSelectedProgram?: boolean;
+        /** PowerSync streams that must finish before page content is shown. */
+        syncStreams?: Array<"user_scope" | "program_scope">;
         /** Edit / Control / Check-in shell under a program. */
         programContext?: "edit" | "control" | "checkin";
     }

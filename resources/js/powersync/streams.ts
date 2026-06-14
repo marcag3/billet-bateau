@@ -1,7 +1,9 @@
 import type { PowerSyncDatabase } from "@powersync/web";
 import { watch } from "vue";
+import { isProgramScopePrioritySynced } from "./program-scope-sync-status";
 import {
     activeProgramIdRef,
+    initialProgramScopeSyncComplete,
     powerSyncDbRef,
     powerSyncConnectorConnected,
 } from "./powersync-runtime-state";
@@ -65,6 +67,8 @@ export function attachProgramScopeStreamSubscription(): void {
         return;
     }
 
+    initialProgramScopeSyncComplete.value = false;
+
     const attachSeq = ++programScopeAttachSeq;
 
     void db
@@ -79,6 +83,10 @@ export function attachProgramScopeStreamSubscription(): void {
             programScopeUnsubscribe = () => {
                 sub.unsubscribe();
             };
+
+            if (isProgramScopePrioritySynced(db.currentStatus)) {
+                initialProgramScopeSyncComplete.value = true;
+            }
         })
         .catch((err) => {
             console.error("program_scope subscribe failed:", err);

@@ -8,6 +8,7 @@ import {
     currentUserIdRef,
     errorMessage,
     hasBootstrappedCollection,
+    initialProgramScopeSyncComplete,
     initialUserScopeSyncComplete,
     isLoading,
     outboxCommitError,
@@ -34,6 +35,7 @@ export type AppPowerSyncContext = {
     programsDeserializationError: Ref<unknown>;
     hasBootstrappedCollection: Ref<boolean>;
     initialUserScopeSyncComplete: Ref<boolean>;
+    initialProgramScopeSyncComplete: Ref<boolean>;
     persistenceUnavailable: Ref<boolean>;
     persistenceLimitedMessage: typeof persistenceLimitedMessage;
     powerSyncDbRef: ShallowRef<PowerSyncDatabase | null>;
@@ -55,6 +57,7 @@ const appPowerSyncContext: AppPowerSyncContext = {
     programsDeserializationError,
     hasBootstrappedCollection,
     initialUserScopeSyncComplete,
+    initialProgramScopeSyncComplete,
     persistenceUnavailable,
     persistenceLimitedMessage,
     powerSyncDbRef,

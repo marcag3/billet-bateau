@@ -129,6 +129,11 @@ export const hasBootstrappedCollection = ref(false);
  * Used to avoid flashing an empty programs list while the first replication is still in flight.
  */
 export const initialUserScopeSyncComplete = ref(false);
+/**
+ * True after PowerSync reports initial sync completion for `program_scope` (priority 2).
+ * Reset when `activeProgramIdRef` changes so a new program subscription can resync.
+ */
+export const initialProgramScopeSyncComplete = ref(false);
 export const persistenceUnavailable = ref(false);
 export const outboxPendingCount = ref(0);
 export const outboxCommitError = ref("");

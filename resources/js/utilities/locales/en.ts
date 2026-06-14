@@ -187,6 +187,14 @@ export default {
         validationEndBeforeStart: "End date must be on or after the start date.",
     },
     sync: {
+        preparingLocal: "Preparing local data…",
+        preparingLocalHint:
+            "Setting up offline storage and sync. This only takes a moment on first launch.",
+        syncingUserScope: "Syncing your programs…",
+        syncingUserScopeHint: "Fetching your workspace from the server.",
+        syncingProgramScope: "Loading program data…",
+        syncingProgramScopeHint:
+            "Syncing boats, trips, and other workspace details.",
         syncRequestFailed: "Sync request failed.",
         unableLoadSync: "Unable to load local sync.",
         persistenceLimited:
@@ -645,12 +653,6 @@ export default {
     },
     programsList: {
         title: "Programs",
-        loadingLocal: "Preparing local data…",
-        loadingLocalHint:
-            "Setting up offline storage and sync. This only takes a moment on first launch.",
-        loadingPrograms: "Syncing your programs…",
-        loadingProgramsHint:
-            "Fetching your workspace from the server.",
         empty: "No programs yet. Create one with the button above.",
         emptyActive: "No programs in the Active tab.",
         emptyArchived: "No archived programs.",

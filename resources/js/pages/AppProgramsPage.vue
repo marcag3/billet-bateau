@@ -7,27 +7,24 @@
             </template>
         </AppPageHeader>
 
-        <AppBootstrapGate :ready="hasBootstrapped" :loading-title="t('programsList.loadingLocal')"
-            :loading-subcopy="t('programsList.loadingLocalHint')" :error-message="powersyncErrorMessage">
+        <AppBootstrapGate
+            :ready="!sync.isBootstrapping"
+            :loading-title="t('sync.preparingLocal')"
+            :loading-subcopy="t('sync.preparingLocalHint')"
+            :error-message="sync.errorMessage"
+        >
             <q-tabs v-model="programTab" class="q-mb-md" active-color="primary" align="left" dense no-caps>
                 <q-tab name="active" :label="t('programsList.tabActive')" />
                 <q-tab name="archived" :label="t('programsList.tabArchived')" />
             </q-tabs>
 
             <div class="row q-col-gutter-md">
-                <template v-if="isProgramsInitialLoadPending">
+                <template v-if="sync.isContentPending">
                     <div class="col-12">
-                        <q-banner rounded class="bg-grey-2 text-body2">
-                            <template #avatar>
-                                <q-spinner color="primary" size="sm" />
-                            </template>
-                            <div class="text-weight-medium">
-                                {{ t("programsList.loadingPrograms") }}
-                            </div>
-                            <div class="text-caption text-grey-8">
-                                {{ t("programsList.loadingProgramsHint") }}
-                            </div>
-                        </q-banner>
+                        <AppSyncLoadingBanner
+                            :title="t(sync.contentLoadingTitleKey)"
+                            :hint="t(sync.contentLoadingHintKey)"
+                        />
                     </div>
                     <div v-for="i in 3" :key="`prog-skel-${i}`" class="col-12 col-sm-6 col-md-4">
                         <q-card>
@@ -113,20 +110,15 @@ import { isProgramArchivedByEndDateYmd } from "../utilities/program-helpers";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEmptyListRow from "../components/ui/AppEmptyListRow.vue";
 import AppBootstrapGate from "../components/ui/AppBootstrapGate.vue";
+import AppSyncLoadingBanner from "../components/ui/AppSyncLoadingBanner.vue";
 import { usePageLayout } from "../composables/usePageLayout";
-import {
-    isProgramsInitialLoadPending as computeProgramsInitialLoadPending,
-    shouldShowProgramsEmptyState as computeShowProgramsEmptyState,
-} from "../utilities/programs-first-run-loading";
+import { useSyncReadiness } from "../composables/useSyncReadiness";
 
 const { t } = useI18n();
 
 usePageLayout({ documentTitleKey: "programsList.title" });
 
 const programsCollection = powersync.collections.programs;
-const hasBootstrapped = powersync.hasBootstrappedCollection;
-const initialUserScopeSyncComplete = powersync.initialUserScopeSyncComplete;
-const powersyncErrorMessage = powersync.errorMessage;
 
 const { data: programs, isLoading: programsQueryLoading } = useLiveQuery(
     (queryBuilder) => {
@@ -138,6 +130,11 @@ const { data: programs, isLoading: programsQueryLoading } = useLiveQuery(
     },
     [programsCollection],
 );
+
+const sync = useSyncReadiness({
+    streams: ["user_scope"],
+    liveQueryLoading: programsQueryLoading,
+});
 
 const programTab = ref<"active" | "archived">("active");
 const programBannerLoadFailedIds = ref<Set<string>>(new Set());
@@ -198,21 +195,8 @@ const filteredPrograms = computed((): ProgramOutput[] => {
     ) as unknown as ProgramOutput[];
 });
 
-const isProgramsInitialLoadPending = computed(() =>
-    computeProgramsInitialLoadPending(
-        hasBootstrapped.value,
-        initialUserScopeSyncComplete.value,
-        programsQueryLoading.value,
-    ),
-);
-
 const showProgramsEmptyState = computed(() =>
-    computeShowProgramsEmptyState(
-        hasBootstrapped.value,
-        filteredPrograms.value.length,
-        initialUserScopeSyncComplete.value,
-        programsQueryLoading.value,
-    ),
+    sync.shouldShowEmpty(filteredPrograms.value.length === 0),
 );
 
 const emptyListMessage = computed(() => {
