@@ -1,0 +1,290 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\BoatType;
+use App\Models\Product;
+use App\Models\Program;
+use App\Models\TemplateDay;
+use App\Models\TemplateDaySlot;
+use App\Models\User;
+use App\Models\WaterRoute;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
+use Tests\TestCase;
+
+class PowerSyncUploadTemplateDayTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_put_creates_template_day_for_program_manager(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $templateDayId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'template_days',
+                    'id' => $templateDayId,
+                    'data' => [
+                        'program_id' => $program->getKey(),
+                        'name' => 'Standard Saturday',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('template_days', [
+            'id' => $templateDayId,
+            'program_id' => $program->getKey(),
+            'name' => 'Standard Saturday',
+        ]);
+    }
+
+    public function test_put_template_day_forbids_non_member_program(): void
+    {
+        $owner = User::factory()->create();
+        $intruder = User::factory()->create();
+        $program = Program::factory()->withOwner($owner)->create();
+        $templateDayId = (string) Str::ulid();
+
+        $this->actingAs($intruder)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'template_days',
+                    'id' => $templateDayId,
+                    'data' => [
+                        'program_id' => $program->getKey(),
+                        'name' => 'Blocked',
+                    ],
+                ],
+            ],
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('template_days', ['id' => $templateDayId]);
+    }
+
+    public function test_put_creates_template_day_slot(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $templateDay = TemplateDay::factory()->forProgram($program)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
+        $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
+        $slotId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'template_day_slots',
+                    'id' => $slotId,
+                    'data' => [
+                        'template_day_id' => $templateDay->getKey(),
+                        'sort_order' => 1,
+                        'departure_time' => '10:15:00',
+                        'capacity' => 20,
+                        'boat_type_id' => $boatType->getKey(),
+                        'water_route_id' => $route->getKey(),
+                        'internal_notes' => 'Bring extra life jackets',
+                        'ticket_setup' => json_encode([
+                            'policy' => 'custom',
+                            'allowed_ticket_type_ids' => [(string) Str::ulid()],
+                            'min_per_booking' => 1,
+                            'max_per_booking' => 6,
+                        ]),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('template_day_slots', [
+            'id' => $slotId,
+            'template_day_id' => $templateDay->getKey(),
+            'departure_time' => '10:15:00',
+            'capacity' => 20,
+            'internal_notes' => 'Bring extra life jackets',
+        ]);
+
+        $slot = TemplateDaySlot::query()->whereKey($slotId)->first();
+        $this->assertNotNull($slot);
+        $this->assertIsArray($slot->ticket_setup);
+        $this->assertSame('custom', $slot->ticket_setup['policy']);
+    }
+
+    public function test_put_template_day_slot_rejects_short_departure_time(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $templateDay = TemplateDay::factory()->forProgram($program)->create();
+        $slotId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'template_day_slots',
+                    'id' => $slotId,
+                    'data' => [
+                        'template_day_id' => $templateDay->getKey(),
+                        'sort_order' => 1,
+                        'departure_time' => '09:00',
+                        'capacity' => 20,
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseMissing('template_day_slots', ['id' => $slotId]);
+    }
+
+    public function test_put_template_day_slot_accepts_full_departure_time(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $templateDay = TemplateDay::factory()->forProgram($program)->create();
+        $slotId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'template_day_slots',
+                    'id' => $slotId,
+                    'data' => [
+                        'template_day_id' => $templateDay->getKey(),
+                        'sort_order' => 1,
+                        'departure_time' => '09:00:00',
+                        'capacity' => 20,
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('template_day_slots', [
+            'id' => $slotId,
+            'departure_time' => '09:00:00',
+        ]);
+    }
+
+    public function test_put_template_day_slot_rejects_invalid_ticket_setup(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $templateDay = TemplateDay::factory()->forProgram($program)->create();
+        $slotId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'template_day_slots',
+                    'id' => $slotId,
+                    'data' => [
+                        'template_day_id' => $templateDay->getKey(),
+                        'sort_order' => 1,
+                        'departure_time' => '10:15:00',
+                        'capacity' => 20,
+                        'ticket_setup' => ['not', 'an', 'object'],
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseMissing('template_day_slots', ['id' => $slotId]);
+    }
+
+    public function test_put_template_day_slot_rejects_overlong_internal_notes(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $templateDay = TemplateDay::factory()->forProgram($program)->create();
+        $slotId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'template_day_slots',
+                    'id' => $slotId,
+                    'data' => [
+                        'template_day_id' => $templateDay->getKey(),
+                        'sort_order' => 1,
+                        'departure_time' => '10:15:00',
+                        'capacity' => 20,
+                        'internal_notes' => str_repeat('x', 2001),
+                    ],
+                ],
+            ],
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseMissing('template_day_slots', ['id' => $slotId]);
+    }
+
+    public function test_put_creates_template_day_date(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $templateDay = TemplateDay::factory()->forProgram($program)->create();
+        $rowId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'template_day_dates',
+                    'id' => $rowId,
+                    'data' => [
+                        'program_id' => $program->getKey(),
+                        'template_day_id' => $templateDay->getKey(),
+                        'service_date' => '2026-07-04',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('template_day_dates', [
+            'id' => $rowId,
+            'program_id' => $program->getKey(),
+            'template_day_id' => $templateDay->getKey(),
+        ]);
+    }
+
+    public function test_put_trip_with_product_in_same_program(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $boatType = BoatType::factory()->create(['program_id' => $program->getKey()]);
+        $route = WaterRoute::factory()->create(['program_id' => $program->getKey()]);
+        $product = Product::factory()->forProgram($program)->create([
+            'boat_type_id' => $boatType->getKey(),
+            'water_route_id' => $route->getKey(),
+            'capacity' => 12,
+        ]);
+        $tripId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'trips',
+                    'id' => $tripId,
+                    'data' => [
+                        'program_id' => $program->getKey(),
+                        'scheduled_departure_at' => '2026-08-10T15:30:00.000Z',
+                        'product_id' => $product->getKey(),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('trips', [
+            'id' => $tripId,
+            'product_id' => $product->getKey(),
+        ]);
+    }
+}

@@ -1,0 +1,94 @@
+<?php
+
+namespace Database\Factories;
+
+use App\Enums\VoyageStatus;
+use App\Models\Program;
+use App\Models\ProgramUser;
+use App\Models\Trip;
+use App\Models\User;
+use App\Models\Voyage;
+use App\Models\WaterRoute;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
+
+/**
+ * @extends Factory<Voyage>
+ */
+class VoyageFactory extends Factory
+{
+    protected $model = Voyage::class;
+
+    public function configure(): static
+    {
+        return $this->afterMaking(function (Voyage $voyage): void {
+            if ($voyage->trip_id !== null) {
+                return;
+            }
+
+            $route = WaterRoute::query()->whereKey($voyage->water_route_id)->first();
+
+            if ($route !== null) {
+                $voyage->program_id = $route->program_id;
+            }
+        });
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'id' => (string) Str::ulid(),
+            'program_id' => Program::factory(),
+            'user_id' => User::factory(),
+            'trip_id' => null,
+            'water_route_id' => WaterRoute::factory(),
+            'scheduled_departure_at' => fake()->optional(0.4)->dateTimeBetween('+1 hour', '+1 week'),
+            'started_at' => null,
+            'arrived_at' => null,
+            'status' => VoyageStatus::Draft,
+        ];
+    }
+
+    public function forTrip(Trip $trip, ?WaterRoute $waterRoute = null): static
+    {
+        return $this->state(function () use ($trip, $waterRoute): array {
+            $programUserId = ProgramUser::where('program_id', $trip->program_id)->value('user_id');
+
+            if ($programUserId === null) {
+                $programUserId = User::factory()->create()->getKey();
+                $program = Program::query()->whereKey($trip->program_id)->first();
+                if ($program !== null) {
+                    $program->users()->syncWithoutDetaching([$programUserId]);
+                }
+            }
+            $route = $waterRoute ?? WaterRoute::factory()->create([
+                'program_id' => $trip->program_id,
+            ]);
+            if ((string) $route->program_id !== (string) $trip->program_id) {
+                $route->forceFill(['program_id' => $trip->program_id])->save();
+            }
+
+            return [
+                'program_id' => $trip->program_id,
+                'user_id' => $programUserId,
+                'trip_id' => $trip->getKey(),
+                'water_route_id' => $route->getKey(),
+                'scheduled_departure_at' => null,
+            ];
+        });
+    }
+
+    public function adHoc(User $user, WaterRoute $waterRoute): static
+    {
+        return $this->state(fn (): array => [
+            'program_id' => $waterRoute->program_id,
+            'user_id' => $user->getKey(),
+            'trip_id' => null,
+            'water_route_id' => $waterRoute->getKey(),
+            'scheduled_departure_at' => fake()->dateTimeBetween('+1 hour', '+1 week'),
+        ]);
+    }
+}

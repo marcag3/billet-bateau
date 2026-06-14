@@ -1,0 +1,236 @@
+# Sync Streams (edition 3). Included via service.yaml → sync_config.path.
+# See: https://docs.powersync.com/sync/streams/overview
+#
+# Programs are visible only to members listed in the program_user pivot table.
+# user_scope auto-subscribes the program list; program_scope adds detail rows for subscription.parameter('program_id').
+#
+# Note: Sync Streams SQL does not support UNION. Use OR + subquery for combined sets (see supported-sql).
+#
+# Client replicas omit created_at / updated_at; Laravel manages those server-side only.
+
+config:
+  edition: 3
+
+# Shared CTE — single SELECT only (no UNION).
+with:
+  accessible_program_ids: |
+    SELECT id AS program_id FROM programs
+    WHERE id IN (
+      SELECT program_id FROM program_user
+      WHERE user_id = auth.user_id()
+    )
+
+streams:
+  user_scope:
+    auto_subscribe: true
+    priority: 1
+    queries:
+      - |
+        SELECT
+          id,
+          name,
+          description,
+          theme_color,
+          is_active,
+          slug,
+          booking_questions::text AS booking_questions,
+          start_date,
+          end_date,
+          line_1,
+          line_2,
+          city,
+          postal_code,
+          country,
+          banner_object_key,
+          banner_mime_type,
+          banner_size_bytes,
+          banner_etag,
+          banner_uploaded_at
+        FROM programs
+        WHERE id IN accessible_program_ids
+      - |
+        SELECT
+          program_id || '.' || user_id AS id,
+          program_id,
+          user_id,
+          role
+        FROM program_user
+        WHERE user_id = auth.user_id()
+      - |
+        SELECT id, name, staff_user_id
+        FROM guides
+
+  program_scope:
+    priority: 2
+    queries:
+      - |
+        SELECT
+          id,
+          program_id,
+          name,
+          banner_object_key,
+          banner_mime_type,
+          banner_size_bytes,
+          banner_etag,
+          banner_uploaded_at
+        FROM boat_types
+        WHERE boat_types.program_id = subscription.parameter('program_id')
+          AND boat_types.program_id IN accessible_program_ids
+      - |
+        SELECT id, boat_type_id, program_id, name, capacity, notes
+        FROM boats
+        WHERE boats.program_id = subscription.parameter('program_id')
+          AND boats.program_id IN accessible_program_ids
+      - |
+        SELECT
+          id,
+          program_id,
+          boat_type_id,
+          water_route_id,
+          capacity,
+          name,
+          description,
+          banner_object_key,
+          banner_mime_type,
+          banner_size_bytes,
+          banner_etag,
+          banner_uploaded_at
+        FROM products
+        WHERE products.program_id = subscription.parameter('program_id')
+          AND products.program_id IN accessible_program_ids
+      - |
+        SELECT
+          id,
+          program_id,
+          product_id,
+          scheduled_departure_at
+        FROM trips
+        WHERE trips.program_id = subscription.parameter('program_id')
+          AND trips.program_id IN accessible_program_ids
+      - |
+        SELECT
+          id,
+          program_id,
+          title,
+          price_cents,
+          is_pay_what_you_can,
+          min_per_purchase,
+          max_per_purchase,
+          depends_on_ticket_type_id,
+          max_per_reference_ticket
+        FROM ticket_types
+        WHERE ticket_types.program_id = subscription.parameter('program_id')
+          AND ticket_types.program_id IN accessible_program_ids
+      - |
+        SELECT
+          booking_tickets.id,
+          booking_tickets.booking_id,
+          booking_tickets.ticket_type_id,
+          booking_tickets.name,
+          booking_tickets.email,
+          booking_tickets.country,
+          booking_tickets.custom_fields,
+          booking_tickets.waiver_confirmation_id
+        FROM booking_tickets
+        INNER JOIN bookings ON bookings.id = booking_tickets.booking_id
+        WHERE bookings.program_id = subscription.parameter('program_id')
+          AND bookings.program_id IN accessible_program_ids
+      - |
+        SELECT
+          id,
+          program_id,
+          trip_id,
+          contact_name,
+          contact_email
+        FROM bookings
+        WHERE bookings.program_id = subscription.parameter('program_id')
+          AND bookings.program_id IN accessible_program_ids
+      - |
+        SELECT
+          id,
+          program_id,
+          name,
+          ST_AsGeoJSON(trace) AS trace,
+          duration_minutes
+        FROM water_routes
+        WHERE water_routes.program_id = subscription.parameter('program_id')
+          AND water_routes.program_id IN accessible_program_ids
+      - |
+        SELECT id, program_id, name
+        FROM template_days
+        WHERE template_days.program_id = subscription.parameter('program_id')
+          AND template_days.program_id IN accessible_program_ids
+      - |
+        SELECT
+          template_day_slots.id,
+          template_day_slots.template_day_id,
+          template_day_slots.sort_order,
+          template_day_slots.departure_time,
+          template_day_slots.capacity,
+          template_day_slots.boat_type_id,
+          template_day_slots.water_route_id,
+          template_day_slots.internal_notes,
+          template_day_slots.ticket_setup
+        FROM template_day_slots
+        INNER JOIN template_days ON template_days.id = template_day_slots.template_day_id
+        WHERE template_days.program_id = subscription.parameter('program_id')
+          AND template_days.program_id IN accessible_program_ids
+      - |
+        SELECT id, program_id, template_day_id, service_date
+        FROM template_day_dates
+        WHERE template_day_dates.program_id = subscription.parameter('program_id')
+          AND template_day_dates.program_id IN accessible_program_ids
+      - |
+        SELECT
+          voyages.id,
+          voyages.program_id,
+          voyages.user_id,
+          voyages.trip_id,
+          voyages.water_route_id,
+          voyages.scheduled_departure_at,
+          voyages.started_at,
+          voyages.arrived_at,
+          voyages.status
+        FROM voyages
+        WHERE voyages.program_id = subscription.parameter('program_id')
+          AND voyages.program_id IN accessible_program_ids
+      - |
+        SELECT
+          passengers.id,
+          passengers.voyage_id,
+          passengers.name,
+          passengers.booking_id,
+          passengers.check_in_id,
+          passengers.notes
+        FROM passengers
+        INNER JOIN voyages ON voyages.id = passengers.voyage_id
+        WHERE voyages.program_id = subscription.parameter('program_id')
+          AND voyages.program_id IN accessible_program_ids
+      - |
+        SELECT
+          check_ins.id,
+          check_ins.booking_id,
+          check_ins.voyage_id,
+          check_ins.notes
+        FROM check_ins
+        INNER JOIN voyages ON voyages.id = check_ins.voyage_id
+        WHERE voyages.program_id = subscription.parameter('program_id')
+          AND voyages.program_id IN accessible_program_ids
+      - |
+        SELECT
+          voyage_boat.id,
+          voyage_boat.voyage_id,
+          voyage_boat.boat_id
+        FROM voyage_boat
+        INNER JOIN voyages ON voyages.id = voyage_boat.voyage_id
+        WHERE voyages.program_id = subscription.parameter('program_id')
+          AND voyages.program_id IN accessible_program_ids
+      - |
+        SELECT
+          voyage_guide.id,
+          voyage_guide.voyage_id,
+          voyage_guide.guide_id
+        FROM voyage_guide
+        INNER JOIN voyages ON voyages.id = voyage_guide.voyage_id
+        WHERE voyages.program_id = subscription.parameter('program_id')
+          AND voyages.program_id IN accessible_program_ids

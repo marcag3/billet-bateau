@@ -1,3 +1,13 @@
 {
-    "Regards": "See you soon on the water"
+    ":count × :title": ":count × :title",
+    "Billet": "Ticket",
+    "Billets : :summary": "Tickets: :summary",
+    "Bonjour :name,": "Hello :name,",
+    "Confirmation de réservation — :program": "Booking confirmation — :program",
+    "Conservez ce courriel pour votre référence.": "Keep this email for your records.",
+    "Contact : :name": "Contact: :name",
+    "Départ : :departure": "Departure: :departure",
+    "Merci pour votre réservation pour :program.": "Thank you for booking with :program.",
+    "Référence de réservation : :id": "Booking reference: :id",
+    "Sortie : :product": "Trip: :product"
 }

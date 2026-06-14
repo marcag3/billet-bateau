@@ -1,0 +1,24 @@
+/**
+ * Central bootstrap for domain models (PowerSync-backed TanStack DB collections).
+ */
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+
+/**
+ * Ordered domain model bootstraps.
+ *
+ * @type {Record<string, () => Promise<unknown>>}
+ */
+export const domainModelBootstraps = {
+    powersync: getAppPowerSyncContext().bootstrapAppPowerSync,
+};
+
+/**
+ * Boots PowerSync once with the unified app schema (programs, boats, trips, …).
+ *
+ * @returns {Promise<void>}
+ */
+export async function bootstrapDomainModels() {
+    for (const bootstrap of Object.values(domainModelBootstraps)) {
+        await bootstrap();
+    }
+}

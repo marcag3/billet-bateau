@@ -2,42 +2,52 @@
 
 namespace App\Models;
 
+use Database\Factories\BoatFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Boat extends Model
 {
-    use softdeletes;
+    /** @use HasFactory<BoatFactory> */
     use HasFactory;
 
-    protected $guarded = [];
+    use HasUlids;
 
-    protected $appends = [
-        'boat_category_name',
+    protected $fillable = [
+        'id',
+        'boat_type_id',
+        'program_id',
+        'name',
+        'capacity',
+        'notes',
+        'created_at',
+        'updated_at',
     ];
 
-    //GETTERS
-
-    public function getIdentifierAttribute()
+    protected function casts(): array
     {
-        return $this->name.', '.$this->capacity.' place, '.$this->boatCategory->name;
+        return [
+            'capacity' => 'integer',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+        ];
     }
 
-    public function getBoatCategoryNameAttribute()
+    public function boatType(): BelongsTo
     {
-        return $this->boatCategory->name;
+        return $this->belongsTo(BoatType::class, 'boat_type_id');
     }
 
-    //RELATIONS
-
-    public function boatCategory()
+    public function voyages(): BelongsToMany
     {
-        return $this->belongsTo(\App\Models\BoatCategory::class)->withDefault();
+        return $this->belongsToMany(Voyage::class, 'voyage_boat')->withTimestamps();
     }
 
-    public function sailingPlans()
+    public function program(): BelongsTo
     {
-        return $this->belongsToMany(\App\Models\SailingPlan::class)->withTimestamps();
+        return $this->belongsTo(Program::class, 'program_id');
     }
 }

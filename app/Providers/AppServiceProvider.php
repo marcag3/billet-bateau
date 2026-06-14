@@ -2,54 +2,51 @@
 
 namespace App\Providers;
 
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Facades\App;
+use App\Models\User;
+use App\Services\PowerSyncTokenIssuer;
+use App\Support\ObjectStorage\ObjectStorage;
+use Carbon\CarbonImmutable;
+use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Filesystem\FilesystemManager;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Lorisleiva\Actions\Facades\Actions;
 
 class AppServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
-     *
-     * @return void
      */
-    public function register()
+    public function register(): void
     {
+        $this->app->singleton(PowerSyncTokenIssuer::class, fn (): PowerSyncTokenIssuer => PowerSyncTokenIssuer::fromConfig());
 
-//        if ($this->app->isLocal()) {
-        //    $this->app->register(TelescopeServiceProvider::class);
-//        }
+        $this->app->singleton(ObjectStorage::class, fn ($app): ObjectStorage => new ObjectStorage(
+            $app->make(FilesystemManager::class),
+        ));
     }
 
     /**
      * Bootstrap any application services.
-     *
-     * @return void
      */
-    public function boot()
+    public function boot(): void
     {
-        //Fix for SwiftMailer Service
-        $_SERVER['SERVER_NAME'] = config('app.url');
+        Date::use(CarbonImmutable::class);
 
-        if (request()->cookie('language_preference') !== null) {
-            App::setLocale(request()->cookie('language_preference'));
+        Model::shouldBeStrict(! $this->app->isProduction());
+
+        if ($this->app->runningInConsole() && is_dir(app_path('Actions'))) {
+            Actions::registerCommands();
         }
 
-        URL::forceRootUrl(config('app.url'));
-        // if(request()->hasHeader('x-forwarded-proto') && request()->header('x-forwarded-proto') === "https")
-        // {
+        if ($this->app->isProduction()) {
+            URL::forceScheme('https');
+        }
 
-        // }
-
-        Relation::enforceMorphMap([
-            'Ticket' => \App\Models\Ticket::class,
-            'Pass' => \App\Models\Pass::class,
-            'App\User' => \App\Models\User::class,
-            'App\Client' => \App\Models\Client::class,
-            'App\Product' => \App\Models\Product::class,
-            'App\Subscription' => \App\Models\Subscription::class,
-            'App\Promotion' => \App\Models\Promotion::class,
-        ]);
+        ResetPassword::createUrlUsing(fn (User $user, string $token): string => url(
+            '/app/reset-password?token='.$token.'&email='.urlencode($user->getEmailForPasswordReset()),
+        ));
     }
 }

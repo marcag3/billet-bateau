@@ -1,8 +1,0 @@
-services:
-
-  traefik:
-    image: traefik:v3.6
-
-  php:
-    depends_on:
-      - traefik

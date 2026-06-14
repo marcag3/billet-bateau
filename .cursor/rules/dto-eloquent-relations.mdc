@@ -1,0 +1,27 @@
+---
+description: Never use loadMissing; eager load at query call sites
+alwaysApply: false
+---
+
+# Avoid loadMissing Everywhere
+
+Treat `loadMissing()` as a bad pattern across the codebase.
+
+## Why
+
+- It can hide implicit queries and cause N+1 issues when code runs in loops.
+- It masks missing eager loading that should be explicit at the query boundary.
+
+## What to do instead
+
+Use relations directly (for example `$program->address`) and eager-load where records are fetched (`with()` in query builders, or explicit `load()` at orchestration boundaries).
+
+With strict/lazy-loading protection enabled, direct relation access fails fast in development, making missing eager loads visible before shipping.
+
+```php
+// Bad
+$model->loadMissing(['address']);
+
+// Good
+$model->address;
+```

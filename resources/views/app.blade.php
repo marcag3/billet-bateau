@@ -1,1 +1,25 @@
-<!DOCTYPE html><html><head><base href=/ ><title>La Route De Champlain</title><meta charset=utf-8><meta name=description content="Portail La Route De Champlain"><meta name=format-detection content="telephone=no"><meta name=msapplication-tap-highlight content=no><meta name=viewport content="user-scalable=no,initial-scale=1,maximum-scale=1,minimum-scale=1,width=device-width"><link rel=icon type=image/png sizes=128x128 href=icons/favicon-128x128.png><link rel=icon type=image/png sizes=96x96 href=icons/favicon-96x96.png><link rel=icon type=image/png sizes=32x32 href=icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=icons/favicon-16x16.png><link rel=icon type=image/ico href=favicon.ico><script defer src=/js/vendor.a4a93789.js></script><script defer src=/js/app.ec043f12.js></script><link href=/css/vendor.1cbda59d.css rel=stylesheet><link href=/css/app.29772061.css rel=stylesheet></head><body><div id=q-app></div></body><script>let env = "{{config('app.env')}}";</script></html>
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="theme-color" content="#02153D">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'Billet Bateau App') }}">
+        <meta
+            name="app-media-config"
+            content="{{ e(json_encode(\App\Support\Media\MediaConfig::serviceWorkerPayload(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)) }}"
+        >
+        <title>{{ config('app.name', 'Billet Bateau App') }}</title>
+        <link rel="manifest" href="/build/app.webmanifest">
+        <link rel="icon" href="/icons/app-icon.svg" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="/icons/app-icon.svg">
+        @vite('resources/js/app.main.ts')
+    </head>
+    <body>
+        <div id="app-root"></div>
+    </body>
+</html>
