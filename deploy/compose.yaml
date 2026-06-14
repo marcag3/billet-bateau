@@ -80,12 +80,8 @@ services:
 
     powersync:
         # Sync Streams (sync-config.yaml edition: 3) require PowerSync Service v1.20.0+.
-        image: "journeyapps/powersync-service:latest"
+        image: "${POWERSYNC_IMAGE}"
         restart: unless-stopped
-        entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
-        command: ["start", "-r", "unified"]
-        volumes:
-            - "./config/powersync:/config:ro"
         environment:
             POWERSYNC_CONFIG_PATH: /config/service.yaml
             NODE_OPTIONS: --max-old-space-size=1000

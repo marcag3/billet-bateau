@@ -78,10 +78,10 @@ services:
 
     powersync:
         # Sync Streams (sync-config.yaml edition: 3) require PowerSync Service v1.20.0+.
-        image: "journeyapps/powersync-service:latest"
+        build:
+            context: .
+            dockerfile: deploy/Dockerfile.powersync
         restart: unless-stopped
-        entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
-        command: ["start", "-r", "unified"]
         volumes:
             - "./deploy/config/powersync:/config:ro"
         environment:

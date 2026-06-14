@@ -55,10 +55,13 @@ Two sync streams in `deploy/config/powersync/sync-config.yaml`:
 
 **Common pitfall:** If `program_scope` is never subscribed, zero program-scoped data appears — even if PostgreSQL has it. Verify `activeProgramIdRef` is set and the `accessible_program_ids` CTE includes the user's programs.
 
+**Deploy:** Production PowerSync config is baked into `deploy/Dockerfile.powersync` (CI image). Dev bind-mounts `deploy/config/powersync` for live edits — restart PowerSync after sync-config changes (`docker compose restart powersync`).
+
 ### Where to Look
 
 | Concern                      | File                                                     |
 | ---------------------------- | -------------------------------------------------------- |
+| PowerSync image              | `deploy/Dockerfile.powersync`                            |
 | Dev compose                  | `compose.yaml` (repo root)                               |
 | Prod compose                 | `deploy/compose.yaml`                                    |
 | Sync stream queries          | `deploy/config/powersync/sync-config.yaml`               |
