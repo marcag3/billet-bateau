@@ -28,6 +28,16 @@ export default tseslint.config(
         languageOptions: {
             globals: { ...globals.browser },
         },
+        rules: {
+            '@typescript-eslint/no-unused-vars': [
+                'error',
+                {
+                    argsIgnorePattern: '^_',
+                    varsIgnorePattern: '^_',
+                    caughtErrorsIgnorePattern: '^_',
+                },
+            ],
+        },
     },
     {
         files: ['resources/js/service-worker/app-sw.ts'],

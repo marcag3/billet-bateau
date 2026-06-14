@@ -544,13 +544,6 @@ export function areControlPanelQueryCollectionsReady(
     );
 }
 
-function __controlPanelTripCardsQueryForTypes(
-    qb: InitialQueryBuilder,
-    cols: ControlPanelQueryCollections,
-) {
-    return buildControlPanelTripCardsQuery(qb, cols, '');
-}
-
 export type ControlPanelTripCardQueryRow = QueryResult<
-    ReturnType<typeof __controlPanelTripCardsQueryForTypes>
+    ReturnType<typeof buildControlPanelTripCardsQuery>
 >;

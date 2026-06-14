@@ -5,7 +5,6 @@ import {
     mediaPublicBaseUrl,
     readAppMediaConfigFromMeta,
     resetAppMediaConfig,
-    setAppMediaConfig,
     trustedImageOrigins,
 } from '../../utilities/media-config';
 
