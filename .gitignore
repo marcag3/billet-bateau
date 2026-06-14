@@ -25,3 +25,6 @@ Homestead.yaml
 Thumbs.db
 .vault-password
 .spin.yml
+
+**/caddy
+/frankenphp

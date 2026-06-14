@@ -2,14 +2,21 @@ services:
     production:
         image: "${PRODUCTION_IMAGE}"
         restart: unless-stopped
+        command: ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8080"]
         env_file: ".env"
         environment:
             AUTORUN_ENABLED: true
             AUTORUN_LARAVEL_STORAGE_LINK: false
             AUTORUN_LARAVEL_VIEW_CACHE: false
             HEALTHCHECK_PATH: "/up"
+            OCTANE_SERVER: frankenphp
+            PHP_OPCACHE_ENABLE: "1"
+            PHP_OPCACHE_VALIDATE_TIMESTAMPS: "0"
             DB_HOST: "pgsql"
             REDIS_HOST: "redis"
+        healthcheck:
+            test: ["CMD", "healthcheck-octane"]
+            start_period: 10s
         depends_on:
             pgsql:
                 condition: service_healthy
