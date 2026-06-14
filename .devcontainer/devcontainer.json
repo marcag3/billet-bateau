@@ -20,6 +20,7 @@
         "6080": { "label": "PowerSync" },
         "8025": { "label": "Mailpit" }
     },
+    "initializeCommand": "docker run --rm -u \"$(id -u):$(id -g)\" -v \"$(pwd):/app\" -w /app composer:latest composer install --ignore-platform-reqs --no-scripts",
     "postCreateCommand": "bash .devcontainer/post-create.sh",
     "postStartCommand": "php artisan migrate --force --no-interaction && php artisan storage:configure --no-interaction",
     "customizations": {
