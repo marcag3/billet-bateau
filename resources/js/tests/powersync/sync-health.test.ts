@@ -102,6 +102,20 @@ describe("deriveSyncHealth", () => {
         expect(result.bannerVariant).toBe("info");
     });
 
+    test("reports idle when PowerSync has not bootstrapped yet", () => {
+        const result = deriveSyncHealth(
+            snapshot({
+                hasBootstrapped: false,
+                connected: false,
+                hasSynced: false,
+            }),
+            nowMs,
+        );
+
+        expect(result.phase).toBe("idle");
+        expect(result.showBanner).toBe(false);
+    });
+
     test("reports sync blocked when online without prior sync", () => {
         const result = deriveSyncHealth(
             snapshot({

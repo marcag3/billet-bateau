@@ -3,6 +3,7 @@ export const SYNC_CONNECTING_GRACE_MS = 8_000;
 export type SyncHealthPhase =
     | "unavailable"
     | "offline"
+    | "idle"
     | "connecting"
     | "live"
     | "stale_local"
@@ -114,6 +115,19 @@ export function deriveSyncHealth(
             toolbarIcon: "cloud_off",
             toolbarSeverity: "none",
             toolbarStatusKey: "sync.toolbarStatusOffline",
+        };
+    }
+
+    if (!input.hasBootstrapped) {
+        return {
+            phase: "idle",
+            showBanner: false,
+            bannerVariant: "info",
+            bannerTitleKey: "",
+            bannerHintKey: "",
+            toolbarIcon: "cloud_off",
+            toolbarSeverity: "none",
+            toolbarStatusKey: "sync.toolbarStatusConnecting",
         };
     }
 

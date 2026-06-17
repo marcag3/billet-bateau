@@ -21,7 +21,7 @@
 
                 <q-space />
 
-                <AppSyncToolbarMenu />
+                <AppSyncToolbarMenu v-if="authStore.canAccessProtectedRoute()" />
 
                 <AppLanguageSwitcher on-dark-header />
 
@@ -92,7 +92,7 @@
             </AppAlertBanner>
 
             <AppSyncHealthBanner
-                v-if="syncHealth.showBanner"
+                v-if="syncHealth.showBanner && authStore.canAccessProtectedRoute()"
                 class="q-ma-md"
             />
 
