@@ -96,7 +96,6 @@
             v-if="croppable"
             v-model="cropDialogOpen"
             :image-url="cropSourceUrl ?? ''"
-            :source-file="cropSourceFile"
             :aspect-ratio="previewRatio"
             :file-name="cropSourceFileName"
             :mime-type="cropSourceMimeType"
@@ -168,7 +167,6 @@ const isDragOver = ref(false);
 const fieldError = ref('');
 const cropDialogOpen = ref(false);
 const cropSourceUrl = ref<string | null>(null);
-const cropSourceFile = ref<File | null>(null);
 const cropSourceFileName = ref('image.jpg');
 const cropSourceMimeType = ref('image/jpeg');
 
@@ -274,7 +272,6 @@ function revokeCropSourceUrl(): void {
 function closeCropDialog(): void {
     cropDialogOpen.value = false;
     revokeCropSourceUrl();
-    cropSourceFile.value = null;
 }
 
 function clearPendingSelection(): void {
@@ -331,7 +328,6 @@ function ingestFile(file: File): void {
     }
 
     closeCropDialog();
-    cropSourceFile.value = file;
     cropSourceFileName.value = file.name;
     cropSourceMimeType.value = file.type.length > 0 ? file.type : 'image/jpeg';
     cropSourceUrl.value = URL.createObjectURL(file);

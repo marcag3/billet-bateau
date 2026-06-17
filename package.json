@@ -45,6 +45,7 @@
         "@tanstack/powersync-db-collection": "^0.1.45",
         "@tanstack/vue-db": "^0.0.119",
         "@vee-validate/zod": "^4.15.1",
+        "cropperjs": "^1.6.2",
         "leaflet": "^1.9.4",
         "pinia": "^3.0.4",
         "quasar": "^2.19.3",
