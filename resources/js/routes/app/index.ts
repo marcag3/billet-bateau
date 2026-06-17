@@ -44,7 +44,7 @@ swConfig.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:15
+* @see routes/web.php:16
 * @route '/app/invite/{token}'
 */
 export const invite = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -58,7 +58,7 @@ invite.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:15
+* @see routes/web.php:16
 * @route '/app/invite/{token}'
 */
 invite.url = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -84,7 +84,7 @@ invite.url = (args: { token: string | number } | [token: string | number ] | str
 }
 
 /**
-* @see routes/web.php:15
+* @see routes/web.php:16
 * @route '/app/invite/{token}'
 */
 invite.get = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -93,7 +93,7 @@ invite.get = (args: { token: string | number } | [token: string | number ] | str
 })
 
 /**
-* @see routes/web.php:15
+* @see routes/web.php:16
 * @route '/app/invite/{token}'
 */
 invite.head = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -102,7 +102,7 @@ invite.head = (args: { token: string | number } | [token: string | number ] | st
 })
 
 /**
-* @see routes/web.php:30
+* @see routes/web.php:31
 * @route '/app/setup'
 */
 export const setup = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ setup.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:30
+* @see routes/web.php:31
 * @route '/app/setup'
 */
 setup.url = (options?: RouteQueryOptions) => {
@@ -124,7 +124,7 @@ setup.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:30
+* @see routes/web.php:31
 * @route '/app/setup'
 */
 setup.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -133,7 +133,7 @@ setup.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:30
+* @see routes/web.php:31
 * @route '/app/setup'
 */
 setup.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -142,7 +142,7 @@ setup.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:38
+* @see routes/web.php:39
 * @route '/app/login'
 */
 export const login = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -156,7 +156,7 @@ login.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:38
+* @see routes/web.php:39
 * @route '/app/login'
 */
 login.url = (options?: RouteQueryOptions) => {
@@ -164,7 +164,7 @@ login.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:38
+* @see routes/web.php:39
 * @route '/app/login'
 */
 login.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -173,7 +173,7 @@ login.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:38
+* @see routes/web.php:39
 * @route '/app/login'
 */
 login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -182,7 +182,7 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:42
+* @see routes/web.php:43
 * @route '/app/forgot-password'
 */
 export const forgotPassword = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -196,7 +196,7 @@ forgotPassword.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:42
+* @see routes/web.php:43
 * @route '/app/forgot-password'
 */
 forgotPassword.url = (options?: RouteQueryOptions) => {
@@ -204,7 +204,7 @@ forgotPassword.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:42
+* @see routes/web.php:43
 * @route '/app/forgot-password'
 */
 forgotPassword.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -213,7 +213,7 @@ forgotPassword.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:42
+* @see routes/web.php:43
 * @route '/app/forgot-password'
 */
 forgotPassword.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -222,7 +222,7 @@ forgotPassword.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 })
 
 /**
-* @see routes/web.php:46
+* @see routes/web.php:47
 * @route '/app/reset-password'
 */
 export const resetPassword = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -236,7 +236,7 @@ resetPassword.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:46
+* @see routes/web.php:47
 * @route '/app/reset-password'
 */
 resetPassword.url = (options?: RouteQueryOptions) => {
@@ -244,7 +244,7 @@ resetPassword.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:46
+* @see routes/web.php:47
 * @route '/app/reset-password'
 */
 resetPassword.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -253,7 +253,7 @@ resetPassword.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:46
+* @see routes/web.php:47
 * @route '/app/reset-password'
 */
 resetPassword.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

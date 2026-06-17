@@ -52,6 +52,13 @@ export default {
         validationEmail: "Entrez une adresse e-mail valide.",
         passwordResetSuccess:
             "Votre mot de passe a ete reinitialise. Connectez-vous avec votre nouveau mot de passe.",
+        continueWithGoogle: "Continuer avec Google",
+        orContinueWithEmail: "ou",
+        googleAccountNotFound:
+            "Aucun compte n'existe pour cet e-mail Google. Demandez une invitation a votre administrateur.",
+        googleFailed:
+            "La connexion Google a echoue. Veuillez reessayer.",
+        googleDenied: "La connexion Google a ete annulee.",
         forgotPasswordLink: "Mot de passe oublie ?",
         forgotPassword: {
             title: "Mot de passe oublie",

@@ -50,6 +50,12 @@ export default {
         validationEmail: "Enter a valid email address.",
         passwordResetSuccess:
             "Your password has been reset. Sign in with your new password.",
+        continueWithGoogle: "Continue with Google",
+        orContinueWithEmail: "or",
+        googleAccountNotFound:
+            "No account exists for this Google email. Ask your program administrator for an invitation.",
+        googleFailed: "Google sign-in failed. Please try again.",
+        googleDenied: "Google sign-in was cancelled.",
         forgotPasswordLink: "Forgot password?",
         forgotPassword: {
             title: "Forgot password",

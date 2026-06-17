@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AppServiceWorkerConfigController;
+use App\Http\Controllers\Auth\GoogleOAuthController;
 use App\Http\Controllers\Auth\InstallController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\ProgramInvitationAcceptController;
@@ -48,6 +49,13 @@ Route::middleware('guest')->group(function (): void {
         })->name('app.reset-password');
 
         Route::post('/login', [SessionController::class, 'store'])->name('login');
+
+        Route::middleware('throttle:10,1')->group(function (): void {
+            Route::get('/auth/google/redirect', [GoogleOAuthController::class, 'redirect'])
+                ->name('auth.google.redirect');
+            Route::get('/auth/google/callback', [GoogleOAuthController::class, 'callback'])
+                ->name('auth.google.callback');
+        });
 
         Route::middleware('throttle:6,1')->group(function (): void {
             Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->name('password.email');
