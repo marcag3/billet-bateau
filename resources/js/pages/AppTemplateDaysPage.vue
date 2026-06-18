@@ -13,14 +13,14 @@
 
         <AppEntityList>
             <AppEmptyListRow :show="templateDays.length === 0" :message="t('templateDaysList.empty')" />
-            <q-item v-for="td in templateDays" :key="String(td.id)" class="q-pa-md">
+            <q-item v-for="td in templateDays" :key="String(td.id)" class="p-4">
                 <q-item-section>
                     <q-item-label class="text-h6">{{
                         td.name ?? "Untitled"
                         }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                    <div class="row q-gutter-xs">
+                    <div class="row gap-1">
                         <q-btn flat round dense icon="edit" :aria-label="t('common.edit')" :to="{
                             name: 'template-days.edit',
                             params: {

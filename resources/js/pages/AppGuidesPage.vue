@@ -21,7 +21,7 @@
             <q-item
                 v-for="row in guides"
                 :key="String(row.id)"
-                class="q-pa-md"
+                class="p-4"
             >
                 <q-item-section>
                     <q-item-label class="text-h6">{{
@@ -29,7 +29,7 @@
                     }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                    <div class="column q-gutter-xs items-end">
+                    <div class="column gap-1 items-end">
                         <q-btn
                             color="primary"
                             outline

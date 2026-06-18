@@ -5,7 +5,7 @@
 
         <AppCardSection :label="t('templateDaysList.addNew')">
             <q-form @submit.prevent="onCreateSubmit">
-                <div class="column q-gutter-y-md">
+                <div class="column gap-4">
                     <q-input v-model="createName" outlined :label="t('templateDaysList.name')"
                         :disable="isSubmitting" />
                     <q-btn color="primary" type="submit" :label="t('templateDaysList.create')" :loading="isSubmitting"

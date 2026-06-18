@@ -1,5 +1,5 @@
 <template>
-    <q-page class="q-pa-md">
+    <q-page class="p-4">
         <AppPageHeader :title="t('programsList.title')">
             <template #actions>
                 <q-btn color="secondary" icon="add" :label="t('programsList.addProgram')"
@@ -13,20 +13,20 @@
             :loading-subcopy="t('sync.preparingLocalHint')"
             :error-message="sync.errorMessage"
         >
-            <q-tabs v-model="programTab" class="q-mb-md" active-color="primary" align="left" dense no-caps>
+            <q-tabs v-model="programTab" class="mb-4" active-color="primary" align="left" dense no-caps>
                 <q-tab name="active" :label="t('programsList.tabActive')" />
                 <q-tab name="archived" :label="t('programsList.tabArchived')" />
             </q-tabs>
 
-            <div class="row q-col-gutter-md">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 <template v-if="sync.isContentPending">
-                    <div class="col-12">
+                    <div class="col-span-full">
                         <AppSyncLoadingBanner
                             :title="t(sync.contentLoadingTitleKey)"
                             :hint="t(sync.contentLoadingHintKey)"
                         />
                     </div>
-                    <div v-for="i in 3" :key="`prog-skel-${i}`" class="col-12 col-sm-6 col-md-4">
+                    <div v-for="i in 3" :key="`prog-skel-${i}`">
                         <q-card>
                             <q-skeleton height="160px" square />
                             <q-card-section>
@@ -37,8 +37,8 @@
                     </div>
                 </template>
                 <template v-else>
-                    <AppEmptyListRow class="col-12" :show="showProgramsEmptyState" :message="emptyListMessage" />
-                    <div v-for="program in filteredPrograms" :key="String(program.id)" class="col-12 col-sm-6 col-md-4">
+                    <AppEmptyListRow class="col-span-full" :show="showProgramsEmptyState" :message="emptyListMessage" />
+                    <div v-for="program in filteredPrograms" :key="String(program.id)">
                         <q-card>
                             <q-img :src="programListBannerSrc(program)" :ratio="16 / 9"
                                 :style="programListBannerStyle(program)"
@@ -53,8 +53,8 @@
 
                             <q-card-section class="col-grow">
                                 <div v-if="addressDisplayLines(program).length"
-                                    class="row no-wrap items-start text-body2 text-grey-7 q-gutter-sm">
-                                    <q-icon name="place" size="sm" class="q-pt-xs" />
+                                    class="row no-wrap items-start text-body2 text-grey-7 gap-2">
+                                    <q-icon name="place" size="sm" class="pt-1" />
                                     <div>
                                         <div v-for="(line, i) in addressDisplayLines(
                                             program,

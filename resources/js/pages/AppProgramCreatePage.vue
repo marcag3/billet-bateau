@@ -1,5 +1,5 @@
 <template>
-    <q-page class="q-pa-md">
+    <q-page class="p-4">
         <AppPageHeader :title="t('programsCreate.title')" />
 
         <AppCardSection :label="t('programsCreate.formSection')">
@@ -14,7 +14,7 @@
                 @submitted="onProgramCreated"
             >
                 <template #actions="{ isSubmitting: formSubmitting, fieldsDisabled }">
-                    <div class="row q-gutter-sm">
+                    <div class="row gap-2">
                         <q-btn
                             color="primary"
                             type="submit"

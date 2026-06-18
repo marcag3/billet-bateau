@@ -1,6 +1,6 @@
 <template>
-    <q-page class="app-control-panel-page q-pa-md column min-h-0">
-        <AppPageHeader :title="t('programsControl.title')" class="q-mb-sm shrink-0" />
+    <q-page class="app-control-panel-page p-4 column min-h-0">
+        <AppPageHeader :title="t('programsControl.title')" class="mb-2 shrink-0" />
 
         <AppControlPanelDayToolbar v-model:selected-date-ymd="selectedDateYmd" class="shrink-0"
             v-model:show-finished-trips="showFinishedTrips" :stats="dayStats" :trip-date-ymds="tripDateYmds"

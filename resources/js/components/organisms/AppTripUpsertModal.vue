@@ -7,12 +7,12 @@
         transition-hide="slide-down"
     >
         <q-card class="column" style="max-width: 42rem; width: 100%; max-height: 100vh">
-            <q-card-section class="row items-start q-pb-none">
+            <q-card-section class="row items-start pb-0">
                 <div class="col">
                     <div class="text-h6">{{ modalTitle }}</div>
                     <div
                         v-if="modalDescription.length > 0"
-                        class="text-body2 text-grey-8 q-mt-xs"
+                        class="text-body2 text-grey-8 mt-1"
                     >
                         {{ modalDescription }}
                     </div>
@@ -30,7 +30,7 @@
             <q-card-section class="col scroll">
                 <q-banner
                     v-if="showNotFound"
-                    class="bg-warning text-dark q-mb-md"
+                    class="bg-warning text-dark mb-4"
                     rounded
                 >
                     {{ t("tripsList.notFound") }}
@@ -45,7 +45,7 @@
                     "
                 >
                     <AppCardSection :label="t('tripsList.quickNavLabel')">
-                        <div class="row q-col-gutter-sm items-center">
+                        <div class="row items-center gap-2 flex-wrap">
                             <div class="col-12 col-sm-auto">
                                 <q-btn
                                     flat
@@ -100,7 +100,7 @@
                             modalMode === 'edit' &&
                             !currentTrip
                     "
-                    class="flex flex-center q-pa-xl"
+                    class="flex flex-center p-12"
                 >
                     <q-spinner color="primary" size="2.5em" />
                 </div>
@@ -144,7 +144,7 @@
                         <template
                             #actions="{ meta, isSubmitting, fieldsDisabled }"
                         >
-                            <div class="row q-gutter-sm">
+                            <div class="row gap-2">
                                 <q-btn
                                     color="primary"
                                     type="submit"

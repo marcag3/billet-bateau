@@ -4,12 +4,12 @@
         :subtitle="t('programsInvite.acceptSubtitle')"
         :error-message="errorMessage"
     >
-        <div v-if="loading" class="row justify-center q-pa-lg">
+        <div v-if="loading" class="row justify-center p-6">
             <q-spinner color="primary" size="40px" />
         </div>
 
         <template v-else-if="preview !== null && preview.valid">
-            <q-list bordered separator class="rounded-borders q-mb-md">
+            <q-list bordered separator class="rounded-borders mb-4">
                 <q-item>
                     <q-item-section>
                         <q-item-label caption>{{
@@ -28,9 +28,9 @@
                 </q-item>
             </q-list>
 
-            <AppAlertBanner v-if="wrongAccount" variant="warning" class="q-mb-md">
+            <AppAlertBanner v-if="wrongAccount" variant="warning" class="mb-4">
                 {{ t("programsInvite.wrongAccount") }}
-                <div class="q-mt-sm">
+                <div class="mt-2">
                     <q-btn
                         color="primary"
                         outline
@@ -43,7 +43,7 @@
 
             <q-form
                 v-else-if="!authStore.isAuthenticated"
-                class="q-gutter-md"
+                class="column gap-4"
                 @submit.prevent="acceptAsGuest"
             >
                 <div class="text-subtitle2">
@@ -90,7 +90,7 @@
                 />
             </q-form>
 
-            <q-form v-else class="q-gutter-md" @submit.prevent="acceptAuthenticated">
+            <q-form v-else class="column gap-4" @submit.prevent="acceptAuthenticated">
                 <q-btn
                     type="submit"
                     color="primary"
@@ -101,7 +101,7 @@
                 />
             </q-form>
 
-            <div class="text-center q-mt-md">
+            <div class="text-center mt-4">
                 <router-link
                     class="text-primary"
                     :to="{ name: 'login', query: { redirect: route.fullPath } }"

@@ -1,5 +1,5 @@
 <template>
-    <div class="column q-gutter-sm">
+    <div class="column gap-2">
         <div class="text-subtitle2">{{ label }}</div>
         <div v-if="hint.length > 0" class="text-caption text-grey-7">
             {{ hint }}
@@ -7,9 +7,9 @@
         <div
             v-for="(_, index) in rows"
             :key="`text-repeater-${index}`"
-            class="rounded-borders bg-grey-1 q-pa-sm q-gutter-y-sm"
+            class="column rounded-borders bg-grey-1 p-2 gap-y-2"
         >
-            <div class="row items-center q-col-gutter-sm">
+            <div class="row items-center gap-2">
                 <div class="col text-body2 text-weight-medium">
                     {{ resolveItemLabel(index) }}
                 </div>

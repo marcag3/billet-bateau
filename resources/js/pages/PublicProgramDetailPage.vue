@@ -1,11 +1,11 @@
 <template>
     <q-page class="max-w-[600px] mx-auto">
 
-        <q-banner v-if="errorMessage" class="bg-red-1 text-negative q-mb-md" rounded>
+        <q-banner v-if="errorMessage" class="bg-red-1 text-negative mb-4" rounded>
             {{ errorMessage }}
         </q-banner>
 
-        <div v-if="isLoading" class="row justify-center q-pa-md">
+        <div v-if="isLoading" class="row justify-center p-4">
             <q-spinner color="primary" size="48px" />
         </div>
 
@@ -14,7 +14,7 @@
                 <q-img :src="programBannerSrc" height="300px">
                     <div class="absolute-top">
 
-                        <h1 class="text-h4 q-mb-sm text-weight-bold">{{ program.name }} </h1>
+                        <h1 class="text-h4 mb-2 text-weight-bold">{{ program.name }} </h1>
                     </div>
                     <div class="absolute-bottom">
 
@@ -29,12 +29,12 @@
 
             </section>
 
-            <section v-if="createdBooking" class="row justify-center q-py-xl">
+            <section v-if="createdBooking" class="row justify-center py-12">
                 <q-card class="full-width" style="max-width: 560px;" flat bordered>
-                    <q-card-section class="column items-center text-center q-gutter-sm">
+                    <q-card-section class="column items-center text-center gap-2">
                         <q-icon name="check_circle" color="positive" size="52px" />
                         <div class="text-h5 text-weight-bold">{{ t('publicBooking.successTitle') }}</div>
-                        <p class="text-body1 text-grey-8 q-mb-sm">
+                        <p class="text-body1 text-grey-8 mb-2">
                             {{
                                 t('publicBooking.successBody', {
                                     id: createdBooking.id,
@@ -82,7 +82,7 @@
                 </q-step>
             </q-stepper>
 
-            <div v-else class="column q-gutter-sm">
+            <div v-else class="column gap-2">
                 <q-banner v-if="tripOptions.length === 0" rounded outline class="text-grey-8">
                     {{ t('publicBooking.noTrips') }}
                 </q-banner>

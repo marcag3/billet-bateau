@@ -1,10 +1,10 @@
 <template>
-    <q-page class="q-pa-md">
+    <q-page class="p-4">
         <AppPageHeader :title="t('profile.title')" />
 
         <AppCardSection :label="t('profile.profileSection')">
             <q-form @submit.prevent="onProfileSubmit">
-                <div class="column q-gutter-y-md">
+                <div class="column gap-4">
                     <q-input
                         v-model="profileName"
                         v-bind="profileNameProps"
@@ -39,10 +39,10 @@
             </q-form>
         </AppCardSection>
 
-        <div class="q-mt-md">
+        <div class="mt-4">
             <AppCardSection :label="t('profile.passwordSection')">
             <q-form @submit.prevent="onPasswordSubmit">
-                <div class="column q-gutter-y-md">
+                <div class="column gap-4">
                     <q-input
                         v-model="currentPassword"
                         v-bind="currentPasswordProps"

@@ -5,7 +5,7 @@
         :loading-subcopy="t('sync.preparingLocalHint')"
         :error-message="sync.errorMessage"
     >
-        <q-page v-if="sync.isContentPending" class="q-pa-md">
+        <q-page v-if="sync.isContentPending" class="p-4">
             <AppSyncLoadingBanner
                 :title="t(sync.contentLoadingTitleKey)"
                 :hint="t(sync.contentLoadingHintKey)"

@@ -4,7 +4,7 @@
             {{ t('publicBooking.noTrips') }}
         </div>
         <template v-else>
-            <div class="row items-center q-gutter-sm q-mb-md flex-wrap">
+            <div class="row items-center gap-2 mb-4 flex-wrap">
                 <PublicProgramBookingDateFilter v-model:selected-date-ymd="selectedDateYmd"
                     :daily-availability-by-date="dailyAvailabilityByDate"
                     :program-start-date-ymd="props.programStartDateYmd"
@@ -17,7 +17,7 @@
             </div>
 
             <q-banner v-if="filteredTripOptions.length === 0 && hasActiveTripFilters" rounded outline
-                class="text-grey-8 q-mb-md">
+                class="text-grey-8 mb-4">
                 {{ t('publicBooking.noTripsForFilters') }}
             </q-banner>
 

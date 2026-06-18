@@ -1,10 +1,10 @@
 <template>
     <q-layout view="lHh LpR fFf">
         <q-header elevated reveal class="app-header">
-            <q-toolbar class="app-toolbar">
-                <q-btn v-if="showSideNav && $q.screen.lt.md" flat dense round icon="menu" class="q-mr-sm"
+            <q-toolbar class="app-toolbar gap-2 w-full max-w-none m-0 box-border">
+                <q-btn v-if="showSideNav && $q.screen.lt.md" flat dense round icon="menu" class="mr-2"
                     aria-label="Main menu" @click="leftDrawerOpen = !leftDrawerOpen" />
-                <q-toolbar-title class="app-toolbar-title">
+                <q-toolbar-title class="app-toolbar-title flex items-center gap-3 min-w-0">
                     <q-btn-dropdown v-if="showAppNav && hasSelectedProgram" flat dense color="white"
                         :label="currentContextLabel" :aria-label="t('common.switchWorkspaceContext')">
                         <q-list>
@@ -34,10 +34,10 @@
                     icon="manage_accounts"
                     :aria-label="t('profile.openProfile')"
                     :to="{ name: 'profile' }"
-                    class="q-ml-sm"
+                    class="ml-2"
                 />
 
-                <q-btn v-if="authStore.isAuthenticated" flat color="grey-2" :label="t('common.logout')" class="q-ml-md"
+                <q-btn v-if="authStore.isAuthenticated" flat color="grey-2" :label="t('common.logout')" class="ml-4"
                     style="min-width: 10rem" @click="logout" />
 
             </q-toolbar>
@@ -59,7 +59,7 @@
                             }}</q-item-section>
                     </q-item>
 
-                    <q-separator class="q-my-sm" />
+                    <q-separator class="my-2" />
 
                     <div
                         :id="APP_PROGRAM_MAIN_NAV_TELEPORT_ID"
@@ -69,7 +69,7 @@
             </q-scroll-area>
             <q-img class="absolute-top" src="/icons/logo.jpg" alt="Brand logo" style="height: 150px">
                 <div class="absolute-bottom bg-transparent">
-                    <q-avatar size="56px" class="q-mb-sm">
+                    <q-avatar size="56px" class="mb-2">
                         <img src="/icons/logo.jpg" alt="Brand logo" />
                     </q-avatar>
                     <div class="text-weight-bold">
@@ -81,7 +81,7 @@
         </q-drawer>
 
         <q-page-container class="app-page-container">
-            <AppAlertBanner v-if="authStore.requiresReauthentication" variant="warning" class="q-ma-md">
+            <AppAlertBanner v-if="authStore.requiresReauthentication" variant="warning" class="m-4">
                 {{
                     authStore.authErrorMessage ||
                     t("auth.sessionExpiredAfterReconnect")
@@ -93,7 +93,7 @@
 
             <AppSyncHealthBanner
                 v-if="syncHealth.showBanner && authStore.canAccessProtectedRoute()"
-                class="q-ma-md"
+                class="m-4"
             />
 
             <router-view />
@@ -199,18 +199,7 @@ async function logout() {
 }
 
 .app-toolbar {
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    gap: 0.5rem;
     box-sizing: border-box;
-}
-
-.app-toolbar-title {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-width: 0;
 }
 
 .brand-logo {

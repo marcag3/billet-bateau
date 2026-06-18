@@ -7,7 +7,7 @@
         <AppAlertBanner
             v-if="showPasswordResetSuccess"
             variant="info"
-            class="q-mb-md"
+            class="mb-4"
         >
             {{ t('auth.passwordResetSuccess') }}
         </AppAlertBanner>
@@ -22,13 +22,13 @@
                 @click="signInWithGoogle"
             />
 
-            <div class="text-center text-grey-7 q-my-md">
+            <div class="text-center text-grey-7 my-4">
                 {{ t('auth.orContinueWithEmail') }}
             </div>
         </template>
 
         <q-form
-            class="q-gutter-md"
+            class="column gap-4"
             @submit.prevent="submitLogin"
         >
             <q-input
@@ -69,7 +69,7 @@
             />
         </q-form>
 
-        <div class="text-center q-mt-md">
+        <div class="text-center mt-4">
             <router-link
                 class="text-primary"
                 :to="{ name: 'forgot-password' }"

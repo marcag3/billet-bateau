@@ -1,7 +1,7 @@
 <template>
     <q-dialog v-model="dialogOpen" persistent @show="onDialogShow" @hide="onDialogHide">
-        <q-card class="crop-dialog-card">
-            <q-card-section class="row items-center q-pb-none">
+        <q-card class="w-[min(920px,96vw)] max-w-full">
+            <q-card-section class="row items-center pb-0">
                 <div class="text-h6">{{ t('imageUploadField.cropTitle') }}</div>
                 <q-space />
                 <q-btn
@@ -15,12 +15,15 @@
             </q-card-section>
 
             <q-card-section>
-                <div ref="cropContainerRef" class="crop-container rounded-borders bg-grey-9">
-                    <img ref="imageRef" :src="localImageUrl" alt="" class="crop-source-image" />
+                <div
+                    ref="cropContainerRef"
+                    class="w-full h-[min(70vh,720px)] min-h-[400px] overflow-hidden [&_cropper-canvas]:h-full rounded-borders bg-grey-9"
+                >
+                    <img ref="imageRef" :src="localImageUrl" alt="" class="block max-w-full" />
                 </div>
 
-                <div class="q-mt-md">
-                    <div class="text-caption text-grey-7 q-mb-xs">
+                <div class="mt-4">
+                    <div class="text-caption text-grey-7 mb-1">
                         {{ t('imageUploadField.cropZoom') }}
                     </div>
                     <q-slider
@@ -171,26 +174,3 @@ onBeforeUnmount(() => {
     releaseLocalImageUrl();
 });
 </script>
-
-<style scoped>
-.crop-dialog-card {
-    width: min(920px, 96vw);
-    max-width: 100%;
-}
-
-.crop-container {
-    width: 100%;
-    height: min(70vh, 720px);
-    min-height: 400px;
-    overflow: hidden;
-}
-
-.crop-container :deep(cropper-canvas) {
-    height: 100%;
-}
-
-.crop-source-image {
-    display: block;
-    max-width: 100%;
-}
-</style>

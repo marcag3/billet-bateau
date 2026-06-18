@@ -9,7 +9,7 @@
                 {{ successMessage }}
             </AppAlertBanner>
 
-            <div class="text-center q-mt-md">
+            <div class="text-center mt-4">
                 <router-link
                     class="text-primary"
                     :to="{ name: 'login' }"
@@ -21,7 +21,7 @@
 
         <template v-else>
             <q-form
-                class="q-gutter-md"
+                class="column gap-4"
                 @submit.prevent="submitForgotPassword"
             >
                 <q-input
@@ -45,7 +45,7 @@
                 />
             </q-form>
 
-            <div class="text-center q-mt-md">
+            <div class="text-center mt-4">
                 <router-link
                     class="text-primary"
                     :to="{ name: 'login' }"

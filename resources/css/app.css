@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 body {
-    margin: 0;
+    @apply m-0;
         background: linear-gradient(280deg,
     color-mix(in lch, var(--q-accent) 30%, white) 0%,
     color-mix(in lch, var(--q-positive) 40%, white) 40%

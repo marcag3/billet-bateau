@@ -16,7 +16,7 @@
             transition-hide="slide-right"
         >
             <q-card class="full-height" style="width: 100vw; max-width: 450px">
-                <q-card-section class="row items-center q-pb-none">
+                <q-card-section class="row items-center pb-0">
                     <div class="col text-h6">{{ t('publicBooking.productFilterModalTitle') }}</div>
                     <q-btn v-close-popup flat round dense icon="close" :aria-label="t('common.dismiss')" />
                 </q-card-section>
@@ -46,10 +46,10 @@
                                     ratio="16/9"
                                 >
                                     <div class="absolute-bottom">
-                                        <p class="text-body1 q-mt-sm text-weight-medium">
+                                        <p class="text-body1 mt-2 text-weight-medium">
                                             {{ opt.name }}
                                         </p>
-                                        <p v-if="hasDescription(opt)" class="text-body2 q-mt-xs q-mb-none">
+                                        <p v-if="hasDescription(opt)" class="text-body2 mt-1 mb-0">
                                             {{ opt.description }}
                                         </p>
                                     </div>
@@ -58,12 +58,12 @@
                                     v-else
                                     class="public-program-product-filter__placeholder rounded-borders flex flex-center"
                                 >
-                                    <div class="text-center q-pa-md">
+                                    <div class="text-center p-4">
                                         <q-icon name="image_not_supported" size="32px" color="grey-6" />
-                                        <p class="text-body1 q-mt-sm text-weight-medium">
+                                        <p class="text-body1 mt-2 text-weight-medium">
                                             {{ opt.name }}
                                         </p>
-                                        <p v-if="hasDescription(opt)" class="text-body2 q-mt-xs q-mb-none text-grey-8">
+                                        <p v-if="hasDescription(opt)" class="text-body2 mt-1 mb-0 text-grey-8">
                                             {{ opt.description }}
                                         </p>
                                     </div>

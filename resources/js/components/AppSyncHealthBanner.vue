@@ -5,7 +5,7 @@
         </div>
         <div
             v-if="syncHealth.bannerHint.length > 0"
-            class="text-caption q-mt-xs"
+            class="text-caption mt-1"
         >
             {{ syncHealth.bannerHint }}
         </div>

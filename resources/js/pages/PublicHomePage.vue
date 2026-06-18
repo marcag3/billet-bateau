@@ -1,20 +1,20 @@
 <template>
     <q-page>
 
-        <h1 class="text-h3 q-mb-sm text-weight-bold">{{ t('common.welcome') }}</h1>
-        <p class="text-body1 text-grey-8 q-mb-lg">{{ t('publicHome.description') }}</p>
+        <h1 class="text-h3 mb-2 text-weight-bold">{{ t('common.welcome') }}</h1>
+        <p class="text-body1 text-grey-8 mb-6">{{ t('publicHome.description') }}</p>
 
 
-        <div v-if="isLoading" class="row justify-center q-pa-md">
+        <div v-if="isLoading" class="row justify-center p-4">
             <q-spinner color="primary" size="48px" />
         </div>
 
         <div v-else>
-            <p v-if="items.length === 0" class="text-body1 text-center q-mb-md">
+            <p v-if="items.length === 0" class="text-body1 text-center mb-4">
                 {{ t('publicHome.noPrograms') }}
             </p>
-            <div v-else class="row q-col-gutter-md">
-                <div v-for="program in items" :key="program.id" class="col-12 col-sm-6 col-md-4 col-lg-3">
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div v-for="program in items" :key="program.id">
                     <q-card v-ripple class="public-program-card cursor-pointer" @click="goProgram(program)">
                         <q-img :src="programBannerUrlFromUrl(program.image_url)" :alt="program.name" :ratio="1 / 1">
                             <div class="absolute-bottom">
@@ -23,8 +23,8 @@
                                     {{ program.description }}
                                 </p>
                                 <div v-if="addressDisplayLines(program).length"
-                                    class="row no-wrap items-start text-body2 text-grey-7 q-gutter-sm">
-                                    <q-icon name="place" size="sm" class="q-pt-xs" />
+                                    class="row no-wrap items-start text-body2 text-grey-7 gap-2">
+                                    <q-icon name="place" size="sm" class="pt-1" />
                                     <div>
                                         <div v-for="(line, i) in addressDisplayLines(
                                             program,
@@ -141,20 +141,5 @@ onMounted(() => {
     transform: translateY(-3px);
     box-shadow: 0 16px 30px hsla(226, 97%, 12%, 0.15);
     border-color: hsla(358, 84%, 52%, 0.36);
-}
-
-
-.hero-wrap {
-    max-width: 48rem;
-    margin: 0 auto;
-    padding: 2rem 1.5rem;
-    border-radius: 1.25rem;
-    background: linear-gradient(130deg, hsla(226, 97%, 12%, 0.94) 0%, hsla(221, 83%, 28%, 0.92) 60%, hsla(358, 84%, 52%, 0.92) 100%);
-    color: #ffffff;
-    box-shadow: 0 20px 38px hsla(226, 97%, 12%, 0.2);
-}
-
-.hero-copy {
-    color: rgba(255, 255, 255, 0.88);
 }
 </style>

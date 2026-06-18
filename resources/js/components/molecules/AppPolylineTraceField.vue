@@ -1,6 +1,6 @@
 <template>
     <div class="app-polyline-trace-field">
-        <div v-if="label.length > 0" class="text-body2 q-mb-xs">
+        <div v-if="label.length > 0" class="text-body2 mb-1">
             {{ label }}
         </div>
         <div
@@ -9,7 +9,7 @@
             :class="{ 'app-polyline-trace-field__map--disabled': disable }"
             data-testid="polyline-trace-map"
         />
-        <div class="row q-gutter-sm q-mt-sm">
+        <div class="row gap-2 mt-2">
             <q-btn
                 outline
                 dense
@@ -33,12 +33,12 @@
         </div>
         <div
             v-if="error && errorMessage.length > 0"
-            class="text-negative text-caption q-mt-xs"
+            class="text-negative text-caption mt-1"
             data-testid="polyline-trace-error"
         >
             {{ errorMessage }}
         </div>
-        <div v-else-if="hint.length > 0" class="text-caption text-grey-7 q-mt-xs">
+        <div v-else-if="hint.length > 0" class="text-caption text-grey-7 mt-1">
             {{ hint }}
         </div>
     </div>

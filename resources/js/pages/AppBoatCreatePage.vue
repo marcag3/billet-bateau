@@ -3,7 +3,7 @@
         :back-label="t('boatsList.backToList')">
         <AppCardSection :label="t('boatsList.addNew')">
             <q-form @submit.prevent="onCreateSubmit">
-                <div class="column q-gutter-y-md">
+                <div class="column gap-4">
                     <q-input v-model="createName" v-bind="createNameProps" outlined :label="t('boatsList.name')"
                         :disable="isSubmitting" />
                     <q-input v-model.number="createCapacity" v-bind="createCapacityProps" outlined type="number"

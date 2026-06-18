@@ -1,6 +1,6 @@
 <template>
     <q-page :class="pageClass">
-        <div class="q-gutter-y-md">
+        <div class="column gap-4">
             <slot name="header" />
             <div v-if="$slots.filters">
                 <slot name="filters" />
@@ -15,11 +15,11 @@ import { computed } from "vue";
 
 const props = withDefaults(
     defineProps<{
-        /** Default `q-pa-xl` for list pages. */
+        /** Default page padding (`p-4`). */
         paddingClass?: string;
     }>(),
     {
-        paddingClass: "q-pa-md",
+        paddingClass: "p-4",
     },
 );
 

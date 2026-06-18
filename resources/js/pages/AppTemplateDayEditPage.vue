@@ -1,7 +1,7 @@
 <template>
     <AppEntityEditPageLayout :title="t('templateDaysList.editPageTitle')" :back-to="backTo"
         :back-label="t('templateDaysList.backToList')">
-        <q-banner v-if="showNotFound" class="bg-warning text-dark q-mb-md" rounded>
+        <q-banner v-if="showNotFound" class="bg-warning text-dark mb-4" rounded>
             {{ t("templateDaysList.notFound") }}
             <template #action>
                 <q-btn color="primary" flat :label="t('templateDaysList.backToList')" :to="backTo" />
@@ -11,7 +11,7 @@
         <template v-if="currentTemplateDay">
             <AppCardSection :label="t('templateDaysList.detailsSection')">
                 <q-form @submit.prevent="onSaveNameSubmit">
-                    <div class="column q-gutter-y-md">
+                    <div class="column gap-4">
                         <q-input v-model="editName" outlined :label="t('templateDaysList.name')"
                             :disable="isSavingName" />
                         <q-btn color="primary" type="submit" :label="t('templateDaysList.saveChanges')"
@@ -21,7 +21,7 @@
             </AppCardSection>
 
             <AppCardSection :label="t('templateDaysList.slotCalendarSection')">
-                <div class="text-caption text-grey-7 q-mb-sm">
+                <div class="text-caption text-grey-7 mb-2">
                     {{ t("templateDaysList.slotCalendarHint") }}
                 </div>
                 <div class="template-day-slot-calendar">
@@ -51,7 +51,7 @@
 
     <q-dialog v-model="slotDialogOpen" persistent @show="onSlotDialogShow">
         <q-card style="min-width: 480px; max-width: 600px">
-            <q-card-section class="q-pb-none">
+            <q-card-section class="pb-0">
                 <div class="text-h6">
                     {{
                         editingSlotId

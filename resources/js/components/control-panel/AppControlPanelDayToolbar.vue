@@ -1,6 +1,6 @@
 <template>
-    <div class="row items-center q-col-gutter-sm q-mb-md">
-        <div class="col-auto row items-center q-gutter-xs">
+    <div class="row items-center gap-2 mb-4">
+        <div class="col-auto row items-center gap-1">
             <q-btn
                 flat
                 round
@@ -57,7 +57,7 @@
 
         <q-space />
 
-        <div class="col-auto row q-gutter-sm">
+        <div class="col-auto row gap-2">
             <q-chip outline :style="controlPanelStatChipStyle('booked')">
                 {{ t('programsControl.statsBooked') }}: {{ stats.booked }}
             </q-chip>

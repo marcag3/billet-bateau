@@ -1,5 +1,5 @@
 <template>
-    <div class="column q-gutter-y-xs">
+    <div class="column gap-1">
         <div v-if="label.length > 0" class="text-caption text-grey-7">
             {{ label }}
         </div>
@@ -20,7 +20,7 @@
             @drop.prevent="onDrop"
         >
             <q-card-section
-                class="q-pa-none cursor-pointer"
+                class="p-0 cursor-pointer"
                 :class="(disabled || isUploading) && 'cursor-not-allowed'"
                 role="button"
                 tabindex="0"
@@ -40,20 +40,20 @@
 
                 <div
                     v-else
-                    class="column items-center justify-center q-pa-md text-center"
+                    class="column items-center justify-center p-4 text-center"
                     :class="!compactPreview && 'w-full'"
                     :style="emptyStateStyle"
                 >
                     <q-icon name="image" size="md" color="grey-6" />
-                    <div class="text-body2 q-mt-sm">{{ t('imageUploadField.emptyHint') }}</div>
-                    <div v-if="hint.length > 0" class="text-caption text-grey-7 q-mt-xs">
+                    <div class="text-body2 mt-2">{{ t('imageUploadField.emptyHint') }}</div>
+                    <div v-if="hint.length > 0" class="text-caption text-grey-7 mt-1">
                         {{ hint }}
                     </div>
                 </div>
             </q-card-section>
 
-            <q-card-section v-if="showActions" class="q-pt-sm q-pb-sm" @click.stop>
-                <div class="row q-gutter-sm">
+            <q-card-section v-if="showActions" class="pt-2 pb-2" @click.stop>
+                <div class="row gap-2">
                     <q-btn
                         flat
                         dense

@@ -1,6 +1,6 @@
 <template>
     <q-form @submit="onValidSubmit">
-        <div class="column q-gutter-y-md">
+        <div class="column gap-4">
             <q-input
                 v-model="name"
                 v-bind="nameProps"

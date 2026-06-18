@@ -9,7 +9,7 @@
             </AppPageHeader>
         </template>
 
-        <div class="trips-calendar-toolbar row items-center no-wrap q-mb-sm q-gutter-xs">
+        <div class="trips-calendar-toolbar row items-center no-wrap mb-2 gap-1 pb-2">
             <template v-if="tripsViewMode !== 'list'">
                 <q-btn flat round dense icon="chevron_left" :aria-label="t('tripsCalendar.prev')"
                     :disable="!canCalendarPrev" @click="calendarPrev" />
@@ -27,7 +27,7 @@
 
         <AppEntityList v-if="tripsViewMode === 'list'">
             <AppEmptyListRow :show="trips.length === 0" :message="t('tripsList.empty')" />
-            <q-item v-for="tr in trips" :key="String(tr.id)" class="q-pa-md">
+            <q-item v-for="tr in trips" :key="String(tr.id)" class="p-4">
                 <q-item-section v-if="tripListProductImageUrl(tr).length > 0" avatar>
                     <q-avatar rounded size="48px">
                         <q-img :src="tripListProductImageUrl(tr)" ratio="1" fit="cover"
@@ -69,7 +69,7 @@
                 class="trips-calendar-surface" @click-time="onDayCalendarClickTime">
                 <template #column-header-after="{ scope }">
                     <div v-if="isValidServiceDateYmd(scope.timestamp.date)"
-                        class="trips-cal-col-header-after q-px-xs q-pb-xs">
+                        class="trips-cal-col-header-after px-1 pb-1">
                         <AppTripsCalendarDayHeaderActions :disabled="programId.length === 0"
                             :template-days="templateDayMenuOptions" @apply="
                                 onApplyTemplateDay($event, scope.timestamp.date)
@@ -95,7 +95,7 @@
                 :weekdays="calendarWeekdays" :use-navigation="false" class="trips-calendar-surface"
                 @click-day="onMonthCalendarClickDay">
                 <template #day="{ scope }">
-                    <div v-if="!scope.outside" class="trips-cal-month-day column q-gutter-xs q-pa-xs">
+                    <div v-if="!scope.outside" class="trips-cal-month-day column gap-1 p-1">
                         <q-btn v-for="ev in eventsForDay(scope.timestamp.date)" :key="ev.id" dense no-caps size="sm"
                             outline color="primary" class="trips-cal-month-event full-width text-left"
                             @click.stop="onTripClick(ev.id)">
@@ -1130,7 +1130,6 @@ function onMonthCalendarClickDay(payload: MonthClickDayPayload): void {
 
 .trips-calendar-toolbar {
     border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-    padding-bottom: 0.5rem;
 }
 
 .trips-calendar-surface {

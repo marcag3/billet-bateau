@@ -33,7 +33,7 @@
         />
 
         <q-menu>
-            <q-list dense bordered class="q-pa-sm" style="min-width: 300px">
+            <q-list dense bordered class="p-2" style="min-width: 300px">
                 <q-item-label header class="text-caption text-grey-8">
                     {{ t("sync.toolbarConnectionHeader") }}
                 </q-item-label>
@@ -62,11 +62,11 @@
                     </q-item-section>
                 </q-item>
 
-                <q-separator class="q-my-sm" />
+                <q-separator class="my-2" />
 
                 <q-item
                     v-if="hasOutboxCommitError"
-                    class="bg-red-1 text-negative rounded-borders q-mb-xs"
+                    class="bg-red-1 text-negative rounded-borders mb-1"
                 >
                     <q-item-section avatar>
                         <q-icon name="error_outline" color="negative" />
@@ -92,7 +92,7 @@
 
                 <q-item-label header class="text-caption text-grey-8">
                     {{ t("sync.toolbarPendingHeader") }}
-                    <span class="q-ml-xs">({{ outboxPendingCount }})</span>
+                    <span class="ml-1">({{ outboxPendingCount }})</span>
                 </q-item-label>
 
                 <q-item v-if="outboxPendingCount === 0">

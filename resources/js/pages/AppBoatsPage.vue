@@ -9,9 +9,9 @@
             </AppPageHeader>
         </template>
 
-        <div class="row q-col-gutter-md">
-            <AppEmptyListRow class="col-12" :show="boats.length === 0" :message="t('boatsList.empty')" />
-            <div v-for="b in boats" :key="String(b.id)" class="col-12 col-sm-6 col-md-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <AppEmptyListRow class="col-span-full" :show="boats.length === 0" :message="t('boatsList.empty')" />
+            <div v-for="b in boats" :key="String(b.id)">
                 <q-card class="boat-card cursor-pointer full-height column relative-position" role="button" tabindex="0"
                     :aria-label="`${t('common.edit')}: ${boatDisplayTitle(b)}`" @click="goEdit(b)"
                     @keydown.enter.prevent="goEdit(b)" @keydown.space.prevent="goEdit(b)">
@@ -24,7 +24,7 @@
                             </div>
                         </div>
                     </q-img>
-                    <div class="boat-card__hint absolute-full flex flex-center text-white text-body1 text-weight-medium text-center q-px-md"
+                    <div class="boat-card__hint absolute-full flex flex-center text-white text-body1 text-weight-medium text-center px-4"
                         aria-hidden="true">
                         {{ t("common.edit") }}
                     </div>

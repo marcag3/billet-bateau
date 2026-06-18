@@ -10,7 +10,7 @@
                 'public-program-filter-dialog__side': isDesktopSidePanel,
                 'public-program-filter-dialog__centered': !isDesktopSidePanel,
             }">
-                <q-card-section class="row items-center q-pb-none">
+                <q-card-section class="row items-center pb-0">
                     <div class="col text-h6">{{ t('publicBooking.dateFilterModalTitle') }}</div>
                     <q-btn v-close-popup flat round dense icon="close" :aria-label="t('common.dismiss')" />
                 </q-card-section>
@@ -19,29 +19,29 @@
                     {{ t('publicBooking.noDatesWithTrips') }}
                 </q-card-section>
 
-                <q-card-section v-else class="col scroll q-pt-sm">
+                <q-card-section v-else class="col scroll pt-2">
                     <q-date v-model="qDateModel" mask="YYYY-MM-DD" :default-year-month="defaultYearMonth"
                         :events="hasAvailabilityEvent" :event-color="availabilityEventColor" :options="isDaySelectable"
                         :navigation-min-year-month="navigationMinYearMonth"
                         :navigation-max-year-month="navigationMaxYearMonth" @update:model-value="onDatePicked" />
 
-                    <div class="row q-gutter-md text-caption text-grey-8 q-mt-md">
-                        <div class="row items-center q-gutter-xs">
+                    <div class="row gap-4 text-caption text-grey-8 mt-4">
+                        <div class="row items-center gap-1">
                             <span class="public-booking-date-filter__dot public-booking-date-filter__dot--red" />
                             <span>{{ t('publicBooking.availabilityLegendFull') }}</span>
                         </div>
-                        <div class="row items-center q-gutter-xs">
+                        <div class="row items-center gap-1">
                             <span class="public-booking-date-filter__dot public-booking-date-filter__dot--yellow" />
                             <span>{{ t('publicBooking.availabilityLegendLow') }}</span>
                         </div>
-                        <div class="row items-center q-gutter-xs">
+                        <div class="row items-center gap-1">
                             <span class="public-booking-date-filter__dot public-booking-date-filter__dot--green" />
                             <span>{{ t('publicBooking.availabilityLegendGood') }}</span>
                         </div>
                     </div>
                 </q-card-section>
 
-                <q-card-actions v-if="hasSelectableDates" align="stretch" class="q-px-md q-pb-md">
+                <q-card-actions v-if="hasSelectableDates" align="stretch" class="px-4 pb-4">
                     <q-btn class="col" outline no-caps color="grey-7" :label="t('publicBooking.clearDateFilter')"
                         :disable="selectedDateYmd.trim().length === 0" @click="clearDate" />
                 </q-card-actions>

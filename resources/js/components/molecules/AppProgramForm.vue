@@ -1,8 +1,8 @@
 <template>
     <q-form @submit="onValidSubmit">
-        <div class="column q-gutter-y-md">
-            <div class="row q-col-gutter-x-md">
-                <div class="col-12 col-sm-6">
+        <div class="column gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                     <q-input v-model="name" v-bind="nameProps" outlined label-slot :disable="fieldsDisabled">
                         <template #label>
                             {{ t("programsCreate.name") }}
@@ -10,7 +10,7 @@
                         </template>
                     </q-input>
                 </div>
-                <div class="col-12 col-sm-6">
+                <div>
                     <q-input v-model="themeColor" v-bind="themeColorProps" outlined label-slot
                         :disable="fieldsDisabled">
                         <template #label>
@@ -34,8 +34,8 @@
             <q-input v-if="isEditMode" v-model="slug" v-bind="slugProps" outlined :label="t('programsList.slug')"
                 :hint="t('programsList.slugHint')" :disable="fieldsDisabled" />
 
-            <div class="row q-col-gutter-x-md">
-                <div class="col-12 col-sm-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                     <q-input v-model="startDate" v-bind="startDateProps" type="date" outlined label-slot
                         :disable="fieldsDisabled">
                         <template #label>
@@ -44,7 +44,7 @@
                         </template>
                     </q-input>
                 </div>
-                <div class="col-12 col-sm-6">
+                <div>
                     <q-input v-model="endDate" v-bind="endDateProps" type="date" outlined label-slot
                         :disable="fieldsDisabled">
                         <template #label>
@@ -71,23 +71,23 @@
 
             <q-expansion-item :label="t('programsCreate.addressOptional')" icon="place"
                 class="bg-grey-1 rounded-borders" dense-toggle :disable="fieldsDisabled">
-                <div class="q-pa-md column q-gutter-y-md">
-                    <div class="row q-col-gutter-x-md">
-                        <div class="col-12 col-sm-6">
+                <div class="p-4 column gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
                             <q-input v-model="line1" v-bind="line1Props" outlined :label="t('programsCreate.line1')"
                                 :disable="fieldsDisabled" />
                         </div>
-                        <div class="col-12 col-sm-6">
+                        <div>
                             <q-input v-model="line2" v-bind="line2Props" outlined :label="t('programsCreate.line2')"
                                 :disable="fieldsDisabled" />
                         </div>
                     </div>
-                    <div class="row q-col-gutter-x-md">
-                        <div class="col-12 col-sm-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
                             <q-input v-model="city" v-bind="cityProps" outlined :label="t('programsCreate.city')"
                                 :disable="fieldsDisabled" />
                         </div>
-                        <div class="col-12 col-sm-6">
+                        <div>
                             <q-input v-model="postalCode" v-bind="postalCodeProps" outlined
                                 :label="t('programsCreate.postalCode')" :disable="fieldsDisabled" />
                         </div>

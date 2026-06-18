@@ -1,6 +1,6 @@
 <template>
-    <q-form class="q-gutter-md" @submit="onSubmit">
-        <div class="column q-gutter-y-md">
+    <q-form class="column gap-4" @submit="onSubmit">
+        <div class="column gap-4">
             <q-input
                 v-model="name"
                 v-bind="nameProps"
@@ -29,7 +29,7 @@
             />
         </div>
 
-        <div class="row justify-end q-gutter-sm">
+        <div class="row justify-end gap-2">
             <q-btn
                 flat
                 :label="t('common.dismiss')"

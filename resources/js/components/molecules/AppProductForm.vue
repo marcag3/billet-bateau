@@ -1,6 +1,6 @@
 <template>
     <q-form @submit="onValidSubmit">
-        <div class="column q-gutter-y-md">
+        <div class="column gap-4">
             <q-input v-model="name" v-bind="nameProps" outlined :label="t('productsList.name')"
                 :disable="fieldsDisabled" />
             <q-input v-model="description" v-bind="descriptionProps" type="textarea" outlined autogrow

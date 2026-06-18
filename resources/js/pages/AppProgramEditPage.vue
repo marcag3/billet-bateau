@@ -1,10 +1,10 @@
 <template>
-    <q-page class="q-pa-md">
+    <q-page class="p-4">
         <AppPageHeader :title="t('programsEdit.title')" />
 
         <AppAlertBanner v-if="showNotFound" variant="error">
             {{ t("programsEdit.notFound") }}
-            <div class="q-mt-sm">
+            <div class="mt-2">
                 <q-btn color="primary" outline :label="t('programsEdit.backToList')" :to="{ name: 'programs.list' }" />
             </div>
         </AppAlertBanner>
@@ -26,7 +26,7 @@
                 @banner-uploaded="onBannerUploaded"
             >
                 <template #actions="{ isSubmitting: formSubmitting, fieldsDisabled }">
-                    <div class="row q-gutter-sm">
+                    <div class="row gap-2">
                         <q-btn
                             color="primary"
                             type="submit"
@@ -48,11 +48,11 @@
         </AppCardSection>
 
         <AppCardSection v-if="hasBootstrapped && canInviteAdmins && !showNotFound"
-            :label="t('programsInvite.editSectionTitle')" class="q-mt-lg">
+            :label="t('programsInvite.editSectionTitle')" class="mt-6">
             <p class="text-body2 text-grey-8">
                 {{ t("programsInvite.editSectionSubtitle") }}
             </p>
-            <q-form class="q-gutter-md" @submit.prevent="onInviteSubmit">
+            <q-form class="column gap-4" @submit.prevent="onInviteSubmit">
                 <AppAlertBanner v-if="inviteError.length > 0" variant="error">
                     {{ inviteError }}
                 </AppAlertBanner>
@@ -61,12 +61,18 @@
                 </AppAlertBanner>
                 <q-input v-model="inviteEmail" type="email" outlined :label="t('programsInvite.emailLabel')"
                     :disable="inviteSubmitting" autocomplete="off" />
-                <q-btn color="primary" type="submit" :loading="inviteSubmitting" :disable="inviteSubmitting"
-                    :label="t('programsInvite.sendInvite')" />
+                <q-btn
+                    color="primary"
+                    type="submit"
+                    class="self-start"
+                    :loading="inviteSubmitting"
+                    :disable="inviteSubmitting"
+                    :label="t('programsInvite.sendInvite')"
+                />
             </q-form>
         </AppCardSection>
 
-        <AppAlertBanner v-else-if="hasBootstrapped && !canInviteAdmins && !showNotFound" variant="info" class="q-mt-lg">
+        <AppAlertBanner v-else-if="hasBootstrapped && !canInviteAdmins && !showNotFound" variant="info" class="mt-6">
             {{ t("programsInvite.notOwner") }}
         </AppAlertBanner>
     </q-page>

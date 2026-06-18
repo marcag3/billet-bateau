@@ -1,6 +1,6 @@
 <template>
     <q-form @submit="onValidSubmit">
-        <div class="column q-gutter-y-md">
+        <div class="column gap-4">
             <q-input
                 v-model="title"
                 v-bind="titleProps"
@@ -25,8 +25,8 @@
                 :label="t('ticketTypesList.payWhatYouCan')"
                 :disable="fieldsDisabled"
             />
-            <div class="row">
-                <div class="col-12 col-sm-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                     <q-input
                         v-model.number="minPerPurchase"
                         v-bind="minPerPurchaseProps"
@@ -37,7 +37,7 @@
                         :disable="fieldsDisabled"
                     />
                 </div>
-                <div class="col-12 col-sm-6">
+                <div>
                     <q-input
                         :model-value="maxPerPurchaseDisplay"
                         v-bind="maxPerPurchaseProps"
@@ -50,8 +50,8 @@
                     />
                 </div>
             </div>
-            <div class="row">
-                <div class="col-12 col-sm-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                     <q-select
                         v-model="dependsOnTicketTypeId"
                         v-bind="dependsOnTicketTypeIdProps"
@@ -68,7 +68,7 @@
                         :disable="fieldsDisabled"
                     />
                 </div>
-                <div class="col-12 col-sm-6">
+                <div>
                     <q-input
                         :model-value="maxPerReferenceTicketDisplay"
                         v-bind="maxPerReferenceTicketProps"

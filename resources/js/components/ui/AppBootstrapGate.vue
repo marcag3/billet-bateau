@@ -1,9 +1,9 @@
 <template>
-    <div class="relative-position" :class="{ 'app-bootstrap-gate--loading': !ready }">
+    <div class="relative-position" :class="!ready && 'min-h-[50vh]'">
         <q-banner
             v-if="!ready && hasErrorMessage"
             rounded
-            class="bg-red-1 text-negative q-mb-md"
+            class="bg-red-1 text-negative mb-4"
         >
             {{ resolvedErrorMessage }}
         </q-banner>
@@ -11,7 +11,7 @@
             v-else-if="!ready && hasLoadingCopy"
             :showing="true"
         >
-            <div class="column items-center q-gutter-sm q-px-md">
+            <div class="column items-center gap-2 px-4">
                 <q-spinner color="primary" size="42px" />
                 <div
                     v-if="loadingTitle != null && loadingTitle !== ''"
@@ -64,9 +64,3 @@ const hasErrorMessage = computed(
     () => resolvedErrorMessage.value.trim().length > 0,
 );
 </script>
-
-<style scoped>
-.app-bootstrap-gate--loading {
-    min-height: 50vh;
-}
-</style>
