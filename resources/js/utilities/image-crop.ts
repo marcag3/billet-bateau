@@ -1,4 +1,11 @@
-import type Cropper from 'cropperjs';
+import type { CropperSelection } from 'cropperjs';
+
+export type ImageCropRect = {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+};
 
 const DEFAULT_MAX_OUTPUT_DIMENSION = 2048;
 const DEFAULT_JPEG_QUALITY = 0.92;
@@ -20,8 +27,36 @@ export function normalizeOutputMimeType(mimeType: string): string {
     return 'image/jpeg';
 }
 
-export async function exportCroppedFileFromCropper(
-    cropper: Cropper,
+export function computeCoverBaseScale(
+    imageWidth: number,
+    imageHeight: number,
+    cropWidth: number,
+    cropHeight: number,
+): number {
+    if (imageWidth <= 0 || imageHeight <= 0 || cropWidth <= 0 || cropHeight <= 0) {
+        return 1;
+    }
+
+    return Math.max(cropWidth / imageWidth, cropHeight / imageHeight);
+}
+
+export function clampCoverPan(
+    imageBounds: ImageCropRect,
+    selectionBounds: ImageCropRect,
+): { x: number; y: number } {
+    const minX = selectionBounds.x + selectionBounds.width - imageBounds.width;
+    const maxX = selectionBounds.x;
+    const minY = selectionBounds.y + selectionBounds.height - imageBounds.height;
+    const maxY = selectionBounds.y;
+
+    return {
+        x: Math.min(maxX, Math.max(minX, imageBounds.x)),
+        y: Math.min(maxY, Math.max(minY, imageBounds.y)),
+    };
+}
+
+export async function exportCroppedFileFromSelection(
+    selection: CropperSelection,
     options: {
         fileName: string;
         mimeType: string;
@@ -33,17 +68,16 @@ export async function exportCroppedFileFromCropper(
     const quality = options.quality ?? DEFAULT_JPEG_QUALITY;
     const maxOutputDimension = options.maxOutputDimension ?? DEFAULT_MAX_OUTPUT_DIMENSION;
 
-    const canvas = cropper.getCroppedCanvas({
-        maxWidth: maxOutputDimension,
-        maxHeight: maxOutputDimension,
-        fillColor: mimeType === 'image/jpeg' ? '#ffffff' : 'transparent',
-        imageSmoothingEnabled: true,
-        imageSmoothingQuality: 'high',
+    const canvas = await selection.$toCanvas({
+        width: maxOutputDimension,
+        beforeDraw:
+            mimeType === 'image/jpeg'
+                ? (context, outputCanvas) => {
+                      context.fillStyle = '#ffffff';
+                      context.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+                  }
+                : undefined,
     });
-
-    if (canvas == null) {
-        throw new Error('Unable to export cropped image.');
-    }
 
     return canvasToFile(canvas, options.fileName, mimeType, quality);
 }

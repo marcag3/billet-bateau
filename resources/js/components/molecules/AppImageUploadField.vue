@@ -95,12 +95,13 @@
         <AppImageCropDialog
             v-if="croppable"
             v-model="cropDialogOpen"
-            :image-url="cropSourceUrl ?? ''"
+            :image-file="cropSourceFile"
             :aspect-ratio="previewRatio"
             :file-name="cropSourceFileName"
             :mime-type="cropSourceMimeType"
             @apply="onCropApplied"
             @cancel="onCropCancelled"
+            @hidden="onCropDialogHidden"
         />
     </div>
 </template>
@@ -166,7 +167,7 @@ const isUploading = ref(false);
 const isDragOver = ref(false);
 const fieldError = ref('');
 const cropDialogOpen = ref(false);
-const cropSourceUrl = ref<string | null>(null);
+const cropSourceFile = ref<File | null>(null);
 const cropSourceFileName = ref('image.jpg');
 const cropSourceMimeType = ref('image/jpeg');
 
@@ -262,16 +263,12 @@ function revokePendingPreview(): void {
     }
 }
 
-function revokeCropSourceUrl(): void {
-    if (cropSourceUrl.value != null) {
-        URL.revokeObjectURL(cropSourceUrl.value);
-        cropSourceUrl.value = null;
-    }
-}
-
 function closeCropDialog(): void {
     cropDialogOpen.value = false;
-    revokeCropSourceUrl();
+}
+
+function onCropDialogHidden(): void {
+    cropSourceFile.value = null;
 }
 
 function clearPendingSelection(): void {
@@ -327,20 +324,17 @@ function ingestFile(file: File): void {
         return;
     }
 
-    closeCropDialog();
     cropSourceFileName.value = file.name;
     cropSourceMimeType.value = file.type.length > 0 ? file.type : 'image/jpeg';
-    cropSourceUrl.value = URL.createObjectURL(file);
+    cropSourceFile.value = file;
     cropDialogOpen.value = true;
 }
 
 function onCropApplied(file: File): void {
-    closeCropDialog();
     setPendingFile(file);
 }
 
 function onCropCancelled(): void {
-    closeCropDialog();
     fileModel.value = null;
 }
 
@@ -427,6 +421,7 @@ function clearSelection(): void {
 
 onBeforeUnmount(() => {
     closeCropDialog();
+    cropSourceFile.value = null;
     clearPendingSelection();
 });
 

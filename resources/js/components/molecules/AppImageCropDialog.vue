@@ -1,6 +1,6 @@
 <template>
     <q-dialog v-model="dialogOpen" persistent @show="onDialogShow" @hide="onDialogHide">
-        <q-card style="width: min(560px, 94vw); max-width: 100%">
+        <q-card class="crop-dialog-card">
             <q-card-section class="row items-center q-pb-none">
                 <div class="text-h6">{{ t('imageUploadField.cropTitle') }}</div>
                 <q-space />
@@ -10,18 +10,13 @@
                     dense
                     icon="close"
                     :aria-label="t('common.cancel')"
-                    @click="onCancel"
+                    @click="close"
                 />
             </q-card-section>
 
             <q-card-section>
                 <div ref="cropContainerRef" class="crop-container rounded-borders bg-grey-9">
-                    <img
-                        ref="imageRef"
-                        :src="imageUrl"
-                        alt=""
-                        class="crop-source-image"
-                    />
+                    <img ref="imageRef" :src="localImageUrl" alt="" class="crop-source-image" />
                 </div>
 
                 <div class="q-mt-md">
@@ -30,8 +25,8 @@
                     </div>
                     <q-slider
                         v-model="zoom"
-                        :min="1"
-                        :max="3"
+                        :min="minZoomMultiplier"
+                        :max="maxZoomMultiplier"
                         :step="0.01"
                         color="primary"
                         label
@@ -42,7 +37,7 @@
             </q-card-section>
 
             <q-card-actions align="right">
-                <q-btn flat no-caps :label="t('common.cancel')" @click="onCancel" />
+                <q-btn flat no-caps :label="t('common.cancel')" @click="close" />
                 <q-btn
                     color="primary"
                     no-caps
@@ -57,16 +52,13 @@
 </template>
 
 <script setup lang="ts">
-import Cropper from 'cropperjs';
-import 'cropperjs/dist/cropper.css';
-import { nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue';
+import { nextTick, onBeforeUnmount, ref, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { exportCroppedFileFromCropper } from '../../utilities/image-crop';
-
-const VIEWPORT_HEIGHT_PX = 320;
+import { useImageCropper } from '../../composables/useImageCropper';
+import { exportCroppedFileFromSelection } from '../../utilities/image-crop';
 
 const props = defineProps<{
-    imageUrl: string;
+    imageFile: File | null;
     aspectRatio: number;
     fileName: string;
     mimeType: string;
@@ -77,122 +69,92 @@ const dialogOpen = defineModel<boolean>({ required: true });
 const emit = defineEmits<{
     apply: [file: File];
     cancel: [];
+    hidden: [];
 }>();
 
 const { t } = useI18n();
 
 const cropContainerRef = useTemplateRef<HTMLElement>('cropContainerRef');
 const imageRef = useTemplateRef<HTMLImageElement>('imageRef');
-const isReady = ref(false);
 const isApplying = ref(false);
-const zoom = ref(1);
+const localImageUrl = ref('');
 
-let cropper: Cropper | null = null;
-let baseZoomRatio = 1;
+const {
+    isReady,
+    zoom,
+    minZoomMultiplier,
+    maxZoomMultiplier,
+    mount,
+    destroy,
+    setZoomMultiplier,
+    getSelection,
+} = useImageCropper();
 
-function destroyCropper(): void {
-    cropper?.destroy();
-    cropper = null;
-    baseZoomRatio = 1;
-    zoom.value = 1;
-    isReady.value = false;
-}
-
-function initCropper(): void {
-    const image = imageRef.value;
-    if (image == null) {
+function releaseLocalImageUrl(): void {
+    if (localImageUrl.value.length === 0) {
         return;
     }
 
-    destroyCropper();
-
-    cropper = new Cropper(image, {
-        aspectRatio: props.aspectRatio > 0 ? props.aspectRatio : Number.NaN,
-        viewMode: 1,
-        dragMode: 'move',
-        autoCropArea: 1,
-        responsive: true,
-        restore: false,
-        guides: true,
-        center: true,
-        highlight: false,
-        cropBoxMovable: false,
-        cropBoxResizable: false,
-        toggleDragModeOnDblclick: false,
-        zoomOnWheel: true,
-        ready() {
-            const imageData = cropper?.getImageData();
-            if (imageData != null && imageData.naturalWidth > 0) {
-                baseZoomRatio = imageData.width / imageData.naturalWidth;
-            }
-
-            isReady.value = true;
-        },
-    });
+    URL.revokeObjectURL(localImageUrl.value);
+    localImageUrl.value = '';
 }
 
-async function prepareCropSurface(): Promise<void> {
-    destroyCropper();
-
+async function mountCropper(file: File): Promise<void> {
+    releaseLocalImageUrl();
+    localImageUrl.value = URL.createObjectURL(file);
     await nextTick();
 
+    const container = cropContainerRef.value;
     const image = imageRef.value;
-    if (image == null) {
+
+    if (container == null || image == null) {
         throw new Error('Unable to initialize crop surface.');
     }
 
-    if (image.complete && image.naturalWidth > 0) {
-        initCropper();
-        return;
-    }
-
-    await new Promise<void>((resolve, reject) => {
-        image.onload = () => {
-            resolve();
-        };
-        image.onerror = () => {
-            reject(new Error('Unable to load image for cropping.'));
-        };
-    });
-
-    initCropper();
+    await mount(container, image, props.aspectRatio);
 }
 
 function onZoomUpdated(value: number | null): void {
-    if (cropper == null || value == null || !isReady.value) {
-        return;
+    if (value != null) {
+        setZoomMultiplier(value);
     }
-
-    cropper.zoomTo(baseZoomRatio * value);
 }
 
-function onCancel(): void {
+function close(): void {
     dialogOpen.value = false;
     emit('cancel');
 }
 
 function onDialogHide(): void {
-    destroyCropper();
+    destroy();
+    releaseLocalImageUrl();
+    emit('hidden');
 }
 
 async function onDialogShow(): Promise<void> {
+    const file = props.imageFile;
+    if (!(file instanceof File)) {
+        close();
+        return;
+    }
+
     try {
-        await prepareCropSurface();
+        await mountCropper(file);
     } catch {
-        dialogOpen.value = false;
-        emit('cancel');
+        close();
     }
 }
 
 async function onApply(): Promise<void> {
-    if (!isReady.value || isApplying.value || cropper == null) {
+    const selection = getSelection();
+    if (!isReady.value || isApplying.value || selection == null) {
         return;
     }
 
     isApplying.value = true;
 
     try {
-        const croppedFile = await exportCroppedFileFromCropper(cropper, {
+        const croppedFile = await exportCroppedFileFromSelection(selection, {
             fileName: props.fileName,
             mimeType: props.mimeType,
         });
@@ -204,41 +166,27 @@ async function onApply(): Promise<void> {
     }
 }
 
-watch(
-    () => props.imageUrl,
-    async () => {
-        if (!dialogOpen.value) {
-            return;
-        }
-
-        try {
-            await prepareCropSurface();
-        } catch {
-            dialogOpen.value = false;
-            emit('cancel');
-        }
-    },
-);
-
-watch(
-    () => dialogOpen.value,
-    (isOpen) => {
-        if (!isOpen) {
-            destroyCropper();
-        }
-    },
-);
-
 onBeforeUnmount(() => {
-    destroyCropper();
+    destroy();
+    releaseLocalImageUrl();
 });
 </script>
 
 <style scoped>
+.crop-dialog-card {
+    width: min(920px, 96vw);
+    max-width: 100%;
+}
+
 .crop-container {
     width: 100%;
-    height: v-bind('`${VIEWPORT_HEIGHT_PX}px`');
+    height: min(70vh, 720px);
+    min-height: 400px;
     overflow: hidden;
+}
+
+.crop-container :deep(cropper-canvas) {
+    height: 100%;
 }
 
 .crop-source-image {
