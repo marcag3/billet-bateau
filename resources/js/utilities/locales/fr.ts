@@ -12,6 +12,7 @@ export default {
         waterRoutes: "Parcours",
         calendar: "Calendrier",
         logout: "Se deconnecter",
+        disconnect: "Se deconnecter",
         reauthenticate: "Se reconnecter",
         language: "Langue",
         welcome: "Bienvenue",
@@ -695,6 +696,7 @@ export default {
     profile: {
         title: "Profil",
         openProfile: "Ouvrir le profil",
+        userMenu: "Menu utilisateur",
         profileSection: "Informations du compte",
         passwordSection: "Changer le mot de passe",
         name: "Nom",

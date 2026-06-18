@@ -25,20 +25,7 @@
 
                 <AppLanguageSwitcher on-dark-header />
 
-                <q-btn
-                    v-if="authStore.isAuthenticated"
-                    flat
-                    round
-                    dense
-                    color="grey-2"
-                    icon="manage_accounts"
-                    :aria-label="t('profile.openProfile')"
-                    :to="{ name: 'profile' }"
-                    class="ml-2"
-                />
-
-                <q-btn v-if="authStore.isAuthenticated" flat color="grey-2" :label="t('common.logout')" class="ml-4"
-                    style="min-width: 10rem" @click="logout" />
+                <AppUserMenu on-dark-header />
 
             </q-toolbar>
         </q-header>
@@ -116,6 +103,7 @@ import {
 import AppSyncToolbarMenu from "../components/AppSyncToolbarMenu.vue";
 import AppSyncHealthBanner from "../components/AppSyncHealthBanner.vue";
 import AppLanguageSwitcher from "../components/AppLanguageSwitcher.vue";
+import AppUserMenu from "../components/AppUserMenu.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import { useSyncHealth } from "../composables/useSyncHealth";
 
@@ -184,8 +172,4 @@ async function goToLogin() {
     });
 }
 
-async function logout() {
-    await authStore.logout();
-    await router.replace({ name: "login" });
-}
 </script>
