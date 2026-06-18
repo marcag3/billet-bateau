@@ -1,7 +1,7 @@
 <template>
     <q-layout view="lHh LpR fFf">
-        <q-header elevated reveal class="app-header">
-            <q-toolbar class="app-toolbar gap-2 w-full max-w-none m-0 box-border">
+        <q-header elevated reveal class="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--q-primary)_90%,white)_90%,var(--q-secondary))] text-white">
+            <q-toolbar class="gap-2 w-full max-w-none m-0 box-border">
                 <q-btn v-if="showSideNav && $q.screen.lt.md" flat dense round icon="menu" class="mr-2"
                     aria-label="Main menu" @click="leftDrawerOpen = !leftDrawerOpen" />
                 <q-toolbar-title class="app-toolbar-title flex items-center gap-3 min-w-0">
@@ -43,14 +43,14 @@
             </q-toolbar>
         </q-header>
 
-        <q-drawer v-if="showSideNav" v-model="leftDrawerOpen" show-if-above bordered :width="260" class="app-drawer">
+        <q-drawer v-if="showSideNav" v-model="leftDrawerOpen" show-if-above bordered :width="260" class="bg-white">
             <q-scroll-area style="
                     height: calc(100% - 150px);
                     margin-top: 150px;
                     border-right: 1px solid #ddd;
                 ">
-                <q-list padding class="app-nav-list">
-                    <q-item v-ripple clickable class="app-nav-item--back" @click="backToPrograms">
+                <q-list padding class="[&_.app-nav-item--active]:bg-[hsla(358,84%,52%,0.1)] [&_.app-nav-item--active]:text-secondary [&_.app-nav-item--active]:font-semibold [&_.app-nav-item--active]:border-l-[3px] [&_.app-nav-item--active]:border-l-primary">
+                    <q-item v-ripple clickable class="font-semibold text-secondary" @click="backToPrograms">
                         <q-item-section avatar>
                             <q-icon name="arrow_back" />
                         </q-item-section>
@@ -189,41 +189,3 @@ async function logout() {
     await router.replace({ name: "login" });
 }
 </script>
-
-<style scoped>
-.app-header {
-    background: linear-gradient(180deg,
-            color-mix(var(--q-primary) 90%, white) 90%,
-            var(--q-secondary));
-    color: #ffffff;
-}
-
-.app-toolbar {
-    box-sizing: border-box;
-}
-
-.brand-logo {
-    width: 2.1rem;
-    height: 2.1rem;
-    border-radius: 9999px;
-    border: 2px solid rgba(255, 255, 255, 0.55);
-    object-fit: cover;
-    background: #ffffff;
-}
-
-.app-drawer {
-    background: #ffffff;
-}
-
-.app-nav-list :deep(.app-nav-item--active) {
-    background: hsla(358, 84%, 52%, 0.1);
-    color: var(--q-secondary);
-    font-weight: 600;
-    border-left: 3px solid var(--q-primary);
-}
-
-.app-nav-list :deep(.app-nav-item--back) {
-    font-weight: 600;
-    color: var(--q-secondary);
-}
-</style>

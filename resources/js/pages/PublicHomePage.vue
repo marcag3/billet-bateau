@@ -15,7 +15,7 @@
             </p>
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <div v-for="program in items" :key="program.id">
-                    <q-card v-ripple class="public-program-card cursor-pointer" @click="goProgram(program)">
+                    <q-card v-ripple class="cursor-pointer transition-[transform,box-shadow,border-color] duration-[180ms] hover:-translate-y-[3px] hover:shadow-[0_16px_30px_hsla(226,97%,12%,0.15)] hover:border-[hsla(358,84%,52%,0.36)]" @click="goProgram(program)">
                         <q-img :src="programBannerUrlFromUrl(program.image_url)" :alt="program.name" :ratio="1 / 1">
                             <div class="absolute-bottom">
                                 <div class="text-h6">{{ program.name }}</div>
@@ -123,23 +123,3 @@ onMounted(() => {
         });
 });
 </script>
-
-<style scoped>
-.ellipsis-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    line-clamp: 3;
-    overflow: hidden;
-}
-
-.public-program-card {
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-}
-
-.public-program-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 16px 30px hsla(226, 97%, 12%, 0.15);
-    border-color: hsla(358, 84%, 52%, 0.36);
-}
-</style>

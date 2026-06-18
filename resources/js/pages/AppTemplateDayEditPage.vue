@@ -24,17 +24,17 @@
                 <div class="text-caption text-grey-7 mb-2">
                     {{ t("templateDaysList.slotCalendarHint") }}
                 </div>
-                <div class="template-day-slot-calendar">
+                <div class="min-h-[32rem]">
                     <QCalendarDay v-model="slotCalendarDateStr" view="day" bordered no-header
                         :locale="slotCalendarDateLocale" hour24-format interval-minutes="30" interval-count="48"
-                        interval-height="22" :use-navigation="false" class="template-day-slot-calendar-surface"
+                        interval-height="22" :use-navigation="false" class="rounded overflow-hidden [&_.q-calendar-day__day-interval]:cursor-pointer [&_.q-calendar-day__day-interval--section]:cursor-pointer"
                         @click-time="onSlotCalendarClickTime">
                         <template #day-body="{ scope }">
-                            <div class="template-day-slot-cal-day-body">
+                            <div class="absolute inset-0 pointer-events-none">
                                 <div v-for="ev in slotCalendarEventsForScope(scope)" :key="ev.id"
-                                    class="template-day-slot-cal-event-wrap" :style="slotEventPositionStyle(scope, ev)">
+                                    class="pointer-events-auto overflow-hidden" :style="slotEventPositionStyle(scope, ev)">
                                     <q-btn dense no-caps padding="xs sm" outline color="primary"
-                                        class="template-day-slot-cal-event-btn full-width text-left"
+                                        class="text-xs h-full min-h-0 full-width text-left"
                                         @click.stop="openEditSlotDialogByEventId(ev.id)">
                                         <span class="ellipsis block">{{
                                             ev.title
@@ -684,36 +684,3 @@ async function submitSlotDialog(closeAfter: boolean): Promise<void> {
     isSavingSlot.value = false;
 }
 </script>
-
-<style scoped>
-.template-day-slot-calendar {
-    min-height: 32rem;
-}
-
-.template-day-slot-calendar-surface {
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.template-day-slot-calendar-surface :deep(.q-calendar-day__day-interval),
-.template-day-slot-calendar-surface :deep(.q-calendar-day__day-interval--section) {
-    cursor: pointer;
-}
-
-.template-day-slot-cal-day-body {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-.template-day-slot-cal-event-wrap {
-    pointer-events: auto;
-    overflow: hidden;
-}
-
-.template-day-slot-cal-event-btn {
-    font-size: 0.75rem;
-    height: 100%;
-    min-height: 0;
-}
-</style>

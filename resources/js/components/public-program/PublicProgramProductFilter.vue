@@ -56,7 +56,7 @@
                                 </q-img>
                                 <div
                                     v-else
-                                    class="public-program-product-filter__placeholder rounded-borders flex flex-center"
+                                    class="min-h-80 aspect-video bg-blue-1 rounded-borders flex flex-center"
                                 >
                                     <div class="text-center p-4">
                                         <q-icon name="image_not_supported" size="32px" color="grey-6" />
@@ -122,11 +122,3 @@ function onPick(id: string): void {
     dialogOpen.value = false;
 }
 </script>
-
-<style scoped>
-.public-program-product-filter__placeholder {
-    min-height: 20rem;
-    aspect-ratio: 16 / 9;
-    background: var(--q-blue-1);
-}
-</style>

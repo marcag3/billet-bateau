@@ -1,6 +1,6 @@
 <template>
-    <q-page class="row items-center justify-center p-4 app-not-found-page">
-        <div class="text-center app-not-found-page__inner">
+    <q-page class="row items-center justify-center p-4">
+        <div class="text-center max-w-md">
             <AppPageHeader :title="t('notFoundPage.title')" />
             <q-btn unelevated color="primary" class="mt-6" icon="home" :label="t('notFoundPage.backHome')"
                 :to="homeLocation" />
@@ -28,9 +28,3 @@ const homeLocation = computed((): RouteLocationRaw => {
     return { name: 'login' };
 });
 </script>
-
-<style scoped>
-.app-not-found-page__inner {
-    max-width: 28rem;
-}
-</style>

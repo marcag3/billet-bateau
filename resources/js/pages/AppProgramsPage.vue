@@ -244,5 +244,3 @@ function addressDisplayLines(p: ProgramOutput): string[] {
 }
 
 </script>
-
-<style scoped></style>

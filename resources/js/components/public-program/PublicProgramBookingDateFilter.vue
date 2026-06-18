@@ -6,10 +6,9 @@
 
         <q-dialog v-model="dialogOpen" :position="isDesktopSidePanel ? 'right' : 'standard'"
             transition-show="slide-left" transition-hide="slide-right">
-            <q-card class="column no-wrap" :class="{
-                'public-program-filter-dialog__side': isDesktopSidePanel,
-                'public-program-filter-dialog__centered': !isDesktopSidePanel,
-            }">
+            <q-card class="column no-wrap" :class="isDesktopSidePanel
+                ? 'w-[min(440px,100vw)] max-w-screen h-screen max-h-screen'
+                : 'w-[min(420px,100vw)]'">
                 <q-card-section class="row items-center pb-0">
                     <div class="col text-h6">{{ t('publicBooking.dateFilterModalTitle') }}</div>
                     <q-btn v-close-popup flat round dense icon="close" :aria-label="t('common.dismiss')" />
@@ -27,15 +26,15 @@
 
                     <div class="row gap-4 text-caption text-grey-8 mt-4">
                         <div class="row items-center gap-1">
-                            <span class="public-booking-date-filter__dot public-booking-date-filter__dot--red" />
+                            <span class="size-2.5 rounded-full inline-flex bg-[#d32f2f]" />
                             <span>{{ t('publicBooking.availabilityLegendFull') }}</span>
                         </div>
                         <div class="row items-center gap-1">
-                            <span class="public-booking-date-filter__dot public-booking-date-filter__dot--yellow" />
+                            <span class="size-2.5 rounded-full inline-flex bg-[#f9a825]" />
                             <span>{{ t('publicBooking.availabilityLegendLow') }}</span>
                         </div>
                         <div class="row items-center gap-1">
-                            <span class="public-booking-date-filter__dot public-booking-date-filter__dot--green" />
+                            <span class="size-2.5 rounded-full inline-flex bg-[#2e7d32]" />
                             <span>{{ t('publicBooking.availabilityLegendGood') }}</span>
                         </div>
                     </div>
@@ -194,35 +193,3 @@ function clearDate(): void {
     selectedDateYmd.value = '';
 }
 </script>
-
-<style scoped>
-.public-program-filter-dialog__side {
-    width: min(440px, 100vw);
-    max-width: 100vw;
-    height: 100vh;
-    max-height: 100vh;
-}
-
-.public-program-filter-dialog__centered {
-    width: min(420px, 100vw);
-}
-
-.public-booking-date-filter__dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    display: inline-flex;
-}
-
-.public-booking-date-filter__dot--red {
-    background: #d32f2f;
-}
-
-.public-booking-date-filter__dot--yellow {
-    background: #f9a825;
-}
-
-.public-booking-date-filter__dot--green {
-    background: #2e7d32;
-}
-</style>

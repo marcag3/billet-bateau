@@ -5,8 +5,8 @@
         </div>
         <div
             ref="mapContainerRef"
-            class="app-polyline-trace-field__map"
-            :class="{ 'app-polyline-trace-field__map--disabled': disable }"
+            class="w-full min-h-[75vh] rounded overflow-hidden border border-black/12 [&_.app-polyline-trace-field__endpoint-marker]:bg-transparent [&_.app-polyline-trace-field__endpoint-marker]:border-0"
+            :class="disable && 'opacity-65 pointer-events-none'"
             data-testid="polyline-trace-map"
         />
         <div class="row gap-2 mt-2">
@@ -341,23 +341,3 @@ watch(
     },
 );
 </script>
-
-<style scoped>
-.app-polyline-trace-field__map {
-    width: 100%;
-    min-height: 75vh;
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-}
-
-.app-polyline-trace-field__map--disabled {
-    opacity: 0.65;
-    pointer-events: none;
-}
-
-:deep(.app-polyline-trace-field__endpoint-marker) {
-    background: transparent;
-    border: none;
-}
-</style>

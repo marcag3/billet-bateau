@@ -23,7 +23,8 @@
 
             <q-virtual-scroll v-if="filteredTripOptions.length > 0" type="table" style="max-height: 70vh"
                 :virtual-scroll-item-size="64" :virtual-scroll-sticky-size-start="48"
-                :virtual-scroll-sticky-size-end="32" bordered separator="horizontal" class="h-100"
+                :virtual-scroll-sticky-size-end="32" bordered separator="horizontal"
+                class="h-100 [&_.thead-sticky_tr>*]:sticky [&_.thead-sticky_tr>*]:opacity-100 [&_.thead-sticky_tr>*]:z-[2] [&_.thead-sticky_tr>*]:bg-white [&_.q-markup-table.q-dark_.thead-sticky_tr>*]:bg-[var(--q-dark)] [&_.thead-sticky_tr:last-child>*]:top-0 [&_.tfoot-sticky_tr:first-child>*]:bottom-0"
                 :items="filteredTripOptions">
                 <template v-slot:before>
                     <thead class="thead-sticky text-left">
@@ -171,26 +172,3 @@ function clearAllFilters(): void {
 }
 
 </script>
-
-<style scoped>
-:deep(.thead-sticky tr > *),
-:deep(.tfoot-sticky tr > *) {
-    position: sticky;
-    opacity: 1;
-    z-index: 2;
-    background-color: #fff;
-}
-
-:deep(.q-markup-table.q-dark .thead-sticky tr > *),
-:deep(.q-markup-table.q-dark .tfoot-sticky tr > *) {
-    background-color: var(--q-dark);
-}
-
-:deep(.thead-sticky tr:last-child > *) {
-    top: 0;
-}
-
-:deep(.tfoot-sticky tr:first-child > *) {
-    bottom: 0;
-}
-</style>
