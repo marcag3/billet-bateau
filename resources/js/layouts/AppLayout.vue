@@ -54,15 +54,18 @@
                     />
                 </q-list>
             </q-scroll-area>
-            <q-img class="absolute-top" src="/icons/logo.jpg" alt="Brand logo" style="height: 150px">
-                <div class="absolute-bottom bg-transparent">
-                    <q-avatar size="56px" class="mb-2">
-                        <img src="/icons/logo.jpg" alt="Brand logo" />
-                    </q-avatar>
-                    <div class="text-weight-bold">
-                        {{ authStore.user?.name }}
+            <q-img
+                class="absolute-top"
+                :src="workspaceProgramBannerUrl"
+                :alt="workspaceProgramName"
+                style="height: 150px"
+            >
+                <div
+                    class="absolute-bottom bg-gradient-to-t from-black/70 to-transparent text-white px-3 pb-3 pt-8"
+                >
+                    <div class="text-weight-bold text-base leading-tight">
+                        {{ workspaceProgramName }}
                     </div>
-                    <div>{{ authStore.user?.email }}</div>
                 </div>
             </q-img>
         </q-drawer>
@@ -139,6 +142,8 @@ watch(
 
 const {
     isProgramWorkspace: hasSelectedProgram,
+    workspaceProgramName,
+    workspaceProgramBannerUrl,
     contextSwitcherOptions,
     currentContext,
     currentContextLabel,

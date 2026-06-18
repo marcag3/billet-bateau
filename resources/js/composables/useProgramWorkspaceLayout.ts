@@ -3,6 +3,8 @@ import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+import type { ProgramOutput } from "../powersync/programs.collection";
+import { programBannerUrlFromObjectKey } from "../utilities/program-banner-url";
 import {
     isProgramWorkspaceContext,
     PROGRAM_CONTEXT_HOME_ROUTE_NAMES,
@@ -104,6 +106,35 @@ export function useProgramWorkspaceLayout({
         return programLabelById.value.get(id) ?? id;
     });
 
+    const workspaceProgram = computed((): ProgramOutput | null => {
+        const id = workspaceProgramId.value;
+        if (id.length === 0) {
+            return null;
+        }
+        const idUpper = id.toUpperCase();
+        return (
+            programsList.value.find(
+                (p) => String(p.id).trim().toUpperCase() === idUpper,
+            ) ?? null
+        );
+    });
+
+    const workspaceProgramName = computed(() => {
+        const program = workspaceProgram.value;
+        if (program?.name != null && String(program.name).trim().length > 0) {
+            return String(program.name);
+        }
+        const id = workspaceProgramId.value;
+        if (id.length === 0) {
+            return "";
+        }
+        return programLabelById.value.get(id) ?? id;
+    });
+
+    const workspaceProgramBannerUrl = computed(() =>
+        programBannerUrlFromObjectKey(workspaceProgram.value?.banner_object_key),
+    );
+
     watch(
         [
             accessibleProgramIdsUpperSet,
@@ -173,6 +204,8 @@ export function useProgramWorkspaceLayout({
     return {
         isProgramWorkspace,
         workspaceProgramId,
+        workspaceProgramName,
+        workspaceProgramBannerUrl,
         contextSwitcherOptions,
         currentContext,
         currentContextLabel,
