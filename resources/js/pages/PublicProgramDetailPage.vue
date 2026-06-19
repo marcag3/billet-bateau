@@ -311,14 +311,13 @@ function goToTicketsStep(tripId: string): void {
     step.value = 2;
 }
 
-async function goToContactStep(): Promise<void> {
+function goToContactStep(): void {
     submitError.value = '';
     if (!canAccessStep3.value) {
         step.value = canAccessStep2.value ? 2 : 1;
         return;
     }
 
-    await loadBookingOptionsOnly();
     step.value = 3;
 }
 
