@@ -123,7 +123,7 @@ final class CreatePublicBookingAction
                 ->values()
                 ->all();
 
-            $providedAnswers = collect($data->custom_answers)
+            $providedAnswers = collect($data->custom_answers ?? [])
                 ->map(static fn ($answer): string => trim((string) $answer))
                 ->values()
                 ->all();

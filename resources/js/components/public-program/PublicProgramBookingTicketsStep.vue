@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="p-4">
         <q-card v-if="hasProductSummary" flat bordered class="mb-4">
             <q-img v-if="productBannerUrl != null" :src="productBannerUrl" :alt="productName ?? ''" height="180px"
                 fit="cover" />
@@ -17,7 +17,7 @@
         </div>
         <div v-else class="column gap-4">
             <div v-for="tt in ticketTypeOptions" :key="`tt-${String(tt.id)}`"
-                class="grid grid-cols-1 sm:grid-cols-2 items-center gap-2 md:gap-6 md:px-6">
+                class="grid grid-cols-2 items-center gap-2 md:gap-6 md:px-6">
                 <div>
                     <div class="text-subtitle1 text-weight-medium">{{ tt.title }}</div>
                     <div class="text-caption text-grey-7">{{ formatTicketTypePrice(tt) }}</div>
@@ -26,7 +26,7 @@
                     <div class="row items-start no-wrap justify-end">
                         <q-btn round dense flat color="primary" icon="remove" :disable="getTicketQuantity(tt.id) === 0"
                             @click="decrementTicketQuantity(tt.id)" />
-                        <q-input class="mx-2" dense outlined type="number" min="0"
+                        <q-input class="mx-0" dense outlined type="number" min="0"
                             :model-value="getTicketQuantity(tt.id)" :error="Boolean(getTicketErrorMessage(tt.id))"
                             :error-message="getTicketErrorMessage(tt.id)" input-class="text-center" style="width: 170px"
                             @update:model-value="setTicketQuantity(tt.id, $event)" @blur="markTicketTouched(tt.id)" />

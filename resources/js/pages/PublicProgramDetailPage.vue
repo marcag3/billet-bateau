@@ -311,13 +311,14 @@ function goToTicketsStep(tripId: string): void {
     step.value = 2;
 }
 
-function goToContactStep(): void {
+async function goToContactStep(): Promise<void> {
     submitError.value = '';
     if (!canAccessStep3.value) {
         step.value = canAccessStep2.value ? 2 : 1;
         return;
     }
 
+    await loadBookingOptionsOnly();
     step.value = 3;
 }
 
@@ -336,28 +337,31 @@ const onContactSubmit = handleSubmit(async (values) => {
         quantities[String(tt.id)] = q;
     }
 
-    const payload = {
+    const payload: Record<string, unknown> = {
         trip_id: String(trip.id),
         ticket_quantities: quantities,
         contact_name: String(values.contact_name).trim(),
         contact_email: String(values.contact_email).trim(),
         country: String(values.country).trim().toUpperCase(),
-        custom_answers: [] as string[],
         locale: String(locale.value) === 'fr' ? 'fr' : 'en',
     };
 
-    const answerErrors: Record<number, string> = {};
-    payload.custom_answers = customQuestions.value.map((question, index) => {
-        const answer = String(customAnswers.value[index] ?? '').trim();
-        if (answer.length === 0) {
-            answerErrors[index] = t('publicBooking.customAnswerRequired', { question });
-        }
+    if (customQuestions.value.length > 0) {
+        const answerErrors: Record<number, string> = {};
+        payload.custom_answers = customQuestions.value.map((question, index) => {
+            const answer = String(customAnswers.value[index] ?? '').trim();
+            if (answer.length === 0) {
+                answerErrors[index] = t('publicBooking.customAnswerRequired', { question });
+            }
 
-        return answer;
-    });
-    customAnswerErrors.value = answerErrors;
-    if (Object.keys(answerErrors).length > 0) {
-        return;
+            return answer;
+        });
+        customAnswerErrors.value = answerErrors;
+        if (Object.keys(answerErrors).length > 0) {
+            return;
+        }
+    } else {
+        customAnswerErrors.value = {};
     }
 
     try {

@@ -1,5 +1,5 @@
 <template>
-    <q-form class="column gap-4" @submit="emit('submit', $event)">
+    <q-form class="column gap-4 p-4" @submit="emit('submit', $event)">
         <q-banner v-if="submitError.length > 0" rounded class="bg-red-1 text-negative">
             {{ submitError }}
         </q-banner>
@@ -9,7 +9,7 @@
             :label="t('publicBooking.contactEmail')" />
         <AppCountrySelect v-model="country" v-bind="countryProps" :disable="isSubmitting"
             :label="t('publicBooking.country')" />
-        <div v-if="customQuestions.length > 0" >
+        <div v-if="customQuestions.length > 0">
             <q-input v-for="(question, index) in customQuestions" :key="`${index}-${question}`"
                 v-model="customAnswers[index]" outlined :disable="isSubmitting" :label="question"
                 :error="customAnswerErrors[index] !== undefined" :error-message="customAnswerErrors[index] ?? ''" />

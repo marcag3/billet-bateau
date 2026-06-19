@@ -342,6 +342,34 @@ class PublicBookingApiTest extends TestCase
         );
     }
 
+    public function test_store_accepts_explicit_empty_custom_answers_when_program_has_no_questions(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'slug' => 'empty-custom-answers',
+            'booking_questions' => [],
+        ]);
+
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+
+        $type = TicketType::factory()->forProgram($program)->create([
+            'min_per_purchase' => 1,
+            'max_per_purchase' => 10,
+        ]);
+
+        $this->postJson('/api/public/programs/empty-custom-answers/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'Alex River',
+            'contact_email' => 'alex@example.com',
+            'country' => 'CA',
+            'custom_answers' => [],
+        ])->assertCreated();
+    }
+
     public function test_store_sends_booking_confirmation_notification(): void
     {
         Notification::fake();
