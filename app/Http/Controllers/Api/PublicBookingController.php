@@ -19,7 +19,7 @@ class PublicBookingController extends Controller
     public function bookingOptions(Program $program): JsonResponse
     {
         $trips = $program->trips()
-            ->where('scheduled_departure_at', '>=', now())
+            ->publiclyBookable()
             ->orderBy('scheduled_departure_at')
             ->with([
                 'product' => static function ($query): void {

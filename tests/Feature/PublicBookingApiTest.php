@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\VoyageStatus;
 use App\Models\BoatType;
 use App\Models\Booking;
 use App\Models\BookingTicket;
@@ -9,6 +10,7 @@ use App\Models\Program;
 use App\Models\TicketType;
 use App\Models\Trip;
 use App\Models\User;
+use App\Models\Voyage;
 use App\Models\WaterRoute;
 use App\Notifications\BookingConfirmationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -143,6 +145,93 @@ class PublicBookingApiTest extends TestCase
         $this->getJson('/api/public/programs/past-only/booking-options')
             ->assertOk()
             ->assertJsonCount(0, 'data.trips');
+    }
+
+    public function test_booking_options_excludes_trips_with_boarding_started(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'is_active' => true,
+            'slug' => 'boarding-started',
+        ]);
+
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addDay(),
+        ]);
+
+        Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Ready,
+        ]);
+
+        $this->getJson('/api/public/programs/boarding-started/booking-options')
+            ->assertOk()
+            ->assertJsonCount(0, 'data.trips');
+    }
+
+    public function test_booking_options_excludes_ended_trips(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'is_active' => true,
+            'slug' => 'ended-trip',
+        ]);
+
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addDay(),
+        ]);
+
+        Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Completed,
+        ]);
+
+        $this->getJson('/api/public/programs/ended-trip/booking-options')
+            ->assertOk()
+            ->assertJsonCount(0, 'data.trips');
+    }
+
+    public function test_booking_options_includes_trips_with_draft_voyage_only(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'is_active' => true,
+            'slug' => 'draft-voyage',
+        ]);
+
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addDay(),
+        ]);
+
+        Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Draft,
+        ]);
+
+        $this->getJson('/api/public/programs/draft-voyage/booking-options')
+            ->assertOk()
+            ->assertJsonPath('data.trips.0.id', $trip->getKey());
+    }
+
+    public function test_store_rejects_trip_with_boarding_started(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['slug' => 'boarding-store']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+
+        Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Ready,
+        ]);
+
+        $type = TicketType::factory()->forProgram($program)->create();
+
+        $this->postJson('/api/public/programs/boarding-store/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+            'country' => 'CA',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['trip_id']);
     }
 
     public function test_booking_options_returns_404_for_inactive_program(): void

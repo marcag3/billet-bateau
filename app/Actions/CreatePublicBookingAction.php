@@ -44,7 +44,7 @@ final class CreatePublicBookingAction
                 ]);
             }
 
-            if ($trip->scheduled_departure_at->isPast()) {
+            if (! $trip->isPubliclyBookable()) {
                 throw ValidationException::withMessages([
                     'trip_id' => [__('This trip is no longer available for booking.')],
                 ]);
