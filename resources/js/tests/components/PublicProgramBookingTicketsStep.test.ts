@@ -19,6 +19,8 @@ describe('PublicProgramBookingTicketsStep', () => {
             is_pay_what_you_can: false,
             min_per_purchase: 1,
             max_per_purchase: null,
+            depends_on_ticket_type_id: null,
+            max_per_reference_ticket: null,
         },
     ];
 

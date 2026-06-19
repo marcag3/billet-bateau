@@ -106,7 +106,7 @@ jobs:
         run: ./vendor/bin/pint --test
 
       - name: Phpstan static analysis
-        run: ./vendor/bin/phpstan analyse
+        run: ./vendor/bin/phpstan analyse --memory-limit=512M
 
       - name: Generate key
         run: php artisan key:generate

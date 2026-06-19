@@ -33,14 +33,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toValue } from "vue";
+import { computed, toValue, type MaybeRefOrGetter } from "vue";
 
 const props = withDefaults(
     defineProps<{
         ready?: boolean;
         loadingTitle?: string;
         loadingSubcopy?: string;
-        errorMessage?: string;
+        errorMessage?: MaybeRefOrGetter<string>;
     }>(),
     {
         ready: false,

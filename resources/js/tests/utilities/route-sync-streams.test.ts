@@ -5,7 +5,9 @@ import { resolveRouteSyncStreams } from "../../utilities/route-sync-streams";
 function matched(
     meta: RouteLocationMatched["meta"],
 ): RouteLocationMatched[] {
-    return [{ meta, path: "", redirect: undefined, name: undefined, components: {} }];
+    return [
+        { meta, path: "", redirect: undefined, name: undefined, components: {} },
+    ] as RouteLocationMatched[];
 }
 
 describe("route-sync-streams", () => {

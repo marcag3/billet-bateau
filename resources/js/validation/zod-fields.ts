@@ -96,6 +96,34 @@ export function powerSyncNullableIsoDate() {
 }
 
 /**
+ * ISO datetime for PowerSync collection schemas (SQLite TEXT input).
+ * Preprocesses in-memory Date rows to ISO strings before parsing.
+ */
+export function powerSyncCollectionNullableIsoDate() {
+    const sqliteDate = z
+        .string()
+        .transform((v): Date | null => {
+            const trimmed = v.trim();
+            if (trimmed === '') {
+                return null;
+            }
+            return new Date(trimmed);
+        })
+        .nullable()
+        .default(null);
+
+    return z.preprocess(
+        (raw): unknown => {
+            if (raw instanceof Date) {
+                return raw.toISOString();
+            }
+            return raw;
+        },
+        sqliteDate,
+    ) as unknown as typeof sqliteDate;
+}
+
+/**
  * Boolean stored as INTEGER (0/1) in PowerSync SQLite.
  * Accepts sync/insert input (number) and in-memory rows (boolean) after deserialization.
  */

@@ -27,7 +27,7 @@ class TemplateDayDateFactory extends Factory
         ];
     }
 
-    protected function configure(): static
+    public function configure(): static
     {
         return $this->afterMaking(function (TemplateDayDate $model): void {
             $templateDayId = $model->template_day_id;

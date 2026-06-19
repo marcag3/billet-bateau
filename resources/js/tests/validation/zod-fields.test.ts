@@ -39,7 +39,7 @@ describe('voyagesSchema update merge', () => {
         const result = voyagesSchema.safeParse(merged);
         expect(result.success).toBe(true);
         if (result.success) {
-            expect(result.data.started_at).toBe(startedAt);
+            expect(result.data.started_at?.toISOString()).toBe(startedAt.toISOString());
             expect(result.data.status).toBe('completed');
         }
     });
