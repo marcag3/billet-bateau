@@ -124,6 +124,7 @@ import {
 import AppAuthFormLayout from "../components/ui/AppAuthFormLayout.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import { useAuthStore } from "../store/auth.store";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import {
     buildJsonHeaders,
     fetchWith419Retry,
@@ -136,6 +137,7 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const powersync = getAppPowerSyncContext();
 
 const loading = ref(true);
 const errorMessage = ref("");
@@ -249,6 +251,15 @@ function firstValidationMessage(
     return null;
 }
 
+async function finishInviteAccept(): Promise<void> {
+    await authStore.refreshSession({
+        markInitialized: true,
+        silent: true,
+    });
+    await powersync.teardownAppPowerSync();
+    await router.replace({ name: "programs.list" });
+}
+
 async function acceptAuthenticated() {
     const tkn = token.value;
     if (tkn.length !== 64 || preview.value === null || !preview.value.valid) {
@@ -285,11 +296,7 @@ async function acceptAuthenticated() {
             return;
         }
 
-        await authStore.refreshSession({
-            markInitialized: true,
-            silent: true,
-        });
-        await router.replace({ name: "programs.list" });
+        await finishInviteAccept();
     } catch (error) {
         errorMessage.value =
             error instanceof Error ? error.message : t("programsInvite.acceptFailed");
@@ -338,11 +345,7 @@ async function acceptAsGuest() {
             return;
         }
 
-        await authStore.refreshSession({
-            markInitialized: true,
-            silent: true,
-        });
-        await router.replace({ name: "programs.list" });
+        await finishInviteAccept();
     } catch (error) {
         errorMessage.value =
             error instanceof Error ? error.message : t("programsInvite.acceptFailed");

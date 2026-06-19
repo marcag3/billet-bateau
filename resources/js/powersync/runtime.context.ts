@@ -1,6 +1,6 @@
 import type { Ref, ShallowRef } from "vue";
 import type { PowerSyncDatabase } from "@powersync/web";
-import { bootstrapAppPowerSync } from "./bootstrap";
+import { bootstrapAppPowerSync, teardownAppPowerSync } from "./bootstrap";
 import { refreshOutboxSnapshot, useAppPowerSyncOutbox } from "./outbox";
 import {
     activeProgramIdRef,
@@ -31,6 +31,7 @@ export type AppPowerSyncContext = {
     setActiveProgramId: typeof setActiveProgramId;
     getActiveProgramIdRef: typeof getActiveProgramIdRef;
     bootstrapAppPowerSync: typeof bootstrapAppPowerSync;
+    teardownAppPowerSync: typeof teardownAppPowerSync;
     refreshOutboxSnapshot: typeof refreshOutboxSnapshot;
     useAppPowerSyncOutbox: typeof useAppPowerSyncOutbox;
     useSyncHealth: typeof useSyncHealth;
@@ -55,6 +56,7 @@ const appPowerSyncContext: AppPowerSyncContext = {
     setActiveProgramId,
     getActiveProgramIdRef,
     bootstrapAppPowerSync,
+    teardownAppPowerSync,
     refreshOutboxSnapshot,
     useAppPowerSyncOutbox,
     useSyncHealth,

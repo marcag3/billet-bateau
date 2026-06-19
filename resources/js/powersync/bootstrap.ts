@@ -73,17 +73,65 @@ function applyCurrentPowerSyncStatus(db: PowerSyncDatabase): void {
     handlePowerSyncStatusChanged(db.currentStatus);
 }
 
+export async function teardownAppPowerSync(): Promise<void> {
+    if (runtimeState.bootstrapPromise !== null) {
+        try {
+            await runtimeState.bootstrapPromise;
+        } catch {
+            // Bootstrap may have failed; still tear down partial state.
+        }
+    }
+
+    runtimeState.setBootstrapPromise(null);
+    runtimeState.hasBootstrappedCollection.value = false;
+    runtimeState.initialUserScopeSyncComplete.value = false;
+    runtimeState.initialProgramScopeSyncComplete.value = false;
+    runtimeState.setPowerSyncConnectorConnected(false);
+    runtimeState.currentUserIdRef.value = "";
+
+    detachAllPowerSyncStreams();
+
+    runtimeState.powerSyncStatusUnsubscribe?.();
+    runtimeState.setPowerSyncStatusUnsubscribe(null);
+
+    const dbToClose = runtimeState.powerSyncDbRef.value;
+    runtimeState.powerSyncDbRef.value = null;
+    if (dbToClose) {
+        try {
+            await dbToClose.close();
+        } catch (closeError) {
+            console.error("PowerSync close failed during teardown:", closeError);
+        }
+    }
+
+    for (const ref of Object.values(runtimeState.collectionRefs)) {
+        ref.value = null;
+    }
+
+    resetSyncHealthSnapshot();
+    runtimeState.errorMessage.value = "";
+    runtimeState.outboxCommitError.value = "";
+    runtimeState.outboxPendingCount.value = 0;
+}
+
 export async function bootstrapAppPowerSync(): Promise<void> {
     trackBrowserOnlineForSyncHealth();
 
+    const authenticatedUserId = await resolveAuthenticatedUserId();
+
     if (
         runtimeState.hasBootstrappedCollection.value &&
-        runtimeState.powerSyncDbRef.value
+        runtimeState.powerSyncDbRef.value &&
+        runtimeState.currentUserIdRef.value === authenticatedUserId
     ) {
         runtimeState.errorMessage.value = "";
         publishSyncHealthSnapshot();
         applyCurrentPowerSyncStatus(runtimeState.powerSyncDbRef.value);
         return;
+    }
+
+    if (runtimeState.powerSyncDbRef.value !== null) {
+        await teardownAppPowerSync();
     }
 
     if (runtimeState.bootstrapPromise !== null) {
@@ -98,8 +146,7 @@ export async function bootstrapAppPowerSync(): Promise<void> {
             runtimeState.setPowerSyncConnectorConnected(false);
             runtimeState.initialUserScopeSyncComplete.value = false;
             runtimeState.initialProgramScopeSyncComplete.value = false;
-            runtimeState.currentUserIdRef.value =
-                await resolveAuthenticatedUserId();
+            runtimeState.currentUserIdRef.value = authenticatedUserId;
 
             const db = new PowerSyncDatabase({
                 schema: appPowerSyncSchema,
@@ -141,32 +188,7 @@ export async function bootstrapAppPowerSync(): Promise<void> {
             await refreshOutboxSnapshot();
         } catch (error) {
             console.error("PowerSync bootstrap failed:", error);
-            runtimeState.setBootstrapPromise(null);
-            runtimeState.hasBootstrappedCollection.value = false;
-            runtimeState.initialUserScopeSyncComplete.value = false;
-            runtimeState.initialProgramScopeSyncComplete.value = false;
-            runtimeState.setPowerSyncConnectorConnected(false);
-
-            detachAllPowerSyncStreams();
-
-            runtimeState.powerSyncStatusUnsubscribe?.();
-            runtimeState.setPowerSyncStatusUnsubscribe(null);
-
-            const dbToClose = runtimeState.powerSyncDbRef.value;
-            runtimeState.powerSyncDbRef.value = null;
-            if (dbToClose) {
-                try {
-                    await dbToClose.close();
-                } catch (closeError) {
-                    console.error(
-                        "PowerSync close failed during bootstrap recovery:",
-                        closeError,
-                    );
-                }
-            }
-            for (const ref of Object.values(runtimeState.collectionRefs)) {
-                ref.value = null;
-            }
+            await teardownAppPowerSync();
             runtimeState.persistenceUnavailable.value = true;
             runtimeState.errorMessage.value =
                 error instanceof Error

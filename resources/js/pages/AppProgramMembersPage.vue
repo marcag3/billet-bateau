@@ -168,7 +168,7 @@
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
@@ -277,6 +277,15 @@ async function loadMembership(): Promise<void> {
 }
 
 watch(
+    () => (programMemberships.value ?? []).length,
+    () => {
+        if (hasBootstrapped.value && isOwner.value) {
+            void loadMembership();
+        }
+    },
+);
+
+watch(
     [programId, isOwner, hasBootstrapped],
     () => {
         inviteSuccess.value = false;
@@ -287,6 +296,24 @@ watch(
     },
     { immediate: true },
 );
+
+function onDocumentVisibilityChange(): void {
+    if (
+        document.visibilityState === "visible" &&
+        hasBootstrapped.value &&
+        isOwner.value
+    ) {
+        void loadMembership();
+    }
+}
+
+onMounted(() => {
+    document.addEventListener("visibilitychange", onDocumentVisibilityChange);
+});
+
+onUnmounted(() => {
+    document.removeEventListener("visibilitychange", onDocumentVisibilityChange);
+});
 
 async function onInviteSubmit(): Promise<void> {
     inviteError.value = "";

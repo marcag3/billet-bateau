@@ -55,7 +55,7 @@ streams:
           user_id,
           role
         FROM program_user
-        WHERE user_id = auth.user_id()
+        WHERE program_id IN accessible_program_ids
       - |
         SELECT id, name, staff_user_id
         FROM guides

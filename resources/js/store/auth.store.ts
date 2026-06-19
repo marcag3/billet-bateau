@@ -8,6 +8,7 @@ import {
 } from "../models/auth.api";
 import { translate } from "../utilities/i18n";
 import { setActiveProgramId } from "../powersync/app-powersync.runtime";
+import { teardownAppPowerSync } from "../powersync/bootstrap";
 
 const AUTH_MARKER_STORAGE_KEY = "app.hasAuthenticatedOnce";
 
@@ -183,6 +184,7 @@ export const useAuthStore = defineStore("auth", {
             await logoutRequest();
 
             setActiveProgramId("");
+            await teardownAppPowerSync();
 
             this.isAuthenticated = false;
             this.user = null;
