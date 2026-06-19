@@ -46,35 +46,6 @@
                 </template>
             </AppProgramForm>
         </AppCardSection>
-
-        <AppCardSection v-if="hasBootstrapped && canInviteAdmins && !showNotFound"
-            :label="t('programsInvite.editSectionTitle')" class="mt-6">
-            <p class="text-body2 text-grey-8">
-                {{ t("programsInvite.editSectionSubtitle") }}
-            </p>
-            <q-form class="column gap-4" @submit.prevent="onInviteSubmit">
-                <AppAlertBanner v-if="inviteError.length > 0" variant="error">
-                    {{ inviteError }}
-                </AppAlertBanner>
-                <AppAlertBanner v-if="inviteSuccess" variant="info">
-                    {{ t("programsInvite.inviteSent") }}
-                </AppAlertBanner>
-                <q-input v-model="inviteEmail" type="email" outlined :label="t('programsInvite.emailLabel')"
-                    :disable="inviteSubmitting" autocomplete="off" />
-                <q-btn
-                    color="primary"
-                    type="submit"
-                    class="self-start"
-                    :loading="inviteSubmitting"
-                    :disable="inviteSubmitting"
-                    :label="t('programsInvite.sendInvite')"
-                />
-            </q-form>
-        </AppCardSection>
-
-        <AppAlertBanner v-else-if="hasBootstrapped && !canInviteAdmins && !showNotFound" variant="info" class="mt-6">
-            {{ t("programsInvite.notOwner") }}
-        </AppAlertBanner>
     </q-page>
 </template>
 
@@ -93,17 +64,12 @@ import {
 import type { ProgramFormSubmitPayload } from "../models/programs/program-form";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import type { ProgramOutput } from "../powersync/programs.collection";
-import type { ProgramUserOutput } from "../powersync/program-user.collection";
 import { programBannerPreviewUrlFromObjectKey } from "../utilities/program-banner-url";
 import { parseProgramBookingQuestions } from "../utilities/program-booking-questions";
-import { canInviteProgramAdmins } from "../utilities/program-membership";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
 import AppCardSection from "../components/ui/AppCardSection.vue";
 import AppProgramForm from "../components/molecules/AppProgramForm.vue";
-import {
-    sendProgramAdminInvitation,
-} from "../models/programs/program-invitations.api";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
 
@@ -115,7 +81,6 @@ const { confirm } = useConfirmDialog();
 const { notifyError } = useNotifyErrorFromCatch();
 const powersync = getAppPowerSyncContext();
 const programsCollection = powersync.collections.programs;
-const programUsersCollection = powersync.collections.program_user;
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const { data: programs } = useLiveQuery(
@@ -128,23 +93,9 @@ const { data: programs } = useLiveQuery(
     [programsCollection, programId],
 );
 
-const { data: programMemberships } = useLiveQuery(
-    (queryBuilder) => {
-        const col = programUsersCollection.value;
-        const pid = programId.value;
-        if (!col || pid.length === 0) return undefined;
-        return queryBuilder.from({ m: col }).where(({ m }) => eq(m.program_id, pid));
-    },
-    [programUsersCollection, programId],
-);
-
 const errorMessage = ref("");
-const isDeleting = ref(false);
 
-const inviteEmail = ref("");
-const inviteSubmitting = ref(false);
-const inviteError = ref("");
-const inviteSuccess = ref(false);
+const isDeleting = ref(false);
 
 const hasBootstrapped = powersync.hasBootstrappedCollection;
 const currentProgram = computed<ProgramOutput | null>(() => {
@@ -161,25 +112,6 @@ const currentProgram = computed<ProgramOutput | null>(() => {
     });
     return row ? (row as unknown as ProgramOutput) : null;
 });
-
-const currentMembershipRole = computed((): string | null => {
-    const row = (programMemberships.value ?? []).find((candidateRow) => {
-        if (candidateRow == null) {
-            return false;
-        }
-        const membership = candidateRow as unknown as ProgramUserOutput;
-        return String(membership.program_id) === programId.value;
-    });
-    if (row == null) {
-        return null;
-    }
-    const membership = row as unknown as ProgramUserOutput;
-    return membership.role ?? null;
-});
-
-const canInviteAdmins = computed(() =>
-    canInviteProgramAdmins(currentMembershipRole.value),
-);
 
 const showNotFound = computed(() => {
     if (!hasBootstrapped.value) {
@@ -226,42 +158,11 @@ const bookingQuestionSeed = computed((): string[] | null => {
 });
 
 watch(programId, () => {
-    inviteSuccess.value = false;
-    inviteError.value = "";
     currentProgramBannerUrlRemote.value = "";
 });
 
 function onBannerUploaded(publicUrl: string): void {
     currentProgramBannerUrlRemote.value = publicUrl;
-}
-
-async function onInviteSubmit() {
-    inviteError.value = "";
-    inviteSuccess.value = false;
-
-    const id = programId.value;
-    const email = inviteEmail.value.trim();
-    if (id.length === 0) {
-        return;
-    }
-    if (email.length === 0) {
-        inviteError.value = t("programsInvite.invalidEmail");
-        return;
-    }
-
-    inviteSubmitting.value = true;
-    try {
-        await sendProgramAdminInvitation(id, email);
-        inviteSuccess.value = true;
-        inviteEmail.value = "";
-    } catch (error) {
-        inviteError.value =
-            error instanceof Error
-                ? error.message
-                : t("programsInvite.sendFailed");
-    } finally {
-        inviteSubmitting.value = false;
-    }
 }
 
 async function onUpdateProgram({

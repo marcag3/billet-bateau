@@ -118,6 +118,15 @@ const programScopeChildren: RouteRecordRaw[] = [
                     syncStreams: ["user_scope"],
                 },
             },
+            {
+                path: "members",
+                name: "programs.members",
+                component: () => import("../pages/AppProgramMembersPage.vue"),
+                meta: {
+                    ...scopedProgramMeta,
+                    syncStreams: ["user_scope"],
+                },
+            },
         ],
     },
     {

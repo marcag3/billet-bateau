@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\PowerSyncUploadController;
 use App\Http\Controllers\Api\PresignUploadController;
 use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\ProgramInvitationController;
+use App\Http\Controllers\Api\ProgramMembershipController;
 use App\Http\Controllers\Api\PublicBookingController;
 use App\Http\Controllers\Api\PublicProgramController;
 use App\Http\Controllers\Auth\ProfileController;
@@ -37,6 +38,20 @@ Route::middleware(['web', 'auth:sanctum', 'throttle:60,1'])->group(function (): 
     Route::post('/programs/{programId}/invitations', [ProgramInvitationController::class, 'store'])
         ->whereUlid('programId')
         ->name('api.programs.invitations.store');
+    Route::get('/programs/{programId}/membership', [ProgramMembershipController::class, 'index'])
+        ->whereUlid('programId')
+        ->name('api.programs.membership.index');
+    Route::delete('/programs/{programId}/members/{userId}', [ProgramMembershipController::class, 'destroyMember'])
+        ->whereUlid('programId')
+        ->whereUlid('userId')
+        ->name('api.programs.members.destroy');
+    Route::delete('/programs/{programId}/invitations/{invitationId}', [ProgramMembershipController::class, 'destroyInvitation'])
+        ->whereUlid('programId')
+        ->whereUlid('invitationId')
+        ->name('api.programs.invitations.destroy');
+    Route::post('/programs/{programId}/transfer-ownership', [ProgramMembershipController::class, 'transferOwnership'])
+        ->whereUlid('programId')
+        ->name('api.programs.transfer-ownership');
 
     Route::post('/presign-upload', [PresignUploadController::class, 'presignUpload'])
         ->name('api.presign-upload');

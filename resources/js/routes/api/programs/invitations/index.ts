@@ -51,8 +51,60 @@ store.post = (args: { programId: string | number } | [programId: string | number
     method: 'post',
 })
 
+/**
+* @see \App\Http\Controllers\Api\ProgramMembershipController::destroy
+* @see app/Http/Controllers/Api/ProgramMembershipController.php:40
+* @route '/api/programs/{programId}/invitations/{invitationId}'
+*/
+export const destroy = (args: { programId: string | number, invitationId: string | number } | [programId: string | number, invitationId: string | number ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: destroy.url(args, options),
+    method: 'delete',
+})
+
+destroy.definition = {
+    methods: ["delete"],
+    url: '/api/programs/{programId}/invitations/{invitationId}',
+} satisfies RouteDefinition<["delete"]>
+
+/**
+* @see \App\Http\Controllers\Api\ProgramMembershipController::destroy
+* @see app/Http/Controllers/Api/ProgramMembershipController.php:40
+* @route '/api/programs/{programId}/invitations/{invitationId}'
+*/
+destroy.url = (args: { programId: string | number, invitationId: string | number } | [programId: string | number, invitationId: string | number ], options?: RouteQueryOptions) => {
+    if (Array.isArray(args)) {
+        args = {
+            programId: args[0],
+            invitationId: args[1],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        programId: args.programId,
+        invitationId: args.invitationId,
+    }
+
+    return destroy.definition.url
+            .replace('{programId}', parsedArgs.programId.toString())
+            .replace('{invitationId}', parsedArgs.invitationId.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\ProgramMembershipController::destroy
+* @see app/Http/Controllers/Api/ProgramMembershipController.php:40
+* @route '/api/programs/{programId}/invitations/{invitationId}'
+*/
+destroy.delete = (args: { programId: string | number, invitationId: string | number } | [programId: string | number, invitationId: string | number ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: destroy.url(args, options),
+    method: 'delete',
+})
+
 const invitations = {
     store: Object.assign(store, store),
+    destroy: Object.assign(destroy, destroy),
 }
 
 export default invitations

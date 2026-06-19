@@ -1,5 +1,5 @@
 <template>
-    <q-page>
+    <q-page class="p-4">
 
         <h1 class="text-h3 mb-2 text-weight-bold">{{ t('common.welcome') }}</h1>
         <p class="text-body1 text-grey-8 mb-6">{{ t('publicHome.description') }}</p>
@@ -15,26 +15,32 @@
             </p>
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <div v-for="program in items" :key="program.id">
-                    <q-card v-ripple class="cursor-pointer transition-[transform,box-shadow,border-color] duration-[180ms] hover:-translate-y-[3px] hover:shadow-[0_16px_30px_hsla(226,97%,12%,0.15)] hover:border-[hsla(358,84%,52%,0.36)]" @click="goProgram(program)">
-                        <q-img :src="programBannerUrlFromUrl(program.image_url)" :alt="program.name" :ratio="1 / 1">
-                            <div class="absolute-bottom">
-                                <div class="text-h6">{{ program.name }}</div>
-                                <p v-if="program.description" class="text-subtitle2">
-                                    {{ program.description }}
-                                </p>
-                                <div v-if="addressDisplayLines(program).length"
-                                    class="row no-wrap items-start text-body2 text-grey-7 gap-2">
-                                    <q-icon name="place" size="sm" class="pt-1" />
-                                    <div>
-                                        <div v-for="(line, i) in addressDisplayLines(
-                                            program,
-                                        )" :key="`addr-${String(program.id)}-${i}`">
-                                            {{ line }}
-                                        </div>
+                    <q-card v-ripple
+                        class="cursor-pointer transition-[transform,box-shadow,border-color] duration-[180ms] hover:-translate-y-[3px] hover:shadow-[0_16px_30px_hsla(226,97%,12%,0.15)] hover:border-[hsla(358,84%,52%,0.36)]"
+                        @click="goProgram(program)">
+                        <q-img :src="programBannerUrlFromUrl(program.image_url)" :alt="program.name" :ratio="16 / 9">
+
+                        </q-img>
+                        <q-card-section>
+                            <div class="text-h6">{{ program.name }}</div>
+                            <p v-if="program.description" class="text-subtitle2">
+                                {{ program.description }}
+                            </p>
+                            <div v-if="addressDisplayLines(program).length"
+                                class="row no-wrap items-start text-body2 text-grey-7 gap-2">
+                                <q-icon name="place" size="sm" class="pt-1" />
+                                <div>
+                                    <div v-for="(line, i) in addressDisplayLines(
+                                        program,
+                                    )" :key="`addr-${String(program.id)}-${i}`">
+                                        {{ line }}
                                     </div>
                                 </div>
                             </div>
-                        </q-img>
+
+                            <q-btn color="primary" :label="t('publicHome.viewProgram')"
+                                :to="{ name: 'public.program', params: { identifier: program.path_segment } }" />
+                        </q-card-section>
                     </q-card>
                 </div>
             </div>

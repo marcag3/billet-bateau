@@ -167,6 +167,41 @@ export default {
         sendFailed: "Impossible d'envoyer l'invitation.",
         fieldRequired: "Ce champ est requis.",
     },
+    programsMembers: {
+        title: "Membres du programme",
+        navLabel: "Membres",
+        notOwner:
+            "Seul le proprietaire du programme peut gerer les membres du programme.",
+        inviteSectionTitle: "Inviter des administrateurs",
+        inviteSectionSubtitle:
+            "Les personnes invitees deviennent administratrices du programme avec un acces complet.",
+        pendingSectionTitle: "Invitations en attente",
+        pendingEmpty: "Aucune invitation en attente.",
+        membersSectionTitle: "Membres",
+        membersEmpty: "Aucun membre trouve.",
+        roleOwner: "Proprietaire",
+        roleAdmin: "Administrateur",
+        expiresLabel: "Expire le {date}",
+        revokeInvite: "Revoquer l'invitation",
+        revokeInviteConfirmTitle: "Revoquer l'invitation?",
+        revokeInviteConfirmMessage:
+            "Revoquer l'invitation envoyee a {email}? Cette personne ne pourra plus l'accepter.",
+        revokeInviteSuccess: "Invitation revoquee.",
+        removeAccess: "Retirer l'acces",
+        removeConfirmTitle: "Retirer le membre?",
+        removeConfirmMessage:
+            "Retirer {name} de ce programme? Cette personne perdra tout acces.",
+        removeSuccess: "Membre retire.",
+        transferOwnership: "Transferer la propriete",
+        transferConfirmTitle: "Transferer la propriete?",
+        transferConfirmMessage:
+            "Nommer {name} proprietaire du programme? Vous resterez sur le programme en tant qu'administrateur.",
+        transferSuccess: "Propriete transferee.",
+        loadFailed: "Impossible de charger les membres du programme.",
+        removeFailed: "Impossible de retirer le membre.",
+        revokeInviteFailed: "Impossible de revoquer l'invitation.",
+        transferFailed: "Impossible de transferer la propriete.",
+    },
     notFoundPage: {
         title: "Page introuvable",
         description: "Cette page n'existe pas ou le lien est incorrect.",
@@ -256,6 +291,7 @@ export default {
     publicHome: {
         description: "Parcourez les programmes et trouvez votre prochaine aventure.",
         noPrograms: "Aucun programme n’est publié pour le moment.",
+        viewProgram: "Voir le programme",
         loadError: "Impossible de charger les programmes. Reessayez plus tard.",
     },
     publicProgram: {

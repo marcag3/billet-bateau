@@ -158,6 +158,40 @@ export default {
         sendFailed: "Could not send the invitation.",
         fieldRequired: "This field is required.",
     },
+    programsMembers: {
+        title: "Program members",
+        navLabel: "Members",
+        notOwner: "Only the program owner can manage program members.",
+        inviteSectionTitle: "Invite administrators",
+        inviteSectionSubtitle:
+            "Invited users become program administrators with full management access.",
+        pendingSectionTitle: "Pending invitations",
+        pendingEmpty: "No pending invitations.",
+        membersSectionTitle: "Members",
+        membersEmpty: "No members found.",
+        roleOwner: "Owner",
+        roleAdmin: "Admin",
+        expiresLabel: "Expires {date}",
+        revokeInvite: "Revoke invitation",
+        revokeInviteConfirmTitle: "Revoke invitation?",
+        revokeInviteConfirmMessage:
+            "Revoke the invitation sent to {email}? They will no longer be able to accept it.",
+        revokeInviteSuccess: "Invitation revoked.",
+        removeAccess: "Remove access",
+        removeConfirmTitle: "Remove member?",
+        removeConfirmMessage:
+            "Remove {name} from this program? They will lose all access.",
+        removeSuccess: "Member removed.",
+        transferOwnership: "Transfer ownership",
+        transferConfirmTitle: "Transfer ownership?",
+        transferConfirmMessage:
+            "Make {name} the program owner? You will remain on the program as an administrator.",
+        transferSuccess: "Ownership transferred.",
+        loadFailed: "Could not load program members.",
+        removeFailed: "Could not remove member.",
+        revokeInviteFailed: "Could not revoke invitation.",
+        transferFailed: "Could not transfer ownership.",
+    },
     notFoundPage: {
         title: "Page not found",
         description: "This page does not exist or the link may be incorrect.",
@@ -244,6 +278,7 @@ export default {
     publicHome: {
         description: "Browse programs and find your next adventure.",
         noPrograms: "No programs are published yet.",
+        viewProgram: "View program",
         loadError: "Unable to load programs. Please try again later.",
     },
     publicProgram: {

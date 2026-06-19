@@ -54,7 +54,8 @@
                 </q-card>
             </section>
 
-            <q-stepper v-else-if="hasBookingFlow" v-model="step" color="primary" animated flat bordered>
+            <q-stepper v-else-if="hasBookingFlow" v-model="step" color="primary" animated flat bordered
+                class="public-booking-stepper">
                 <q-step :name="1" :title="t('publicBooking.stepTrip')" :done="step > 1">
                     <PublicProgramBookingTripStep :key="tripStepResetKey" :trip-options="tripOptions"
                         v-model:selected-product-id="selectedTripProductId"
@@ -75,10 +76,10 @@
                     <PublicProgramBookingContactStep v-model:contact-name="contactName"
                         v-model:contact-email="contactEmail" v-model:country="country"
                         :contact-name-props="contactNameProps" :contact-email-props="contactEmailProps"
-                        :country-props="countryProps" :submit-error="submitError"
-                        v-model:custom-answers="customAnswers" :custom-questions="customQuestions"
-                        :custom-answer-errors="customAnswerErrors" :is-submitting="isSubmitting"
-                        :can-submit="canSubmitContactStep" @back="step = 2" @submit="onContactSubmit" />
+                        :country-props="countryProps" :submit-error="submitError" v-model:custom-answers="customAnswers"
+                        :custom-questions="customQuestions" :custom-answer-errors="customAnswerErrors"
+                        :is-submitting="isSubmitting" :can-submit="canSubmitContactStep" @back="step = 2"
+                        @submit="onContactSubmit" />
                 </q-step>
             </q-stepper>
 
@@ -418,3 +419,9 @@ watch(step, (nextStep) => {
     }
 });
 </script>
+
+<style scoped>
+.public-booking-stepper :deep(.q-stepper__step-inner) {
+    padding-inline: 0;
+}
+</style>

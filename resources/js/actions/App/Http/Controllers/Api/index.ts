@@ -4,6 +4,7 @@ import PowerSyncCredentialsController from './PowerSyncCredentialsController'
 import PowerSyncUploadController from './PowerSyncUploadController'
 import ProgramController from './ProgramController'
 import ProgramInvitationController from './ProgramInvitationController'
+import ProgramMembershipController from './ProgramMembershipController'
 import PresignUploadController from './PresignUploadController'
 
 const Api = {
@@ -13,6 +14,7 @@ const Api = {
     PowerSyncUploadController: Object.assign(PowerSyncUploadController, PowerSyncUploadController),
     ProgramController: Object.assign(ProgramController, ProgramController),
     ProgramInvitationController: Object.assign(ProgramInvitationController, ProgramInvitationController),
+    ProgramMembershipController: Object.assign(ProgramMembershipController, ProgramMembershipController),
     PresignUploadController: Object.assign(PresignUploadController, PresignUploadController),
 }
 
