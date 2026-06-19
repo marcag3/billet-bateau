@@ -12,5 +12,6 @@ final class PublicBookingCreatedData extends Data
         public int $total_tickets,
         public string $contact_name,
         public string $contact_email,
+        public string $cancel_token,
     ) {}
 }

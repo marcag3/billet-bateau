@@ -17,6 +17,7 @@ class BookingConfirmationNotification extends Notification
     public function __construct(
         public Booking $booking,
         public ?string $mailLocale = null,
+        public ?string $plainCancelToken = null,
     ) {}
 
     /**
@@ -82,6 +83,15 @@ class BookingConfirmationNotification extends Notification
                 'mime' => 'text/calendar',
                 'charset' => 'utf-8',
             ]);
+        }
+
+        if ($this->plainCancelToken !== null && $this->plainCancelToken !== '') {
+            $message
+                ->line(__('Pour annuler votre réservation, utilisez le bouton ci-dessous.'))
+                ->action(
+                    __('Annuler la réservation'),
+                    url('/bookings/cancel/'.$this->plainCancelToken),
+                );
         }
 
         return $message->line(__('Conservez ce courriel pour votre référence.'));

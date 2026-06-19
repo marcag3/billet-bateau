@@ -436,7 +436,8 @@ class PublicBookingApiTest extends TestCase
             'custom_fields' => [],
         ]);
 
-        $mail = (new BookingConfirmationNotification($booking))->toMail(
+        $plainToken = Str::random(64);
+        $mail = (new BookingConfirmationNotification($booking, mailLocale: 'fr', plainCancelToken: $plainToken))->toMail(
             Notification::route('mail', 'alex@example.com'),
         );
 
@@ -446,6 +447,11 @@ class PublicBookingApiTest extends TestCase
                 static fn (string $line): bool => str_contains($line, '2 × Adult') || str_contains($line, 'Adult'),
             ),
         );
+        $this->assertSame(
+            url('/bookings/cancel/'.$plainToken),
+            $mail->actionUrl,
+        );
+        $this->assertStringContainsString('Annuler la réservation', (string) $mail->actionText);
 
         $this->assertCount(1, $mail->rawAttachments);
         $attachment = $mail->rawAttachments[0];
@@ -472,12 +478,14 @@ class PublicBookingApiTest extends TestCase
             'contact_email' => 'alex@example.com',
         ]);
 
-        $mail = (new BookingConfirmationNotification($booking, mailLocale: 'en'))->toMail(
+        $plainToken = Str::random(64);
+        $mail = (new BookingConfirmationNotification($booking, mailLocale: 'en', plainCancelToken: $plainToken))->toMail(
             Notification::route('mail', 'alex@example.com'),
         );
 
         $this->assertStringContainsString('Booking confirmation', (string) $mail->subject);
         $this->assertStringContainsString('Hello Alex River', (string) $mail->greeting);
+        $this->assertSame('Cancel booking', (string) $mail->actionText);
     }
 
     public function test_booking_confirmation_notification_mail_renders_in_french_when_locale_fr(): void

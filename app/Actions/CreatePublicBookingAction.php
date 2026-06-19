@@ -158,6 +158,7 @@ final class CreatePublicBookingAction
             }
 
             $bookingId = (string) Str::ulid();
+            $plainCancelToken = Str::random(64);
 
             Booking::query()->create([
                 'id' => $bookingId,
@@ -165,6 +166,7 @@ final class CreatePublicBookingAction
                 'trip_id' => $trip->getKey(),
                 'contact_name' => $data->contact_name,
                 'contact_email' => $data->contact_email,
+                'cancel_token_hash' => hash('sha256', $plainCancelToken),
             ]);
 
             foreach ($nonZeroQuantities as $ticketTypeId => $quantity) {
@@ -188,6 +190,7 @@ final class CreatePublicBookingAction
                 total_tickets: $totalTickets,
                 contact_name: $data->contact_name,
                 contact_email: $data->contact_email,
+                cancel_token: $plainCancelToken,
             );
         });
 
@@ -195,7 +198,11 @@ final class CreatePublicBookingAction
         $locale = AppLocale::normalize($data->locale);
 
         Notification::route('mail', $created->contact_email)
-            ->notify(new BookingConfirmationNotification($booking, mailLocale: $locale));
+            ->notify(new BookingConfirmationNotification(
+                $booking,
+                mailLocale: $locale,
+                plainCancelToken: $created->cancel_token,
+            ));
 
         return $created;
     }

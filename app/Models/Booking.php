@@ -23,6 +23,7 @@ class Booking extends Model
         'trip_id',
         'contact_name',
         'contact_email',
+        'cancel_token_hash',
         'created_at',
         'updated_at',
     ];

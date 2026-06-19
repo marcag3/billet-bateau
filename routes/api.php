@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\PresignUploadController;
 use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\ProgramInvitationController;
 use App\Http\Controllers\Api\ProgramMembershipController;
+use App\Http\Controllers\Api\PublicBookingCancelController;
 use App\Http\Controllers\Api\PublicBookingController;
 use App\Http\Controllers\Api\PublicProgramController;
 use App\Http\Controllers\Auth\ProfileController;
@@ -23,6 +24,12 @@ Route::prefix('public')->middleware('throttle:120,1')->group(function (): void {
     Route::post('programs/{program:slug}/bookings', [PublicBookingController::class, 'store'])
         ->where('program', '[^/]+')
         ->name('api.public.programs.bookings.store');
+    Route::get('bookings/cancel/{token}', [PublicBookingCancelController::class, 'show'])
+        ->where('token', '[A-Za-z0-9]{64}')
+        ->name('api.public.bookings.cancel.show');
+    Route::post('bookings/cancel/{token}', [PublicBookingCancelController::class, 'cancel'])
+        ->where('token', '[A-Za-z0-9]{64}')
+        ->name('api.public.bookings.cancel.destroy');
 });
 
 Route::middleware(['web', 'throttle:60,1'])->group(function (): void {

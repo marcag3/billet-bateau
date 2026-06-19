@@ -1,5 +1,6 @@
 {
     ":count × :title": ":count × :title",
+    "Annuler la réservation": "Cancel booking",
     "Billet": "Ticket",
     "Billets : :summary": "Tickets: :summary",
     "Bonjour :name,": "Hello :name,",
@@ -8,6 +9,11 @@
     "Contact : :name": "Contact: :name",
     "Départ : :departure": "Departure: :departure",
     "Merci pour votre réservation pour :program.": "Thank you for booking with :program.",
+    "Pour annuler votre réservation, utilisez le bouton ci-dessous.": "To cancel your booking, use the button below.",
     "Référence de réservation : :id": "Booking reference: :id",
-    "Sortie : :product": "Trip: :product"
+    "Sortie : :product": "Trip: :product",
+    "This booking can no longer be cancelled because check-in has already started.": "This booking can no longer be cancelled because check-in has already started.",
+    "This booking can no longer be cancelled because the trip has already departed.": "This booking can no longer be cancelled because the trip has already departed.",
+    "This booking can no longer be cancelled because the trip has already started.": "This booking can no longer be cancelled because the trip has already started.",
+    "This cancellation link is invalid.": "This cancellation link is invalid."
 }

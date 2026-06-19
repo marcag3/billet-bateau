@@ -1,6 +1,11 @@
 import type { BookingTripOption } from '../models/public-booking/public-booking.types';
 
-export function pickTripBannerUrl(trip: BookingTripOption): string | null {
+export type TripBannerSource = {
+    product_banner_url?: string | null;
+    boat_type_banner_url?: string | null;
+};
+
+export function pickTripBannerUrl(trip: TripBannerSource): string | null {
     const product = trip.product_banner_url?.trim() ?? '';
     if (product.length > 0) {
         return trip.product_banner_url;
