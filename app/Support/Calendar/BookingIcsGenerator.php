@@ -4,7 +4,7 @@ namespace App\Support\Calendar;
 
 use App\Models\Booking;
 use App\Models\Program;
-use Illuminate\Support\Collection;
+use App\Support\BookingMailFormatter;
 use Spatie\IcalendarGenerator\Components\Calendar;
 use Spatie\IcalendarGenerator\Components\Event;
 use Spatie\IcalendarGenerator\Enums\EventStatus;
@@ -84,32 +84,10 @@ final class BookingIcsGenerator
         $lines = [
             __('Référence de réservation : :id', ['id' => $booking->getKey()]),
             __('Contact : :name', ['name' => $booking->contact_name]),
-            __('Billets : :summary', ['summary' => $this->formatTicketSummary($booking)]),
+            __('Billets : :summary', ['summary' => BookingMailFormatter::formatTicketSummary($booking)]),
         ];
 
         return implode("\n", $lines);
-    }
-
-    private function formatTicketSummary(Booking $booking): string
-    {
-        /** @var Collection<int, string> $lines */
-        $lines = $booking->bookingTickets
-            ->groupBy(static fn ($ticket): string => (string) $ticket->ticket_type_id)
-            ->map(function (Collection $group): string {
-                $title = $group->first()?->ticketType?->title ?? __('Billet');
-
-                return __(':count × :title', [
-                    'count' => $group->count(),
-                    'title' => $title,
-                ]);
-            })
-            ->values();
-
-        if ($lines->isEmpty()) {
-            return (string) $booking->bookingTickets->count();
-        }
-
-        return $lines->implode(', ');
     }
 
     private function formatLocation(?Program $program): ?string

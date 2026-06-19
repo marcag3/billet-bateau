@@ -7,7 +7,7 @@ use App\Models\Booking;
 use App\Models\Trip;
 use App\Notifications\BookingCancellationNotification;
 use App\Support\AppLocale;
-use Illuminate\Support\Collection;
+use App\Support\BookingMailFormatter;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -68,15 +68,15 @@ final class CancelPublicBookingAction
         }
 
         $preview = $this->toPreviewData($booking);
-
         $locale = AppLocale::normalize($booking->contact_locale);
-
-        Notification::route('mail', $booking->contact_email)
-            ->notify(new BookingCancellationNotification($booking, mailLocale: $locale));
+        $contactEmail = $booking->contact_email;
 
         DB::transaction(static function () use ($booking): void {
             $booking->delete();
         });
+
+        Notification::route('mail', $contactEmail)
+            ->notify(new BookingCancellationNotification($booking, mailLocale: $locale));
 
         return $preview;
     }
@@ -90,7 +90,7 @@ final class CancelPublicBookingAction
         return Booking::query()
             ->where('cancel_token_hash', self::hashToken($token))
             ->with([
-                'program:id,name',
+                'program:id,name,email_signature',
                 'trip:id,scheduled_departure_at,product_id',
                 'trip.product:id,name,description,banner_object_key,boat_type_id',
                 'trip.product.boatType:id,banner_object_key',
@@ -150,33 +150,11 @@ final class CancelPublicBookingAction
             departure_at: $departure !== null
                 ? $departure->timezone(config('app.timezone'))->toIso8601String()
                 : '',
-            ticket_summary: $this->formatTicketSummary($booking),
+            ticket_summary: BookingMailFormatter::formatTicketSummary($booking),
             product_name: $product?->name,
             product_description: $product?->description,
             product_banner_url: $product?->getImageUrl('banner'),
             boat_type_banner_url: $boatType?->getImageUrl('banner'),
         );
-    }
-
-    private function formatTicketSummary(Booking $booking): string
-    {
-        /** @var Collection<int, string> $lines */
-        $lines = $booking->bookingTickets
-            ->groupBy(static fn ($ticket): string => (string) $ticket->ticket_type_id)
-            ->map(function (Collection $group): string {
-                $title = $group->first()?->ticketType?->title ?? __('Billet');
-
-                return __(':count × :title', [
-                    'count' => $group->count(),
-                    'title' => $title,
-                ]);
-            })
-            ->values();
-
-        if ($lines->isEmpty()) {
-            return (string) $booking->bookingTickets->count();
-        }
-
-        return $lines->implode(', ');
     }
 }

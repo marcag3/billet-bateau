@@ -196,7 +196,15 @@ final class CreatePublicBookingAction
             );
         });
 
-        $booking = Booking::query()->findOrFail($created->id);
+        $booking = Booking::query()
+            ->with([
+                'program:id,name,email_signature,line_1,line_2,city,postal_code,country',
+                'trip:id,scheduled_departure_at,product_id',
+                'trip.product:id,name,description,water_route_id',
+                'trip.product.waterRoute:id,duration_minutes',
+                'bookingTickets.ticketType:id,title',
+            ])
+            ->findOrFail($created->id);
         $locale = AppLocale::normalize($data->locale);
 
         Notification::route('mail', $created->contact_email)

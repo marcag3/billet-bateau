@@ -4,11 +4,11 @@ namespace App\Notifications;
 
 use App\Models\Booking;
 use App\Support\AppLocale;
+use App\Support\BookingMailFormatter;
 use App\Support\Calendar\BookingIcsGenerator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Collection;
 
 class BookingConfirmationNotification extends Notification
 {
@@ -43,14 +43,6 @@ class BookingConfirmationNotification extends Notification
 
     private function buildMailMessage(string $locale): MailMessage
     {
-        $this->booking->load([
-            'program:id,name,email_signature,line_1,line_2,city,postal_code,country',
-            'trip:id,scheduled_departure_at,product_id',
-            'trip.product:id,name,description,water_route_id',
-            'trip.product.waterRoute:id,duration_minutes',
-            'bookingTickets.ticketType:id,title',
-        ]);
-
         $programName = $this->booking->program?->name ?? __('Program');
         $departure = $this->booking->trip?->scheduled_departure_at;
         $departureLabel = $departure !== null
@@ -62,7 +54,7 @@ class BookingConfirmationNotification extends Notification
             : '—';
         $productName = $this->booking->trip?->product?->name;
         $productDescription = trim((string) ($this->booking->trip?->product?->description ?? ''));
-        $ticketSummary = $this->formatTicketSummary();
+        $ticketSummary = BookingMailFormatter::formatTicketSummary($this->booking);
 
         $message = (new MailMessage)
             ->subject(__('Confirmation de réservation — :program', ['program' => $programName]))
@@ -101,40 +93,6 @@ class BookingConfirmationNotification extends Notification
 
         return $message
             ->line(__('Conservez ce courriel pour votre référence.'))
-            ->salutation($this->formatSalutation($this->booking->program?->email_signature));
-    }
-
-    private function formatSalutation(?string $emailSignature): string
-    {
-        $closing = __('Cordialement,');
-        $signature = trim((string) ($emailSignature ?? ''));
-
-        if ($signature === '') {
-            return $closing;
-        }
-
-        return $closing."\n\n".$signature;
-    }
-
-    private function formatTicketSummary(): string
-    {
-        /** @var Collection<int, string> $lines */
-        $lines = $this->booking->bookingTickets
-            ->groupBy(static fn ($ticket): string => (string) $ticket->ticket_type_id)
-            ->map(function (Collection $group): string {
-                $title = $group->first()?->ticketType?->title ?? __('Billet');
-
-                return __(':count × :title', [
-                    'count' => $group->count(),
-                    'title' => $title,
-                ]);
-            })
-            ->values();
-
-        if ($lines->isEmpty()) {
-            return (string) $this->booking->bookingTickets->count();
-        }
-
-        return $lines->implode(', ');
+            ->salutation(BookingMailFormatter::formatSalutation($this->booking->program?->email_signature));
     }
 }

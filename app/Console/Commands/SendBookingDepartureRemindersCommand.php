@@ -29,7 +29,7 @@ class SendBookingDepartureRemindersCommand extends Command
                 ]);
             })
             ->with([
-                'program:id,name',
+                'program:id,name,email_signature',
                 'trip:id,scheduled_departure_at,product_id',
                 'trip.product:id,name,description',
                 'trip.voyages:id,trip_id,status',

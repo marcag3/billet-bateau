@@ -4,10 +4,10 @@ namespace App\Notifications;
 
 use App\Models\Booking;
 use App\Support\AppLocale;
+use App\Support\BookingMailFormatter;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Collection;
 
 class BookingDepartureReminderNotification extends Notification
 {
@@ -41,13 +41,6 @@ class BookingDepartureReminderNotification extends Notification
 
     private function buildMailMessage(string $locale): MailMessage
     {
-        $this->booking->load([
-            'program:id,name',
-            'trip:id,scheduled_departure_at,product_id',
-            'trip.product:id,name,description',
-            'bookingTickets.ticketType:id,title',
-        ]);
-
         $programName = $this->booking->program?->name ?? __('Program');
         $departure = $this->booking->trip?->scheduled_departure_at;
         $departureLabel = $departure !== null
@@ -59,7 +52,7 @@ class BookingDepartureReminderNotification extends Notification
             : '—';
         $productName = $this->booking->trip?->product?->name;
         $productDescription = trim((string) ($this->booking->trip?->product?->description ?? ''));
-        $ticketSummary = $this->formatTicketSummary();
+        $ticketSummary = BookingMailFormatter::formatTicketSummary($this->booking);
 
         $message = (new MailMessage)
             ->subject(__('Rappel — votre réservation pour :program', ['program' => $programName]))
@@ -91,28 +84,6 @@ class BookingDepartureReminderNotification extends Notification
 
         return $message
             ->line(__('Conservez ce courriel pour votre référence.'))
-            ->salutation(__('Cordialement,')."\n\n".$programName);
-    }
-
-    private function formatTicketSummary(): string
-    {
-        /** @var Collection<int, string> $lines */
-        $lines = $this->booking->bookingTickets
-            ->groupBy(static fn ($ticket): string => (string) $ticket->ticket_type_id)
-            ->map(function (Collection $group): string {
-                $title = $group->first()?->ticketType?->title ?? __('Billet');
-
-                return __(':count × :title', [
-                    'count' => $group->count(),
-                    'title' => $title,
-                ]);
-            })
-            ->values();
-
-        if ($lines->isEmpty()) {
-            return (string) $this->booking->bookingTickets->count();
-        }
-
-        return $lines->implode(', ');
+            ->salutation(BookingMailFormatter::formatSalutation($this->booking->program?->email_signature));
     }
 }

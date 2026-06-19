@@ -166,7 +166,38 @@ class PublicBookingCancelApiTest extends TestCase
 
     public function test_cancellation_notification_mail_renders_in_english(): void
     {
-        [$booking] = $this->createCancellableBooking();
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'name' => 'Harbor Tours',
+            'email_signature' => 'The Dock Team',
+        ]);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $type = TicketType::factory()->forProgram($program)->create(['title' => 'Adult']);
+
+        $booking = Booking::query()->create([
+            'program_id' => $program->getKey(),
+            'trip_id' => $trip->getKey(),
+            'contact_name' => 'Alex River',
+            'contact_email' => 'alex@example.com',
+        ]);
+
+        BookingTicket::query()->create([
+            'booking_id' => $booking->getKey(),
+            'ticket_type_id' => $type->getKey(),
+            'name' => 'Alex River',
+            'email' => 'alex@example.com',
+            'country' => 'CA',
+            'custom_fields' => [],
+        ]);
+
+        $booking->load([
+            'program:id,name,email_signature',
+            'trip:id,scheduled_departure_at,product_id',
+            'trip.product:id,name,description',
+            'bookingTickets.ticketType:id,title',
+        ]);
 
         $mail = (new BookingCancellationNotification($booking, mailLocale: 'en'))->toMail(
             Notification::route('mail', 'alex@example.com'),
@@ -178,6 +209,9 @@ class PublicBookingCancelApiTest extends TestCase
                 static fn (string $line): bool => str_contains($line, 'has been cancelled'),
             ),
         );
+        $this->assertStringContainsString('Regards', (string) $mail->salutation);
+        $this->assertStringContainsString('The Dock Team', (string) $mail->salutation);
+        $this->assertStringNotContainsString('Harbor Tours', (string) $mail->salutation);
     }
 
     public function test_cancel_is_blocked_after_trip_departure(): void

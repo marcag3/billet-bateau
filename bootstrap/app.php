@@ -25,7 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $schedule->command('bookings:send-departure-reminders')
             ->hourly()
-            ->withoutOverlapping();
+            ->withoutOverlapping()
+            ->onOneServer();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         Integration::handles($exceptions);

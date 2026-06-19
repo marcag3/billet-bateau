@@ -34,6 +34,7 @@ class SendBookingDepartureRemindersCommandTest extends TestCase
         $program = Program::factory()->withOwner($u)->create([
             'slug' => 'reminder-test',
             'name' => 'Harbor Tours',
+            'email_signature' => 'The Dock Team',
         ]);
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => $departureAt ?? now()->addHours(24)->addMinutes(30),
@@ -187,7 +188,10 @@ class SendBookingDepartureRemindersCommandTest extends TestCase
     public function test_departure_reminder_notification_mail_renders_with_cancel_link(): void
     {
         $u = User::factory()->create();
-        $program = Program::factory()->withOwner($u)->create(['name' => 'Harbor Tours']);
+        $program = Program::factory()->withOwner($u)->create([
+            'name' => 'Harbor Tours',
+            'email_signature' => 'The Dock Team',
+        ]);
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->addDay(),
         ]);
@@ -214,11 +218,21 @@ class SendBookingDepartureRemindersCommandTest extends TestCase
             'custom_fields' => [],
         ]);
 
+        $booking->load([
+            'program:id,name,email_signature',
+            'trip:id,scheduled_departure_at,product_id',
+            'trip.product:id,name,description',
+            'bookingTickets.ticketType:id,title',
+        ]);
+
         $mail = (new BookingDepartureReminderNotification($booking, mailLocale: 'en'))->toMail(
             Notification::route('mail', 'alex@example.com'),
         );
 
         $this->assertStringContainsString('Reminder — your booking with Harbor Tours', (string) $mail->subject);
         $this->assertSame(url('/bookings/cancel/'.$plainToken), $mail->actionUrl);
+        $this->assertStringContainsString('Regards', (string) $mail->salutation);
+        $this->assertStringContainsString('The Dock Team', (string) $mail->salutation);
+        $this->assertStringNotContainsString('Harbor Tours', (string) $mail->salutation);
     }
 }
