@@ -5,8 +5,11 @@ namespace App\Actions;
 use App\Data\Programs\PublicBookingCancelPreviewData;
 use App\Models\Booking;
 use App\Models\Trip;
+use App\Notifications\BookingCancellationNotification;
+use App\Support\AppLocale;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 final class CancelPublicBookingAction
@@ -66,6 +69,11 @@ final class CancelPublicBookingAction
 
         $preview = $this->toPreviewData($booking);
 
+        $locale = AppLocale::normalize($booking->contact_locale);
+
+        Notification::route('mail', $booking->contact_email)
+            ->notify(new BookingCancellationNotification($booking, mailLocale: $locale));
+
         DB::transaction(static function () use ($booking): void {
             $booking->delete();
         });
@@ -93,7 +101,7 @@ final class CancelPublicBookingAction
             ->first();
     }
 
-    private function cancellationBlockReason(Booking $booking): ?string
+    public function cancellationBlockReason(Booking $booking): ?string
     {
         $trip = $booking->trip;
 

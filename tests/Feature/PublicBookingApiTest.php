@@ -410,6 +410,50 @@ class PublicBookingApiTest extends TestCase
         Notification::assertCount(1);
     }
 
+    public function test_store_persists_contact_locale_and_cancel_token(): void
+    {
+        Notification::fake();
+
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'slug' => 'locale-store',
+            'name' => 'Harbor Tours',
+        ]);
+
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+
+        $type = TicketType::factory()->forProgram($program)->create([
+            'min_per_purchase' => 1,
+            'max_per_purchase' => 10,
+        ]);
+
+        $this->postJson('/api/public/programs/locale-store/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'Alex River',
+            'contact_email' => 'alex@example.com',
+            'country' => 'CA',
+            'locale' => 'fr',
+        ])->assertCreated();
+
+        $booking = Booking::query()->firstOrFail();
+
+        $this->assertSame('fr', $booking->contact_locale);
+        $this->assertNotNull($booking->cancel_token_hash);
+        $this->assertNotNull($booking->cancel_token);
+
+        Notification::assertSentOnDemand(
+            BookingConfirmationNotification::class,
+            function (BookingConfirmationNotification $notification) use ($booking): bool {
+                return hash('sha256', (string) $notification->plainCancelToken) === $booking->cancel_token_hash
+                    && $notification->plainCancelToken === $booking->cancel_token;
+            },
+        );
+    }
+
     public function test_booking_confirmation_notification_mail_renders_with_ticket_summary(): void
     {
         $u = User::factory()->create();

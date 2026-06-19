@@ -11,6 +11,7 @@ use App\Models\TicketType;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Voyage;
+use App\Notifications\BookingCancellationNotification;
 use App\Notifications\BookingConfirmationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -126,6 +127,14 @@ class PublicBookingCancelApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.program_name', 'Harbor Tours');
 
+        Notification::assertSentOnDemand(
+            BookingCancellationNotification::class,
+            function (BookingCancellationNotification $notification, array $channels, object $notifiable): bool {
+                return ($notifiable->routes['mail'] ?? null) === 'alex@example.com'
+                    && $notification->booking->contact_email === 'alex@example.com';
+            },
+        );
+
         $this->assertDatabaseMissing('bookings', [
             'id' => $bookingId,
         ]);
@@ -153,6 +162,22 @@ class PublicBookingCancelApiTest extends TestCase
         $this->postJson('/api/public/bookings/cancel/'.$token)
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['token']);
+    }
+
+    public function test_cancellation_notification_mail_renders_in_english(): void
+    {
+        [$booking] = $this->createCancellableBooking();
+
+        $mail = (new BookingCancellationNotification($booking, mailLocale: 'en'))->toMail(
+            Notification::route('mail', 'alex@example.com'),
+        );
+
+        $this->assertStringContainsString('Cancellation confirmed — Harbor Tours', (string) $mail->subject);
+        $this->assertTrue(
+            collect($mail->introLines)->contains(
+                static fn (string $line): bool => str_contains($line, 'has been cancelled'),
+            ),
+        );
     }
 
     public function test_cancel_is_blocked_after_trip_departure(): void

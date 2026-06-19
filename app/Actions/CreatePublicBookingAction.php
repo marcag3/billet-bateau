@@ -166,7 +166,9 @@ final class CreatePublicBookingAction
                 'trip_id' => $trip->getKey(),
                 'contact_name' => $data->contact_name,
                 'contact_email' => $data->contact_email,
-                'cancel_token_hash' => hash('sha256', $plainCancelToken),
+                'contact_locale' => AppLocale::normalize($data->locale),
+                'cancel_token_hash' => CancelPublicBookingAction::hashToken($plainCancelToken),
+                'cancel_token' => $plainCancelToken,
             ]);
 
             foreach ($nonZeroQuantities as $ticketTypeId => $quantity) {
