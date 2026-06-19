@@ -18,9 +18,7 @@
                 <div
                     ref="cropContainerRef"
                     class="w-full h-[min(70vh,720px)] min-h-[400px] overflow-hidden [&_cropper-canvas]:h-full rounded-borders bg-grey-9"
-                >
-                    <img ref="imageRef" :src="localImageUrl" alt="" class="block max-w-full" />
-                </div>
+                />
 
                 <div class="mt-4">
                     <div class="text-caption text-grey-7 mb-1">
@@ -78,7 +76,6 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 const cropContainerRef = useTemplateRef<HTMLElement>('cropContainerRef');
-const imageRef = useTemplateRef<HTMLImageElement>('imageRef');
 const isApplying = ref(false);
 const localImageUrl = ref('');
 
@@ -108,11 +105,13 @@ async function mountCropper(file: File): Promise<void> {
     await nextTick();
 
     const container = cropContainerRef.value;
-    const image = imageRef.value;
 
-    if (container == null || image == null) {
+    if (container == null) {
         throw new Error('Unable to initialize crop surface.');
     }
+
+    const image = new Image();
+    image.src = localImageUrl.value;
 
     await mount(container, image, props.aspectRatio);
 }
