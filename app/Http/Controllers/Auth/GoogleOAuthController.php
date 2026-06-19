@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Auth\SafeRedirectPath;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +23,10 @@ class GoogleOAuthController extends Controller
         $this->ensureGoogleOAuthConfigured();
 
         if ($request->filled('redirect')) {
-            $request->session()->put('oauth.intended_url', $request->string('redirect')->toString());
+            $request->session()->put(
+                'oauth.intended_url',
+                SafeRedirectPath::sanitize($request->string('redirect')->toString()),
+            );
         }
 
         return Socialite::driver('google')->redirect();
@@ -51,7 +55,9 @@ class GoogleOAuthController extends Controller
         Auth::guard('web')->login($user, remember: true);
         $request->session()->regenerate();
 
-        $intendedUrl = $request->session()->pull('oauth.intended_url', '/app');
+        $intendedUrl = SafeRedirectPath::sanitize(
+            $request->session()->pull('oauth.intended_url'),
+        );
 
         return redirect($intendedUrl);
     }

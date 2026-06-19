@@ -130,4 +130,49 @@ class GoogleOAuthTest extends TestCase
         $this->get('/auth/google/callback')
             ->assertRedirect('/app/programs');
     }
+
+    public function test_callback_rejects_external_intended_url(): void
+    {
+        User::factory()->create();
+        Socialite::fake('google');
+
+        $this->withSession(['oauth.intended_url' => 'https://evil.example/phish'])
+            ->get('/auth/google/redirect')
+            ->assertRedirect('https://socialite.fake/google/authorize');
+
+        Socialite::fake('google', SocialiteUser::fake([
+            'id' => 'google-123',
+            'email' => 'john@example.com',
+            'email_verified' => true,
+        ]));
+
+        User::factory()->create([
+            'email' => 'john@example.com',
+        ]);
+
+        $this->get('/auth/google/callback')
+            ->assertRedirect('/app');
+    }
+
+    public function test_redirect_sanitizes_external_redirect_query_param(): void
+    {
+        User::factory()->create();
+        Socialite::fake('google');
+
+        $this->get('/auth/google/redirect?redirect='.urlencode('https://evil.example/phish'))
+            ->assertRedirect('https://socialite.fake/google/authorize');
+
+        Socialite::fake('google', SocialiteUser::fake([
+            'id' => 'google-123',
+            'email' => 'john@example.com',
+            'email_verified' => true,
+        ]));
+
+        User::factory()->create([
+            'email' => 'john@example.com',
+        ]);
+
+        $this->get('/auth/google/callback')
+            ->assertRedirect('/app');
+    }
 }

@@ -90,6 +90,7 @@ import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useAuthStore } from '../store/auth.store';
 import { getAppAuthConfig } from '../utilities/auth-config';
 import { redirect as googleRedirect } from '../routes/auth/google';
+import { sanitizeRedirectPath } from '../utilities/safe-redirect-path';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
 import AppAuthFormLayout from '../components/ui/AppAuthFormLayout.vue';
 
@@ -119,7 +120,10 @@ onMounted(() => {
 });
 
 function signInWithGoogle() {
-    const redirectTarget = typeof route.query.redirect === 'string' ? route.query.redirect : undefined;
+    const redirectTarget =
+        typeof route.query.redirect === 'string'
+            ? sanitizeRedirectPath(route.query.redirect, '/')
+            : undefined;
 
     window.location.assign(
         googleRedirect.url(
@@ -158,7 +162,9 @@ const submitLogin = handleSubmit(async (values) => {
             remember: remember.value,
         });
 
-        const redirectTarget = typeof route.query.redirect === 'string' ? route.query.redirect : '/';
+        const redirectTarget = sanitizeRedirectPath(
+            typeof route.query.redirect === 'string' ? route.query.redirect : null,
+        );
         await router.replace(redirectTarget);
     } catch (error) {
         errorMessage.value = error instanceof Error ? error.message : t('auth.unableAuthenticate');

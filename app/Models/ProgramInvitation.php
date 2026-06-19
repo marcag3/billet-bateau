@@ -4,10 +4,12 @@ namespace App\Models;
 
 use App\Enums\ProgramRole;
 use Database\Factories\ProgramInvitationFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 /**
  * @property-read Program|null $program
@@ -52,6 +54,30 @@ class ProgramInvitation extends Model
     public function invitedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invited_by_user_id');
+    }
+
+    /**
+     * @param  Builder<ProgramInvitation>  $query
+     */
+    public function scopePending(Builder $query): void
+    {
+        $query
+            ->whereNull('accepted_at')
+            ->whereNull('revoked_at')
+            ->where('expires_at', '>', now());
+    }
+
+    public static function hasPendingInvitationForEmail(string $email): bool
+    {
+        $normalizedEmail = Str::lower(trim($email));
+        if ($normalizedEmail === '') {
+            return false;
+        }
+
+        return static::query()
+            ->pending()
+            ->whereRaw('LOWER(email) = ?', [$normalizedEmail])
+            ->exists();
     }
 
     public function isPending(): bool
