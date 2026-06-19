@@ -44,9 +44,9 @@ class BookingConfirmationNotification extends Notification
     private function buildMailMessage(string $locale): MailMessage
     {
         $this->booking->load([
-            'program:id,name,line_1,line_2,city,postal_code,country',
+            'program:id,name,email_signature,line_1,line_2,city,postal_code,country',
             'trip:id,scheduled_departure_at,product_id',
-            'trip.product:id,name,water_route_id',
+            'trip.product:id,name,description,water_route_id',
             'trip.product.waterRoute:id,duration_minutes',
             'bookingTickets.ticketType:id,title',
         ]);
@@ -61,6 +61,7 @@ class BookingConfirmationNotification extends Notification
             )
             : '—';
         $productName = $this->booking->trip?->product?->name;
+        $productDescription = trim((string) ($this->booking->trip?->product?->description ?? ''));
         $ticketSummary = $this->formatTicketSummary();
 
         $message = (new MailMessage)
@@ -76,6 +77,10 @@ class BookingConfirmationNotification extends Notification
         $message
             ->line(__('Départ : :departure', ['departure' => $departureLabel]))
             ->line(__('Billets : :summary', ['summary' => $ticketSummary]));
+
+        if ($productDescription !== '') {
+            $message->line($productDescription);
+        }
 
         $ics = app(BookingIcsGenerator::class)->generate($this->booking);
         if ($ics !== null) {
@@ -94,7 +99,21 @@ class BookingConfirmationNotification extends Notification
                 );
         }
 
-        return $message->line(__('Conservez ce courriel pour votre référence.'));
+        return $message
+            ->line(__('Conservez ce courriel pour votre référence.'))
+            ->salutation($this->formatSalutation($this->booking->program?->email_signature));
+    }
+
+    private function formatSalutation(?string $emailSignature): string
+    {
+        $closing = __('Cordialement,');
+        $signature = trim((string) ($emailSignature ?? ''));
+
+        if ($signature === '') {
+            return $closing;
+        }
+
+        return $closing."\n\n".$signature;
     }
 
     private function formatTicketSummary(): string

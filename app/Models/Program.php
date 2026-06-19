@@ -32,6 +32,7 @@ class Program extends Model
         'is_active',
         'slug',
         'booking_questions',
+        'email_signature',
         'line_1',
         'line_2',
         'city',

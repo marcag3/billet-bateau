@@ -67,6 +67,7 @@ function createProgramCreateZodSchema(t: Translator) {
             startDate: isoYmd(t),
             endDate: isoYmd(t),
             bookingQuestionsText: z.preprocess(coerceStringInput, z.string()),
+            emailSignature: z.preprocess(coerceStringInput, z.string().trim().max(1000)),
             address: programAddressObjectSchema,
         }),
     );
@@ -84,6 +85,7 @@ export function createEmptyProgramCreateFormValues(): ProgramCreateFormValues {
         startDate: range.startDate,
         endDate: range.endDate,
         bookingQuestionsText: '',
+        emailSignature: '',
         address: {
             line_1: '',
             line_2: '',
@@ -124,6 +126,7 @@ export function createProgramEditZodSchema(t: Translator) {
             startDate: isoYmd(t),
             endDate: isoYmd(t),
             bookingQuestionsText: z.preprocess(coerceStringInput, z.string()),
+            emailSignature: z.preprocess(coerceStringInput, z.string().trim().max(1000)),
             address: programAddressObjectSchema,
         }),
     );

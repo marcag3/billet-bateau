@@ -26,6 +26,7 @@ final class ProgramResolvedPutData extends Data
         public ?string $city,
         public ?string $postal_code,
         public ?string $country,
+        public ?string $email_signature,
         public ?string $banner_object_key,
         public ?string $banner_mime_type,
         public ?int $banner_size_bytes,
@@ -53,6 +54,7 @@ final class ProgramResolvedPutData extends Data
             'city' => ['nullable', 'string', 'max:120'],
             'postal_code' => ['nullable', 'string', 'max:32'],
             'country' => ['nullable', 'string', 'max:120'],
+            'email_signature' => ['nullable', 'string', 'max:1000'],
             'booking_questions' => ['sometimes', 'array', 'max:20'],
             'booking_questions.*' => ['string', 'min:1', 'max:255'],
             'banner_object_key' => [

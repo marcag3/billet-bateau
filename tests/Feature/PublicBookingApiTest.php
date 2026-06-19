@@ -413,11 +413,17 @@ class PublicBookingApiTest extends TestCase
     public function test_booking_confirmation_notification_mail_renders_with_ticket_summary(): void
     {
         $u = User::factory()->create();
-        $program = Program::factory()->withOwner($u)->create(['name' => 'Harbor Tours']);
+        $program = Program::factory()->withOwner($u)->create([
+            'name' => 'Harbor Tours',
+            'email_signature' => 'The Dock Team',
+        ]);
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->addWeek(),
         ]);
-        $trip->product->forceFill(['name' => 'Sunset run'])->save();
+        $trip->product->forceFill([
+            'name' => 'Sunset run',
+            'description' => 'Arrive 15 minutes before departure at the main dock.',
+        ])->save();
         $type = TicketType::factory()->forProgram($program)->create(['title' => 'Adult']);
 
         $booking = Booking::query()->create([
@@ -452,6 +458,15 @@ class PublicBookingApiTest extends TestCase
             $mail->actionUrl,
         );
         $this->assertStringContainsString('Annuler la réservation', (string) $mail->actionText);
+        $this->assertTrue(
+            collect($mail->introLines)->contains(
+                static fn (string $line): bool => str_contains($line, 'Arrive 15 minutes before departure at the main dock.'),
+            ),
+        );
+        $this->assertStringContainsString('Cordialement', (string) $mail->salutation);
+        $this->assertStringContainsString('The Dock Team', (string) $mail->salutation);
+        $this->assertStringNotContainsString('Regards', (string) $mail->salutation);
+        $this->assertStringNotContainsString('Harbor Tours', (string) $mail->salutation);
 
         $this->assertCount(1, $mail->rawAttachments);
         $attachment = $mail->rawAttachments[0];
@@ -467,7 +482,10 @@ class PublicBookingApiTest extends TestCase
     public function test_booking_confirmation_notification_mail_renders_in_english_when_locale_en(): void
     {
         $u = User::factory()->create();
-        $program = Program::factory()->withOwner($u)->create(['name' => 'Harbor Tours']);
+        $program = Program::factory()->withOwner($u)->create([
+            'name' => 'Harbor Tours',
+            'email_signature' => 'The Dock Team',
+        ]);
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->addWeek(),
         ]);
@@ -486,12 +504,19 @@ class PublicBookingApiTest extends TestCase
         $this->assertStringContainsString('Booking confirmation', (string) $mail->subject);
         $this->assertStringContainsString('Hello Alex River', (string) $mail->greeting);
         $this->assertSame('Cancel booking', (string) $mail->actionText);
+        $this->assertStringContainsString('Regards', (string) $mail->salutation);
+        $this->assertStringContainsString('The Dock Team', (string) $mail->salutation);
+        $this->assertStringNotContainsString('Cordialement', (string) $mail->salutation);
+        $this->assertStringNotContainsString('Harbor Tours', (string) $mail->salutation);
     }
 
     public function test_booking_confirmation_notification_mail_renders_in_french_when_locale_fr(): void
     {
         $u = User::factory()->create();
-        $program = Program::factory()->withOwner($u)->create(['name' => 'Croisières']);
+        $program = Program::factory()->withOwner($u)->create([
+            'name' => 'Croisières',
+            'email_signature' => "L'équipe Croisières",
+        ]);
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->addWeek(),
         ]);
@@ -508,6 +533,10 @@ class PublicBookingApiTest extends TestCase
 
         $this->assertStringContainsString('Confirmation de réservation', (string) $mail->subject);
         $this->assertStringContainsString('Bonjour Alex River', (string) $mail->greeting);
+        $this->assertStringContainsString('Cordialement', (string) $mail->salutation);
+        $this->assertStringContainsString("L'équipe Croisières", (string) $mail->salutation);
+        $this->assertStringNotContainsString('Regards', (string) $mail->salutation);
+        $this->assertStringNotContainsString('Billet Bateau', (string) $mail->salutation);
     }
 
     public function test_store_does_not_send_notification_when_validation_fails(): void

@@ -31,6 +31,7 @@ export function programToFormValues(p: ProgramOutput): ProgramEditFormValues {
                 ? p.end_date
                 : '',
         bookingQuestionsText: parseProgramBookingQuestions(p.booking_questions).join('\n'),
+        emailSignature: typeof p.email_signature === 'string' ? String(p.email_signature) : '',
         isActive: p.is_active ?? true,
         address: {
             line_1: typeof p.line_1 === 'string' ? String(p.line_1) : '',
@@ -52,6 +53,7 @@ export type ProgramDraftPatch = {
     start_date: string;
     end_date: string;
     booking_questions: string;
+    email_signature: string | null;
     line_1: string | null;
     line_2: string | null;
     city: string | null;
@@ -73,6 +75,7 @@ export function toProgramDraftPatch(
         start_date: values.startDate,
         end_date: values.endDate,
         booking_questions: JSON.stringify(bookingQuestions),
+        email_signature: values.emailSignature.length > 0 ? values.emailSignature : null,
         line_1: addressFields.line_1,
         line_2: addressFields.line_2,
         city: addressFields.city,

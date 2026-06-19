@@ -211,6 +211,9 @@ export default {
         bookingQuestionLabel: "Question {index}",
         addBookingQuestion: "Add question",
         removeBookingQuestion: "Remove question",
+        emailSignature: "Booking email signature",
+        emailSignatureHint:
+            "Shown at the end of booking confirmation emails. Leave blank to omit a signature line.",
         addressOptional: "Address (optional)",
         line1: "Address line 1",
         line2: "Address line 2",

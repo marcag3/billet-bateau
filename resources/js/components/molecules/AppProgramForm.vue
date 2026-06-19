@@ -66,6 +66,10 @@
                 </template>
             </AppTextRepeaterField>
 
+            <q-input v-model="emailSignature" v-bind="emailSignatureProps" type="textarea" outlined autogrow
+                :label="t('programsCreate.emailSignature')" :hint="t('programsCreate.emailSignatureHint')"
+                :disable="fieldsDisabled" />
+
             <q-toggle v-model="isActive" v-bind="isActiveProps" :label="t('programsList.isActive')"
                 :disable="fieldsDisabled" />
 
@@ -186,6 +190,7 @@ const [description, descriptionProps] = quasarField("description");
 const [themeColor, themeColorProps] = quasarField("themeColor");
 const [startDate, startDateProps] = quasarField("startDate");
 const [endDate, endDateProps] = quasarField("endDate");
+const [emailSignature, emailSignatureProps] = quasarField("emailSignature");
 const [isActive, isActiveProps] = quasarField("isActive");
 const [line1, line1Props] = quasarField("address.line_1");
 const [line2, line2Props] = quasarField("address.line_2");

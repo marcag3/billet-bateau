@@ -221,6 +221,9 @@ export default {
         bookingQuestionLabel: "Question {index}",
         addBookingQuestion: "Ajouter une question",
         removeBookingQuestion: "Retirer la question",
+        emailSignature: "Signature des courriels de reservation",
+        emailSignatureHint:
+            "Affichee a la fin des courriels de confirmation de reservation. Laissez vide pour omettre une ligne de signature.",
         addressOptional: "Adresse (optionnelle)",
         line1: "Ligne 1",
         line2: "Ligne 2",

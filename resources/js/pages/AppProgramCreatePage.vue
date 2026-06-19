@@ -110,6 +110,9 @@ async function onCreateProgram({
             start_date: formValues.startDate,
             end_date: formValues.endDate,
             booking_questions: JSON.stringify(bookingQuestions),
+            email_signature: formValues.emailSignature.trim().length > 0
+                ? formValues.emailSignature.trim()
+                : null,
             line_1: addressFields.line_1,
             line_2: addressFields.line_2,
             city: addressFields.city,
