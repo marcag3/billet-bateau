@@ -62,28 +62,37 @@
                         class="p-4"
                     >
                         <q-item-section>
-                            <q-item-label class="text-h6">{{
-                                invitation.email
-                            }}</q-item-label>
-                            <q-item-label caption>
-                                {{
-                                    t("programsMembers.expiresLabel", {
-                                        date: formatDateTime(
-                                            invitation.expires_at,
-                                        ),
-                                    })
-                                }}
-                            </q-item-label>
-                        </q-item-section>
-                        <q-item-section side>
-                            <q-btn
-                                flat
-                                dense
-                                color="negative"
-                                :label="t('programsMembers.revokeInvite')"
-                                :disable="loading || actionUserId.length > 0"
-                                @click="() => confirmRevokeInvite(invitation)"
-                            />
+                            <div
+                                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                                <div class="min-w-0">
+                                    <q-item-label class="text-h6 break-all">{{
+                                        invitation.email
+                                    }}</q-item-label>
+                                    <q-item-label caption>
+                                        {{
+                                            t("programsMembers.expiresLabel", {
+                                                date: formatDateTime(
+                                                    invitation.expires_at,
+                                                ),
+                                            })
+                                        }}
+                                    </q-item-label>
+                                </div>
+                                <q-btn
+                                    flat
+                                    dense
+                                    color="negative"
+                                    class="w-full shrink-0 sm:w-auto"
+                                    :label="t('programsMembers.revokeInvite')"
+                                    :disable="
+                                        loading || actionUserId.length > 0
+                                    "
+                                    @click="
+                                        () => confirmRevokeInvite(invitation)
+                                    "
+                                />
+                            </div>
                         </q-item-section>
                     </q-item>
                 </AppEntityList>
@@ -104,57 +113,80 @@
                         class="p-4"
                     >
                         <q-item-section>
-                            <q-item-label class="text-h6">{{
-                                member.name
-                            }}</q-item-label>
-                            <q-item-label caption>{{ member.email }}</q-item-label>
-                        </q-item-section>
-                        <q-item-section side>
-                            <div class="column gap-1 items-end">
-                                <q-badge
-                                    :color="
-                                        member.role === 'owner'
-                                            ? 'primary'
-                                            : 'grey-7'
-                                    "
-                                    :label="roleLabel(member.role)"
-                                />
-                                <template v-if="member.role === 'admin'">
-                                    <q-btn
-                                        color="primary"
-                                        outline
-                                        dense
-                                        :label="
-                                            t('programsMembers.transferOwnership')
+                            <div
+                                class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+                            >
+                                <div class="min-w-0 flex-grow">
+                                    <q-item-label class="text-h6 break-words">{{
+                                        member.name
+                                    }}</q-item-label>
+                                    <q-item-label caption class="break-all">{{
+                                        member.email
+                                    }}</q-item-label>
+                                </div>
+                                <div
+                                    class="flex flex-col gap-2 shrink-0 sm:items-end"
+                                >
+                                    <q-badge
+                                        class="self-start sm:self-end"
+                                        :color="
+                                            member.role === 'owner'
+                                                ? 'primary'
+                                                : 'grey-7'
                                         "
-                                        :loading="
-                                            actionUserId === member.user_id &&
-                                            actionType === 'transfer'
-                                        "
-                                        :disable="
-                                            loading ||
-                                            (actionUserId.length > 0 &&
-                                                actionUserId !== member.user_id)
-                                        "
-                                        @click="() => confirmTransfer(member)"
+                                        :label="roleLabel(member.role)"
                                     />
-                                    <q-btn
-                                        flat
-                                        dense
-                                        color="negative"
-                                        :label="t('programsMembers.removeAccess')"
-                                        :loading="
-                                            actionUserId === member.user_id &&
-                                            actionType === 'remove'
-                                        "
-                                        :disable="
-                                            loading ||
-                                            (actionUserId.length > 0 &&
-                                                actionUserId !== member.user_id)
-                                        "
-                                        @click="() => confirmRemove(member)"
-                                    />
-                                </template>
+                                    <template v-if="member.role === 'admin'">
+                                        <q-btn
+                                            color="primary"
+                                            outline
+                                            dense
+                                            class="w-full sm:w-auto"
+                                            :label="
+                                                t(
+                                                    'programsMembers.transferOwnership',
+                                                )
+                                            "
+                                            :loading="
+                                                actionUserId ===
+                                                    member.user_id &&
+                                                actionType === 'transfer'
+                                            "
+                                            :disable="
+                                                loading ||
+                                                (actionUserId.length > 0 &&
+                                                    actionUserId !==
+                                                        member.user_id)
+                                            "
+                                            @click="
+                                                () => confirmTransfer(member)
+                                            "
+                                        />
+                                        <q-btn
+                                            flat
+                                            dense
+                                            color="negative"
+                                            class="w-full sm:w-auto"
+                                            :label="
+                                                t(
+                                                    'programsMembers.removeAccess',
+                                                )
+                                            "
+                                            :loading="
+                                                actionUserId ===
+                                                    member.user_id &&
+                                                actionType === 'remove'
+                                            "
+                                            :disable="
+                                                loading ||
+                                                (actionUserId.length > 0 &&
+                                                    actionUserId !==
+                                                        member.user_id)
+                                            "
+                                            @click="() => confirmRemove(member)"
+                                        />
+                                    </template>
+                                </div>
                             </div>
                         </q-item-section>
                     </q-item>
