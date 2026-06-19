@@ -4,7 +4,7 @@
             {{ t('publicBooking.noTrips') }}
         </div>
         <template v-else>
-            <div class="row items-center gap-2 mb-4 flex-wrap">
+            <div class="row items-center gap-2 mb-2 mx-4 flex-wrap">
                 <PublicProgramBookingDateFilter v-model:selected-date-ymd="selectedDateYmd"
                     :daily-availability-by-date="dailyAvailabilityByDate"
                     :program-start-date-ymd="props.programStartDateYmd"
@@ -27,8 +27,8 @@
                 class="h-100 [&_.thead-sticky_tr>*]:sticky [&_.thead-sticky_tr>*]:opacity-100 [&_.thead-sticky_tr>*]:z-[2] [&_.thead-sticky_tr>*]:bg-white [&_.q-markup-table.q-dark_.thead-sticky_tr>*]:bg-[var(--q-dark)] [&_.thead-sticky_tr:last-child>*]:top-0 [&_.tfoot-sticky_tr:first-child>*]:bottom-0"
                 :items="filteredTripOptions">
                 <template v-slot:before>
-                    <thead class="thead-sticky text-left">
-                        <tr>
+                    <thead class="thead-sticky text-left ">
+                        <tr class="bg-accent">
                             <th class="text-center" style="width: 3.5rem" />
                             <th>{{ t('publicBooking.departure') }}</th>
                             <th>{{ t('publicBooking.tripColumn') }}</th>
