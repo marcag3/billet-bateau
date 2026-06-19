@@ -26,6 +26,7 @@ Homestead.yaml
 Thumbs.db
 .vault-password
 .spin.yml
+/.phplint.cache
 
 **/caddy
 !deploy/config/caddy/

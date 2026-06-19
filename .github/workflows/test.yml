@@ -72,7 +72,7 @@ jobs:
           PGPASSWORD=root psql -h postgres -U root -d testing_mom -c "CREATE EXTENSION IF NOT EXISTS postgis"
 
       - name: Check PHP syntax
-        run: phplint --exclude=*.log .
+        run: phplint .
 
       - uses: ramsey/composer-install@v4
         name: Install Composer & Dependencies

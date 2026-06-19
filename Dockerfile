@@ -58,9 +58,15 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+ENV COMPOSER_HOME=/composer
+
 RUN if ! command -v composer >/dev/null 2>&1; then \
         curl -sLS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer; \
     fi
+
+RUN mkdir -p /composer \
+    && composer global require overtrue/phplint --no-interaction \
+    && ln -sf /composer/vendor/bin/phplint /usr/local/bin/phplint
 
 ############################################
 # Development runtime target
