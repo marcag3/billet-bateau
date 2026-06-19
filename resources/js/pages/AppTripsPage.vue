@@ -119,10 +119,12 @@ import { ulid } from "ulid";
 import { QCalendarDay, QCalendarMonth, today } from "@quasar/quasar-ui-qcalendar";
 import { useQuasar } from "quasar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+import { liveQueryRow, liveQueryRows } from "../powersync/live-query-casts";
 import { joinTripsWithRelationsFrom } from "../powersync/joined-queries";
 import {
     buildProgramBookedTripIdsQuery,
     reduceBookedTripIds,
+    type BookedTripIdRow,
 } from "../powersync/trips-queries";
 import type { ProgramOutput } from "../powersync/programs.collection";
 import { mediaObjectPublicUrl } from "../utilities/media-url";
@@ -181,7 +183,7 @@ const { data: programRowsRaw } = useLiveQuery(
 );
 
 const programDateBounds = computed((): { startYmd: string; endYmd: string } => {
-    const row = (programRowsRaw.value ?? [])[0] as ProgramOutput | undefined;
+    const row = liveQueryRow<ProgramOutput>((programRowsRaw.value ?? [])[0]);
     const s = row != null ? String(row.start_date ?? "").trim() : "";
     const e = row != null ? String(row.end_date ?? "").trim() : "";
     if (/^\d{4}-\d{2}-\d{2}$/.test(s) && /^\d{4}-\d{2}-\d{2}$/.test(e)) {
@@ -218,7 +220,7 @@ const { data: productsRaw } = useLiveQuery(
 );
 
 const bookedTripIds = computed(() =>
-    reduceBookedTripIds(bookedTripIdRows.value ?? []),
+    reduceBookedTripIds(liveQueryRows<BookedTripIdRow>(bookedTripIdRows.value)),
 );
 
 const { data: tripsRaw } = useLiveQuery(
@@ -286,8 +288,8 @@ const { data: templateSlotsRaw } = useLiveQuery(
     [templateDaySlotsCollection],
 );
 
-const templateDaysList = computed(
-    () => (templateDaysRaw.value ?? []) as TemplateDayOutput[],
+const templateDaysList = computed(() =>
+    liveQueryRows<TemplateDayOutput>(templateDaysRaw.value),
 );
 
 const templateDayIds = computed(() => {
@@ -312,8 +314,8 @@ const templateDayMenuOptions = computed(() => {
 const slotsByTemplateDayId = computed(() => {
     const map = new Map<string, TemplateDaySlotOutput[]>();
     const allowed = templateDayIds.value;
-    for (const row of templateSlotsRaw.value ?? []) {
-        const slot = row as TemplateDaySlotOutput;
+    for (const row of liveQueryRows<TemplateDaySlotOutput>(templateSlotsRaw.value)) {
+        const slot = row;
         const tid = slot.template_day_id;
         if (tid == null || String(tid).trim() === "") {
             continue;
@@ -377,7 +379,7 @@ interface DayBodyScope {
 }
 
 const trips = computed(() => {
-    const rows = (tripsRaw.value ?? []) as TripCalendarRow[];
+    const rows = liveQueryRows<TripCalendarRow>(tripsRaw.value);
     const { startYmd, endYmd } = programDateBounds.value;
     return rows.filter((tr) => {
         const raw = tr.scheduled_departure_at;
@@ -392,8 +394,8 @@ const trips = computed(() => {
         return y >= startYmd && y <= endYmd;
     });
 });
-const programProducts = computed(
-    () => (productsRaw.value ?? []) as ProductLookupRow[],
+const programProducts = computed(() =>
+    liveQueryRows<ProductLookupRow>(productsRaw.value),
 );
 
 function productDisplayName(tr: TripCalendarRow): string {

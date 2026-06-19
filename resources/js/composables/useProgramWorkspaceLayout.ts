@@ -4,6 +4,7 @@ import { useQuasar } from "quasar";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import type { ProgramOutput } from "../powersync/programs.collection";
+import { liveQueryRows } from "../powersync/live-query-casts";
 import { programBannerUrlFromObjectKey } from "../utilities/program-banner-url";
 import {
     isProgramWorkspaceContext,
@@ -49,8 +50,8 @@ export function useProgramWorkspaceLayout({
         [programsCollection],
     );
 
-    const programsList = computed(() =>
-        (programs.value ?? []).filter((p) => p != null),
+    const programsList = computed((): ProgramOutput[] =>
+        liveQueryRows<ProgramOutput>(programs.value),
     );
 
     const isProgramWorkspace = computed(() =>

@@ -4,6 +4,7 @@ import type { MaybeRefOrGetter } from 'vue';
 import { computed, toValue } from 'vue';
 import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
 import type { ProgramUserOutput } from '../powersync/program-user.collection';
+import { liveQueryRows } from '../powersync/live-query-casts';
 import {
     isProgramOwner,
     resolveCurrentProgramMembershipRole,
@@ -40,7 +41,7 @@ export function useCurrentProgramMembershipRole(
 
     const role = computed((): string | null =>
         resolveCurrentProgramMembershipRole(
-            (programMemberships.value ?? []) as ProgramUserOutput[],
+            liveQueryRows<ProgramUserOutput>(programMemberships.value),
             programIdTrimmed.value,
             currentUserId.value,
         ),

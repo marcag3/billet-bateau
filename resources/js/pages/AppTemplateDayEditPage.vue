@@ -80,6 +80,7 @@ import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import { QCalendarDay, today } from "@quasar/quasar-ui-qcalendar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+import { liveQueryRows } from "../powersync/live-query-casts";
 import type { TemplateDaySlotOutput } from "../powersync/template-day-slots.collection";
 import {
     createEmptySlotForm,
@@ -282,8 +283,8 @@ const { data: slots } = useLiveQuery(
     [templateDaySlotsCollection, templateDayId],
 );
 
-const sortedSlots = computed(() => {
-    const list = slots.value ?? [];
+const sortedSlots = computed((): TemplateDaySlotOutput[] => {
+    const list = liveQueryRows<TemplateDaySlotOutput>(slots.value);
     return [...list].sort((a, b) => {
         const aOrder = a.sort_order ?? 0;
         const bOrder = b.sort_order ?? 0;

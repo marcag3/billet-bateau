@@ -64,6 +64,7 @@ import {
 import { createQuasarFieldBinder } from '../../validation/quasar-vee-fields';
 import { getAppPowerSyncContext } from '../../powersync/app-powersync.runtime';
 import type { WaterRouteOutput } from '../../powersync/water-routes.collection';
+import { liveQueryRow } from '../../powersync/live-query-casts';
 import { useNotifyErrorFromCatch } from '../../composables/useNotifyErrorFromCatch';
 import { isPersistableLineStringGeoJson } from '../../utilities/geojson-line-string';
 import AppPolylineTraceField from './AppPolylineTraceField.vue';
@@ -147,7 +148,7 @@ watch(
             resetForm({ values: createEmptyWaterRouteFormValues() });
             return;
         }
-        const row = rows?.[0] as WaterRouteOutput | undefined;
+        const row = liveQueryRow<WaterRouteOutput>(rows?.[0]);
         if (!row) {
             return;
         }

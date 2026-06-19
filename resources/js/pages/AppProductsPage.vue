@@ -46,8 +46,9 @@ import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
-import type { ProductOutput } from "../powersync/products.collection";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+import type { ProductOutput } from "../powersync/products.collection";
+import { liveQueryRows } from "../powersync/live-query-casts";
 import { mediaObjectPublicUrl } from "../utilities/media-url";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
@@ -101,7 +102,7 @@ const { data: productsRaw } = useLiveQuery(
     ],
 );
 
-const products = computed(() => (productsRaw.value ?? []) as ProductListRow[]);
+const products = computed(() => liveQueryRows<ProductListRow>(productsRaw.value));
 
 const productModalRef = ref<InstanceType<typeof AppProductUpsertModal> | null>(null);
 

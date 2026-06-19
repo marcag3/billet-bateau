@@ -60,6 +60,7 @@ import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+import { liveQueryRows } from "../powersync/live-query-casts";
 import type { GuideOutput } from "../powersync/guides.collection";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
@@ -89,7 +90,7 @@ const { data: guidesRaw } = useLiveQuery(
     [guidesCollection],
 );
 
-const guides = computed(() => (guidesRaw.value ?? []) as GuideOutput[]);
+const guides = computed(() => liveQueryRows<GuideOutput>(guidesRaw.value));
 
 const guideModalRef = ref<InstanceType<typeof AppGuideUpsertModal> | null>(
     null,

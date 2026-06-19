@@ -7,6 +7,7 @@
  */
 
 import { eq, type Collection, type InitialQueryBuilder } from '@tanstack/db';
+import { queryRef } from './live-query-casts';
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- TanStack Collection generics */
 
@@ -26,8 +27,8 @@ export function buildProgramBookedTripIdsQuery(
 
     return qb
         .from({ b: bookingsCollection })
-        .where(({ b }) => eq(b.program_id, pid))
-        .select(({ b }) => ({ trip_id: b.trip_id }));
+        .where(({ b }) => eq(queryRef(b).program_id, pid))
+        .select(({ b }) => ({ trip_id: queryRef(b).trip_id }));
 }
 
 export function reduceBookedTripIds(rows: BookedTripIdRow[] | undefined): Set<string> {
