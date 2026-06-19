@@ -123,47 +123,16 @@
 import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { useLiveQuery } from "@tanstack/vue-db";
-import { eq } from "@tanstack/db";
-import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
-import type { ProgramUserOutput } from "../powersync/program-user.collection";
-import { isProgramOwner } from "../utilities/program-membership";
+import { useCurrentProgramMembershipRole } from "../composables/useCurrentProgramMembershipRole";
 import { useAppProgramMainNavTeleport } from "../utilities/app-layout-nav";
 
 const route = useRoute();
 const { t } = useI18n();
-const powersync = getAppPowerSyncContext();
-const programUsersCollection = powersync.collections.program_user;
 
 const { teleportTo, teleportDisabled, teleportTargetKey } =
     useAppProgramMainNavTeleport();
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
-const { data: programMemberships } = useLiveQuery(
-    (queryBuilder) => {
-        const col = programUsersCollection.value;
-        const pid = programId.value;
-        if (!col || pid.length === 0) return undefined;
-        return queryBuilder.from({ m: col }).where(({ m }) => eq(m.program_id, pid));
-    },
-    [programUsersCollection, programId],
-);
-
-const currentMembershipRole = computed((): string | null => {
-    const row = (programMemberships.value ?? []).find((candidateRow) => {
-        if (candidateRow == null) {
-            return false;
-        }
-        const membership = candidateRow as unknown as ProgramUserOutput;
-        return String(membership.program_id) === programId.value;
-    });
-    if (row == null) {
-        return null;
-    }
-    const membership = row as unknown as ProgramUserOutput;
-    return membership.role ?? null;
-});
-
-const isOwner = computed(() => isProgramOwner(currentMembershipRole.value));
+const { isOwner } = useCurrentProgramMembershipRole(programId);
 </script>
