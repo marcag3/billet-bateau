@@ -53,8 +53,102 @@ class ProgramInvitationTest extends TestCase
         ]);
 
         Notification::assertSentOnDemand(ProgramInvitationNotification::class, function (ProgramInvitationNotification $notification): bool {
-            return strlen($notification->plainToken) === 64;
+            return strlen($notification->plainToken) === 64
+                && $notification->mailLocale === 'en';
         });
+    }
+
+    public function test_owner_invitation_uses_submitted_locale_for_notification(): void
+    {
+        Notification::fake();
+
+        $owner = User::factory()->create();
+        $program = Program::factory()->withOwner($owner)->create();
+
+        $this->actingAs($owner)
+            ->postJson("/api/programs/{$program->id}/invitations", [
+                'email' => 'fr-admin@example.com',
+                'locale' => 'fr',
+            ])
+            ->assertCreated();
+
+        Notification::assertSentOnDemand(ProgramInvitationNotification::class, function (ProgramInvitationNotification $notification): bool {
+            return $notification->mailLocale === 'fr';
+        });
+    }
+
+    public function test_program_invitation_notification_mail_renders_in_french_when_locale_fr(): void
+    {
+        $owner = User::factory()->create();
+        $program = Program::factory()->withOwner($owner)->create([
+            'name' => 'Croisières',
+        ]);
+
+        $invitation = ProgramInvitation::query()->create([
+            'program_id' => $program->id,
+            'invited_by_user_id' => $owner->id,
+            'email' => 'admin@example.com',
+            'role' => 'admin',
+            'token_hash' => hash('sha256', str_repeat('a', 64)),
+            'expires_at' => now()->addDays(7),
+        ]);
+        $invitation->setRelation('program', $program);
+
+        $mail = (new ProgramInvitationNotification($invitation, str_repeat('a', 64), mailLocale: 'fr'))->toMail(
+            Notification::route('mail', 'admin@example.com'),
+        );
+
+        $this->assertStringContainsString('Croisières', (string) $mail->subject);
+        $this->assertStringContainsString('invité à gérer', (string) $mail->subject);
+        $this->assertSame('Accepter l\'invitation', (string) $mail->actionText);
+        $this->assertTrue(
+            collect($mail->introLines)->contains(
+                static fn (string $line): bool => str_contains($line, 'administrateur'),
+            ),
+        );
+        $allLines = array_merge($mail->introLines, $mail->outroLines);
+        $this->assertTrue(
+            collect($allLines)->contains(
+                static fn (string $line): bool => str_contains($line, 'expire'),
+            ),
+        );
+    }
+
+    public function test_program_invitation_notification_mail_renders_in_english_when_locale_en(): void
+    {
+        $owner = User::factory()->create();
+        $program = Program::factory()->withOwner($owner)->create([
+            'name' => 'Harbor Tours',
+        ]);
+
+        $invitation = ProgramInvitation::query()->create([
+            'program_id' => $program->id,
+            'invited_by_user_id' => $owner->id,
+            'email' => 'admin@example.com',
+            'role' => 'admin',
+            'token_hash' => hash('sha256', str_repeat('b', 64)),
+            'expires_at' => now()->addDays(7),
+        ]);
+        $invitation->setRelation('program', $program);
+
+        $mail = (new ProgramInvitationNotification($invitation, str_repeat('b', 64), mailLocale: 'en'))->toMail(
+            Notification::route('mail', 'admin@example.com'),
+        );
+
+        $this->assertStringContainsString('Harbor Tours', (string) $mail->subject);
+        $this->assertStringContainsString('invited to manage', (string) $mail->subject);
+        $this->assertSame('Accept invitation', (string) $mail->actionText);
+        $this->assertTrue(
+            collect($mail->introLines)->contains(
+                static fn (string $line): bool => str_contains($line, 'administrator'),
+            ),
+        );
+        $allLines = array_merge($mail->introLines, $mail->outroLines);
+        $this->assertTrue(
+            collect($allLines)->contains(
+                static fn (string $line): bool => str_contains($line, 'expires on'),
+            ),
+        );
     }
 
     public function test_cannot_invite_existing_program_member(): void

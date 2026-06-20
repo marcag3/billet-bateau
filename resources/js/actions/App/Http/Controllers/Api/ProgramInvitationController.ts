@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\ProgramInvitationController::store
-* @see app/Http/Controllers/Api/ProgramInvitationController.php:20
+* @see app/Http/Controllers/Api/ProgramInvitationController.php:21
 * @route '/api/programs/{programId}/invitations'
 */
 export const store = (args: { programId: string | number } | [programId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ProgramInvitationController::store
-* @see app/Http/Controllers/Api/ProgramInvitationController.php:20
+* @see app/Http/Controllers/Api/ProgramInvitationController.php:21
 * @route '/api/programs/{programId}/invitations'
 */
 store.url = (args: { programId: string | number } | [programId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -43,7 +43,7 @@ store.url = (args: { programId: string | number } | [programId: string | number 
 
 /**
 * @see \App\Http\Controllers\Api\ProgramInvitationController::store
-* @see app/Http/Controllers/Api/ProgramInvitationController.php:20
+* @see app/Http/Controllers/Api/ProgramInvitationController.php:21
 * @route '/api/programs/{programId}/invitations'
 */
 store.post = (args: { programId: string | number } | [programId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({

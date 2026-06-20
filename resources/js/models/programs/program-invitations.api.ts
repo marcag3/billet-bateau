@@ -6,7 +6,7 @@ import {
     getCsrfHeaders,
     parseJsonPayload,
 } from "../../services/http.client";
-import { translate } from "../../utilities/i18n";
+import { i18n, translate } from "../../utilities/i18n";
 
 export async function ensureSanctumCsrfCookie(): Promise<void> {
     const response = await fetch(csrfCookie.url(), {
@@ -36,7 +36,10 @@ export async function sendProgramAdminInvitation(
             },
             { includeRequestedWith: true },
         ),
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+            email,
+            locale: i18n.global.locale.value,
+        }),
     });
 
     const payload = await parseJsonPayload(response);
