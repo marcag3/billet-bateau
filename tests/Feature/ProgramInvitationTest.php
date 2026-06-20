@@ -54,7 +54,7 @@ class ProgramInvitationTest extends TestCase
 
         Notification::assertSentOnDemand(ProgramInvitationNotification::class, function (ProgramInvitationNotification $notification): bool {
             return strlen($notification->plainToken) === 64
-                && $notification->mailLocale === 'en';
+                && $notification->mailLocale === 'fr';
         });
     }
 
