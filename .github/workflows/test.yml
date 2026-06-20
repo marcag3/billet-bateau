@@ -12,9 +12,10 @@ jobs:
   laravel-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    container: ubuntu:22.04
+    container: ubuntu:24.04
     env:
       extensions: mbstring, dom, fileinfo, pgsql, redis, bcmath, gd
+      extension-cache-key: php-extensions-v1
     services:
       postgres:
         image: postgis/postgis:18-3.6
@@ -24,27 +25,32 @@ jobs:
           POSTGRES_DB: postgres
         options: --health-cmd="pg_isready -U root -d postgres" --health-interval=10s --health-timeout=5s --health-retries=5
       redis:
-        image: redis
+        image: redis:alpine
         ports:
           - 6379/tcp
         options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     strategy:
       matrix:
-        php-version: ["8.3"]
+        php-version: ["8.5"]
 
     steps:
-      - name: Verify PostgreSQL and create test databases
-        run: |
-          apt-get update
-          apt-get install -y postgresql-client
-          PGPASSWORD=root psql -h postgres -U root -d postgres -c "SELECT datname FROM pg_database"
-          PGPASSWORD=root psql -h postgres -U root -d postgres -c "CREATE DATABASE testing"
-          PGPASSWORD=root psql -h postgres -U root -d postgres -c "CREATE DATABASE testing_mom"
-          PGPASSWORD=root psql -h postgres -U root -d testing -c "CREATE EXTENSION IF NOT EXISTS postgis"
-          PGPASSWORD=root psql -h postgres -U root -d testing_mom -c "CREATE EXTENSION IF NOT EXISTS postgis"
+      - uses: actions/checkout@v6
 
-      - uses: actions/checkout@v4
+      - name: Setup extension cache environment
+        id: extcache
+        uses: shivammathur/cache-extensions@v1
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: ${{ env.extensions }}
+          key: ${{ env.extension-cache-key }}
+
+      - name: Cache PHP extensions
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.extcache.outputs.dir }}
+          key: ${{ steps.extcache.outputs.key }}
+          restore-keys: ${{ steps.extcache.outputs.key }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -55,20 +61,41 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check PHP syntax
-        run: phplint --exclude=*.log .
+      - name: Verify PostgreSQL and create test databases
+        run: |
+          apt-get update
+          apt-get install -y postgresql-client
+          PGPASSWORD=root psql -h postgres -U root -d postgres -c "SELECT datname FROM pg_database"
+          PGPASSWORD=root psql -h postgres -U root -d postgres -c "CREATE DATABASE testing"
+          PGPASSWORD=root psql -h postgres -U root -d postgres -c "CREATE DATABASE testing_mom"
+          PGPASSWORD=root psql -h postgres -U root -d testing -c "CREATE EXTENSION IF NOT EXISTS postgis"
+          PGPASSWORD=root psql -h postgres -U root -d testing_mom -c "CREATE EXTENSION IF NOT EXISTS postgis"
 
-      - uses: "ramsey/composer-install@v2"
+      - name: Check PHP syntax
+        run: phplint .
+
+      - uses: ramsey/composer-install@v4
         name: Install Composer & Dependencies
         with:
           composer-options: "--no-scripts --prefer-dist"
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: "npm"
+          cache: npm
 
-      - run: npm ci
+      - name: Cache node modules
+        id: node-modules-cache
+        uses: actions/cache@v5
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
+
+      - name: Install npm dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: npm ci
 
       - run: npm run build
 
@@ -79,7 +106,7 @@ jobs:
         run: ./vendor/bin/pint --test
 
       - name: Phpstan static analysis
-        run: ./vendor/bin/phpstan analyse
+        run: ./vendor/bin/phpstan analyse --memory-limit=512M
 
       - name: Generate key
         run: php artisan key:generate

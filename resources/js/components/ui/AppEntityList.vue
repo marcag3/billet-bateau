@@ -2,7 +2,7 @@
     <q-list
         bordered
         separator
-        class="app-entity-list bg-white rounded-borders"
+        class="bg-white rounded-borders border-[hsla(226,97%,12%,0.12)]"
         :class="listClass"
     >
         <slot />
@@ -17,9 +17,3 @@ withDefaults(
     { listClass: '' },
 );
 </script>
-
-<style scoped>
-.app-entity-list {
-    border-color: hsla(226, 97%, 12%, 0.12);
-}
-</style>

@@ -6,7 +6,7 @@
         :error-message="errorMessage"
     >
         <q-form
-            class="q-gutter-md"
+            class="column gap-4"
             @submit.prevent="submitSetup"
         >
             <q-input

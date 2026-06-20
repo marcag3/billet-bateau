@@ -23,6 +23,10 @@ class Booking extends Model
         'trip_id',
         'contact_name',
         'contact_email',
+        'contact_locale',
+        'cancel_token_hash',
+        'cancel_token',
+        'departure_reminder_sent_at',
         'created_at',
         'updated_at',
     ];
@@ -30,6 +34,8 @@ class Booking extends Model
     protected function casts(): array
     {
         return [
+            'cancel_token' => 'encrypted',
+            'departure_reminder_sent_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

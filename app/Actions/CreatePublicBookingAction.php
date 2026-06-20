@@ -44,7 +44,7 @@ final class CreatePublicBookingAction
                 ]);
             }
 
-            if ($trip->scheduled_departure_at->isPast()) {
+            if (! $trip->isPubliclyBookable()) {
                 throw ValidationException::withMessages([
                     'trip_id' => [__('This trip is no longer available for booking.')],
                 ]);
@@ -123,7 +123,7 @@ final class CreatePublicBookingAction
                 ->values()
                 ->all();
 
-            $providedAnswers = collect($data->custom_answers)
+            $providedAnswers = collect($data->custom_answers ?? [])
                 ->map(static fn ($answer): string => trim((string) $answer))
                 ->values()
                 ->all();
@@ -158,6 +158,7 @@ final class CreatePublicBookingAction
             }
 
             $bookingId = (string) Str::ulid();
+            $plainCancelToken = Str::random(64);
 
             Booking::query()->create([
                 'id' => $bookingId,
@@ -165,6 +166,9 @@ final class CreatePublicBookingAction
                 'trip_id' => $trip->getKey(),
                 'contact_name' => $data->contact_name,
                 'contact_email' => $data->contact_email,
+                'contact_locale' => AppLocale::normalize($data->locale),
+                'cancel_token_hash' => CancelPublicBookingAction::hashToken($plainCancelToken),
+                'cancel_token' => $plainCancelToken,
             ]);
 
             foreach ($nonZeroQuantities as $ticketTypeId => $quantity) {
@@ -188,14 +192,27 @@ final class CreatePublicBookingAction
                 total_tickets: $totalTickets,
                 contact_name: $data->contact_name,
                 contact_email: $data->contact_email,
+                cancel_token: $plainCancelToken,
             );
         });
 
-        $booking = Booking::query()->findOrFail($created->id);
+        $booking = Booking::query()
+            ->with([
+                'program:id,name,email_signature,line_1,line_2,city,postal_code,country',
+                'trip:id,scheduled_departure_at,product_id',
+                'trip.product:id,name,description,water_route_id',
+                'trip.product.waterRoute:id,duration_minutes',
+                'bookingTickets.ticketType:id,title',
+            ])
+            ->findOrFail($created->id);
         $locale = AppLocale::normalize($data->locale);
 
         Notification::route('mail', $created->contact_email)
-            ->notify(new BookingConfirmationNotification($booking, mailLocale: $locale));
+            ->notify(new BookingConfirmationNotification(
+                $booking,
+                mailLocale: $locale,
+                plainCancelToken: $created->cancel_token,
+            ));
 
         return $created;
     }

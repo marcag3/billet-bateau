@@ -1,11 +1,11 @@
 <template>
     <q-page class="max-w-[600px] mx-auto">
 
-        <q-banner v-if="errorMessage" class="bg-red-1 text-negative q-mb-md" rounded>
+        <q-banner v-if="errorMessage" class="bg-red-1 text-negative mb-4" rounded>
             {{ errorMessage }}
         </q-banner>
 
-        <div v-if="isLoading" class="row justify-center q-pa-md">
+        <div v-if="isLoading" class="row justify-center p-4">
             <q-spinner color="primary" size="48px" />
         </div>
 
@@ -14,7 +14,7 @@
                 <q-img :src="programBannerSrc" height="300px">
                     <div class="absolute-top">
 
-                        <h1 class="text-h4 q-mb-sm text-weight-bold">{{ program.name }} </h1>
+                        <h1 class="text-h4 mb-2 text-weight-bold">{{ program.name }} </h1>
                     </div>
                     <div class="absolute-bottom">
 
@@ -29,12 +29,12 @@
 
             </section>
 
-            <section v-if="createdBooking" class="row justify-center q-py-xl">
+            <section v-if="createdBooking" class="row justify-center py-12">
                 <q-card class="full-width" style="max-width: 560px;" flat bordered>
-                    <q-card-section class="column items-center text-center q-gutter-sm">
+                    <q-card-section class="column items-center text-center gap-2">
                         <q-icon name="check_circle" color="positive" size="52px" />
                         <div class="text-h5 text-weight-bold">{{ t('publicBooking.successTitle') }}</div>
-                        <p class="text-body1 text-grey-8 q-mb-sm">
+                        <p class="text-body1 text-grey-8 mb-2">
                             {{
                                 t('publicBooking.successBody', {
                                     id: createdBooking.id,
@@ -54,7 +54,8 @@
                 </q-card>
             </section>
 
-            <q-stepper v-else-if="hasBookingFlow" v-model="step" color="primary" animated flat bordered>
+            <q-stepper v-else-if="hasBookingFlow" v-model="step" color="primary" animated flat bordered
+                class="public-booking-stepper">
                 <q-step :name="1" :title="t('publicBooking.stepTrip')" :done="step > 1">
                     <PublicProgramBookingTripStep :key="tripStepResetKey" :trip-options="tripOptions"
                         v-model:selected-product-id="selectedTripProductId"
@@ -75,14 +76,14 @@
                     <PublicProgramBookingContactStep v-model:contact-name="contactName"
                         v-model:contact-email="contactEmail" v-model:country="country"
                         :contact-name-props="contactNameProps" :contact-email-props="contactEmailProps"
-                        :country-props="countryProps" :submit-error="submitError"
-                        v-model:custom-answers="customAnswers" :custom-questions="customQuestions"
-                        :custom-answer-errors="customAnswerErrors" :is-submitting="isSubmitting"
-                        :can-submit="canSubmitContactStep" @back="step = 2" @submit="onContactSubmit" />
+                        :country-props="countryProps" :submit-error="submitError" v-model:custom-answers="customAnswers"
+                        :custom-questions="customQuestions" :custom-answer-errors="customAnswerErrors"
+                        :is-submitting="isSubmitting" :can-submit="canSubmitContactStep" @back="step = 2"
+                        @submit="onContactSubmit" />
                 </q-step>
             </q-stepper>
 
-            <div v-else class="column q-gutter-sm">
+            <div v-else class="column gap-2">
                 <q-banner v-if="tripOptions.length === 0" rounded outline class="text-grey-8">
                     {{ t('publicBooking.noTrips') }}
                 </q-banner>
@@ -335,28 +336,31 @@ const onContactSubmit = handleSubmit(async (values) => {
         quantities[String(tt.id)] = q;
     }
 
-    const payload = {
+    const payload: Record<string, unknown> = {
         trip_id: String(trip.id),
         ticket_quantities: quantities,
         contact_name: String(values.contact_name).trim(),
         contact_email: String(values.contact_email).trim(),
         country: String(values.country).trim().toUpperCase(),
-        custom_answers: [] as string[],
         locale: String(locale.value) === 'fr' ? 'fr' : 'en',
     };
 
-    const answerErrors: Record<number, string> = {};
-    payload.custom_answers = customQuestions.value.map((question, index) => {
-        const answer = String(customAnswers.value[index] ?? '').trim();
-        if (answer.length === 0) {
-            answerErrors[index] = t('publicBooking.customAnswerRequired', { question });
-        }
+    if (customQuestions.value.length > 0) {
+        const answerErrors: Record<number, string> = {};
+        payload.custom_answers = customQuestions.value.map((question, index) => {
+            const answer = String(customAnswers.value[index] ?? '').trim();
+            if (answer.length === 0) {
+                answerErrors[index] = t('publicBooking.customAnswerRequired', { question });
+            }
 
-        return answer;
-    });
-    customAnswerErrors.value = answerErrors;
-    if (Object.keys(answerErrors).length > 0) {
-        return;
+            return answer;
+        });
+        customAnswerErrors.value = answerErrors;
+        if (Object.keys(answerErrors).length > 0) {
+            return;
+        }
+    } else {
+        customAnswerErrors.value = {};
     }
 
     try {
@@ -418,3 +422,9 @@ watch(step, (nextStep) => {
     }
 });
 </script>
+
+<style scoped>
+.public-booking-stepper :deep(.q-stepper__step-inner) {
+    padding-inline: 0;
+}
+</style>

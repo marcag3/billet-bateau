@@ -1,17 +1,17 @@
 <template>
-    <div class="relative-position">
+    <div class="relative-position" :class="!ready && 'min-h-[50vh]'">
         <q-banner
             v-if="!ready && hasErrorMessage"
             rounded
-            class="bg-red-1 text-negative q-mb-md"
+            class="bg-red-1 text-negative mb-4"
         >
-            {{ errorMessage }}
+            {{ resolvedErrorMessage }}
         </q-banner>
         <q-inner-loading
             v-else-if="!ready && hasLoadingCopy"
             :showing="true"
         >
-            <div class="column items-center q-gutter-sm q-px-md">
+            <div class="column items-center gap-2 px-4">
                 <q-spinner color="primary" size="42px" />
                 <div
                     v-if="loadingTitle != null && loadingTitle !== ''"
@@ -33,14 +33,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, toValue, type MaybeRefOrGetter } from "vue";
 
 const props = withDefaults(
     defineProps<{
         ready?: boolean;
         loadingTitle?: string;
         loadingSubcopy?: string;
-        errorMessage?: string;
+        errorMessage?: MaybeRefOrGetter<string>;
     }>(),
     {
         ready: false,
@@ -55,7 +55,12 @@ const hasLoadingCopy = computed(
         (props.loadingTitle != null && props.loadingTitle !== "") ||
         (props.loadingSubcopy != null && props.loadingSubcopy !== ""),
 );
+const resolvedErrorMessage = computed(() => {
+    const message = toValue(props.errorMessage);
+    return typeof message === "string" ? message : "";
+});
+
 const hasErrorMessage = computed(
-    () => props.errorMessage != null && props.errorMessage.trim().length > 0,
+    () => resolvedErrorMessage.value.trim().length > 0,
 );
 </script>

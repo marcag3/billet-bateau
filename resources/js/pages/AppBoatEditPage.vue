@@ -3,7 +3,7 @@
         :back-label="t('boatsList.backToList')">
         <template v-if="currentBoat && boatSwitcherOptions.length > 0" #quickNav>
             <AppCardSection :label="t('boatsList.quickNavLabel')">
-                <div class="row q-col-gutter-sm items-center">
+                <div class="row items-center gap-2 flex-wrap">
                     <div class="col-12 col-sm-auto">
                         <q-btn flat round dense icon="chevron_left" :aria-label="t('boatsList.previousBoat')"
                             :disable="!neighbors.prev" @click="goPrev" />
@@ -27,7 +27,7 @@
             </AppCardSection>
         </template>
 
-        <q-banner v-if="showNotFound" class="bg-warning text-dark q-mb-md" rounded>
+        <q-banner v-if="showNotFound" class="bg-warning text-dark mb-4" rounded>
             {{ t("boatsList.notFound") }}
             <template #action>
                 <q-btn color="primary" flat :label="t('boatsList.backToList')" :to="backTo" />
@@ -36,7 +36,7 @@
 
         <AppCardSection v-else-if="currentBoat" :label="formSectionLabel">
             <q-form @submit.prevent="onSaveSubmit">
-                <div class="column q-gutter-y-md">
+                <div class="column gap-4">
                     <q-input v-model="editName" v-bind="editNameProps" outlined :label="t('boatsList.name')"
                         :disable="isSubmitting || isDeleting" />
                     <q-input v-model.number="editCapacity" v-bind="editCapacityProps" outlined type="number"
@@ -47,7 +47,7 @@
                     <AppBoatTypeSelectField v-model="editBoatTypeId" v-bind="editBoatTypeIdProps"
                         :program-id="programId" :label="t('boatsList.boatType')"
                         :disable="isSubmitting || isDeleting" />
-                    <div class="row q-gutter-sm">
+                    <div class="row gap-2">
                         <q-btn color="primary" type="submit" :label="t('boatsList.saveChanges')" :loading="isSubmitting"
                             :disable="!meta.valid || isDeleting" />
                         <q-btn flat color="negative" icon="delete" :label="t('boatsList.delete')"

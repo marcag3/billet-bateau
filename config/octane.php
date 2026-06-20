@@ -221,4 +221,34 @@ return [
 
     'max_execution_time' => 30,
 
+    /*
+    |--------------------------------------------------------------------------
+    | FrankenPHP / Caddy Environment
+    |--------------------------------------------------------------------------
+    |
+    | Octane starts FrankenPHP with its own Caddyfile and only forwards env vars
+    | listed here (see StartFrankenPhpCommand). The serversideup image entrypoint
+    | cannot inject CADDY_SERVER_EXTRA_DIRECTIVES when using octane:start.
+    |
+    */
+
+    'caddy' => [
+        'env' => [
+            'CADDY_SERVER_EXTRA_DIRECTIVES' => (static function (): string {
+                foreach (
+                    [
+                        '/etc/caddy/server-extra-directives',
+                        base_path('deploy/config/caddy/server-extra-directives'),
+                    ] as $path
+                ) {
+                    if (is_readable($path)) {
+                        return trim((string) file_get_contents($path));
+                    }
+                }
+
+                return '';
+            })(),
+        ],
+    ],
+
 ];

@@ -113,7 +113,19 @@ const programScopeChildren: RouteRecordRaw[] = [
                 path: "edit",
                 name: "programs.edit",
                 component: () => import("../pages/AppProgramEditPage.vue"),
-                meta: scopedProgramMeta,
+                meta: {
+                    ...scopedProgramMeta,
+                    syncStreams: ["user_scope"],
+                },
+            },
+            {
+                path: "members",
+                name: "programs.members",
+                component: () => import("../pages/AppProgramMembersPage.vue"),
+                meta: {
+                    ...scopedProgramMeta,
+                    syncStreams: ["user_scope"],
+                },
             },
         ],
     },
@@ -229,6 +241,15 @@ const routes: RouteRecordRaw[] = [
         path: "/programs",
         name: "programs.list",
         component: () => import("../pages/AppProgramsPage.vue"),
+        meta: {
+            requiresAuth: true,
+            syncStreams: ["user_scope"],
+        },
+    },
+    {
+        path: "/profile",
+        name: "profile",
+        component: () => import("../pages/AppProfilePage.vue"),
         meta: {
             requiresAuth: true,
         },

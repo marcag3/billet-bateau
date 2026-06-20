@@ -1,6 +1,6 @@
 <template>
     <q-page :class="pageClass">
-        <div class="q-gutter-y-md">
+        <div class="column gap-4">
             <div v-if="backTo" class="row items-center">
                 <q-btn flat color="primary" icon="arrow_back" :to="backTo" :label="backLabel" />
             </div>
@@ -34,7 +34,7 @@ const props = withDefaults(
         title: "",
         backTo: null,
         backLabel: "",
-        paddingClass: "q-pa-md",
+        paddingClass: "p-4",
     },
 );
 

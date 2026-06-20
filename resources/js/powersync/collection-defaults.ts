@@ -4,6 +4,7 @@ import {
     type Collection,
     type CollectionConfig,
 } from '@tanstack/db';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 export const tanstackCollectionDefaults = {
     defaultIndexType: BasicIndex,
@@ -22,11 +23,10 @@ function rebuildCollectionIndexes(
 export function createAppPowerSyncCollection<
     TOutput extends object,
     TKey extends string | number = string,
-    TSchema = never,
 >(
     id: string,
     config: Omit<
-        CollectionConfig<TOutput, TKey, TSchema>,
+        CollectionConfig<TOutput, TKey, StandardSchemaV1>,
         'id' | 'defaultIndexType' | 'autoIndex'
     >,
 ) {
@@ -34,7 +34,7 @@ export function createAppPowerSyncCollection<
         id,
         ...tanstackCollectionDefaults,
         ...config,
-    });
+    } as never);
 
     collection.onFirstReady(() => {
         rebuildCollectionIndexes(

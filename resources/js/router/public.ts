@@ -17,6 +17,12 @@ const routes = [
                 component: () => import('../pages/PublicProgramDetailPage.vue'),
                 props: true,
             },
+            {
+                path: 'bookings/cancel/:token',
+                name: 'public.booking.cancel',
+                component: () => import('../pages/PublicBookingCancelPage.vue'),
+                props: true,
+            },
         ],
     },
 ];

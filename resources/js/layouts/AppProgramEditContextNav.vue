@@ -21,6 +21,22 @@
                 }}</q-item-section>
             </q-item>
             <q-item
+                v-if="isOwner"
+                key="program-members"
+                v-ripple
+                clickable
+                :to="{ name: 'programs.members', params: { programId } }"
+                exact
+                active-class="app-nav-item--active"
+            >
+                <q-item-section avatar>
+                    <q-icon name="people" />
+                </q-item-section>
+                <q-item-section>{{
+                    t("programsMembers.navLabel")
+                }}</q-item-section>
+            </q-item>
+            <q-item
                 key="boats"
                 v-ripple
                 clickable
@@ -107,6 +123,7 @@
 import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { useCurrentProgramMembershipRole } from "../composables/useCurrentProgramMembershipRole";
 import { useAppProgramMainNavTeleport } from "../utilities/app-layout-nav";
 
 const route = useRoute();
@@ -116,4 +133,6 @@ const { teleportTo, teleportDisabled, teleportTargetKey } =
     useAppProgramMainNavTeleport();
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
+
+const { isOwner } = useCurrentProgramMembershipRole(programId);
 </script>

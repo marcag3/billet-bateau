@@ -1,0 +1,4 @@
+@app_service_worker path /build/app-sw.js
+header @app_service_worker Service-Worker-Allowed "/app/"
+@build_assets path /build/assets/*
+header @build_assets Cache-Control "public, max-age=31536000, immutable"

@@ -90,6 +90,7 @@ final class ApplyProgramPowerSyncCrudAction
             'city' => $resolved->city,
             'postal_code' => $resolved->postal_code,
             'country' => $resolved->country,
+            'email_signature' => $resolved->email_signature,
             'booking_questions' => $resolved->booking_questions,
         ];
 
@@ -168,6 +169,10 @@ final class ApplyProgramPowerSyncCrudAction
 
         if (! ($patch->booking_questions instanceof Optional)) {
             $program->booking_questions = ProgramPutPayloadResolver::normalizeBookingQuestions($patch->booking_questions);
+        }
+
+        if (! ($patch->email_signature instanceof Optional)) {
+            $program->email_signature = $patch->email_signature;
         }
 
         if (! ($patch->start_date instanceof Optional) && $patch->start_date !== null && $patch->start_date !== '') {

@@ -1,7 +1,7 @@
 <template>
     <q-btn
-        class="q-ml-md"
-        :class="{ 'app-language-switcher__btn--on-dark': onDarkHeader }"
+        class="ml-4"
+        :class="onDarkHeader && 'text-[rgba(255,255,255,0.92)]'"
         flat
         round
         dense
@@ -59,10 +59,3 @@ const langOptions: { label: string; value: AppLocale }[] = [
     { label: "Français", value: "fr" },
 ];
 </script>
-
-<style scoped>
-.app-language-switcher__btn--on-dark {
-    color: rgba(255, 255, 255, 0.92);
-}
-
-</style>

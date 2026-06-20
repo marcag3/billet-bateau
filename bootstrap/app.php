@@ -22,6 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('powersync:compact')
             ->dailyAt('03:00')
             ->withoutOverlapping();
+
+        $schedule->command('bookings:send-departure-reminders')
+            ->hourly()
+            ->withoutOverlapping()
+            ->onOneServer();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         Integration::handles($exceptions);

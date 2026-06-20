@@ -7,13 +7,28 @@
         <AppAlertBanner
             v-if="showPasswordResetSuccess"
             variant="info"
-            class="q-mb-md"
+            class="mb-4"
         >
             {{ t('auth.passwordResetSuccess') }}
         </AppAlertBanner>
 
+        <template v-if="googleOauthEnabled">
+            <q-btn
+                outline
+                color="primary"
+                :label="t('auth.continueWithGoogle')"
+                class="full-width"
+                :disable="isSubmitting"
+                @click="signInWithGoogle"
+            />
+
+            <div class="text-center text-grey-7 my-4">
+                {{ t('auth.orContinueWithEmail') }}
+            </div>
+        </template>
+
         <q-form
-            class="q-gutter-md"
+            class="column gap-4"
             @submit.prevent="submitLogin"
         >
             <q-input
@@ -54,7 +69,7 @@
             />
         </q-form>
 
-        <div class="text-center q-mt-md">
+        <div class="text-center mt-4">
             <router-link
                 class="text-primary"
                 :to="{ name: 'forgot-password' }"
@@ -69,10 +84,13 @@
 import { useForm } from 'vee-validate';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { createLoginFormSchema, type LoginFormValues } from '../models/auth.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { useAuthStore } from '../store/auth.store';
+import { getAppAuthConfig } from '../utilities/auth-config';
+import { redirect as googleRedirect } from '../routes/auth/google';
+import { sanitizeRedirectPath } from '../utilities/safe-redirect-path';
 import AppAlertBanner from '../components/ui/AppAlertBanner.vue';
 import AppAuthFormLayout from '../components/ui/AppAuthFormLayout.vue';
 
@@ -83,7 +101,42 @@ const { t } = useI18n();
 
 const remember = ref(true);
 const errorMessage = ref('');
+const googleOauthEnabled = getAppAuthConfig().google_oauth_enabled;
 const showPasswordResetSuccess = computed(() => route.query.reset === 'success');
+
+const oauthErrorMessages: Record<string, string> = {
+    google_account_not_found: 'auth.googleAccountNotFound',
+    google_failed: 'auth.googleFailed',
+    google_denied: 'auth.googleDenied',
+};
+
+onMounted(() => {
+    const errorKey = typeof route.query.error === 'string' ? route.query.error : '';
+    const messageKey = oauthErrorMessages[errorKey];
+
+    if (messageKey) {
+        errorMessage.value = t(messageKey);
+    }
+});
+
+function signInWithGoogle() {
+    const redirectTarget =
+        typeof route.query.redirect === 'string'
+            ? sanitizeRedirectPath(route.query.redirect, '/')
+            : undefined;
+
+    window.location.assign(
+        googleRedirect.url(
+            redirectTarget
+                ? {
+                      query: {
+                          redirect: redirectTarget,
+                      },
+                  }
+                : undefined,
+        ),
+    );
+}
 
 const validationSchema = createLoginFormSchema(t);
 const { handleSubmit, defineField, isSubmitting } = useForm<LoginFormValues>({
@@ -109,7 +162,9 @@ const submitLogin = handleSubmit(async (values) => {
             remember: remember.value,
         });
 
-        const redirectTarget = typeof route.query.redirect === 'string' ? route.query.redirect : '/';
+        const redirectTarget = sanitizeRedirectPath(
+            typeof route.query.redirect === 'string' ? route.query.redirect : null,
+        );
         await router.replace(redirectTarget);
     } catch (error) {
         errorMessage.value = error instanceof Error ? error.message : t('auth.unableAuthenticate');

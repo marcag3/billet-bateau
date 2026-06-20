@@ -1,12 +1,9 @@
 <template>
-    <q-page class="row items-center justify-center q-pa-md">
-        <q-card
-            class="app-auth-form-layout__card q-pa-lg"
-            :class="cardClass"
-        >
+    <q-page class="row items-center justify-center p-4">
+        <q-card class="w-full p-6" :class="cardClass">
             <q-card-section
                 v-if="hasHeader"
-                class="q-pb-sm"
+                class="pb-2"
             >
                 <div class="text-h5">
                     <slot name="title">{{ title }}</slot>
@@ -68,18 +65,6 @@ const cardClass = computed(() => {
     if (props.maxWidth === 'none') {
         return '';
     }
-    return props.maxWidth === 'setup' ? 'app-auth-form-layout--wide' : 'app-auth-form-layout--login';
+    return props.maxWidth === 'setup' ? 'max-w-[460px]' : 'max-w-[420px]';
 });
 </script>
-
-<style scoped>
-.app-auth-form-layout__card {
-    width: 100%;
-}
-.app-auth-form-layout--login {
-    max-width: 420px;
-}
-.app-auth-form-layout--wide {
-    max-width: 460px;
-}
-</style>

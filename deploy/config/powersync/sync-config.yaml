@@ -34,6 +34,7 @@ streams:
           is_active,
           slug,
           booking_questions::text AS booking_questions,
+          email_signature,
           start_date,
           end_date,
           line_1,

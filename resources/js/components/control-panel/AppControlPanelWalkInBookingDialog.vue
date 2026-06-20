@@ -6,7 +6,7 @@
             </q-card-section>
 
             <q-form @submit="onSubmit">
-                <q-card-section class="column q-gutter-md">
+                <q-card-section class="column gap-4">
                     <q-select
                         v-model="ticketTypeId"
                         outlined

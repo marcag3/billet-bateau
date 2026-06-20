@@ -1,13 +1,24 @@
 {
     ":count × :title": ":count × :title",
+    "Annulation confirmée — :program": "Cancellation confirmed — :program",
+    "Annuler la réservation": "Cancel booking",
     "Billet": "Ticket",
     "Billets : :summary": "Tickets: :summary",
     "Bonjour :name,": "Hello :name,",
     "Confirmation de réservation — :program": "Booking confirmation — :program",
+    "Cordialement,": "Regards,",
     "Conservez ce courriel pour votre référence.": "Keep this email for your records.",
     "Contact : :name": "Contact: :name",
     "Départ : :departure": "Departure: :departure",
     "Merci pour votre réservation pour :program.": "Thank you for booking with :program.",
+    "Pour annuler votre réservation, utilisez le bouton ci-dessous.": "To cancel your booking, use the button below.",
+    "Rappel — votre réservation pour :program": "Reminder — your booking with :program",
     "Référence de réservation : :id": "Booking reference: :id",
-    "Sortie : :product": "Trip: :product"
+    "Sortie : :product": "Trip: :product",
+    "This booking can no longer be cancelled because check-in has already started.": "This booking can no longer be cancelled because check-in has already started.",
+    "This booking can no longer be cancelled because the trip has already departed.": "This booking can no longer be cancelled because the trip has already departed.",
+    "This booking can no longer be cancelled because the trip has already started.": "This booking can no longer be cancelled because the trip has already started.",
+    "This cancellation link is invalid.": "This cancellation link is invalid.",
+    "Votre réservation pour :program a été annulée.": "Your booking with :program has been cancelled.",
+    "Votre sortie avec :program part dans environ 24 heures.": "Your trip with :program departs in about 24 hours."
 }

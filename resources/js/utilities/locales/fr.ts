@@ -12,6 +12,7 @@ export default {
         waterRoutes: "Parcours",
         calendar: "Calendrier",
         logout: "Se deconnecter",
+        disconnect: "Se deconnecter",
         reauthenticate: "Se reconnecter",
         language: "Langue",
         welcome: "Bienvenue",
@@ -52,6 +53,13 @@ export default {
         validationEmail: "Entrez une adresse e-mail valide.",
         passwordResetSuccess:
             "Votre mot de passe a ete reinitialise. Connectez-vous avec votre nouveau mot de passe.",
+        continueWithGoogle: "Continuer avec Google",
+        orContinueWithEmail: "ou",
+        googleAccountNotFound:
+            "Aucun compte n'existe pour cet e-mail Google. Demandez une invitation a votre administrateur.",
+        googleFailed:
+            "La connexion Google a echoue. Veuillez reessayer.",
+        googleDenied: "La connexion Google a ete annulee.",
         forgotPasswordLink: "Mot de passe oublie ?",
         forgotPassword: {
             title: "Mot de passe oublie",
@@ -159,6 +167,41 @@ export default {
         sendFailed: "Impossible d'envoyer l'invitation.",
         fieldRequired: "Ce champ est requis.",
     },
+    programsMembers: {
+        title: "Membres du programme",
+        navLabel: "Membres",
+        notOwner:
+            "Seul le proprietaire du programme peut gerer les membres du programme.",
+        inviteSectionTitle: "Inviter des administrateurs",
+        inviteSectionSubtitle:
+            "Les personnes invitees deviennent administratrices du programme avec un acces complet.",
+        pendingSectionTitle: "Invitations en attente",
+        pendingEmpty: "Aucune invitation en attente.",
+        membersSectionTitle: "Membres",
+        membersEmpty: "Aucun membre trouve.",
+        roleOwner: "Proprietaire",
+        roleAdmin: "Administrateur",
+        expiresLabel: "Expire le {date}",
+        revokeInvite: "Revoquer l'invitation",
+        revokeInviteConfirmTitle: "Revoquer l'invitation?",
+        revokeInviteConfirmMessage:
+            "Revoquer l'invitation envoyee a {email}? Cette personne ne pourra plus l'accepter.",
+        revokeInviteSuccess: "Invitation revoquee.",
+        removeAccess: "Retirer l'acces",
+        removeConfirmTitle: "Retirer le membre?",
+        removeConfirmMessage:
+            "Retirer {name} de ce programme? Cette personne perdra tout acces.",
+        removeSuccess: "Membre retire.",
+        transferOwnership: "Transferer la propriete",
+        transferConfirmTitle: "Transferer la propriete?",
+        transferConfirmMessage:
+            "Nommer {name} proprietaire du programme? Vous resterez sur le programme en tant qu'administrateur.",
+        transferSuccess: "Propriete transferee.",
+        loadFailed: "Impossible de charger les membres du programme.",
+        removeFailed: "Impossible de retirer le membre.",
+        revokeInviteFailed: "Impossible de revoquer l'invitation.",
+        transferFailed: "Impossible de transferer la propriete.",
+    },
     notFoundPage: {
         title: "Page introuvable",
         description: "Cette page n'existe pas ou le lien est incorrect.",
@@ -178,6 +221,9 @@ export default {
         bookingQuestionLabel: "Question {index}",
         addBookingQuestion: "Ajouter une question",
         removeBookingQuestion: "Retirer la question",
+        emailSignature: "Signature des courriels de reservation",
+        emailSignatureHint:
+            "Affichee a la fin des courriels de confirmation de reservation. Laissez vide pour omettre une ligne de signature.",
         addressOptional: "Adresse (optionnelle)",
         line1: "Ligne 1",
         line2: "Ligne 2",
@@ -196,6 +242,15 @@ export default {
             "La date de fin doit etre le meme jour ou apres la date de debut.",
     },
     sync: {
+        preparingLocal: "Preparation des donnees locales…",
+        preparingLocalHint:
+            "Configuration du stockage hors ligne et de la synchronisation. Un court instant seulement au premier lancement.",
+        syncingUserScope: "Synchronisation de vos programmes…",
+        syncingUserScopeHint:
+            "Recuperation de votre espace depuis le serveur.",
+        syncingProgramScope: "Chargement des donnees du programme…",
+        syncingProgramScopeHint:
+            "Synchronisation des bateaux, des sorties et des autres details de l'espace de travail.",
         syncRequestFailed: "La requete de synchronisation a echoue.",
         unableLoadSync: "Impossible de charger la synchronisation locale.",
         persistenceLimited:
@@ -205,10 +260,41 @@ export default {
         rowPendingSync: "En attente du serveur",
         outboxCommitFailed:
             "La synchronisation d'une modification vers le serveur a echoue pour le moment. Votre modification reste en file localement ; vous pouvez reessayer.",
+        healthUnavailableTitle: "Synchronisation locale indisponible",
+        healthUnavailableHint:
+            "Redemarrez l'application ou verifiez les parametres de stockage du navigateur.",
+        healthOfflineTitle: "Vous etes hors ligne",
+        healthOfflineHint:
+            "Affichage des donnees enregistrees le {time}. Les modifications seront synchronisees au retour en ligne.",
+        healthOfflineHintNoTime:
+            "Affichage des donnees locales. Les modifications seront synchronisees au retour en ligne.",
+        healthConnectingTitle: "Connexion a la synchronisation…",
+        healthConnectingHint: "Tentative de connexion au serveur de synchronisation.",
+        healthStaleTitle: "Serveur de synchronisation inaccessible",
+        healthStaleHint:
+            "Affichage des donnees enregistrees le {time}. Les mises a jour des autres appareils n'apparaitront pas tant que la synchronisation n'est pas retablie.",
+        healthStaleHintNoTime:
+            "Affichage des donnees locales. Les mises a jour des autres appareils n'apparaitront pas tant que la synchronisation n'est pas retablie.",
+        healthBlockedTitle: "Impossible de synchroniser depuis le serveur",
+        healthBlockedHint:
+            "Le telechargement des donnees de l'espace de travail a echoue. Verifiez votre connexion et reessayez.",
+        healthDownloadError: "Erreur de telechargement",
+        toolbarTitle: "Etat de la synchronisation",
+        toolbarConnectionHeader: "Connexion",
+        toolbarPendingHeader: "Ecritures en attente",
+        toolbarLastSynced: "Derniere synchro {time}",
+        toolbarLastSyncedNever: "Pas encore synchronise",
+        toolbarStatusLive: "Synchronisation active",
+        toolbarStatusOffline: "Hors ligne",
+        toolbarStatusConnecting: "Connexion…",
+        toolbarStatusStale: "Donnees locales uniquement",
+        toolbarStatusBlocked: "Synchronisation bloquee",
+        toolbarStatusUnavailable: "Synchronisation indisponible",
     },
     publicHome: {
         description: "Parcourez les programmes et trouvez votre prochaine aventure.",
         noPrograms: "Aucun programme n’est publié pour le moment.",
+        viewProgram: "Voir le programme",
         loadError: "Impossible de charger les programmes. Reessayez plus tard.",
     },
     publicProgram: {
@@ -274,6 +360,25 @@ export default {
         bookAnother: "Réserver une autre sortie",
         payWhatYouCan: "Prix libre",
         priceFromCents: "{amount}",
+    },
+    publicBookingCancel: {
+        title: "Annuler la réservation",
+        programLabel: "Programme",
+        tripLabel: "Sortie",
+        departureLabel: "Départ",
+        ticketsLabel: "Billets",
+        referenceLabel: "Référence",
+        confirmHint: "Cette action est définitive. Vos billets seront libérés.",
+        confirmButton: "Confirmer l'annulation",
+        keepBooking: "Conserver ma réservation",
+        successTitle: "Réservation annulée",
+        successBody: "Votre réservation {id} a été annulée.",
+        invalidLink: "Ce lien d'annulation est invalide.",
+        pastDeparture: "Cette réservation ne peut plus être annulée car la sortie est déjà passée.",
+        checkedIn: "Cette réservation ne peut plus être annulée car l'enregistrement a déjà commencé.",
+        voyageStarted: "Cette réservation ne peut plus être annulée car la sortie a déjà commencé.",
+        loadFailed: "Impossible de charger cette réservation. Réessayez plus tard.",
+        cancelFailed: "Impossible d'annuler cette réservation. Réessayez plus tard.",
     },
     boatsList: {
         title: "Bateaux",
@@ -646,14 +751,31 @@ export default {
         placeholderDescription:
             "Les flux d’enregistrement et d’arrivée seront disponibles ici.",
     },
+    profile: {
+        title: "Profil",
+        openProfile: "Ouvrir le profil",
+        userMenu: "Menu utilisateur",
+        profileSection: "Informations du compte",
+        passwordSection: "Changer le mot de passe",
+        name: "Nom",
+        email: "Courriel",
+        currentPassword: "Mot de passe actuel",
+        newPassword: "Nouveau mot de passe",
+        confirmPassword: "Confirmer le nouveau mot de passe",
+        saveProfile: "Enregistrer le profil",
+        changePassword: "Changer le mot de passe",
+        profileUpdated: "Votre profil a été mis à jour.",
+        passwordChanged: "Votre mot de passe a été modifié.",
+        unableUpdateProfile:
+            "Impossible de mettre à jour votre profil. Veuillez réessayer.",
+        unableChangePassword:
+            "Impossible de changer votre mot de passe. Veuillez réessayer.",
+        validationRequired: "Ce champ est obligatoire.",
+        validationEmail: "Entrez une adresse courriel valide.",
+        passwordMismatch: "Les mots de passe ne correspondent pas.",
+    },
     programsList: {
         title: "Programmes",
-        loadingLocal: "Preparation des donnees locales…",
-        loadingLocalHint:
-            "Configuration du stockage hors ligne et de la synchronisation. Un court instant seulement au premier lancement.",
-        loadingPrograms: "Synchronisation de vos programmes…",
-        loadingProgramsHint:
-            "Recuperation de votre espace depuis le serveur.",
         empty: "Aucun programme pour l'instant. Utilisez le bouton ci-dessus pour en creer un.",
         emptyActive: "Aucun programme dans l’onglet Actifs.",
         emptyArchived: "Aucun programme archive.",

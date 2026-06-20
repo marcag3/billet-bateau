@@ -1,6 +1,6 @@
 import type { Ref, ShallowRef } from "vue";
 import type { PowerSyncDatabase } from "@powersync/web";
-import { bootstrapAppPowerSync } from "./bootstrap";
+import { bootstrapAppPowerSync, teardownAppPowerSync } from "./bootstrap";
 import { refreshOutboxSnapshot, useAppPowerSyncOutbox } from "./outbox";
 import {
     activeProgramIdRef,
@@ -8,6 +8,7 @@ import {
     currentUserIdRef,
     errorMessage,
     hasBootstrappedCollection,
+    initialProgramScopeSyncComplete,
     initialUserScopeSyncComplete,
     isLoading,
     outboxCommitError,
@@ -20,6 +21,9 @@ import {
     getActiveProgramIdRef,
     type PowerSyncCollectionRefs,
 } from "./powersync-runtime-state";
+import { syncHealthSnapshot } from "./sync-health-state";
+import type { SyncHealthSnapshot } from "./sync-health";
+import { useSyncHealth } from "../composables/useSyncHealth";
 
 export type AppPowerSyncContext = {
     collections: PowerSyncCollectionRefs;
@@ -27,13 +31,17 @@ export type AppPowerSyncContext = {
     setActiveProgramId: typeof setActiveProgramId;
     getActiveProgramIdRef: typeof getActiveProgramIdRef;
     bootstrapAppPowerSync: typeof bootstrapAppPowerSync;
+    teardownAppPowerSync: typeof teardownAppPowerSync;
     refreshOutboxSnapshot: typeof refreshOutboxSnapshot;
     useAppPowerSyncOutbox: typeof useAppPowerSyncOutbox;
+    useSyncHealth: typeof useSyncHealth;
+    syncHealthSnapshot: ShallowRef<SyncHealthSnapshot>;
     isLoading: Ref<boolean>;
     errorMessage: Ref<string>;
     programsDeserializationError: Ref<unknown>;
     hasBootstrappedCollection: Ref<boolean>;
     initialUserScopeSyncComplete: Ref<boolean>;
+    initialProgramScopeSyncComplete: Ref<boolean>;
     persistenceUnavailable: Ref<boolean>;
     persistenceLimitedMessage: typeof persistenceLimitedMessage;
     powerSyncDbRef: ShallowRef<PowerSyncDatabase | null>;
@@ -48,13 +56,17 @@ const appPowerSyncContext: AppPowerSyncContext = {
     setActiveProgramId,
     getActiveProgramIdRef,
     bootstrapAppPowerSync,
+    teardownAppPowerSync,
     refreshOutboxSnapshot,
     useAppPowerSyncOutbox,
+    useSyncHealth,
+    syncHealthSnapshot,
     isLoading,
     errorMessage,
     programsDeserializationError,
     hasBootstrappedCollection,
     initialUserScopeSyncComplete,
+    initialProgramScopeSyncComplete,
     persistenceUnavailable,
     persistenceLimitedMessage,
     powerSyncDbRef,

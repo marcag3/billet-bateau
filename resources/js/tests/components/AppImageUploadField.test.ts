@@ -158,8 +158,9 @@ describe('AppImageUploadField', () => {
         qFile.vm.$emit('update:modelValue', selectedFile);
         await flushPromises();
 
-        expect(createObjectUrl).toHaveBeenCalledWith(selectedFile);
-        expect(mounted.findComponent({ name: 'AppImageCropDialog' }).exists()).toBe(true);
+        const cropDialog = mounted.findComponent({ name: 'AppImageCropDialog' });
+        expect(cropDialog.exists()).toBe(true);
+        expect(cropDialog.props('imageFile')).toStrictEqual(selectedFile);
         expect(uploadImageViaPresignedPut).not.toHaveBeenCalled();
     });
 });

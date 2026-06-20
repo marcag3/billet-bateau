@@ -1,6 +1,6 @@
 <template>
     <q-form @submit.prevent="onFormSubmit">
-        <div class="column q-gutter-y-md">
+        <div class="column gap-4">
             <q-input
                 ref="slotDepartureTimeInputRef"
                 :model-value="modelValue.departureTime"
@@ -57,9 +57,9 @@
             <q-card
                 flat
                 bordered
-                class="q-pa-md"
+                class="p-4"
             >
-                <div class="text-subtitle2 q-mb-sm">
+                <div class="text-subtitle2 mb-2">
                     {{ t("templateDaysList.ticketSetup") }}
                 </div>
 
@@ -86,7 +86,7 @@
                                 val.length >= 1 ||
                                 t('templateDaysList.allowedTicketTypesRequired'),
                         ]"
-                        class="q-mt-md"
+                        class="mt-4"
                         @update:model-value="
                             patchModel({ allowedTicketTypeIds: $event })
                         "
@@ -98,7 +98,7 @@
                         type="number"
                         min="1"
                         :label="t('templateDaysList.minPerBooking')"
-                        class="q-mt-sm"
+                        class="mt-2"
                         @update:model-value="
                             patchModel({
                                 minPerBooking:
@@ -115,7 +115,7 @@
                         type="number"
                         min="0"
                         :label="t('templateDaysList.maxPerBooking')"
-                        class="q-mt-sm"
+                        class="mt-2"
                         :hint="t('templateDaysList.maxPerBookingHint')"
                         @update:model-value="
                             patchModel({
@@ -133,7 +133,7 @@
                         type="textarea"
                         rows="2"
                         :label="t('templateDaysList.constraintNotes')"
-                        class="q-mt-sm"
+                        class="mt-2"
                         @update:model-value="
                             patchModel({
                                 constraintNotes: String($event ?? ''),
@@ -157,7 +157,7 @@
                 "
             />
 
-            <div class="row q-gutter-sm items-center full-width">
+            <div class="row gap-2 items-center full-width">
                 <q-btn
                     v-if="editingSlotId"
                     flat

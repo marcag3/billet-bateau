@@ -109,14 +109,14 @@ export function resolveControlPanelDepartedAssignmentLabels(
 }
 
 export function isControlPanelTripFinished(
-    voyage: { status: string } | null,
+    voyage: { status?: string | null } | null,
 ): boolean {
     const displayStatus = resolveControlPanelTripDisplayStatus(voyage);
     return displayStatus === 'returned' || displayStatus === 'cancelled';
 }
 
 export function resolveControlPanelTripDisplayStatus(
-    voyage: { status: string } | null,
+    voyage: { status?: string | null } | null,
 ): ControlPanelTripDisplayStatus {
     if (voyage == null) {
         return 'scheduled';

@@ -1,5 +1,5 @@
 <template>
-    <q-form class="q-gutter-md" @submit="onSubmit">
+    <q-form class="column gap-4" @submit="onSubmit">
         <q-input
             v-model="name"
             outlined
@@ -24,7 +24,7 @@
             @clear-existing="onRemoveBanner"
         />
 
-        <div class="row justify-end q-gutter-sm">
+        <div class="row justify-end gap-2">
             <q-btn
                 flat
                 :label="t('common.dismiss')"

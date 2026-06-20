@@ -1,10 +1,10 @@
 <template>
     <q-layout view="lHh LpR fFf">
-        <q-header elevated reveal class="app-header">
-            <q-toolbar class="app-toolbar">
-                <q-btn v-if="showSideNav && $q.screen.lt.md" flat dense round icon="menu" class="q-mr-sm"
+        <q-header elevated reveal class="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--q-primary)_90%,white)_90%,var(--q-secondary))] text-white">
+            <q-toolbar class="gap-2 w-full max-w-none m-0 box-border">
+                <q-btn v-if="showSideNav && $q.screen.lt.md" flat dense round icon="menu" class="mr-2"
                     aria-label="Main menu" @click="leftDrawerOpen = !leftDrawerOpen" />
-                <q-toolbar-title class="app-toolbar-title">
+                <q-toolbar-title class="app-toolbar-title flex items-center gap-3 min-w-0">
                     <q-btn-dropdown v-if="showAppNav && hasSelectedProgram" flat dense color="white"
                         :label="currentContextLabel" :aria-label="t('common.switchWorkspaceContext')">
                         <q-list>
@@ -21,24 +21,23 @@
 
                 <q-space />
 
-                <AppOutboxToolbarMenu />
+                <AppSyncToolbarMenu v-if="authStore.canAccessProtectedRoute()" />
 
                 <AppLanguageSwitcher on-dark-header />
 
-                <q-btn v-if="authStore.isAuthenticated" flat color="grey-2" :label="t('common.logout')" class="q-ml-md"
-                    style="min-width: 10rem" @click="logout" />
+                <AppUserMenu on-dark-header />
 
             </q-toolbar>
         </q-header>
 
-        <q-drawer v-if="showSideNav" v-model="leftDrawerOpen" show-if-above bordered :width="260" class="app-drawer">
+        <q-drawer v-if="showSideNav" v-model="leftDrawerOpen" show-if-above bordered :width="260" class="bg-white">
             <q-scroll-area style="
                     height: calc(100% - 150px);
                     margin-top: 150px;
                     border-right: 1px solid #ddd;
                 ">
-                <q-list padding class="app-nav-list">
-                    <q-item v-ripple clickable class="app-nav-item--back" @click="backToPrograms">
+                <q-list padding class="[&_.app-nav-item--active]:bg-[hsla(358,84%,52%,0.1)] [&_.app-nav-item--active]:text-secondary [&_.app-nav-item--active]:font-semibold [&_.app-nav-item--active]:border-l-[3px] [&_.app-nav-item--active]:border-l-primary">
+                    <q-item v-ripple clickable class="font-semibold text-secondary" @click="backToPrograms">
                         <q-item-section avatar>
                             <q-icon name="arrow_back" />
                         </q-item-section>
@@ -47,7 +46,7 @@
                             }}</q-item-section>
                     </q-item>
 
-                    <q-separator class="q-my-sm" />
+                    <q-separator class="my-2" />
 
                     <div
                         :id="APP_PROGRAM_MAIN_NAV_TELEPORT_ID"
@@ -55,21 +54,24 @@
                     />
                 </q-list>
             </q-scroll-area>
-            <q-img class="absolute-top" src="/icons/logo.jpg" alt="Brand logo" style="height: 150px">
-                <div class="absolute-bottom bg-transparent">
-                    <q-avatar size="56px" class="q-mb-sm">
-                        <img src="/icons/logo.jpg" alt="Brand logo" />
-                    </q-avatar>
-                    <div class="text-weight-bold">
-                        {{ authStore.user?.name }}
+            <q-img
+                class="absolute-top"
+                :src="workspaceProgramBannerUrl"
+                :alt="workspaceProgramName"
+                style="height: 150px"
+            >
+                <div
+                    class="absolute-bottom bg-gradient-to-t from-black/70 to-transparent text-white px-3 pb-3 pt-8"
+                >
+                    <div class="text-weight-bold text-base leading-tight">
+                        {{ workspaceProgramName }}
                     </div>
-                    <div>{{ authStore.user?.email }}</div>
                 </div>
             </q-img>
         </q-drawer>
 
         <q-page-container class="app-page-container">
-            <AppAlertBanner v-if="authStore.requiresReauthentication" variant="warning" class="q-ma-md">
+            <AppAlertBanner v-if="authStore.requiresReauthentication" variant="warning" class="m-4">
                 {{
                     authStore.authErrorMessage ||
                     t("auth.sessionExpiredAfterReconnect")
@@ -78,6 +80,11 @@
                     <q-btn flat color="primary" :label="t('common.reauthenticate')" @click="goToLogin" />
                 </template>
             </AppAlertBanner>
+
+            <AppSyncHealthBanner
+                v-if="syncHealth.showBanner && authStore.canAccessProtectedRoute()"
+                class="m-4"
+            />
 
             <router-view />
         </q-page-container>
@@ -96,9 +103,14 @@ import {
     APP_PROGRAM_MAIN_NAV_TELEPORT_ID,
     provideAppProgramMainNavTarget,
 } from "../utilities/app-layout-nav";
-import AppOutboxToolbarMenu from "../components/AppOutboxToolbarMenu.vue";
+import AppSyncToolbarMenu from "../components/AppSyncToolbarMenu.vue";
+import AppSyncHealthBanner from "../components/AppSyncHealthBanner.vue";
 import AppLanguageSwitcher from "../components/AppLanguageSwitcher.vue";
+import AppUserMenu from "../components/AppUserMenu.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
+import { useSyncHealth } from "../composables/useSyncHealth";
+
+const syncHealth = useSyncHealth();
 
 const router = useRouter();
 const $q = useQuasar();
@@ -130,6 +142,8 @@ watch(
 
 const {
     isProgramWorkspace: hasSelectedProgram,
+    workspaceProgramName,
+    workspaceProgramBannerUrl,
     contextSwitcherOptions,
     currentContext,
     currentContextLabel,
@@ -163,57 +177,4 @@ async function goToLogin() {
     });
 }
 
-async function logout() {
-    await authStore.logout();
-    await router.replace({ name: "login" });
-}
 </script>
-
-<style scoped>
-.app-header {
-    background: linear-gradient(180deg,
-            color-mix(var(--q-primary) 90%, white) 90%,
-            var(--q-secondary));
-    color: #ffffff;
-}
-
-.app-toolbar {
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    gap: 0.5rem;
-    box-sizing: border-box;
-}
-
-.app-toolbar-title {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-width: 0;
-}
-
-.brand-logo {
-    width: 2.1rem;
-    height: 2.1rem;
-    border-radius: 9999px;
-    border: 2px solid rgba(255, 255, 255, 0.55);
-    object-fit: cover;
-    background: #ffffff;
-}
-
-.app-drawer {
-    background: #ffffff;
-}
-
-.app-nav-list :deep(.app-nav-item--active) {
-    background: hsla(358, 84%, 52%, 0.1);
-    color: var(--q-secondary);
-    font-weight: 600;
-    border-left: 3px solid var(--q-primary);
-}
-
-.app-nav-list :deep(.app-nav-item--back) {
-    font-weight: 600;
-    color: var(--q-secondary);
-}
-</style>

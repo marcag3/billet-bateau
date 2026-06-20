@@ -5,7 +5,7 @@
                 {{ t('programsControl.startDepartTitle') }}
             </q-card-section>
 
-            <q-card-section class="q-gutter-md">
+            <q-card-section class="column gap-4">
                 <q-select
                     v-model="selectedBoatIds"
                     :options="boatOptions"

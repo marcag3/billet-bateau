@@ -9,14 +9,14 @@
             </AppPageHeader>
         </template>
 
-        <div class="row q-col-gutter-md">
-            <AppEmptyListRow class="col-12" :show="boats.length === 0" :message="t('boatsList.empty')" />
-            <div v-for="b in boats" :key="String(b.id)" class="col-12 col-sm-6 col-md-4">
-                <q-card class="boat-card cursor-pointer full-height column relative-position" role="button" tabindex="0"
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <AppEmptyListRow class="col-span-full" :show="boats.length === 0" :message="t('boatsList.empty')" />
+            <div v-for="b in boats" :key="String(b.id)">
+                <q-card class="group cursor-pointer full-height column relative-position focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2" role="button" tabindex="0"
                     :aria-label="`${t('common.edit')}: ${boatDisplayTitle(b)}`" @click="goEdit(b)"
                     @keydown.enter.prevent="goEdit(b)" @keydown.space.prevent="goEdit(b)">
                     <q-img :src="boatTypeBannerUrl(b)" :style="boatBannerPlaceholderStyle(b)" fit="cover" ratio="1"
-                        spinner-color="primary" class="boat-card__img rounded-borders" :alt="boatDisplayTitle(b)">
+                        spinner-color="primary" class="[&_.q-img__content]:min-h-[200px] rounded-borders" :alt="boatDisplayTitle(b)">
                         <div class="absolute-bottom">
                             <div class="text-h6">{{ boatDisplayTitle(b) }}</div>
                             <div v-if="boatTypeSubtitle(b)" class="text-subtitle2">
@@ -24,7 +24,7 @@
                             </div>
                         </div>
                     </q-img>
-                    <div class="boat-card__hint absolute-full flex flex-center text-white text-body1 text-weight-medium text-center q-px-md"
+                    <div class="absolute-full flex flex-center text-white text-body1 text-weight-medium text-center px-4 opacity-0 transition-opacity duration-200 bg-black/45 pointer-events-none z-[600] group-hover:opacity-100 group-focus-visible:opacity-100"
                         aria-hidden="true">
                         {{ t("common.edit") }}
                     </div>
@@ -119,27 +119,3 @@ function goEdit(b: Record<string, unknown>): void {
     });
 }
 </script>
-
-<style scoped>
-.boat-card__img :deep(.q-img__content) {
-    min-height: 200px;
-}
-
-.boat-card__hint {
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    background: rgba(0, 0, 0, 0.45);
-    pointer-events: none;
-    z-index: 600;
-}
-
-.boat-card:hover .boat-card__hint,
-.boat-card:focus-visible .boat-card__hint {
-    opacity: 1;
-}
-
-.boat-card:focus-visible {
-    outline: 2px solid var(--q-primary);
-    outline-offset: 2px;
-}
-</style>

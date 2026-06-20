@@ -1,10 +1,10 @@
 <template>
     <q-dialog v-model="dialogModel" persistent @hide="onDialogHide">
         <q-card
-            class="q-pa-none"
+            class="p-0"
             style="width: min(680px, 94vw); max-width: 100%"
         >
-            <q-card-section class="row items-center q-pb-none">
+            <q-card-section class="row items-center pb-0">
                 <div class="text-h6">
                     {{
                         modalMode === "edit"
@@ -33,7 +33,7 @@
                     @submitted="onProductFormSubmitted"
                 >
                     <template #actions="{ meta, isSubmitting: formSubmitting }">
-                        <div class="row justify-end q-gutter-sm q-mt-md">
+                        <div class="row justify-end gap-2 mt-4">
                             <q-btn
                                 flat
                                 :label="t('productsList.cancel')"

@@ -9,7 +9,7 @@
             </AppPageHeader>
         </template>
 
-        <div class="trips-calendar-toolbar row items-center no-wrap q-mb-sm q-gutter-xs">
+        <div class="trips-calendar-toolbar row items-center no-wrap mb-2 gap-1 pb-2 border-b border-black/12">
             <template v-if="tripsViewMode !== 'list'">
                 <q-btn flat round dense icon="chevron_left" :aria-label="t('tripsCalendar.prev')"
                     :disable="!canCalendarPrev" @click="calendarPrev" />
@@ -27,7 +27,7 @@
 
         <AppEntityList v-if="tripsViewMode === 'list'">
             <AppEmptyListRow :show="trips.length === 0" :message="t('tripsList.empty')" />
-            <q-item v-for="tr in trips" :key="String(tr.id)" class="q-pa-md">
+            <q-item v-for="tr in trips" :key="String(tr.id)" class="p-4">
                 <q-item-section v-if="tripListProductImageUrl(tr).length > 0" avatar>
                     <q-avatar rounded size="48px">
                         <q-img :src="tripListProductImageUrl(tr)" ratio="1" fit="cover"
@@ -61,15 +61,15 @@
             </q-item>
         </AppEntityList>
 
-        <div v-if="tripsViewMode !== 'list'" class="trips-calendar">
+        <div v-if="tripsViewMode !== 'list'" class="min-h-[32rem]">
             <QCalendarDay v-if="tripsViewMode !== 'month'" ref="dayCalendarRef" v-model="selectedDateStr"
                 :view="tripsViewMode === 'day' ? 'day' : 'week'" bordered :locale="dateLocale"
                 :weekdays="calendarWeekdays" hour24-format interval-minutes="30" interval-count="48"
                 interval-height="22" date-header="stacked" column-header-after :use-navigation="false"
-                class="trips-calendar-surface" @click-time="onDayCalendarClickTime">
+                class="rounded overflow-hidden [&_.q-calendar-day__day-interval]:cursor-pointer [&_.q-calendar-day__day-interval--section]:cursor-pointer [&_.q-calendar-month__day]:cursor-pointer [&_.q-calendar-month__day.disabled]:cursor-default" @click-time="onDayCalendarClickTime">
                 <template #column-header-after="{ scope }">
                     <div v-if="isValidServiceDateYmd(scope.timestamp.date)"
-                        class="trips-cal-col-header-after q-px-xs q-pb-xs">
+                        class="w-full px-1 pb-1">
                         <AppTripsCalendarDayHeaderActions :disabled="programId.length === 0"
                             :template-days="templateDayMenuOptions" @apply="
                                 onApplyTemplateDay($event, scope.timestamp.date)
@@ -79,11 +79,11 @@
                     </div>
                 </template>
                 <template #day-body="{ scope }">
-                    <div class="trips-cal-day-body">
-                        <div v-for="ev in eventsForDay(scope.timestamp.date)" :key="ev.id" class="trips-cal-event-wrap"
+                    <div class="absolute inset-0 pointer-events-none">
+                        <div v-for="ev in eventsForDay(scope.timestamp.date)" :key="ev.id" class="pointer-events-auto overflow-hidden"
                             :style="eventPositionStyle(scope, ev)">
                             <q-btn dense no-caps padding="xs sm" outline color="primary"
-                                class="trips-cal-event-btn full-width text-left" @click.stop="onTripClick(ev.id)">
+                                class="text-xs h-full min-h-0 full-width text-left" @click.stop="onTripClick(ev.id)">
                                 <span class="ellipsis block">{{ ev.title }}</span>
                             </q-btn>
                         </div>
@@ -92,12 +92,12 @@
             </QCalendarDay>
 
             <QCalendarMonth v-else ref="monthCalendarRef" v-model="selectedDateStr" bordered :locale="dateLocale"
-                :weekdays="calendarWeekdays" :use-navigation="false" class="trips-calendar-surface"
+                :weekdays="calendarWeekdays" :use-navigation="false" class="rounded overflow-hidden [&_.q-calendar-day__day-interval]:cursor-pointer [&_.q-calendar-day__day-interval--section]:cursor-pointer [&_.q-calendar-month__day]:cursor-pointer [&_.q-calendar-month__day.disabled]:cursor-default"
                 @click-day="onMonthCalendarClickDay">
                 <template #day="{ scope }">
-                    <div v-if="!scope.outside" class="trips-cal-month-day column q-gutter-xs q-pa-xs">
+                    <div v-if="!scope.outside" class="min-h-12 max-h-[6.5rem] overflow-auto column gap-1 p-1">
                         <q-btn v-for="ev in eventsForDay(scope.timestamp.date)" :key="ev.id" dense no-caps size="sm"
-                            outline color="primary" class="trips-cal-month-event full-width text-left"
+                            outline color="primary" class="text-[0.7rem] full-width text-left"
                             @click.stop="onTripClick(ev.id)">
                             <span class="ellipsis block">{{ ev.title }}</span>
                         </q-btn>
@@ -119,10 +119,12 @@ import { ulid } from "ulid";
 import { QCalendarDay, QCalendarMonth, today } from "@quasar/quasar-ui-qcalendar";
 import { useQuasar } from "quasar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+import { liveQueryRow, liveQueryRows } from "../powersync/live-query-casts";
 import { joinTripsWithRelationsFrom } from "../powersync/joined-queries";
 import {
     buildProgramBookedTripIdsQuery,
     reduceBookedTripIds,
+    type BookedTripIdRow,
 } from "../powersync/trips-queries";
 import type { ProgramOutput } from "../powersync/programs.collection";
 import { mediaObjectPublicUrl } from "../utilities/media-url";
@@ -181,7 +183,7 @@ const { data: programRowsRaw } = useLiveQuery(
 );
 
 const programDateBounds = computed((): { startYmd: string; endYmd: string } => {
-    const row = (programRowsRaw.value ?? [])[0] as ProgramOutput | undefined;
+    const row = liveQueryRow<ProgramOutput>((programRowsRaw.value ?? [])[0]);
     const s = row != null ? String(row.start_date ?? "").trim() : "";
     const e = row != null ? String(row.end_date ?? "").trim() : "";
     if (/^\d{4}-\d{2}-\d{2}$/.test(s) && /^\d{4}-\d{2}-\d{2}$/.test(e)) {
@@ -218,7 +220,7 @@ const { data: productsRaw } = useLiveQuery(
 );
 
 const bookedTripIds = computed(() =>
-    reduceBookedTripIds(bookedTripIdRows.value ?? []),
+    reduceBookedTripIds(liveQueryRows<BookedTripIdRow>(bookedTripIdRows.value)),
 );
 
 const { data: tripsRaw } = useLiveQuery(
@@ -286,8 +288,8 @@ const { data: templateSlotsRaw } = useLiveQuery(
     [templateDaySlotsCollection],
 );
 
-const templateDaysList = computed(
-    () => (templateDaysRaw.value ?? []) as TemplateDayOutput[],
+const templateDaysList = computed(() =>
+    liveQueryRows<TemplateDayOutput>(templateDaysRaw.value),
 );
 
 const templateDayIds = computed(() => {
@@ -312,8 +314,8 @@ const templateDayMenuOptions = computed(() => {
 const slotsByTemplateDayId = computed(() => {
     const map = new Map<string, TemplateDaySlotOutput[]>();
     const allowed = templateDayIds.value;
-    for (const row of templateSlotsRaw.value ?? []) {
-        const slot = row as TemplateDaySlotOutput;
+    for (const row of liveQueryRows<TemplateDaySlotOutput>(templateSlotsRaw.value)) {
+        const slot = row;
         const tid = slot.template_day_id;
         if (tid == null || String(tid).trim() === "") {
             continue;
@@ -377,7 +379,7 @@ interface DayBodyScope {
 }
 
 const trips = computed(() => {
-    const rows = (tripsRaw.value ?? []) as TripCalendarRow[];
+    const rows = liveQueryRows<TripCalendarRow>(tripsRaw.value);
     const { startYmd, endYmd } = programDateBounds.value;
     return rows.filter((tr) => {
         const raw = tr.scheduled_departure_at;
@@ -392,8 +394,8 @@ const trips = computed(() => {
         return y >= startYmd && y <= endYmd;
     });
 });
-const programProducts = computed(
-    () => (productsRaw.value ?? []) as ProductLookupRow[],
+const programProducts = computed(() =>
+    liveQueryRows<ProductLookupRow>(productsRaw.value),
 );
 
 function productDisplayName(tr: TripCalendarRow): string {
@@ -1122,60 +1124,3 @@ function onMonthCalendarClickDay(payload: MonthClickDayPayload): void {
     tripsViewMode.value = "day";
 }
 </script>
-
-<style scoped>
-.trips-calendar {
-    min-height: 32rem;
-}
-
-.trips-calendar-toolbar {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-    padding-bottom: 0.5rem;
-}
-
-.trips-calendar-surface {
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.trips-calendar-surface :deep(.q-calendar-day__day-interval),
-.trips-calendar-surface :deep(.q-calendar-day__day-interval--section),
-.trips-calendar-surface :deep(.q-calendar-month__day) {
-    cursor: pointer;
-}
-
-.trips-calendar-surface :deep(.q-calendar-month__day.disabled) {
-    cursor: default;
-}
-
-.trips-cal-day-body {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-.trips-cal-event-wrap {
-    pointer-events: auto;
-    overflow: hidden;
-}
-
-.trips-cal-event-btn {
-    font-size: 0.75rem;
-    height: 100%;
-    min-height: 0;
-}
-
-.trips-cal-month-day {
-    min-height: 3rem;
-    max-height: 6.5rem;
-    overflow: auto;
-}
-
-.trips-cal-month-event {
-    font-size: 0.7rem;
-}
-
-.trips-cal-col-header-after {
-    width: 100%;
-}
-</style>

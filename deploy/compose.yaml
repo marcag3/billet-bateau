@@ -9,6 +9,7 @@ services:
             AUTORUN_LARAVEL_STORAGE_LINK: false
             AUTORUN_LARAVEL_VIEW_CACHE: false
             HEALTHCHECK_PATH: "/up"
+            OCTANE_HTTPS: "true"
             OCTANE_SERVER: frankenphp
             PHP_OPCACHE_ENABLE: "1"
             PHP_OPCACHE_VALIDATE_TIMESTAMPS: "0"

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\VoyageStatus;
 use App\Models\BoatType;
 use App\Models\Booking;
 use App\Models\BookingTicket;
@@ -9,6 +10,7 @@ use App\Models\Program;
 use App\Models\TicketType;
 use App\Models\Trip;
 use App\Models\User;
+use App\Models\Voyage;
 use App\Models\WaterRoute;
 use App\Notifications\BookingConfirmationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -145,6 +147,93 @@ class PublicBookingApiTest extends TestCase
             ->assertJsonCount(0, 'data.trips');
     }
 
+    public function test_booking_options_excludes_trips_with_boarding_started(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'is_active' => true,
+            'slug' => 'boarding-started',
+        ]);
+
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addDay(),
+        ]);
+
+        Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Ready,
+        ]);
+
+        $this->getJson('/api/public/programs/boarding-started/booking-options')
+            ->assertOk()
+            ->assertJsonCount(0, 'data.trips');
+    }
+
+    public function test_booking_options_excludes_ended_trips(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'is_active' => true,
+            'slug' => 'ended-trip',
+        ]);
+
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addDay(),
+        ]);
+
+        Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Completed,
+        ]);
+
+        $this->getJson('/api/public/programs/ended-trip/booking-options')
+            ->assertOk()
+            ->assertJsonCount(0, 'data.trips');
+    }
+
+    public function test_booking_options_includes_trips_with_draft_voyage_only(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'is_active' => true,
+            'slug' => 'draft-voyage',
+        ]);
+
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addDay(),
+        ]);
+
+        Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Draft,
+        ]);
+
+        $this->getJson('/api/public/programs/draft-voyage/booking-options')
+            ->assertOk()
+            ->assertJsonPath('data.trips.0.id', $trip->getKey());
+    }
+
+    public function test_store_rejects_trip_with_boarding_started(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['slug' => 'boarding-store']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+
+        Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Ready,
+        ]);
+
+        $type = TicketType::factory()->forProgram($program)->create();
+
+        $this->postJson('/api/public/programs/boarding-store/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+            'country' => 'CA',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['trip_id']);
+    }
+
     public function test_booking_options_returns_404_for_inactive_program(): void
     {
         $u = User::factory()->create();
@@ -253,6 +342,34 @@ class PublicBookingApiTest extends TestCase
         );
     }
 
+    public function test_store_accepts_explicit_empty_custom_answers_when_program_has_no_questions(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'slug' => 'empty-custom-answers',
+            'booking_questions' => [],
+        ]);
+
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+
+        $type = TicketType::factory()->forProgram($program)->create([
+            'min_per_purchase' => 1,
+            'max_per_purchase' => 10,
+        ]);
+
+        $this->postJson('/api/public/programs/empty-custom-answers/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'Alex River',
+            'contact_email' => 'alex@example.com',
+            'country' => 'CA',
+            'custom_answers' => [],
+        ])->assertCreated();
+    }
+
     public function test_store_sends_booking_confirmation_notification(): void
     {
         Notification::fake();
@@ -293,14 +410,64 @@ class PublicBookingApiTest extends TestCase
         Notification::assertCount(1);
     }
 
-    public function test_booking_confirmation_notification_mail_renders_with_ticket_summary(): void
+    public function test_store_persists_contact_locale_and_cancel_token(): void
     {
+        Notification::fake();
+
         $u = User::factory()->create();
-        $program = Program::factory()->withOwner($u)->create(['name' => 'Harbor Tours']);
+        $program = Program::factory()->withOwner($u)->create([
+            'slug' => 'locale-store',
+            'name' => 'Harbor Tours',
+        ]);
+
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->addWeek(),
         ]);
-        $trip->product->forceFill(['name' => 'Sunset run'])->save();
+        $trip->product->forceFill(['capacity' => 10])->save();
+
+        $type = TicketType::factory()->forProgram($program)->create([
+            'min_per_purchase' => 1,
+            'max_per_purchase' => 10,
+        ]);
+
+        $this->postJson('/api/public/programs/locale-store/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'Alex River',
+            'contact_email' => 'alex@example.com',
+            'country' => 'CA',
+            'locale' => 'fr',
+        ])->assertCreated();
+
+        $booking = Booking::query()->firstOrFail();
+
+        $this->assertSame('fr', $booking->contact_locale);
+        $this->assertNotNull($booking->cancel_token_hash);
+        $this->assertNotNull($booking->cancel_token);
+
+        Notification::assertSentOnDemand(
+            BookingConfirmationNotification::class,
+            function (BookingConfirmationNotification $notification) use ($booking): bool {
+                return hash('sha256', (string) $notification->plainCancelToken) === $booking->cancel_token_hash
+                    && $notification->plainCancelToken === $booking->cancel_token;
+            },
+        );
+    }
+
+    public function test_booking_confirmation_notification_mail_renders_with_ticket_summary(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'name' => 'Harbor Tours',
+            'email_signature' => 'The Dock Team',
+        ]);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill([
+            'name' => 'Sunset run',
+            'description' => 'Arrive 15 minutes before departure at the main dock.',
+        ])->save();
         $type = TicketType::factory()->forProgram($program)->create(['title' => 'Adult']);
 
         $booking = Booking::query()->create([
@@ -319,7 +486,8 @@ class PublicBookingApiTest extends TestCase
             'custom_fields' => [],
         ]);
 
-        $mail = (new BookingConfirmationNotification($booking))->toMail(
+        $plainToken = Str::random(64);
+        $mail = (new BookingConfirmationNotification($booking, mailLocale: 'fr', plainCancelToken: $plainToken))->toMail(
             Notification::route('mail', 'alex@example.com'),
         );
 
@@ -329,6 +497,20 @@ class PublicBookingApiTest extends TestCase
                 static fn (string $line): bool => str_contains($line, '2 × Adult') || str_contains($line, 'Adult'),
             ),
         );
+        $this->assertSame(
+            url('/bookings/cancel/'.$plainToken),
+            $mail->actionUrl,
+        );
+        $this->assertStringContainsString('Annuler la réservation', (string) $mail->actionText);
+        $this->assertTrue(
+            collect($mail->introLines)->contains(
+                static fn (string $line): bool => str_contains($line, 'Arrive 15 minutes before departure at the main dock.'),
+            ),
+        );
+        $this->assertStringContainsString('Cordialement', (string) $mail->salutation);
+        $this->assertStringContainsString('The Dock Team', (string) $mail->salutation);
+        $this->assertStringNotContainsString('Regards', (string) $mail->salutation);
+        $this->assertStringNotContainsString('Harbor Tours', (string) $mail->salutation);
 
         $this->assertCount(1, $mail->rawAttachments);
         $attachment = $mail->rawAttachments[0];
@@ -344,7 +526,10 @@ class PublicBookingApiTest extends TestCase
     public function test_booking_confirmation_notification_mail_renders_in_english_when_locale_en(): void
     {
         $u = User::factory()->create();
-        $program = Program::factory()->withOwner($u)->create(['name' => 'Harbor Tours']);
+        $program = Program::factory()->withOwner($u)->create([
+            'name' => 'Harbor Tours',
+            'email_signature' => 'The Dock Team',
+        ]);
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->addWeek(),
         ]);
@@ -355,18 +540,27 @@ class PublicBookingApiTest extends TestCase
             'contact_email' => 'alex@example.com',
         ]);
 
-        $mail = (new BookingConfirmationNotification($booking, mailLocale: 'en'))->toMail(
+        $plainToken = Str::random(64);
+        $mail = (new BookingConfirmationNotification($booking, mailLocale: 'en', plainCancelToken: $plainToken))->toMail(
             Notification::route('mail', 'alex@example.com'),
         );
 
         $this->assertStringContainsString('Booking confirmation', (string) $mail->subject);
         $this->assertStringContainsString('Hello Alex River', (string) $mail->greeting);
+        $this->assertSame('Cancel booking', (string) $mail->actionText);
+        $this->assertStringContainsString('Regards', (string) $mail->salutation);
+        $this->assertStringContainsString('The Dock Team', (string) $mail->salutation);
+        $this->assertStringNotContainsString('Cordialement', (string) $mail->salutation);
+        $this->assertStringNotContainsString('Harbor Tours', (string) $mail->salutation);
     }
 
     public function test_booking_confirmation_notification_mail_renders_in_french_when_locale_fr(): void
     {
         $u = User::factory()->create();
-        $program = Program::factory()->withOwner($u)->create(['name' => 'Croisières']);
+        $program = Program::factory()->withOwner($u)->create([
+            'name' => 'Croisières',
+            'email_signature' => "L'équipe Croisières",
+        ]);
         $trip = Trip::factory()->forProgram($program)->create([
             'scheduled_departure_at' => now()->addWeek(),
         ]);
@@ -383,6 +577,10 @@ class PublicBookingApiTest extends TestCase
 
         $this->assertStringContainsString('Confirmation de réservation', (string) $mail->subject);
         $this->assertStringContainsString('Bonjour Alex River', (string) $mail->greeting);
+        $this->assertStringContainsString('Cordialement', (string) $mail->salutation);
+        $this->assertStringContainsString("L'équipe Croisières", (string) $mail->salutation);
+        $this->assertStringNotContainsString('Regards', (string) $mail->salutation);
+        $this->assertStringNotContainsString('Billet Bateau', (string) $mail->salutation);
     }
 
     public function test_store_does_not_send_notification_when_validation_fails(): void

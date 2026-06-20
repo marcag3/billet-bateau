@@ -12,15 +12,15 @@
         </template>
 
         <AppEntityList>
-            <AppEmptyListRow :show="templateDays.length === 0" :message="t('templateDaysList.empty')" />
-            <q-item v-for="td in templateDays" :key="String(td.id)" class="q-pa-md">
+            <AppEmptyListRow :show="templateDayRows.length === 0" :message="t('templateDaysList.empty')" />
+            <q-item v-for="td in templateDayRows" :key="String(td.id)" class="p-4">
                 <q-item-section>
                     <q-item-label class="text-h6">{{
                         td.name ?? "Untitled"
                         }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                    <div class="row q-gutter-xs">
+                    <div class="row gap-1">
                         <q-btn flat round dense icon="edit" :aria-label="t('common.edit')" :to="{
                             name: 'template-days.edit',
                             params: {
@@ -48,6 +48,7 @@ import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 const powersync = getAppPowerSyncContext();
 import { useConfirmDialog } from "../composables/useConfirmDialog";
 import { useNotifyErrorFromCatch } from "../composables/useNotifyErrorFromCatch";
+import { liveQueryRows } from "../powersync/live-query-casts";
 import type { TemplateDayOutput } from "../powersync/template-days.collection";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
@@ -74,6 +75,10 @@ const { data: templateDays } = useLiveQuery(
 );
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
+
+const templateDayRows = computed(() =>
+    liveQueryRows<TemplateDayOutput>(templateDays.value),
+);
 
 function confirmDeleteTemplateDay(td: TemplateDayOutput) {
     const name = String(td.name ?? "Untitled");

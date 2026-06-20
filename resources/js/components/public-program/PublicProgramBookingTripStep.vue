@@ -4,7 +4,7 @@
             {{ t('publicBooking.noTrips') }}
         </div>
         <template v-else>
-            <div class="row items-center q-gutter-sm q-mb-md flex-wrap">
+            <div class="row items-center gap-2 mb-2 mx-4 flex-wrap">
                 <PublicProgramBookingDateFilter v-model:selected-date-ymd="selectedDateYmd"
                     :daily-availability-by-date="dailyAvailabilityByDate"
                     :program-start-date-ymd="props.programStartDateYmd"
@@ -17,17 +17,18 @@
             </div>
 
             <q-banner v-if="filteredTripOptions.length === 0 && hasActiveTripFilters" rounded outline
-                class="text-grey-8 q-mb-md">
+                class="text-grey-8 mb-4">
                 {{ t('publicBooking.noTripsForFilters') }}
             </q-banner>
 
             <q-virtual-scroll v-if="filteredTripOptions.length > 0" type="table" style="max-height: 70vh"
                 :virtual-scroll-item-size="64" :virtual-scroll-sticky-size-start="48"
-                :virtual-scroll-sticky-size-end="32" bordered separator="horizontal" class="h-100"
+                :virtual-scroll-sticky-size-end="32" bordered separator="horizontal"
+                class="h-100 [&_.thead-sticky_tr>*]:sticky [&_.thead-sticky_tr>*]:opacity-100 [&_.thead-sticky_tr>*]:z-[2] [&_.thead-sticky_tr>*]:bg-white [&_.q-markup-table.q-dark_.thead-sticky_tr>*]:bg-[var(--q-dark)] [&_.thead-sticky_tr:last-child>*]:top-0 [&_.tfoot-sticky_tr:first-child>*]:bottom-0"
                 :items="filteredTripOptions">
                 <template v-slot:before>
-                    <thead class="thead-sticky text-left">
-                        <tr>
+                    <thead class="thead-sticky text-left ">
+                        <tr class="bg-accent">
                             <th class="text-center" style="width: 3.5rem" />
                             <th>{{ t('publicBooking.departure') }}</th>
                             <th>{{ t('publicBooking.tripColumn') }}</th>
@@ -171,26 +172,3 @@ function clearAllFilters(): void {
 }
 
 </script>
-
-<style scoped>
-:deep(.thead-sticky tr > *),
-:deep(.tfoot-sticky tr > *) {
-    position: sticky;
-    opacity: 1;
-    z-index: 2;
-    background-color: #fff;
-}
-
-:deep(.q-markup-table.q-dark .thead-sticky tr > *),
-:deep(.q-markup-table.q-dark .tfoot-sticky tr > *) {
-    background-color: var(--q-dark);
-}
-
-:deep(.thead-sticky tr:last-child > *) {
-    top: 0;
-}
-
-:deep(.tfoot-sticky tr:first-child > *) {
-    bottom: 0;
-}
-</style>

@@ -1,9 +1,7 @@
 <template>
     <div
-        class="trips-cal-day-header-actions row items-start wrap"
-        :class="{
-            'trips-cal-day-header-actions--compact': compact,
-        }"
+        class="row items-start wrap gap-1 [&_.q-btn]:max-w-full [&_.q-btn-dropdown]:max-w-full"
+        :class="compact && '[&_.q-btn]:min-w-7 [&_.q-btn]:px-1'"
         @click.stop
         @mousedown.stop
     >
@@ -72,20 +70,3 @@ defineEmits<{
 
 const { t } = useI18n();
 </script>
-
-<style scoped>
-.trips-cal-day-header-actions {
-    gap: 0.25rem;
-}
-
-.trips-cal-day-header-actions :deep(.q-btn),
-.trips-cal-day-header-actions :deep(.q-btn-dropdown) {
-    max-width: 100%;
-}
-
-.trips-cal-day-header-actions--compact :deep(.q-btn) {
-    min-width: 1.75rem;
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
-}
-</style>

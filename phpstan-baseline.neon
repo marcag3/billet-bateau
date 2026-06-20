@@ -1,0 +1,409 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Actions/CancelPublicBookingAction.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Actions/CancelPublicBookingAction.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$scheduled_departure_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Actions/CancelPublicBookingAction.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$voyages\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Actions/CancelPublicBookingAction.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Actions/CancelPublicBookingAction.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:userCanManage\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Actions/PowerSync/ApplyBoatPowerSyncCrudAction.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>booking_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Actions/PowerSync/ApplyCheckInPowerSyncCrudAction.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>notes" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Actions/PowerSync/ApplyCheckInPowerSyncCrudAction.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>voyage_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Actions/PowerSync/ApplyCheckInPowerSyncCrudAction.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Actions/PowerSync/ApplyGuidePowerSyncCrudAction.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>staff_user_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Actions/PowerSync/ApplyGuidePowerSyncCrudAction.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str_pad expects string, int\<\-99999, 99999\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Actions/PowerSync/ApplyProgramPowerSyncCrudAction.php
+
+		-
+			message: '#^Property App\\Models\\Program\:\:\$end_date \(Carbon\\CarbonImmutable\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Actions/PowerSync/ApplyProgramPowerSyncCrudAction.php
+
+		-
+			message: '#^Property App\\Models\\Program\:\:\$start_date \(Carbon\\CarbonImmutable\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Actions/PowerSync/ApplyProgramPowerSyncCrudAction.php
+
+		-
+			message: '#^Property App\\Models\\TemplateDayDate\:\:\$service_date \(Carbon\\CarbonImmutable\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Actions/PowerSync/ApplyTemplateDayDatePowerSyncCrudAction.php
+
+		-
+			message: '#^Property App\\Models\\Voyage\:\:\$arrived_at \(Carbon\\CarbonImmutable\|null\) does not accept Carbon\\Carbon\|null\.$#'
+			identifier: assign.propertyType
+			count: 2
+			path: app/Actions/PowerSync/ApplyVoyagePowerSyncCrudAction.php
+
+		-
+			message: '#^Property App\\Models\\Voyage\:\:\$started_at \(Carbon\\CarbonImmutable\|null\) does not accept Carbon\\Carbon\|null\.$#'
+			identifier: assign.propertyType
+			count: 2
+			path: app/Actions/PowerSync/ApplyVoyagePowerSyncCrudAction.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>booking_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Data/PowerSync/BookingTickets/BookingTicketPutPayloadResolver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>country" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Data/PowerSync/BookingTickets/BookingTicketPutPayloadResolver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Data/PowerSync/BookingTickets/BookingTicketPutPayloadResolver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Data/PowerSync/BookingTickets/BookingTicketPutPayloadResolver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>ticket_type_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Data/PowerSync/BookingTickets/BookingTicketPutPayloadResolver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>is_active" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Data/PowerSync/Programs/ProgramPutPayloadResolver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>is_pay_what_you_can" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Data/PowerSync/TicketTypes/TicketTypePutPayloadResolver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>min_per_purchase" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Data/PowerSync/TicketTypes/TicketTypePutPayloadResolver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>title" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Data/PowerSync/TicketTypes/TicketTypePutPayloadResolver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>water_route_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Data/PowerSync/Voyages/VoyagePutPayloadResolver.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$pivot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Data/Programs/ProgramMemberData.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\HasMany\:\:publiclyBookable\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Api/PublicBookingController.php
+
+		-
+			message: '#^Parameter \#1 \$ticketType of static method App\\Data\\Programs\\PublicBookingTicketTypeOptionData\:\:fromModel\(\) expects App\\Models\\TicketType, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Api/PublicBookingController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Auth\\GoogleOAuthController\:\:redirect\(\) should return Illuminate\\Http\\RedirectResponse but returns Symfony\\Component\\HttpFoundation\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Auth/GoogleOAuthController.php
+
+		-
+			message: '#^Parameter \#2 \$googleUser of method App\\Http\\Controllers\\Auth\\GoogleOAuthController\:\:linkGoogleAccount\(\) expects Laravel\\Socialite\\Two\\User, Laravel\\Socialite\\Contracts\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/GoogleOAuthController.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 2
+			path: app/Http/Controllers/Auth/GoogleOAuthController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Requests/UpdateProfileRequest.php
+
+		-
+			message: '#^Method App\\Models\\Program\:\:users\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<App\\Models\\User, \$this\(App\\Models\\Program\), Illuminate\\Database\\Eloquent\\Relations\\Pivot, ''pivot''\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<App\\Models\\User, \$this\(App\\Models\\Program\), App\\Models\\ProgramUser, ''pivot''\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Program.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email_signature\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/BookingCancellationNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/BookingCancellationNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/BookingCancellationNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$scheduled_departure_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/BookingCancellationNotification.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Notifications/BookingCancellationNotification.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type Illuminate\\Database\\Eloquent\\Model\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Notifications/BookingCancellationNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email_signature\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/BookingConfirmationNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/BookingConfirmationNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/BookingConfirmationNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$scheduled_departure_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/BookingConfirmationNotification.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>description" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Notifications/BookingConfirmationNotification.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Notifications/BookingConfirmationNotification.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type Illuminate\\Database\\Eloquent\\Model\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Notifications/BookingConfirmationNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email_signature\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/BookingDepartureReminderNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/BookingDepartureReminderNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/BookingDepartureReminderNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$scheduled_departure_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/BookingDepartureReminderNotification.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>description" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Notifications/BookingDepartureReminderNotification.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Notifications/BookingDepartureReminderNotification.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type Illuminate\\Database\\Eloquent\\Model\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Notifications/BookingDepartureReminderNotification.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Notifications/ProgramInvitationNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$ticketType\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/BookingMailFormatter.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$ticket_type_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/BookingMailFormatter.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>title" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Support/BookingMailFormatter.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/Calendar/BookingIcsGenerator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/Calendar/BookingIcsGenerator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$scheduled_departure_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/Calendar/BookingIcsGenerator.php
+
+		-
+			message: '#^Parameter \#1 \$program of method App\\Support\\Calendar\\BookingIcsGenerator\:\:formatLocation\(\) expects App\\Models\\Program\|null, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Support/Calendar/BookingIcsGenerator.php
+
+		-
+			message: '#^Parameter \#1 \$program of method App\\Support\\Calendar\\BookingIcsGenerator\:\:formatTitle\(\) expects App\\Models\\Program\|null, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Support/Calendar/BookingIcsGenerator.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Support/Calendar/BookingIcsGenerator.php
+
+		-
+			message: '#^Instanceof between string and App\\Models\\TemplateDay will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 1
+			path: database/factories/TemplateDayDateFactory.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: database/factories/TemplateDayDateFactory.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: database/factories/TripFactory.php

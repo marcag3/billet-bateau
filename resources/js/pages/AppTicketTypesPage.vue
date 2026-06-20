@@ -10,8 +10,8 @@
         </template>
 
         <AppEntityList>
-            <AppEmptyListRow :show="ticketTypes.length === 0" :message="t('ticketTypesList.empty')" />
-            <q-item v-for="row in ticketTypes" :key="String(row.id)" class="q-pa-md">
+            <AppEmptyListRow :show="ticketTypeRows.length === 0" :message="t('ticketTypesList.empty')" />
+            <q-item v-for="row in ticketTypeRows" :key="String(row.id)" class="p-4">
                 <q-item-section>
                     <q-item-label class="text-h6">{{
                         row.title
@@ -21,7 +21,7 @@
                     </q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                    <div class="column q-gutter-xs items-end">
+                    <div class="column gap-1 items-end">
                         <q-btn color="primary" outline dense :label="t('common.edit')"
                             @click="() => ticketTypeModalRef?.openEditModal(row)" />
                         <q-btn flat dense color="negative" icon="delete" :label="t('ticketTypesList.delete')"
@@ -36,12 +36,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+import { liveQueryRows } from "../powersync/live-query-casts";
 import type { TicketTypeOutput } from "../powersync/ticket-types.collection";
 
 import { useConfirmDialog } from "../composables/useConfirmDialog";
@@ -71,6 +72,10 @@ const { data: ticketTypes } = useLiveQuery(
             .where(({ tt }) => eq(tt.program_id, pid));
     },
     [ticketTypesCollection, powersync.activeProgramIdRef],
+);
+
+const ticketTypeRows = computed(() =>
+    liveQueryRows<TicketTypeOutput>(ticketTypes.value),
 );
 
 const ticketTypeModalRef = ref<InstanceType<

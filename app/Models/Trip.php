@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\VoyageStatus;
 use Database\Factories\TripFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -66,5 +68,52 @@ class Trip extends Model
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class, 'trip_id');
+    }
+
+    /**
+     * @return list<VoyageStatus>
+     */
+    public static function voyageStatusesBlockingPublicBooking(): array
+    {
+        return [
+            VoyageStatus::Ready,
+            VoyageStatus::Underway,
+            VoyageStatus::Completed,
+            VoyageStatus::Cancelled,
+        ];
+    }
+
+    public function isPubliclyBookable(): bool
+    {
+        if ($this->scheduled_departure_at->isPast()) {
+            return false;
+        }
+
+        $blockingStatuses = array_map(
+            static fn (VoyageStatus $status): string => $status->value,
+            self::voyageStatusesBlockingPublicBooking(),
+        );
+
+        return ! $this->voyages()
+            ->whereIn('status', $blockingStatuses)
+            ->exists();
+    }
+
+    /**
+     * @param  Builder<Trip>  $query
+     * @return Builder<Trip>
+     */
+    public function scopePubliclyBookable(Builder $query): Builder
+    {
+        $blockingStatuses = array_map(
+            static fn (VoyageStatus $status): string => $status->value,
+            self::voyageStatusesBlockingPublicBooking(),
+        );
+
+        return $query
+            ->where('scheduled_departure_at', '>=', now())
+            ->whereDoesntHave('voyages', static function (Builder $voyageQuery) use ($blockingStatuses): void {
+                $voyageQuery->whereIn('status', $blockingStatuses);
+            });
     }
 }

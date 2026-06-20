@@ -15,6 +15,9 @@ USER root
 
 RUN install-php-extensions intl gd exif
 
+COPY deploy/config/caddy/server-extra-directives /etc/caddy/server-extra-directives
+COPY --chmod=755 deploy/entrypoint.d/50-caddy-server-extra-directives.sh /etc/entrypoint.d/50-caddy-server-extra-directives.sh
+
 ############################################
 # Development tools (Sail-like all-in-one)
 ############################################
@@ -55,9 +58,15 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+ENV COMPOSER_HOME=/composer
+
 RUN if ! command -v composer >/dev/null 2>&1; then \
         curl -sLS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer; \
     fi
+
+RUN mkdir -p /composer \
+    && composer global require overtrue/phplint --no-interaction \
+    && ln -sf /composer/vendor/bin/phplint /usr/local/bin/phplint
 
 ############################################
 # Development runtime target
@@ -69,6 +78,7 @@ ARG WWWUSER=1000
 
 COPY --from=powersync_vendor /app /opt/powersync
 COPY --from=powersync_vendor /usr/local/bin/node /usr/local/bin/node
+COPY --chmod=755 deploy/entrypoint.d/ /etc/entrypoint.d/
 COPY --chmod=755 deploy/config/powersync/entrypoint.sh /opt/powersync/entrypoint.sh
 
 RUN groupadd --force -g "${WWWGROUP}" sail \

@@ -5,11 +5,10 @@ export type AppMediaConfig = {
     trustedImageOrigins: string[];
 };
 
-/** Bumped when media config is loaded or refreshed so banner URLs recompute. */
+/** Bumped when media config is loaded so banner URLs recompute. */
 export const mediaConfigRevision = ref(0);
 
 export const APP_MEDIA_CONFIG_META_NAME = 'app-media-config';
-export const APP_SW_CONFIG_URL = '/app/sw-config.json';
 
 let cachedConfig: AppMediaConfig | null = null;
 
@@ -110,44 +109,4 @@ export function mediaPublicBaseUrl(): string {
 
 export function trustedImageOrigins(): string[] {
     return getAppMediaConfig()?.trustedImageOrigins ?? [];
-}
-
-export async function refreshAppMediaConfigFromNetwork(): Promise<AppMediaConfig | null> {
-    try {
-        const response = await fetch(APP_SW_CONFIG_URL, { cache: 'no-store' });
-        if (!response.ok) {
-            return getAppMediaConfig();
-        }
-
-        const config = parseAppMediaConfig(await response.json());
-        if (config != null) {
-            setAppMediaConfig(config);
-        }
-
-        return config;
-    } catch {
-        return getAppMediaConfig();
-    }
-}
-
-export function notifyServiceWorkerOfMediaConfig(): void {
-    if (!('serviceWorker' in navigator)) {
-        return;
-    }
-
-    const origins = trustedImageOrigins();
-    if (origins.length === 0) {
-        return;
-    }
-
-    const message = {
-        type: 'SET_TRUSTED_ORIGINS',
-        trustedImageOrigins: origins,
-    };
-
-    navigator.serviceWorker.controller?.postMessage(message);
-
-    void navigator.serviceWorker.ready.then((registration) => {
-        registration.active?.postMessage(message);
-    });
 }

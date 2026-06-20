@@ -12,6 +12,9 @@
  */
 
 import { eq, type Collection, type InitialQueryBuilder } from "@tanstack/db";
+import { queryRef } from "./live-query-casts";
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- TanStack Collection generics */
 
 // ---------------------------------------------------------------------------
 // Boats + BoatType join
@@ -47,23 +50,23 @@ export interface BoatWithBoatTypeRow {
  * ```
  */
 export function joinBoatsWithBoatTypes<
-    B extends Collection<object, string | number>,
-    BT extends Collection<object, string | number>,
+    B extends Collection<any, string | number>,
+    BT extends Collection<any, string | number>,
 >(qb: InitialQueryBuilder, boatsCollection: B, boatTypesCollection: BT) {
     return qb
         .from({ b: boatsCollection })
         .leftJoin({ bt: boatTypesCollection }, ({ b, bt }) =>
-            eq(b.boat_type_id, bt.id),
+            eq(queryRef(b).boat_type_id, queryRef(bt).id),
         )
         .select(({ b, bt }) => ({
-            id: b.id,
-            boat_type_id: b.boat_type_id,
-            program_id: b.program_id,
-            name: b.name,
-            capacity: b.capacity,
-            notes: b.notes,
-            boatTypeName: bt.name,
-            boatTypeBannerObjectKey: bt.banner_object_key,
+            id: queryRef(b).id,
+            boat_type_id: queryRef(b).boat_type_id,
+            program_id: queryRef(b).program_id,
+            name: queryRef(b).name,
+            capacity: queryRef(b).capacity,
+            notes: queryRef(b).notes,
+            boatTypeName: queryRef(bt).name,
+            boatTypeBannerObjectKey: queryRef(bt).banner_object_key,
         }));
 }
 
@@ -103,10 +106,10 @@ export interface TripWithRelationsRow {
  * ```
  */
 export function joinTripsWithRelationsFrom<
-    T extends Collection<object, string | number>,
-    P extends Collection<object, string | number>,
-    BT extends Collection<object, string | number>,
-    WR extends Collection<object, string | number>,
+    T extends Collection<any, string | number>,
+    P extends Collection<any, string | number>,
+    BT extends Collection<any, string | number>,
+    WR extends Collection<any, string | number>,
 >(
     qb: InitialQueryBuilder,
     tripsCollection: T,
@@ -117,22 +120,22 @@ export function joinTripsWithRelationsFrom<
     return qb
         .from({ trip: tripsCollection })
         .innerJoin({ product: productsCollection }, ({ trip, product }) =>
-            eq(trip.product_id, product.id),
+            eq(queryRef(trip).product_id, queryRef(product).id),
         )
         .leftJoin({ boatType: boatTypesCollection }, ({ product, boatType }) =>
-            eq(product.boat_type_id, boatType.id),
+            eq(queryRef(product).boat_type_id, queryRef(boatType).id),
         )
         .leftJoin({ waterRoute: waterRoutesCollection }, ({ product, waterRoute }) =>
-            eq(product.water_route_id, waterRoute.id),
+            eq(queryRef(product).water_route_id, queryRef(waterRoute).id),
         );
 }
 
 /** Join + select in one step (no further table-alias filters). */
 export function joinTripsWithRelations<
-    T extends Collection<object, string | number>,
-    P extends Collection<object, string | number>,
-    BT extends Collection<object, string | number>,
-    WR extends Collection<object, string | number>,
+    T extends Collection<any, string | number>,
+    P extends Collection<any, string | number>,
+    BT extends Collection<any, string | number>,
+    WR extends Collection<any, string | number>,
 >(
     qb: InitialQueryBuilder,
     tripsCollection: T,
@@ -147,17 +150,17 @@ export function joinTripsWithRelations<
         boatTypesCollection,
         waterRoutesCollection,
     ).select(({ trip, product, boatType, waterRoute }) => ({
-        id: trip.id,
-        program_id: trip.program_id,
-        product_id: trip.product_id,
-        product_name: product.name,
-        scheduled_departure_at: trip.scheduled_departure_at,
-        boat_type_id: product.boat_type_id,
-        water_route_id: product.water_route_id,
-        capacity: product.capacity,
-        boatTypeName: boatType.name,
-        waterRouteName: waterRoute.name,
-        waterRouteDurationMinutes: waterRoute.duration_minutes,
-        productBannerObjectKey: product.banner_object_key,
+        id: queryRef(trip).id,
+        program_id: queryRef(trip).program_id,
+        product_id: queryRef(trip).product_id,
+        product_name: queryRef(product).name,
+        scheduled_departure_at: queryRef(trip).scheduled_departure_at,
+        boat_type_id: queryRef(product).boat_type_id,
+        water_route_id: queryRef(product).water_route_id,
+        capacity: queryRef(product).capacity,
+        boatTypeName: queryRef(boatType).name,
+        waterRouteName: queryRef(waterRoute).name,
+        waterRouteDurationMinutes: queryRef(waterRoute).duration_minutes,
+        productBannerObjectKey: queryRef(product).banner_object_key,
     }));
 }

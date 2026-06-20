@@ -24,6 +24,7 @@ export const programSchema = z.object({
         .nullable()
         .default(null),
     booking_questions: z.string().nullable().default('[]'),
+    email_signature: z.string().nullable().default(null),
     start_date: z
         .string()
         .regex(/^\d{4}-\d{2}-\d{2}$/)

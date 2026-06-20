@@ -1,4 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
+import profile from './profile'
+import password from './password'
 /**
 * @see \App\Http\Controllers\Auth\SessionController::me
 * @see app/Http/Controllers/Auth/SessionController.php:46
@@ -45,6 +47,8 @@ me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 const auth = {
     me: Object.assign(me, me),
+    profile: Object.assign(profile, profile),
+    password: Object.assign(password, password),
 }
 
 export default auth

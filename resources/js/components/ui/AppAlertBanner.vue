@@ -43,7 +43,7 @@ const emit = defineEmits<{
 }>();
 
 const bannerClass = computed(() => {
-    const base = 'q-mb-md';
+    const base = 'mb-4';
     if (props.variant === 'error') {
         return `bg-red-1 text-negative ${base}`;
     }

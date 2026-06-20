@@ -1,0 +1,5 @@
+path:
+  - .
+exclude:
+  - vendor
+  - '*.log'

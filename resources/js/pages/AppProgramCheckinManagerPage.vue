@@ -1,5 +1,5 @@
 <template>
-    <q-page class="q-pa-md">
+    <q-page class="p-4">
         <AppPageHeader :title="t('programsCheckin.title')" />
     </q-page>
 </template>

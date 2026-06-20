@@ -471,7 +471,7 @@ export function mapControlPanelTripCardRow(
     );
 
     return {
-        trip: row,
+        trip: row as unknown as TripWithRelationsRow,
         voyage,
         passengers,
         bookedTicketNames: names,

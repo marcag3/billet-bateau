@@ -1,7 +1,7 @@
 <template>
     <AppEntityEditPageLayout :title="t('templateDaysList.editPageTitle')" :back-to="backTo"
         :back-label="t('templateDaysList.backToList')">
-        <q-banner v-if="showNotFound" class="bg-warning text-dark q-mb-md" rounded>
+        <q-banner v-if="showNotFound" class="bg-warning text-dark mb-4" rounded>
             {{ t("templateDaysList.notFound") }}
             <template #action>
                 <q-btn color="primary" flat :label="t('templateDaysList.backToList')" :to="backTo" />
@@ -11,7 +11,7 @@
         <template v-if="currentTemplateDay">
             <AppCardSection :label="t('templateDaysList.detailsSection')">
                 <q-form @submit.prevent="onSaveNameSubmit">
-                    <div class="column q-gutter-y-md">
+                    <div class="column gap-4">
                         <q-input v-model="editName" outlined :label="t('templateDaysList.name')"
                             :disable="isSavingName" />
                         <q-btn color="primary" type="submit" :label="t('templateDaysList.saveChanges')"
@@ -21,20 +21,20 @@
             </AppCardSection>
 
             <AppCardSection :label="t('templateDaysList.slotCalendarSection')">
-                <div class="text-caption text-grey-7 q-mb-sm">
+                <div class="text-caption text-grey-7 mb-2">
                     {{ t("templateDaysList.slotCalendarHint") }}
                 </div>
-                <div class="template-day-slot-calendar">
+                <div class="min-h-[32rem]">
                     <QCalendarDay v-model="slotCalendarDateStr" view="day" bordered no-header
                         :locale="slotCalendarDateLocale" hour24-format interval-minutes="30" interval-count="48"
-                        interval-height="22" :use-navigation="false" class="template-day-slot-calendar-surface"
+                        interval-height="22" :use-navigation="false" class="rounded overflow-hidden [&_.q-calendar-day__day-interval]:cursor-pointer [&_.q-calendar-day__day-interval--section]:cursor-pointer"
                         @click-time="onSlotCalendarClickTime">
                         <template #day-body="{ scope }">
-                            <div class="template-day-slot-cal-day-body">
+                            <div class="absolute inset-0 pointer-events-none">
                                 <div v-for="ev in slotCalendarEventsForScope(scope)" :key="ev.id"
-                                    class="template-day-slot-cal-event-wrap" :style="slotEventPositionStyle(scope, ev)">
+                                    class="pointer-events-auto overflow-hidden" :style="slotEventPositionStyle(scope, ev)">
                                     <q-btn dense no-caps padding="xs sm" outline color="primary"
-                                        class="template-day-slot-cal-event-btn full-width text-left"
+                                        class="text-xs h-full min-h-0 full-width text-left"
                                         @click.stop="openEditSlotDialogByEventId(ev.id)">
                                         <span class="ellipsis block">{{
                                             ev.title
@@ -51,7 +51,7 @@
 
     <q-dialog v-model="slotDialogOpen" persistent @show="onSlotDialogShow">
         <q-card style="min-width: 480px; max-width: 600px">
-            <q-card-section class="q-pb-none">
+            <q-card-section class="pb-0">
                 <div class="text-h6">
                     {{
                         editingSlotId
@@ -80,6 +80,7 @@ import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import { QCalendarDay, today } from "@quasar/quasar-ui-qcalendar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+import { liveQueryRows } from "../powersync/live-query-casts";
 import type { TemplateDaySlotOutput } from "../powersync/template-day-slots.collection";
 import {
     createEmptySlotForm,
@@ -282,8 +283,8 @@ const { data: slots } = useLiveQuery(
     [templateDaySlotsCollection, templateDayId],
 );
 
-const sortedSlots = computed(() => {
-    const list = slots.value ?? [];
+const sortedSlots = computed((): TemplateDaySlotOutput[] => {
+    const list = liveQueryRows<TemplateDaySlotOutput>(slots.value);
     return [...list].sort((a, b) => {
         const aOrder = a.sort_order ?? 0;
         const bOrder = b.sort_order ?? 0;
@@ -684,36 +685,3 @@ async function submitSlotDialog(closeAfter: boolean): Promise<void> {
     isSavingSlot.value = false;
 }
 </script>
-
-<style scoped>
-.template-day-slot-calendar {
-    min-height: 32rem;
-}
-
-.template-day-slot-calendar-surface {
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.template-day-slot-calendar-surface :deep(.q-calendar-day__day-interval),
-.template-day-slot-calendar-surface :deep(.q-calendar-day__day-interval--section) {
-    cursor: pointer;
-}
-
-.template-day-slot-cal-day-body {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-.template-day-slot-cal-event-wrap {
-    pointer-events: auto;
-    overflow: hidden;
-}
-
-.template-day-slot-cal-event-btn {
-    font-size: 0.75rem;
-    height: 100%;
-    min-height: 0;
-}
-</style>

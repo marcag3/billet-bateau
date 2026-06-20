@@ -11,7 +11,11 @@
         <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'Billet Bateau App') }}">
         <meta
             name="app-media-config"
-            content="{{ e(json_encode(\App\Support\Media\MediaConfig::serviceWorkerPayload(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)) }}"
+            content="{{ json_encode(\App\Support\Media\MediaConfig::serviceWorkerPayload(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES) }}"
+        >
+        <meta
+            name="app-auth-config"
+            content="{{ json_encode(\App\Support\Auth\AuthConfig::spaPayload(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES) }}"
         >
         <title>{{ config('app.name', 'Billet Bateau App') }}</title>
         <link rel="manifest" href="/build/app.webmanifest">

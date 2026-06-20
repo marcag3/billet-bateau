@@ -1,5 +1,5 @@
 <template>
-    <q-page class="q-pa-md">
+    <q-page class="p-4">
         <AppPageHeader :title="t('programsCreate.title')" />
 
         <AppCardSection :label="t('programsCreate.formSection')">
@@ -14,7 +14,7 @@
                 @submitted="onProgramCreated"
             >
                 <template #actions="{ isSubmitting: formSubmitting, fieldsDisabled }">
-                    <div class="row q-gutter-sm">
+                    <div class="row gap-2">
                         <q-btn
                             color="primary"
                             type="submit"
@@ -110,6 +110,9 @@ async function onCreateProgram({
             start_date: formValues.startDate,
             end_date: formValues.endDate,
             booking_questions: JSON.stringify(bookingQuestions),
+            email_signature: formValues.emailSignature.trim().length > 0
+                ? formValues.emailSignature.trim()
+                : null,
             line_1: addressFields.line_1,
             line_2: addressFields.line_2,
             city: addressFields.city,

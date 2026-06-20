@@ -22,7 +22,12 @@ export default defineConfig(({ mode }) => {
         && Boolean(env.SENTRY_ORG)
         && Boolean(env.SENTRY_PROJECT);
 
+    const appBuildId = env.VITE_SENTRY_RELEASE || 'local';
+
     return {
+        define: {
+            __APP_BUILD_ID__: JSON.stringify(appBuildId),
+        },
         build: {
             sourcemap: sentryUploadEnabled ? 'hidden' : false,
         },
@@ -64,7 +69,7 @@ export default defineConfig(({ mode }) => {
                 strategies: 'injectManifest',
                 srcDir: 'resources/js/service-worker',
                 filename: 'app-sw.js',
-                // Source: service-worker/app-sw.ts → public/build/app-sw.js; served at /app/sw.js via Laravel.
+                // service-worker/app-sw.ts → public/build/app-sw.js (scope /app/ via Service-Worker-Allowed).
                 injectRegister: false,
                 registerType: 'autoUpdate',
                 scope: '/app/',
