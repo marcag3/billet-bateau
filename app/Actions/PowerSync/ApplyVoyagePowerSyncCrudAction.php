@@ -2,6 +2,7 @@
 
 namespace App\Actions\PowerSync;
 
+use App\Actions\CancelVoyageAction;
 use App\Actions\MarkVoyageArrivedAction;
 use App\Actions\StartVoyageAction;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
@@ -235,7 +236,9 @@ final class ApplyVoyagePowerSyncCrudAction
 
     private function isLifecycleTransitionStatus(VoyageStatus $status): bool
     {
-        return $status === VoyageStatus::Underway || $status === VoyageStatus::Completed;
+        return $status === VoyageStatus::Underway
+            || $status === VoyageStatus::Completed
+            || $status === VoyageStatus::Cancelled;
     }
 
     private function applyStatusTransition(Voyage $voyage, VoyageStatus $status, string $userId): void
@@ -248,6 +251,12 @@ final class ApplyVoyagePowerSyncCrudAction
 
         if ($status === VoyageStatus::Completed) {
             MarkVoyageArrivedAction::run($voyage, $userId);
+
+            return;
+        }
+
+        if ($status === VoyageStatus::Cancelled) {
+            CancelVoyageAction::run($voyage, $userId);
         }
     }
 

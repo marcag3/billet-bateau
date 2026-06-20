@@ -717,6 +717,12 @@ export default {
         undoCheckInConfirm:
             "Undo check-in for {name}? The booking will return to pending.",
         checkInAlready: "This guest is already checked in.",
+        cancelTrip: "Cancel trip",
+        cancelTripConfirmTitle: "Cancel this trip?",
+        cancelTripConfirmMessage:
+            "Cancel this trip? All booked guests will receive a cancellation email.",
+        cancelTripSuccess: "Trip cancelled.",
+        cancelTripBlocked: "This trip cannot be cancelled after departure.",
         errorGeneric: "Something went wrong. Please try again.",
     },
     programsCheckin: {

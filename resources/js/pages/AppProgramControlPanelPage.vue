@@ -16,7 +16,7 @@
             class="col w-full max-w-full min-h-0 snap-x snap-mandatory" v-slot="{ item }">
             <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" :boat-names-by-id="boatNamesById"
                 :guide-names-by-id="guideNamesById" @open-depart="openDepartModal(item)"
-                @arrive="confirmArrive(item)" @open-walk-in="openWalkInModal(item)"
+                @arrive="confirmArrive(item)" @cancel="confirmCancel(item)" @open-walk-in="openWalkInModal(item)"
                 @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)"
                 @undo-check-in-booking="(bookingId) => onUndoCheckInBooking(item, bookingId)"
                 @remove-passenger="(passengerId) => removePassenger(passengerId)"
@@ -103,7 +103,7 @@ const emptyDayMessage = computed((): string => {
     return t("programsControl.emptyDay");
 });
 
-const { startDeparture, markArrival, removePassenger } = useControlPanelVoyageOps();
+const { startDeparture, markArrival, removePassenger, cancelTrip } = useControlPanelVoyageOps();
 const { addWalkInBooking, removeWalkInBookingTicket } = useControlPanelWalkInBooking();
 const { checkInBooking } = useControlPanelCheckIn();
 const { undoCheckInForBooking } = useControlPanelUndoCheckIn();
@@ -252,6 +252,18 @@ function confirmArrive(card: ControlPanelTripCardModel): void {
         title: t("programsControl.arriveConfirmTitle"),
         message: t("programsControl.arriveConfirmMessage"),
         onOk: () => markArrival(voyageId),
+    });
+}
+
+function confirmCancel(card: ControlPanelTripCardModel): void {
+    confirm({
+        title: t("programsControl.cancelTripConfirmTitle"),
+        message: t("programsControl.cancelTripConfirmMessage"),
+        onOk: () =>
+            cancelTrip({
+                trip: card.trip,
+                existingVoyage: card.voyage,
+            }),
     });
 }
 

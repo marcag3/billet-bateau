@@ -744,6 +744,12 @@ export default {
         undoCheckInConfirm:
             "Annuler l'enregistrement de {name} ? La réservation redeviendra en attente.",
         checkInAlready: "Ce client est déjà enregistré.",
+        cancelTrip: "Annuler la sortie",
+        cancelTripConfirmTitle: "Annuler cette sortie ?",
+        cancelTripConfirmMessage:
+            "Annuler cette sortie ? Tous les clients réservés recevront un courriel d'annulation.",
+        cancelTripSuccess: "Sortie annulée.",
+        cancelTripBlocked: "Cette sortie ne peut pas être annulée après le départ.",
         errorGeneric: "Une erreur est survenue. Veuillez réessayer.",
     },
     programsCheckin: {

@@ -178,10 +178,76 @@ export function useControlPanelVoyageOps() {
         );
     }
 
+    async function cancelTrip(input: {
+        trip: TripWithRelationsRow;
+        existingVoyage: VoyageOutput | null;
+    }): Promise<void> {
+        await runWithNotify(
+            async () => {
+                const voyagesCol = powersync.collections.voyages.value;
+                if (!voyagesCol) {
+                    throw new Error('Collections not ready.');
+                }
+
+                const waterRouteId = String(input.trip.water_route_id ?? '').trim();
+                if (waterRouteId.length === 0) {
+                    throw new Error(t('programsControl.missingWaterRoute'));
+                }
+
+                const programId = String(input.trip.program_id ?? '').trim();
+                if (programId.length === 0) {
+                    throw new Error(t('programsControl.missingProgram'));
+                }
+
+                const voyageStatus = String(input.existingVoyage?.status ?? '').trim();
+                if (
+                    voyageStatus === 'underway' ||
+                    voyageStatus === 'completed' ||
+                    voyageStatus === 'cancelled'
+                ) {
+                    throw new Error(t('programsControl.cancelTripBlocked'));
+                }
+
+                let voyageId =
+                    input.existingVoyage?.id != null
+                        ? String(input.existingVoyage.id)
+                        : '';
+
+                if (voyageId.length === 0) {
+                    voyageId = ulid();
+                    await voyagesCol
+                        .insert({
+                            id: voyageId,
+                            program_id: programId,
+                            user_id: null,
+                            trip_id: String(input.trip.id),
+                            water_route_id: waterRouteId,
+                            scheduled_departure_at: null,
+                            started_at: null,
+                            arrived_at: null,
+                            status: 'cancelled',
+                        })
+                        .isPersisted.promise;
+                } else {
+                    voyagesCol.update(voyageId, (draft) => {
+                        draft.status = 'cancelled';
+                    });
+                }
+
+                void powersync.refreshOutboxSnapshot();
+            },
+            {
+                successMessage: t('programsControl.cancelTripSuccess'),
+                errorGeneric: t('programsControl.errorGeneric'),
+            },
+        );
+    }
+
     return {
         startDeparture,
         markArrival,
         addPassenger,
         removePassenger,
+        cancelTrip,
     };
 }
