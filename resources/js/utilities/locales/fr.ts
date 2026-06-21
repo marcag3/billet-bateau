@@ -723,6 +723,7 @@ export default {
         removePassenger: "Retirer",
         removePassengerConfirm: "Retirer {name} du manifeste ?",
         startDepartTitle: "Démarrer le départ",
+        startDepartBoardedSummary: "{boarded} sur {booked} passagers embarqués",
         selectBoats: "Bateaux",
         selectGuides: "Guides",
         boatsRequired: "Sélectionnez au moins un bateau.",

@@ -30,8 +30,10 @@
 
         <AppControlPanelStartVoyageModal v-model:open="departModalOpen" :boat-options="boatOptions"
             :guide-options="guideOptions" :initial-boat-ids="departCard?.initialBoatIds ?? []"
-            :initial-guide-ids="departCard?.initialGuideIds ?? []" :submitting="departSubmitting"
-            @confirm="onConfirmDepart" />
+            :initial-guide-ids="departCard?.initialGuideIds ?? []"
+            :boarded-count="departCard?.passengers.length ?? 0"
+            :booked-count="departCard?.bookedCount ?? 0"
+            :submitting="departSubmitting" @confirm="onConfirmDepart" />
     </q-page>
 </template>
 

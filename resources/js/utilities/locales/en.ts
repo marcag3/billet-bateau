@@ -696,6 +696,7 @@ export default {
         removePassenger: "Remove",
         removePassengerConfirm: "Remove {name} from the manifest?",
         startDepartTitle: "Start departure",
+        startDepartBoardedSummary: "{boarded} of {booked} passengers boarded",
         selectBoats: "Boats",
         selectGuides: "Guides",
         boatsRequired: "Select at least one boat.",
