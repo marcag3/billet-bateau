@@ -19,6 +19,7 @@ export type ControlPanelStatsVoyage = {
 
 export type ControlPanelTripDisplayStatus =
     | 'scheduled'
+    | 'boarding'
     | 'on_water'
     | 'returned'
     | 'cancelled';
@@ -26,6 +27,7 @@ export type ControlPanelTripDisplayStatus =
 /** Shared hex colors for boat outline, status label, and day-toolbar stat chips. */
 export const CONTROL_PANEL_STATUS_COLOR = {
     scheduled: '#2563eb',
+    boarding: '#ca8a04',
     on_water: '#16a34a',
     returned: '#616161',
     cancelled: '#616161',
@@ -37,6 +39,8 @@ export function controlPanelTripDisplayStatusColor(
     displayStatus: ControlPanelTripDisplayStatus,
 ): string {
     switch (displayStatus) {
+        case 'boarding':
+            return CONTROL_PANEL_STATUS_COLOR.boarding;
         case 'on_water':
             return CONTROL_PANEL_STATUS_COLOR.on_water;
         case 'returned':
@@ -124,6 +128,9 @@ export function resolveControlPanelTripDisplayStatus(
 
     const status = String(voyage.status ?? '').trim();
 
+    if (status === 'ready') {
+        return 'boarding';
+    }
     if (status === 'underway') {
         return 'on_water';
     }

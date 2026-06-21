@@ -685,6 +685,7 @@ export default {
         statusCompleted: "Completed",
         statusCancelled: "Cancelled",
         tripStatusScheduled: "Scheduled",
+        tripStatusBoarding: "Boarding",
         tripStatusOnWater: "On the water",
         tripStatusReturned: "Completed",
         passengers: "Passengers",

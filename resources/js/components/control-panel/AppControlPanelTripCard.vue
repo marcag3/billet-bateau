@@ -171,6 +171,8 @@ const tripDisplayStatus = computed((): ControlPanelTripDisplayStatus =>
 
 const tripDisplayStatusLabel = computed((): string => {
     switch (tripDisplayStatus.value) {
+        case 'boarding':
+            return t('programsControl.tripStatusBoarding');
         case 'on_water':
             return t('programsControl.tripStatusOnWater');
         case 'returned':

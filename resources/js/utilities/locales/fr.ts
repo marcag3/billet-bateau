@@ -712,6 +712,7 @@ export default {
         statusCompleted: "Terminé",
         statusCancelled: "Annulé",
         tripStatusScheduled: "Prévu",
+        tripStatusBoarding: "Embarquement",
         tripStatusOnWater: "Sur l'eau",
         tripStatusReturned: "Terminé",
         passengers: "Passagers",

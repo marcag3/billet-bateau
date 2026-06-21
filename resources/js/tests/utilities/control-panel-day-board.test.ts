@@ -155,6 +155,9 @@ describe('control-panel-day-board', () => {
         expect(controlPanelTripDisplayStatusColor('scheduled')).toBe(
             CONTROL_PANEL_STATUS_COLOR.scheduled,
         );
+        expect(controlPanelTripDisplayStatusColor('boarding')).toBe(
+            CONTROL_PANEL_STATUS_COLOR.boarding,
+        );
         expect(controlPanelTripDisplayStatusColor('on_water')).toBe(
             CONTROL_PANEL_STATUS_COLOR.on_water,
         );
@@ -188,7 +191,7 @@ describe('control-panel-day-board', () => {
     it('resolveControlPanelTripDisplayStatus maps voyage lifecycle to display buckets', () => {
         expect(resolveControlPanelTripDisplayStatus(null)).toBe('scheduled');
         expect(resolveControlPanelTripDisplayStatus({ status: 'draft' })).toBe('scheduled');
-        expect(resolveControlPanelTripDisplayStatus({ status: 'ready' })).toBe('scheduled');
+        expect(resolveControlPanelTripDisplayStatus({ status: 'ready' })).toBe('boarding');
         expect(resolveControlPanelTripDisplayStatus({ status: 'underway' })).toBe('on_water');
         expect(resolveControlPanelTripDisplayStatus({ status: 'completed' })).toBe('returned');
         expect(resolveControlPanelTripDisplayStatus({ status: 'cancelled' })).toBe('cancelled');
