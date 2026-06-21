@@ -40,6 +40,7 @@ export const programSchema = z.object({
     city: z.string().nullable().default(null),
     postal_code: z.string().nullable().default(null),
     country: z.string().nullable().default(null),
+    timezone: z.string().nullable().default('America/Toronto'),
     banner_object_key: z.string().nullable().default(null),
     banner_mime_type: z.string().nullable().default(null),
     banner_size_bytes: z.number().nullable().default(null),

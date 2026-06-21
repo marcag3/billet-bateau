@@ -18,6 +18,7 @@ class StoreProgramInvitationRequest extends FormRequest
     {
         return [
             'email' => ['required', 'string', 'email', 'max:255'],
+            'locale' => ['sometimes', 'nullable', 'string', 'in:en,fr'],
         ];
     }
 }

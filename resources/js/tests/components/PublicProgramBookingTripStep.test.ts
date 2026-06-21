@@ -52,6 +52,7 @@ describe('PublicProgramBookingTripStep', () => {
         return mount(PublicProgramBookingTripStep, {
             props: {
                 tripOptions,
+                programTimezone: 'America/Toronto',
                 selectedProductId: '',
                 selectedDateYmd: '',
                 'onUpdate:selectedProductId': () => {},

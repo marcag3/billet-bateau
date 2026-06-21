@@ -1,8 +1,5 @@
-import { useI18n } from 'vue-i18n';
-import { ulid } from 'ulid';
-import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
-import { useNotifyAsyncAction } from './useNotifyAsyncAction';
 import type { TripWithRelationsRow } from '../powersync/joined-queries';
+import { useBookingAdminCrud, type BookingTicketUpsertInput } from './useBookingAdminCrud';
 
 export type WalkInBookingInput = {
     trip: TripWithRelationsRow;
@@ -15,9 +12,7 @@ export type WalkInBookingInput = {
 };
 
 export function useControlPanelWalkInBooking() {
-    const powersync = getAppPowerSyncContext();
-    const { t } = useI18n();
-    const { runWithNotify } = useNotifyAsyncAction();
+    const crud = useBookingAdminCrud();
 
     async function addWalkInBooking(
         input: WalkInBookingInput,
@@ -28,94 +23,34 @@ export function useControlPanelWalkInBooking() {
           }
         | undefined
     > {
-        return runWithNotify(
-            async () => {
-                const bookingsCol = powersync.collections.bookings.value;
-                const ticketsCol = powersync.collections.booking_tickets.value;
+        const result = await crud.addWalkInBooking({
+            programId: input.programId,
+            tripId: String(input.trip.id),
+            ticketTypeId: input.ticketTypeId,
+            contactName: input.contactName,
+            contactEmail: input.contactEmail,
+            country: input.country,
+            customFieldMap: input.customFieldMap,
+        });
 
-                if (!bookingsCol || !ticketsCol) {
-                    throw new Error('Collections not ready.');
-                }
+        if (result == null) {
+            return undefined;
+        }
 
-                const programId = input.programId.trim();
-                const tripId = String(input.trip.id ?? '').trim();
-                const ticketTypeId = input.ticketTypeId.trim();
-
-                if (programId.length === 0 || tripId.length === 0 || ticketTypeId.length === 0) {
-                    throw new Error(t('programsControl.errorGeneric'));
-                }
-
-                const bookingId = ulid();
-                const ticketId = ulid();
-                const contactName = input.contactName.trim();
-                await bookingsCol
-                    .insert({
-                        id: bookingId,
-                        program_id: programId,
-                        trip_id: tripId,
-                        contact_name: contactName,
-                        contact_email: input.contactEmail.trim(),
-                    })
-                    .isPersisted.promise;
-
-                await ticketsCol
-                    .insert({
-                        id: ticketId,
-                        booking_id: bookingId,
-                        ticket_type_id: ticketTypeId,
-                        name: contactName,
-                        email: input.contactEmail.trim(),
-                        country: input.country.trim().toUpperCase(),
-                        custom_fields: JSON.stringify(input.customFieldMap),
-                        waiver_confirmation_id: null,
-                    })
-                    .isPersisted.promise;
-
-                void powersync.refreshOutboxSnapshot();
-
-                return {
-                    bookingId,
-                    ticket: { id: ticketId, name: contactName, booking_id: bookingId },
-                };
+        return {
+            bookingId: result.bookingId,
+            ticket: {
+                id: result.ticketId,
+                name: input.contactName.trim(),
+                booking_id: result.bookingId,
             },
-            {
-                successMessage: t('programsControl.walkInAdded'),
-                errorGeneric: t('programsControl.errorGeneric'),
-            },
-        );
-    }
-
-    async function removeWalkInBookingTicket(
-        ticketId: string,
-        bookingId: string,
-        ticketsForBookingCount: number,
-    ): Promise<void> {
-        await runWithNotify(
-            async () => {
-                const bookingsCol = powersync.collections.bookings.value;
-                const ticketsCol = powersync.collections.booking_tickets.value;
-
-                if (!bookingsCol || !ticketsCol) {
-                    throw new Error('Collections not ready.');
-                }
-
-                await ticketsCol.delete(ticketId).isPersisted.promise;
-
-                if (ticketsForBookingCount <= 1) {
-                    await bookingsCol.delete(bookingId).isPersisted.promise;
-                }
-
-                void powersync.refreshOutboxSnapshot();
-            },
-            {
-                successMessage: t('programsControl.walkInRemoved'),
-                errorGeneric: t('programsControl.errorGeneric'),
-            },
-        );
+        };
     }
 
     return {
         addWalkInBooking,
-        removeWalkInBookingTicket,
+        removeWalkInBookingTicket: crud.removeWalkInBookingTicket,
     };
 }
+
+export type { BookingTicketUpsertInput };

@@ -6,13 +6,13 @@ import { ulid } from "ulid";
 import { useLiveQuery } from "@tanstack/vue-db";
 import { eq } from "@tanstack/db";
 import type { TripUpsertFormValues } from "../models/trips/trips.validation";
-import {
-    composeLocalDatetimeFromParts,
-    isoToLocalDatetimeInputValue,
-    localDatetimeInputValueToIso,
-    splitLocalDatetimeInputToDateAndTime,
-} from "../utilities/datetime-input";
 import { parseTripCreateDepartureQuery } from "../utilities/trip-departure-query";
+import {
+    formatIsoInTimezone,
+    isoToProgramDateAndTime,
+    programWallClockToIso,
+    resolveProgramTimezone,
+} from "../utilities/program-timezone-datetime";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import { joinTripsWithRelationsFrom, type TripWithRelationsRow } from "../powersync/joined-queries";
 import { useConfirmDialog } from "./useConfirmDialog";
@@ -49,6 +49,7 @@ export function useTripModalUpsert(
     const productsCollection = powersync.collections.products;
     const boatTypesCollection = powersync.collections.boat_types;
     const waterRoutesCollection = powersync.collections.water_routes;
+    const programsCollection = powersync.collections.programs;
     const { runWithNotify } = useNotifyAsyncAction();
     const { confirm } = useConfirmDialog();
     const { notifyError } = useNotifyErrorFromCatch();
@@ -58,6 +59,24 @@ export function useTripModalUpsert(
     const programId = computed(() =>
         String(route.params.programId ?? "").trim(),
     );
+
+    const { data: programRowsRaw } = useLiveQuery(
+        (queryBuilder) => {
+            const col = programsCollection.value;
+            const pid = programId.value;
+            if (!col || pid.length === 0) {
+                return undefined;
+            }
+            return queryBuilder.from({ p: col }).where(({ p }) => eq(p.id, pid));
+        },
+        [programsCollection, programId],
+    );
+
+    const programTimezone = computed((): string => {
+        const row = (programRowsRaw.value ?? [])[0] as { timezone?: string | null } | undefined;
+
+        return resolveProgramTimezone(row?.timezone);
+    });
 
     const modalMode = computed<"create" | "edit" | null>(() => {
         const raw = String(route.query[TRIP_MODAL_QUERY_KEY] ?? "")
@@ -236,11 +255,10 @@ export function useTripModalUpsert(
         if (!tr) {
             return null;
         }
-        const localCombined = isoToLocalDatetimeInputValue(
+        const { date, time } = isoToProgramDateAndTime(
             String(tr.scheduled_departure_at ?? ""),
+            programTimezone.value,
         );
-        const { date, time } =
-            splitLocalDatetimeInputToDateAndTime(localCombined);
         return {
             scheduledDepartureDate: date,
             scheduledDepartureTime: time,
@@ -260,13 +278,10 @@ export function useTripModalUpsert(
         if (Number.isNaN(d.getTime())) {
             return String(raw);
         }
-        return new Intl.DateTimeFormat(
-            locale.value === "fr" ? "fr-CA" : "en-CA",
-            {
-                dateStyle: "medium",
-                timeStyle: "short",
-            },
-        ).format(d);
+        return formatIsoInTimezone(String(raw), programTimezone.value, String(locale.value), {
+            dateStyle: "medium",
+            timeStyle: "short",
+        });
     }
 
     const tripSwitcherOptions = computed(() =>
@@ -315,11 +330,11 @@ export function useTripModalUpsert(
                     throw new Error("Product is required.");
                 }
                 const tripId = ulid();
-                const localCombined = composeLocalDatetimeFromParts(
+                const iso = programWallClockToIso(
                     values.scheduledDepartureDate,
                     values.scheduledDepartureTime,
+                    programTimezone.value,
                 );
-                const iso = localDatetimeInputValueToIso(localCombined);
 
                 await col
                     .insert({
@@ -352,11 +367,11 @@ export function useTripModalUpsert(
                 if (tr === null) {
                     throw new Error("Trip not found.");
                 }
-                const localCombined = composeLocalDatetimeFromParts(
+                const iso = programWallClockToIso(
                     values.scheduledDepartureDate,
                     values.scheduledDepartureTime,
+                    programTimezone.value,
                 );
-                const iso = localDatetimeInputValueToIso(localCombined);
                 const nextProductId = String(values.productId ?? "").trim();
                 if (nextProductId.length === 0) {
                     throw new Error("Product is required.");

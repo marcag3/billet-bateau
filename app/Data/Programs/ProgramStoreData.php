@@ -2,6 +2,8 @@
 
 namespace App\Data\Programs;
 
+use App\Rules\ValidIanaTimezone;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Spatie\LaravelData\Attributes\MergeValidationRules;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Support\Validation\ValidationContext;
@@ -18,13 +20,14 @@ final class ProgramStoreData extends Data
         public string $slug,
         public string $start_date,
         public string $end_date,
+        public string $timezone,
         public ?AddressUpsertData $address = null,
         /** @var list<string> */
         public array $booking_questions = [],
     ) {}
 
     /**
-     * @return array<string, list<string>>
+     * @return array<string, list<string|ValidationRule>>
      */
     public static function rules(?ValidationContext $context = null): array
     {
@@ -37,6 +40,7 @@ final class ProgramStoreData extends Data
             'slug' => ['required', 'string', 'max:255', 'lowercase', 'regex:/^[a-z0-9]+(-[a-z0-9]+)*$/u'],
             'start_date' => ['required', 'date_format:Y-m-d'],
             'end_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:start_date'],
+            'timezone' => ['required', 'string', new ValidIanaTimezone],
             'booking_questions' => ['sometimes', 'array', 'max:20'],
             'booking_questions.*' => ['string', 'min:1', 'max:255'],
             'address' => ['nullable', 'array'],

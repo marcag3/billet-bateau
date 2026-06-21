@@ -34,6 +34,7 @@ class ProgramControllerTest extends TestCase
             'slug' => 'harbor-week',
             'start_date' => '2026-06-01',
             'end_date' => '2026-09-30',
+            'timezone' => 'America/Toronto',
             'address' => [
                 'line_1' => '1 Wharf',
                 'city' => 'Portville',
@@ -108,6 +109,7 @@ class ProgramControllerTest extends TestCase
             'slug' => 'bad-range',
             'start_date' => '2026-09-01',
             'end_date' => '2026-06-01',
+            'timezone' => 'America/Toronto',
         ])->assertUnprocessable();
     }
 }

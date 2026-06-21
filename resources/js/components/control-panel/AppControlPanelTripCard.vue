@@ -52,13 +52,17 @@
             </q-scroll-area>
         </div>
 
-        <div v-if="showDepartedAssignment" class="shrink-0 mx-10 mb-8 text-center min-w-0">
-            <div class="text-body2 ellipsis block max-w-full" :title="departedGuideLabel">
-                {{ departedGuideLabel }}
-            </div>
-            <div class="text-body2 ellipsis block max-w-full" :title="departedBoatLabel">
-                {{ departedBoatLabel }}
-            </div>
+        <div v-if="showDepartedAssignment || showCancel" class="shrink-0 mx-10 mb-8 text-center min-w-0">
+            <template v-if="showDepartedAssignment">
+                <div class="text-body2 ellipsis block max-w-full" :title="departedGuideLabel">
+                    {{ departedGuideLabel }}
+                </div>
+                <div class="text-body2 ellipsis block max-w-full" :title="departedBoatLabel">
+                    {{ departedBoatLabel }}
+                </div>
+            </template>
+            <q-btn v-if="showCancel" flat dense no-caps size="sm" color="negative"
+                :label="t('programsControl.cancelTrip')" @click="emit('cancel')" />
         </div>
 
         <svg class="absolute inset-0 pointer-events-none" :style="tripDisplayStatusStyle" viewBox="0 0 200 480"
@@ -88,9 +92,11 @@ import {
     resolveControlPanelTripDisplayStatus,
     type ControlPanelTripDisplayStatus,
 } from '../../utilities/control-panel-day-board';
+import { formatIsoInTimezone } from '../../utilities/program-timezone-datetime';
 
 const props = defineProps<{
     card: ControlPanelTripCardModel;
+    programTimezone: string;
     boatNamesById?: Readonly<Record<string, string>>;
     guideNamesById?: Readonly<Record<string, string>>;
 }>();
@@ -98,6 +104,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     'open-depart': [];
     arrive: [];
+    cancel: [];
     'open-walk-in': [];
     'remove-booked-ticket': [ticketId: string, bookingId: string];
     'undo-check-in-booking': [bookingId: string];
@@ -117,10 +124,10 @@ const departureTimeLabel = computed((): string => {
         return '—';
     }
     try {
-        return new Intl.DateTimeFormat(String(locale.value), {
+        return formatIsoInTimezone(String(raw), props.programTimezone, String(locale.value), {
             hour: '2-digit',
             minute: '2-digit',
-        }).format(new Date(String(raw)));
+        });
     } catch {
         return String(raw);
     }
@@ -201,6 +208,8 @@ const showDepart = computed(
 );
 
 const showArrive = computed(() => voyageStatus.value === 'underway');
+
+const showCancel = computed(() => manifestModifiable.value);
 
 const showDepartedAssignment = computed(() =>
     hasControlPanelTripDeparted(props.card.voyage),

@@ -9,6 +9,7 @@ use App\Models\Program;
 use App\Models\ProgramInvitation;
 use App\Models\User;
 use App\Notifications\ProgramInvitationNotification;
+use App\Support\AppLocale;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -56,8 +57,10 @@ class ProgramInvitationController extends Controller
             return $created->load('program');
         });
 
+        $mailLocale = AppLocale::normalize($request->validated('locale'));
+
         Notification::route('mail', $email)->notify(
-            new ProgramInvitationNotification($invitation, $plainToken),
+            new ProgramInvitationNotification($invitation, $plainToken, mailLocale: $mailLocale),
         );
 
         return response()->json([

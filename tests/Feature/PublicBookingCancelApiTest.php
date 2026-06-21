@@ -121,7 +121,8 @@ class PublicBookingCancelApiTest extends TestCase
             ->assertJsonPath('data.product_description', 'Evening cruise on the harbor.')
             ->assertJsonPath('data.product_banner_url', null)
             ->assertJsonPath('data.boat_type_banner_url', null)
-            ->assertJsonPath('data.contact_name', 'Alex River');
+            ->assertJsonPath('data.contact_name', 'Alex River')
+            ->assertJsonPath('data.timezone', 'America/Toronto');
 
         $this->postJson('/api/public/bookings/cancel/'.$plainToken)
             ->assertOk()

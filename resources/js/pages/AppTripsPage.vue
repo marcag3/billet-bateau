@@ -132,9 +132,10 @@ import { useConfirmDialog } from "../composables/useConfirmDialog";
 import type { TemplateDaySlotOutput } from "../powersync/template-day-slots.collection";
 import type { TemplateDayOutput } from "../powersync/template-days.collection";
 import {
-    composeLocalDatetimeFromParts,
-    localDatetimeInputValueToIso,
-} from "../utilities/datetime-input";
+    formatIsoInTimezone,
+    programWallClockToIso,
+    resolveProgramTimezone,
+} from "../utilities/program-timezone-datetime";
 import AppEntityIndexPageLayout from "../layouts/AppEntityIndexPageLayout.vue";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppEntityList from "../components/ui/AppEntityList.vue";
@@ -190,6 +191,12 @@ const programDateBounds = computed((): { startYmd: string; endYmd: string } => {
         return { startYmd: s, endYmd: e };
     }
     return { startYmd: "1970-01-01", endYmd: "9999-12-31" };
+});
+
+const programTimezone = computed((): string => {
+    const row = liveQueryRow<ProgramOutput>((programRowsRaw.value ?? [])[0]);
+
+    return resolveProgramTimezone(row?.timezone);
 });
 
 const { data: bookedTripIdRows } = useLiveQuery(
@@ -584,14 +591,10 @@ function formatDeparture(tr: { scheduled_departure_at?: unknown }): string {
     if (raw == null || String(raw) === "") {
         return "—";
     }
-    const d = new Date(String(raw));
-    if (Number.isNaN(d.getTime())) {
-        return String(raw);
-    }
-    return new Intl.DateTimeFormat(locale.value === "fr" ? "fr-CA" : "en-CA", {
+    return formatIsoInTimezone(String(raw), programTimezone.value, locale.value === "fr" ? "fr-CA" : "en-CA", {
         dateStyle: "medium",
         timeStyle: "short",
-    }).format(d);
+    });
 }
 
 function parseDepartureDate(raw: unknown): Date | null {
@@ -848,11 +851,7 @@ async function applyTemplateDayFromSlots(
             skippedCount += 1;
             continue;
         }
-        const localCombined = composeLocalDatetimeFromParts(
-            serviceDate,
-            timeHm,
-        );
-        const iso = localDatetimeInputValueToIso(localCombined);
+        const iso = programWallClockToIso(serviceDate, timeHm, programTimezone.value);
         const tripId = ulid();
         const productId = findMatchingProductIdForSlot(slot);
         if (productId == null) {

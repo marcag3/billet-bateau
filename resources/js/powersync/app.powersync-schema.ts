@@ -16,6 +16,7 @@ const programsTable = new Table({
     city: column.text,
     postal_code: column.text,
     country: column.text,
+    timezone: column.text,
     banner_object_key: column.text,
     banner_mime_type: column.text,
     banner_size_bytes: column.integer,

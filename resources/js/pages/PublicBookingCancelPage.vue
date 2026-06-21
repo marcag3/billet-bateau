@@ -136,6 +136,7 @@ import {
     postPublicJson,
     PublicApiRequestError,
 } from '../services/publicApi';
+import { formatDepartureLabel } from '../utilities/program-timezone-datetime';
 
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -187,20 +188,12 @@ const hasProductSummary = computed((): boolean => {
     );
 });
 
-function formatDeparture(iso: string): string {
+function formatDeparture(iso: string, timezone: string): string {
     if (iso.trim().length === 0) {
         return '—';
     }
 
-    try {
-        const d = new Date(iso);
-        const localeTag = String(locale.value);
-        const datePart = new Intl.DateTimeFormat(localeTag, { dateStyle: 'medium' }).format(d);
-        const timePart = new Intl.DateTimeFormat(localeTag, { timeStyle: 'short' }).format(d);
-        return `${datePart}\n${timePart}`;
-    } catch {
-        return iso;
-    }
+    return formatDepartureLabel(iso, timezone, String(locale.value));
 }
 
 function reasonToMessage(reason: string): string {
@@ -251,7 +244,10 @@ async function loadPreview(): Promise<void> {
             productDescription: String(data.product_description ?? ''),
             productBannerUrl: data.product_banner_url != null ? String(data.product_banner_url) : null,
             boatTypeBannerUrl: data.boat_type_banner_url != null ? String(data.boat_type_banner_url) : null,
-            departureLabel: formatDeparture(String(data.departure_at ?? '')),
+            departureLabel: formatDeparture(
+                String(data.departure_at ?? ''),
+                String(data.timezone ?? 'America/Toronto'),
+            ),
             ticketSummary: String(data.ticket_summary ?? ''),
         };
     } catch {

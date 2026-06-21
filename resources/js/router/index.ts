@@ -154,6 +154,48 @@ const programScopeChildren: RouteRecordRaw[] = [
                     import("../pages/AppProgramControlPanelPage.vue"),
                 meta: scopedProgramMeta,
             },
+            {
+                path: "voyages/create",
+                name: "control.voyages.create",
+                component: () =>
+                    import("../pages/AppControlVoyageCreatePage.vue"),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: "voyages/:voyageId/edit",
+                name: "control.voyages.edit",
+                component: () =>
+                    import("../pages/AppControlVoyageEditPage.vue"),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: "voyages",
+                name: "control.voyages.list",
+                component: () =>
+                    import("../pages/AppControlVoyagesPage.vue"),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: "bookings/create",
+                name: "control.bookings.create",
+                component: () =>
+                    import("../pages/AppControlBookingCreatePage.vue"),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: "bookings/:bookingId/edit",
+                name: "control.bookings.edit",
+                component: () =>
+                    import("../pages/AppControlBookingEditPage.vue"),
+                meta: scopedProgramMeta,
+            },
+            {
+                path: "bookings",
+                name: "control.bookings.list",
+                component: () =>
+                    import("../pages/AppControlBookingsPage.vue"),
+                meta: scopedProgramMeta,
+            },
         ],
     },
     {

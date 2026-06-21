@@ -8,6 +8,7 @@ use App\Models\Trip;
 use App\Notifications\BookingCancellationNotification;
 use App\Support\AppLocale;
 use App\Support\BookingMailFormatter;
+use App\Support\ProgramTimezone;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -90,7 +91,7 @@ final class CancelPublicBookingAction
         return Booking::query()
             ->where('cancel_token_hash', self::hashToken($token))
             ->with([
-                'program:id,name,email_signature',
+                'program:id,name,email_signature,timezone',
                 'trip:id,scheduled_departure_at,product_id',
                 'trip.product:id,name,description,banner_object_key,boat_type_id',
                 'trip.product.boatType:id,banner_object_key',
@@ -148,8 +149,9 @@ final class CancelPublicBookingAction
             program_name: $booking->program?->name ?? __('Program'),
             contact_name: (string) ($booking->contact_name ?? ''),
             departure_at: $departure !== null
-                ? $departure->timezone(config('app.timezone'))->toIso8601String()
+                ? $departure->toIso8601String()
                 : '',
+            timezone: ProgramTimezone::resolve($booking->program),
             ticket_summary: BookingMailFormatter::formatTicketSummary($booking),
             product_name: $product?->name,
             product_description: $product?->description,

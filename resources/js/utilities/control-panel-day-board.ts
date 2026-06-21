@@ -1,4 +1,4 @@
-import { toBrowserLocalDateYmd } from './public-booking-filters';
+import { toTimezoneDateYmd } from './program-timezone-datetime';
 
 export type ControlPanelDayStats = {
     booked: number;
@@ -183,6 +183,7 @@ export type TripDepartureAtRow = {
 /** Local calendar dates (`YYYY-MM-DD`) with at least one scheduled trip departure. */
 export function reduceTripDepartureDateYmds(
     rows: TripDepartureAtRow[] | undefined,
+    timezone: string,
 ): string[] {
     const set = new Set<string>();
     for (const row of rows ?? []) {
@@ -190,7 +191,7 @@ export function reduceTripDepartureDateYmds(
         if (raw == null || String(raw).trim() === '') {
             continue;
         }
-        const ymd = toBrowserLocalDateYmd(String(raw));
+        const ymd = toTimezoneDateYmd(String(raw), timezone);
         if (ymd != null) {
             set.add(ymd);
         }
@@ -201,6 +202,7 @@ export function reduceTripDepartureDateYmds(
 export function voyageArrivedOnDateYmd(
     voyage: ControlPanelStatsVoyage,
     dateYmd: string,
+    timezone: string,
 ): boolean {
     if (voyage.arrived_at == null) {
         return false;
@@ -209,7 +211,7 @@ export function voyageArrivedOnDateYmd(
         voyage.arrived_at instanceof Date
             ? voyage.arrived_at.toISOString()
             : String(voyage.arrived_at);
-    return toBrowserLocalDateYmd(iso) === dateYmd;
+    return toTimezoneDateYmd(iso, timezone) === dateYmd;
 }
 
 type ControlPanelDayStatsCardInput = {

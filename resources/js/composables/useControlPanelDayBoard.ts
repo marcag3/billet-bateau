@@ -1,5 +1,4 @@
-import { computed, ref, watch, type Ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed, type Ref } from 'vue';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { eq } from '@tanstack/db';
 import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
@@ -14,53 +13,24 @@ import {
 } from '../powersync/control-panel-queries';
 import type { ProgramOutput } from '../powersync/programs.collection';
 import {
-    addDaysToYmd,
     computeControlPanelDayStatsFromCards,
-    normalizeCalendarYmd,
-    parseRouteDateYmdOrToday,
     reduceTripDepartureDateYmds,
-    todayLocalDateYmd,
     type ControlPanelDayStats,
 } from '../utilities/control-panel-day-board';
 import { parseProgramBookingQuestions } from '../utilities/program-booking-questions';
+import { resolveProgramTimezone } from '../utilities/program-timezone-datetime';
+import { useControlDayDateRoute } from './useControlDayDateRoute';
 
 export type ControlPanelTripCardModel = ReturnType<typeof mapControlPanelTripCardRow>;
 
-function rawRouteDateQuery(raw: unknown): string {
-    return normalizeCalendarYmd(raw) ?? '';
-}
-
 export function useControlPanelDayBoard(programId: Ref<string>) {
     const powersync = getAppPowerSyncContext();
-    const route = useRoute();
-    const router = useRouter();
 
-    const selectedDateYmd = ref(parseRouteDateYmdOrToday(route.query.date));
-
-    watch(
-        () => route.query.date,
-        (raw) => {
-            const fromRoute = parseRouteDateYmdOrToday(raw);
-            if (selectedDateYmd.value !== fromRoute) {
-                selectedDateYmd.value = fromRoute;
-            }
-        },
-        { immediate: true },
-    );
-
-    watch(selectedDateYmd, (ymd) => {
-        const next = normalizeCalendarYmd(ymd) ?? todayLocalDateYmd();
-        if (next !== ymd) {
-            selectedDateYmd.value = next;
-            return;
-        }
-        if (rawRouteDateQuery(route.query.date) === next) {
-            return;
-        }
-        void router.replace({
-            query: { ...route.query, date: next },
-        });
-    });
+    const {
+        selectedDateYmd,
+        shiftSelectedDay,
+        goToday: goToToday,
+    } = useControlDayDateRoute();
 
     const dayFilterYmd = computed(() => selectedDateYmd.value.trim());
 
@@ -136,6 +106,12 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
         return { startYmd: '', endYmd: '' };
     });
 
+    const programTimezone = computed((): string => {
+        const row = (programRowsRaw.value ?? [])[0] as unknown as ProgramOutput | undefined;
+
+        return resolveProgramTimezone(row?.timezone);
+    });
+
     const bookingQuestions = computed((): string[] => {
         const row = (programRowsRaw.value ?? [])[0] as unknown as ProgramOutput | undefined;
         if (row == null) {
@@ -182,13 +158,20 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
     const tripCards = computed((): ControlPanelTripCardModel[] => {
         const ymd = dayFilterYmd.value;
         return (tripCardsRaw.value ?? [])
-            .filter((row) => tripDepartureMatchesLocalDateYmd(row.scheduled_departure_at, ymd))
+            .filter((row) =>
+                tripDepartureMatchesLocalDateYmd(
+                    row.scheduled_departure_at,
+                    ymd,
+                    programTimezone.value,
+                ),
+            )
             .map(mapControlPanelTripCardRow);
     });
 
     const tripDateYmds = computed((): string[] =>
         reduceTripDepartureDateYmds(
             (tripDepartureRowsRaw.value ?? []) as unknown as TripDepartureAtRow[],
+            programTimezone.value,
         ),
     );
 
@@ -196,20 +179,13 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
         computeControlPanelDayStatsFromCards(tripCards.value, dayFilterYmd.value),
     );
 
-    function shiftSelectedDay(deltaDays: number): void {
-        selectedDateYmd.value = addDaysToYmd(selectedDateYmd.value, deltaDays);
-    }
-
-    function goToToday(): void {
-        selectedDateYmd.value = todayLocalDateYmd();
-    }
-
     return {
         selectedDateYmd,
         tripCards,
         dayStats,
         tripDateYmds,
         programDateBounds,
+        programTimezone,
         bookingQuestions,
         shiftSelectedDay,
         goToToday,

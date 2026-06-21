@@ -25,6 +25,7 @@ final class ProgramData extends Data
         public ?string $city,
         public ?string $postal_code,
         public ?string $country,
+        public string $timezone,
     ) {}
 
     /**
@@ -55,6 +56,7 @@ final class ProgramData extends Data
             city: $program->city,
             postal_code: $program->postal_code,
             country: $program->country,
+            timezone: (string) $program->timezone,
         );
     }
 }
