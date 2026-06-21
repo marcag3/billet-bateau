@@ -49,7 +49,7 @@
                                 })
                             }}
                         </p>
-                        <q-btn color="primary" no-caps :label="t('publicBooking.bookAnother')" @click="onBookAnother" />
+                        <q-btn color="primary" no-caps data-testid="book-another" :label="t('publicBooking.bookAnother')" @click="onBookAnother" />
                     </q-card-section>
                 </q-card>
             </section>
@@ -394,12 +394,7 @@ function onBookAnother(): void {
     submitError.value = '';
     customAnswerErrors.value = {};
     resetForm();
-    if (bookingOptionsData.value !== null) {
-        initTicketQuantities(bookingOptionsData.value.ticket_types);
-        customAnswers.value = customQuestions.value.map(() => '');
-    } else {
-        void loadBookingOptionsOnly();
-    }
+    void loadBookingOptionsOnly();
 }
 
 watch(

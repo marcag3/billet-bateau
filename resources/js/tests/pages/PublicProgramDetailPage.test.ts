@@ -143,6 +143,106 @@ describe('PublicProgramDetailPage', () => {
         expect(wrapper.text()).toContain('Book another trip');
     });
 
+    it('reloads booking options when booking another trip', async () => {
+        let bookingOptionsFetchCount = 0;
+
+        fetchPublicJsonMock.mockImplementation(async (path: string) => {
+            if (path.endsWith('/booking-options')) {
+                bookingOptionsFetchCount += 1;
+
+                return {
+                    data: {
+                        trips: [
+                            {
+                                id: 'trip-1',
+                                scheduled_departure_at: '2026-02-01T10:00:00Z',
+                                capacity: 10,
+                                remaining_capacity: bookingOptionsFetchCount === 1 ? 10 : 8,
+                                product_id: 'product-1',
+                                product_name: 'Product',
+                                product_description: null,
+                                product_banner_url: null,
+                                boat_type_id: null,
+                                boat_type_name: null,
+                                boat_type_banner_url: null,
+                                water_route_id: null,
+                                water_route_name: null,
+                                water_route_duration_minutes: null,
+                                water_route_trace_geojson: null,
+                            },
+                        ],
+                        ticket_types: [
+                            {
+                                id: 'adult',
+                                title: 'Adult',
+                                price_cents: 2500,
+                                is_pay_what_you_can: false,
+                                min_per_purchase: 1,
+                                max_per_purchase: null,
+                            },
+                        ],
+                    },
+                };
+            }
+
+            return {
+                data: {
+                    id: 'program-1',
+                    name: 'Program One',
+                    description: 'Desc',
+                },
+            };
+        });
+
+        const wrapper = mount(PublicProgramDetailPage, {
+            props: {
+                identifier: 'program-1',
+            },
+            global: {
+                plugins: [[Quasar, { lang }]],
+                stubs: {
+                    QPage: {
+                        template: '<div><slot /></div>',
+                    },
+                    QStepper: {
+                        template: '<div><slot /></div>',
+                    },
+                    QStep: {
+                        template: '<div><slot /></div>',
+                    },
+                    PublicProgramBookingTripStep: {
+                        template:
+                            '<div data-testid="remaining-capacity">{{ tripOptions[0]?.remaining_capacity }}</div>',
+                        props: ['tripOptions'],
+                    },
+                    PublicProgramBookingTicketsStep: true,
+                    PublicProgramBookingContactStep: {
+                        template: '<div />',
+                    },
+                },
+            },
+        });
+
+        await flushPromises();
+        expect(bookingOptionsFetchCount).toBe(1);
+        expect(wrapper.get('[data-testid="remaining-capacity"]').text()).toBe('10');
+
+        (wrapper.vm as unknown as { createdBooking: unknown }).createdBooking = {
+            id: 'booking-1',
+            trip_id: 'trip-1',
+            total_tickets: 2,
+            contact_name: 'Jane',
+            contact_email: 'jane@example.com',
+        };
+        await wrapper.vm.$nextTick();
+
+        await wrapper.get('[data-testid="book-another"]').trigger('click');
+        await flushPromises();
+
+        expect(bookingOptionsFetchCount).toBe(2);
+        expect(wrapper.get('[data-testid="remaining-capacity"]').text()).toBe('8');
+    });
+
     it('keeps trip filters when returning to step 1', async () => {
         const TripStepStub = defineComponent({
             name: 'TripStepStub',
