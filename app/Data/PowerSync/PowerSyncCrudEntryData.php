@@ -6,8 +6,10 @@ use App\PowerSync\PowerSyncCrudType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
+use Spatie\LaravelData\Attributes\MergeValidationRules;
 use Spatie\LaravelData\Data;
 
+#[MergeValidationRules]
 final class PowerSyncCrudEntryData extends Data
 {
     public const OP_PUT = 'PUT';
@@ -41,13 +43,25 @@ final class PowerSyncCrudEntryData extends Data
     /**
      * @return array<string, list<string|ValidationRule|Enum>>
      */
+    public static function rules(): array
+    {
+        return self::prefixedRules('');
+    }
+
+    /**
+     * @return array<string, list<string|ValidationRule|Enum>>
+     */
     public static function prefixedRules(string $prefix): array
     {
+        $key = static function (string $field) use ($prefix): string {
+            return $prefix === '' ? $field : $prefix.'.'.$field;
+        };
+
         return [
-            $prefix.'.op' => ['required', Rule::in(self::ops())],
-            $prefix.'.type' => ['required', Rule::enum(PowerSyncCrudType::class)],
-            $prefix.'.id' => ['required', 'ulid'],
-            $prefix.'.data' => ['nullable', 'array'],
+            $key('op') => ['required', Rule::in(self::ops())],
+            $key('type') => ['required', Rule::enum(PowerSyncCrudType::class)],
+            $key('id') => ['required', 'ulid'],
+            $key('data') => ['nullable', 'array'],
         ];
     }
 

@@ -4,6 +4,10 @@ import type {
 } from "@powersync/common";
 import { credentials, upload } from "../routes/api/powersync";
 import { requestJson } from "./http.client";
+import {
+    parseUploadResults,
+    publishUploadRejections,
+} from "../powersync/upload-results";
 
 export function createAppPowerSyncConnector(): PowerSyncBackendConnector {
     return {
@@ -28,7 +32,7 @@ export function createAppPowerSyncConnector(): PowerSyncBackendConnector {
             let batch = await database.getCrudBatch(100);
 
             while (batch !== null) {
-                await requestJson(upload.url(), {
+                const payload = await requestJson(upload.url(), {
                     method: "POST",
                     withCsrf: true,
                     headers: { "Content-Type": "application/json" },
@@ -36,7 +40,9 @@ export function createAppPowerSyncConnector(): PowerSyncBackendConnector {
                         crud: batch.crud.map((entry) => entry.toJSON()),
                     }),
                 });
+
                 await batch.complete();
+                publishUploadRejections(parseUploadResults(payload));
                 batch = await database.getCrudBatch(100);
             }
         },

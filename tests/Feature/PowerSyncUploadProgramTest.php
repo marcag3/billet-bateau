@@ -161,7 +161,7 @@ class PowerSyncUploadProgramTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertForbidden();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $program->refresh();
         $this->assertSame('Owners', $program->name);
@@ -181,7 +181,7 @@ class PowerSyncUploadProgramTest extends TestCase
                     'id' => $program->getKey(),
                 ],
             ],
-        ])->assertForbidden();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseHas('programs', ['id' => $program->getKey()]);
     }
@@ -257,7 +257,7 @@ class PowerSyncUploadProgramTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('programs', ['id' => $programId]);
     }
@@ -278,7 +278,7 @@ class PowerSyncUploadProgramTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
     }
 
     public function test_patch_program_accepts_booking_questions_json_string(): void

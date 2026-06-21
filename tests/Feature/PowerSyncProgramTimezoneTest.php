@@ -51,6 +51,6 @@ class PowerSyncProgramTimezoneTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
     }
 }

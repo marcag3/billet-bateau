@@ -123,7 +123,7 @@ class PowerSyncUploadBookingTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertForbidden();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('bookings', ['id' => $bookingId]);
     }
@@ -166,7 +166,7 @@ class PowerSyncUploadBookingTest extends TestCase
                     'id' => $booking->getKey(),
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseHas('bookings', ['id' => $booking->getKey()]);
     }
@@ -217,9 +217,11 @@ class PowerSyncUploadBookingTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()
+            ->assertJsonPath('results.0.status', 'applied')
+            ->assertJsonPath('results.1.status', 'rejected');
 
-        $this->assertDatabaseMissing('bookings', ['id' => $bookingId]);
+        $this->assertDatabaseHas('bookings', ['id' => $bookingId]);
         $this->assertDatabaseMissing('booking_tickets', ['id' => $bookingTicketId]);
     }
 
@@ -261,8 +263,11 @@ class PowerSyncUploadBookingTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()
+            ->assertJsonPath('results.0.status', 'applied')
+            ->assertJsonPath('results.1.status', 'rejected');
 
+        $this->assertDatabaseHas('bookings', ['id' => $bookingId]);
         $this->assertDatabaseMissing('booking_tickets', ['id' => $bookingTicketId]);
     }
 }

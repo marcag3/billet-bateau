@@ -103,7 +103,7 @@ class PowerSyncUploadGuideTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertForbidden();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('guides', ['id' => $guideId]);
     }

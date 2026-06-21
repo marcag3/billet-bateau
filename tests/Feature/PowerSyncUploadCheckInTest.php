@@ -131,7 +131,7 @@ class PowerSyncUploadCheckInTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('check_ins', ['id' => $checkInId]);
     }
@@ -160,7 +160,7 @@ class PowerSyncUploadCheckInTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertForbidden();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('check_ins', ['id' => $checkInId]);
     }
@@ -189,7 +189,7 @@ class PowerSyncUploadCheckInTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('check_ins', ['id' => $checkInId]);
     }
@@ -218,7 +218,7 @@ class PowerSyncUploadCheckInTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('check_ins', ['id' => $secondCheckInId]);
     }
@@ -287,7 +287,7 @@ class PowerSyncUploadCheckInTest extends TestCase
                     'id' => $checkIn->getKey(),
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseHas('check_ins', ['id' => $checkIn->getKey()]);
     }
