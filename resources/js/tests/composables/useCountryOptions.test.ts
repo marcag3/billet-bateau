@@ -1,47 +1,38 @@
 import { describe, it, expect } from 'vitest';
 import {
     DEFAULT_COUNTRY_CODE,
+    buildCountryOptions,
     getFallbackCountryOptions,
-    mapRestCountriesToOptions,
+    localizedCountryLabel,
     sortCountryOptions,
-    type RestCountryRow,
 } from '../../composables/useCountryOptions';
 
-const sampleCountries: RestCountryRow[] = [
-    {
-        cca2: 'US',
-        name: { common: 'United States' },
-        translations: { fra: { common: 'États-Unis' } },
-    },
-    {
-        cca2: 'CA',
-        name: { common: 'Canada' },
-        translations: { fra: { common: 'Canada' } },
-    },
-];
-
 describe('useCountryOptions helpers', () => {
-    it('maps REST countries to ISO options with English labels', () => {
-        const options = mapRestCountriesToOptions(sampleCountries, 'en');
-
-        expect(options).toEqual([
-            { value: 'US', label: 'United States' },
-            { value: 'CA', label: 'Canada' },
-        ]);
+    it('localizes country labels in English', () => {
+        expect(localizedCountryLabel('US', 'en')).toBe('United States');
+        expect(localizedCountryLabel('CA', 'en')).toBe('Canada');
     });
 
-    it('maps REST countries to French labels when locale is fr', () => {
-        const options = mapRestCountriesToOptions(sampleCountries, 'fr');
+    it('localizes country labels in French', () => {
+        expect(localizedCountryLabel('US', 'fr')).toBe('États-Unis');
+        expect(localizedCountryLabel('CA', 'fr')).toBe('Canada');
+    });
 
-        expect(options).toEqual([
-            { value: 'US', label: 'États-Unis' },
-            { value: 'CA', label: 'Canada' },
-        ]);
+    it('builds a full country list with localized labels', () => {
+        const options = buildCountryOptions('en');
+
+        expect(options.length).toBeGreaterThan(200);
+        expect(options.some((option) => option.value === 'US' && option.label === 'United States')).toBe(
+            true,
+        );
     });
 
     it('sorts options alphabetically for the active locale', () => {
         const sorted = sortCountryOptions(
-            mapRestCountriesToOptions(sampleCountries, 'en'),
+            [
+                { value: 'US', label: 'United States' },
+                { value: 'CA', label: 'Canada' },
+            ],
             'en',
         );
 
