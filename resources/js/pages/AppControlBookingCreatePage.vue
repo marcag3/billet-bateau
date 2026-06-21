@@ -178,7 +178,7 @@ const onCreateSubmit = handleSubmit(async (values: BookingAdminFormValues) => {
             const result = await addWalkInBooking({
                 programId: programId.value,
                 tripId: values.tripId,
-                ticketTypeId: ticketTypeId.value,
+                ticketQuantities: { [ticketTypeId.value]: 1 },
                 contactName: values.contact_name,
                 contactEmail: values.contact_email,
                 country: values.country,

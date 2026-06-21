@@ -161,12 +161,12 @@ export function useBookingAdminCrud() {
     async function addWalkInBooking(input: {
         programId: string;
         tripId: string;
-        ticketTypeId: string;
+        ticketQuantities: Record<string, number>;
         contactName: string;
         contactEmail: string;
         country: string;
         customFieldMap: Record<string, string>;
-    }): Promise<{ bookingId: string; ticketId: string } | undefined> {
+    }): Promise<{ bookingId: string; ticketIds: string[] } | undefined> {
         return runWithNotify(
             async () => {
                 const bookingId = await createBooking({
@@ -176,15 +176,22 @@ export function useBookingAdminCrud() {
                     contactEmail: input.contactEmail,
                 });
 
-                const ticketId = await insertBookingTicket(bookingId, {
-                    ticketTypeId: input.ticketTypeId,
-                    name: input.contactName,
-                    email: input.contactEmail,
-                    country: input.country,
-                    customFieldMap: input.customFieldMap,
-                });
+                const ticketIds: string[] = [];
+                for (const [ticketTypeId, quantityRaw] of Object.entries(input.ticketQuantities)) {
+                    const quantity = Math.max(0, Math.floor(Number(quantityRaw)));
+                    for (let index = 0; index < quantity; index++) {
+                        const ticketId = await insertBookingTicket(bookingId, {
+                            ticketTypeId,
+                            name: input.contactName,
+                            email: input.contactEmail,
+                            country: input.country,
+                            customFieldMap: input.customFieldMap,
+                        });
+                        ticketIds.push(ticketId);
+                    }
+                }
 
-                return { bookingId, ticketId };
+                return { bookingId, ticketIds };
             },
             {
                 successMessage: t('programsControl.walkInAdded'),
