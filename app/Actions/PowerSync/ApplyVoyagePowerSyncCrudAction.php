@@ -4,6 +4,8 @@ namespace App\Actions\PowerSync;
 
 use App\Actions\CancelVoyageAction;
 use App\Actions\MarkVoyageArrivedAction;
+use App\Actions\RevertVoyageArrivalAction;
+use App\Actions\RevertVoyageDepartureAction;
 use App\Actions\StartVoyageAction;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\Voyages\VoyagePatchData;
@@ -121,7 +123,13 @@ final class ApplyVoyagePowerSyncCrudAction
         $voyage->save();
 
         if ($status !== $persistedStatus) {
-            $this->applyStatusTransition($voyage->fresh() ?? $voyage, $status, $userId);
+            $currentStatus = $existing?->status ?? $persistedStatus;
+
+            if ($this->isRevertTransition($currentStatus, $status)) {
+                $this->applyRevertTransition($voyage->fresh() ?? $voyage, $status, $userId);
+            } else {
+                $this->applyStatusTransition($voyage->fresh() ?? $voyage, $status, $userId);
+            }
         }
     }
 
@@ -135,7 +143,16 @@ final class ApplyVoyagePowerSyncCrudAction
 
         VoyageProgramResolver::assertProgramManaged($voyage, $userId);
 
-        if ($voyage->status === VoyageStatus::Completed) {
+        $targetStatusForGuard = $voyage->status;
+
+        if (! ($patch->status instanceof Optional) && $patch->status !== null) {
+            $targetStatusForGuard = VoyageStatus::from($patch->status);
+        }
+
+        if (
+            $voyage->status === VoyageStatus::Completed
+            && ! $this->isRevertArrivalTransition($voyage->status, $targetStatusForGuard)
+        ) {
             throw ValidationException::withMessages([
                 'voyage' => __('A completed departure cannot be modified.'),
             ]);
@@ -190,7 +207,9 @@ final class ApplyVoyagePowerSyncCrudAction
         $voyage->save();
 
         if ($targetStatus !== $voyage->status) {
-            if ($this->isLifecycleTransitionStatus($targetStatus)) {
+            if ($this->isRevertTransition($voyage->status, $targetStatus)) {
+                $this->applyRevertTransition($voyage->fresh() ?? $voyage, $targetStatus, $userId);
+            } elseif ($this->isLifecycleTransitionStatus($targetStatus)) {
                 $this->applyStatusTransition($voyage->fresh() ?? $voyage, $targetStatus, $userId);
             } else {
                 $voyage->status = $targetStatus;
@@ -260,8 +279,43 @@ final class ApplyVoyagePowerSyncCrudAction
         }
     }
 
+    private function applyRevertTransition(Voyage $voyage, VoyageStatus $status, string $userId): void
+    {
+        if ($status === VoyageStatus::Ready) {
+            RevertVoyageDepartureAction::run($voyage, $userId);
+
+            return;
+        }
+
+        if ($status === VoyageStatus::Underway) {
+            RevertVoyageArrivalAction::run($voyage, $userId);
+        }
+    }
+
+    private function isRevertTransition(VoyageStatus $currentStatus, VoyageStatus $targetStatus): bool
+    {
+        return $this->isRevertDepartureTransition($currentStatus, $targetStatus)
+            || $this->isRevertArrivalTransition($currentStatus, $targetStatus);
+    }
+
+    private function isRevertDepartureTransition(VoyageStatus $currentStatus, VoyageStatus $targetStatus): bool
+    {
+        return $currentStatus === VoyageStatus::Underway
+            && $targetStatus === VoyageStatus::Ready;
+    }
+
+    private function isRevertArrivalTransition(VoyageStatus $currentStatus, VoyageStatus $targetStatus): bool
+    {
+        return $currentStatus === VoyageStatus::Completed
+            && $targetStatus === VoyageStatus::Underway;
+    }
+
     private function guardImmutableLifecycleFields(Voyage $voyage, VoyageStatus $nextStatus): void
     {
+        if ($this->isRevertTransition($voyage->status, $nextStatus)) {
+            return;
+        }
+
         if (
             $voyage->status === VoyageStatus::Completed
             && $nextStatus !== VoyageStatus::Completed
