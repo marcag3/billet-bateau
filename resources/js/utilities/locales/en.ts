@@ -205,6 +205,9 @@ export default {
         themeColor: "Theme color",
         startDate: "Program start date",
         endDate: "Program end date",
+        timezone: "Timezone",
+        timezoneHint:
+            "Departure times in emails, booking pages, and staff tools use this timezone.",
         bookingQuestions: "Additional booking questions",
         bookingQuestionsHint:
             "One question per line. These are shown during public booking.",
@@ -229,6 +232,7 @@ export default {
         validationHex: "Use a hex color like #RRGGBB.",
         validationDateYmd: "Use a calendar date YYYY-MM-DD.",
         validationEndBeforeStart: "End date must be on or after the start date.",
+        validationTimezone: "Choose a valid timezone.",
     },
     sync: {
         preparingLocal: "Preparing local data…",

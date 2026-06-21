@@ -14,7 +14,7 @@
         <q-virtual-scroll v-else ref="tripLaneRef" v-touch-pan.mouse.horizontal="onTripLanePan"
             :items="visibleTripCards" virtual-scroll-horizontal :virtual-scroll-item-size="tripCardItemSize"
             class="col w-full max-w-full min-h-0 snap-x snap-mandatory" v-slot="{ item }">
-            <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" :boat-names-by-id="boatNamesById"
+            <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" :program-timezone="programTimezone" :boat-names-by-id="boatNamesById"
                 :guide-names-by-id="guideNamesById" @open-depart="openDepartModal(item)"
                 @arrive="confirmArrive(item)" @cancel="confirmCancel(item)" @open-walk-in="openWalkInModal(item)"
                 @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)"
@@ -82,6 +82,7 @@ const {
     dayStats,
     tripDateYmds,
     programDateBounds,
+    programTimezone,
     bookingQuestions,
     shiftSelectedDay,
     goToToday,

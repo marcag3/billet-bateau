@@ -5,6 +5,7 @@ namespace App\Support\Calendar;
 use App\Models\Booking;
 use App\Models\Program;
 use App\Support\BookingMailFormatter;
+use App\Support\ProgramTimezone;
 use Spatie\IcalendarGenerator\Components\Calendar;
 use Spatie\IcalendarGenerator\Components\Event;
 use Spatie\IcalendarGenerator\Enums\EventStatus;
@@ -24,7 +25,7 @@ final class BookingIcsGenerator
 
         $program = $booking->program;
         $product = $trip->product;
-        $timezone = config('app.timezone');
+        $timezone = ProgramTimezone::resolve($program);
         $startsAt = $departure->copy()->timezone($timezone);
         $endsAt = $startsAt->copy()->addMinutes($this->resolveDurationMinutes($product?->waterRoute?->duration_minutes));
 

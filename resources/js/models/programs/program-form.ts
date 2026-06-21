@@ -1,3 +1,4 @@
+import { DEFAULT_PROGRAM_TIMEZONE } from '../../composables/useTimezoneOptions';
 import type { ProgramOutput } from '../../powersync/programs.collection';
 import { normalizeAddressRowFields } from '../../utilities/program-helpers';
 import { parseProgramBookingQuestions } from '../../utilities/program-booking-questions';
@@ -32,6 +33,10 @@ export function programToFormValues(p: ProgramOutput): ProgramEditFormValues {
                 : '',
         bookingQuestionsText: parseProgramBookingQuestions(p.booking_questions).join('\n'),
         emailSignature: typeof p.email_signature === 'string' ? String(p.email_signature) : '',
+        timezone:
+            typeof p.timezone === 'string' && p.timezone.trim().length > 0
+                ? String(p.timezone).trim()
+                : DEFAULT_PROGRAM_TIMEZONE,
         isActive: p.is_active ?? true,
         address: {
             line_1: typeof p.line_1 === 'string' ? String(p.line_1) : '',
@@ -54,6 +59,7 @@ export type ProgramDraftPatch = {
     end_date: string;
     booking_questions: string;
     email_signature: string | null;
+    timezone: string;
     line_1: string | null;
     line_2: string | null;
     city: string | null;
@@ -76,6 +82,7 @@ export function toProgramDraftPatch(
         end_date: values.endDate,
         booking_questions: JSON.stringify(bookingQuestions),
         email_signature: values.emailSignature.length > 0 ? values.emailSignature : null,
+        timezone: values.timezone,
         line_1: addressFields.line_1,
         line_2: addressFields.line_2,
         city: addressFields.city,

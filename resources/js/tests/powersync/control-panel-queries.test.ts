@@ -48,15 +48,17 @@ const allCollections = {
     check_ins: mockCollection('check_ins'),
 };
 
+const TZ = 'America/Toronto';
+
 describe('control-panel-queries', () => {
     it('tripDepartureMatchesLocalDateYmd compares local calendar day', () => {
         expect(
-            tripDepartureMatchesLocalDateYmd('2026-06-05T12:00:00.000Z', '2026-06-05'),
+            tripDepartureMatchesLocalDateYmd('2026-06-05T12:00:00.000Z', '2026-06-05', TZ),
         ).toBe(true);
         expect(
-            tripDepartureMatchesLocalDateYmd('2026-06-05T12:00:00.000Z', '2026-06-06'),
+            tripDepartureMatchesLocalDateYmd('2026-06-05T12:00:00.000Z', '2026-06-06', TZ),
         ).toBe(false);
-        expect(tripDepartureMatchesLocalDateYmd(null, '2026-06-05')).toBe(false);
+        expect(tripDepartureMatchesLocalDateYmd(null, '2026-06-05', TZ)).toBe(false);
     });
 
     it('passengerOnReturnedVoyage matches completed voyage status', () => {
@@ -126,6 +128,7 @@ describe('control-panel-queries', () => {
             allCollections as never,
             'prog-1',
             '2026-06-05',
+            TZ,
         );
         expect(qb.fn.where).toHaveBeenCalled();
     });
@@ -137,6 +140,7 @@ describe('control-panel-queries', () => {
             allCollections as never,
             'prog-1',
             '2026-06-05',
+            TZ,
         );
         expect(qb.unionAll).toHaveBeenCalledTimes(1);
         expect(qb.unionAll.mock.calls[0]).toHaveLength(3);
@@ -156,12 +160,15 @@ describe('control-panel-queries', () => {
 
     it('reduceTripDepartureDateYmds collects unique local calendar days', () => {
         expect(
-            reduceTripDepartureDateYmds([
+            reduceTripDepartureDateYmds(
+            [
                 { scheduled_departure_at: '2026-06-05T12:00:00.000Z' },
                 { scheduled_departure_at: '2026-06-05T18:00:00.000Z' },
                 { scheduled_departure_at: '2026-06-06T12:00:00.000Z' },
                 { scheduled_departure_at: null },
-            ]),
+            ],
+            TZ,
+            ),
         ).toEqual(['2026-06-05', '2026-06-06']);
     });
 

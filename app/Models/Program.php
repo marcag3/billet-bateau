@@ -38,6 +38,7 @@ class Program extends Model
         'city',
         'postal_code',
         'country',
+        'timezone',
         'banner_object_key',
         'banner_mime_type',
         'banner_size_bytes',

@@ -554,6 +554,39 @@ class PublicBookingApiTest extends TestCase
         $this->assertStringNotContainsString('Harbor Tours', (string) $mail->salutation);
     }
 
+    public function test_booking_confirmation_notification_mail_formats_departure_in_program_timezone(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create([
+            'name' => 'Harbor Tours',
+            'timezone' => 'America/Toronto',
+        ]);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => '2026-06-15T18:00:00Z',
+        ]);
+        $booking = Booking::query()->create([
+            'program_id' => $program->getKey(),
+            'trip_id' => $trip->getKey(),
+            'contact_name' => 'Alex River',
+            'contact_email' => 'alex@example.com',
+        ]);
+
+        $mail = (new BookingConfirmationNotification($booking, mailLocale: 'en'))->toMail(
+            Notification::route('mail', 'alex@example.com'),
+        );
+
+        $this->assertTrue(
+            collect($mail->introLines)->contains(
+                static fn (string $line): bool => str_contains($line, '2:00 PM'),
+            ),
+        );
+        $this->assertFalse(
+            collect($mail->introLines)->contains(
+                static fn (string $line): bool => str_contains($line, '6:00 PM'),
+            ),
+        );
+    }
+
     public function test_booking_confirmation_notification_mail_renders_in_french_when_locale_fr(): void
     {
         $u = User::factory()->create();

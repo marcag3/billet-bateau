@@ -90,6 +90,7 @@ final class ApplyProgramPowerSyncCrudAction
             'city' => $resolved->city,
             'postal_code' => $resolved->postal_code,
             'country' => $resolved->country,
+            'timezone' => $resolved->timezone,
             'email_signature' => $resolved->email_signature,
             'booking_questions' => $resolved->booking_questions,
         ];
@@ -165,6 +166,10 @@ final class ApplyProgramPowerSyncCrudAction
 
         if (! ($patch->country instanceof Optional)) {
             $program->country = $patch->country;
+        }
+
+        if (! ($patch->timezone instanceof Optional) && $patch->timezone !== null && $patch->timezone !== '') {
+            $program->timezone = $patch->timezone;
         }
 
         if (! ($patch->booking_questions instanceof Optional)) {

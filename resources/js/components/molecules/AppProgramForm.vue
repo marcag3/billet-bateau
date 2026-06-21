@@ -55,6 +55,14 @@
                 </div>
             </div>
 
+            <AppTimezoneSelect
+                v-model="timezone"
+                v-bind="timezoneProps"
+                :label="t('programsCreate.timezone')"
+                :hint="t('programsCreate.timezoneHint')"
+                :disable="fieldsDisabled"
+            />
+
             <AppTextRepeaterField v-model="bookingQuestionRows" :label="t('programsCreate.bookingQuestions')"
                 :hint="t('programsCreate.bookingQuestionsHint')"
                 :item-label-template="t('programsCreate.bookingQuestionLabel')"
@@ -130,6 +138,7 @@ import { getAppPowerSyncContext } from "../../powersync/app-powersync.runtime";
 import { useNotifyErrorFromCatch } from "../../composables/useNotifyErrorFromCatch";
 import AppTextRepeaterField from "../ui/AppTextRepeaterField.vue";
 import AppImageUploadField from "./AppImageUploadField.vue";
+import AppTimezoneSelect from "./AppTimezoneSelect.vue";
 
 const props = withDefaults(
     defineProps<{
@@ -190,6 +199,7 @@ const [description, descriptionProps] = quasarField("description");
 const [themeColor, themeColorProps] = quasarField("themeColor");
 const [startDate, startDateProps] = quasarField("startDate");
 const [endDate, endDateProps] = quasarField("endDate");
+const [timezone, timezoneProps] = quasarField("timezone");
 const [emailSignature, emailSignatureProps] = quasarField("emailSignature");
 const [isActive, isActiveProps] = quasarField("isActive");
 const [line1, line1Props] = quasarField("address.line_1");

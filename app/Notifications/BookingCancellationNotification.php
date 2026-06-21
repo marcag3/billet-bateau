@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\Booking;
 use App\Support\AppLocale;
 use App\Support\BookingMailFormatter;
+use App\Support\ProgramTimezone;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -43,13 +44,11 @@ class BookingCancellationNotification extends Notification
     {
         $programName = $this->booking->program?->name ?? __('Program');
         $departure = $this->booking->trip?->scheduled_departure_at;
-        $departureLabel = $departure !== null
-            ? $departure->timezone(config('app.timezone'))->locale($locale)->isoFormat(
-                $locale === 'fr'
-                    ? 'dddd D MMMM YYYY [à] HH:mm'
-                    : 'dddd, MMMM D, YYYY [at] h:mm A',
-            )
-            : '—';
+        $departureLabel = ProgramTimezone::formatDeparture(
+            $departure,
+            $locale,
+            $this->booking->program,
+        );
         $productName = $this->booking->trip?->product?->name;
         $ticketSummary = BookingMailFormatter::formatTicketSummary($this->booking);
 

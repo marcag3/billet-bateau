@@ -8,6 +8,7 @@ import {
 } from '../../validation/zod-fields';
 import { defaultProgramDateRange, normalizeThemeColor } from '../../utilities/program-helpers';
 import { foldUnicodeForProgramSlug } from '../../utilities/program-slug';
+import { DEFAULT_PROGRAM_TIMEZONE, isSupportedTimezone } from '../../composables/useTimezoneOptions';
 
 export type Translator = (key: string) => string;
 
@@ -15,6 +16,12 @@ const isoYmd = (t: Translator) =>
     z
         .string()
         .regex(/^\d{4}-\d{2}-\d{2}$/, t('programsCreate.validationDateYmd'));
+
+const programTimezone = (t: Translator) =>
+    z
+        .string()
+        .min(1, t('programsCreate.validationRequired'))
+        .refine((value) => isSupportedTimezone(value), t('programsCreate.validationTimezone'));
 
 /**
  * Program list slug field (list UI) — trim, require, lowercase.
@@ -66,6 +73,7 @@ function createProgramCreateZodSchema(t: Translator) {
             isActive: z.boolean(),
             startDate: isoYmd(t),
             endDate: isoYmd(t),
+            timezone: programTimezone(t),
             bookingQuestionsText: z.preprocess(coerceStringInput, z.string()),
             emailSignature: z.preprocess(coerceStringInput, z.string().trim().max(1000)),
             address: programAddressObjectSchema,
@@ -84,6 +92,7 @@ export function createEmptyProgramCreateFormValues(): ProgramCreateFormValues {
         isActive: true,
         startDate: range.startDate,
         endDate: range.endDate,
+        timezone: DEFAULT_PROGRAM_TIMEZONE,
         bookingQuestionsText: '',
         emailSignature: '',
         address: {
@@ -125,6 +134,7 @@ export function createProgramEditZodSchema(t: Translator) {
             isActive: z.boolean(),
             startDate: isoYmd(t),
             endDate: isoYmd(t),
+            timezone: programTimezone(t),
             bookingQuestionsText: z.preprocess(coerceStringInput, z.string()),
             emailSignature: z.preprocess(coerceStringInput, z.string().trim().max(1000)),
             address: programAddressObjectSchema,

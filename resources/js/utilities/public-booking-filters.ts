@@ -1,3 +1,5 @@
+import { toTimezoneDateYmd } from './program-timezone-datetime';
+
 export type PublicBookingTripFilterInput = {
     id: string;
     scheduled_departure_at: string;
@@ -70,6 +72,7 @@ export function toBrowserLocalDateYmd(isoDatetime: string): string | null {
  */
 export function buildDailyAvailabilityMap(
     trips: PublicBookingTripFilterInput[],
+    timezone: string,
 ): Record<string, PublicBookingDailyAvailability> {
     const aggregateByDate: Record<string, { totalCapacity: number; totalReserved: number }> = {};
 
@@ -78,7 +81,7 @@ export function buildDailyAvailabilityMap(
             continue;
         }
 
-        const day = toBrowserLocalDateYmd(trip.scheduled_departure_at);
+        const day = toTimezoneDateYmd(trip.scheduled_departure_at, timezone);
         if (day === null) {
             continue;
         }
@@ -127,6 +130,7 @@ export function buildDailyAvailabilityMap(
 export function filterPublicBookingTrips(
     trips: PublicBookingTripFilterInput[],
     filterState: PublicBookingTripFilterState,
+    timezone: string,
 ): PublicBookingTripFilterInput[] {
     const selectedProductId = filterState.productId.trim();
     const selectedDateYmd = filterState.dateYmd.trim();
@@ -140,7 +144,7 @@ export function filterPublicBookingTrips(
             return false;
         }
         if (selectedDateYmd.length > 0) {
-            const tripDateYmd = toBrowserLocalDateYmd(trip.scheduled_departure_at);
+            const tripDateYmd = toTimezoneDateYmd(trip.scheduled_departure_at, timezone);
             if (tripDateYmd !== selectedDateYmd) {
                 return false;
             }

@@ -27,6 +27,7 @@ final class ProgramPutPayloadResolver
      *     city: ?string,
      *     postal_code: ?string,
      *     country: ?string,
+     *     timezone: string,
      *     email_signature: ?string,
      *     booking_questions: list<string>,
      *     start_date: string,
@@ -74,6 +75,8 @@ final class ProgramPutPayloadResolver
         $city = PowerSyncOptional::resolve($dto->city, $existing?->city);
         $postalCode = PowerSyncOptional::resolve($dto->postal_code, $existing?->postal_code);
         $country = PowerSyncOptional::resolve($dto->country, $existing?->country);
+        $timezoneRaw = PowerSyncOptional::resolve($dto->timezone, $existing?->timezone, 'America/Toronto');
+        $timezone = is_string($timezoneRaw) && $timezoneRaw !== '' ? $timezoneRaw : 'America/Toronto';
         $emailSignature = PowerSyncOptional::resolve($dto->email_signature, $existing?->email_signature);
         $bookingQuestions = $dto->booking_questions instanceof Optional
             ? self::normalizeBookingQuestions($existing?->booking_questions)
@@ -110,6 +113,7 @@ final class ProgramPutPayloadResolver
                 'city' => $city,
                 'postal_code' => $postalCode,
                 'country' => $country,
+                'timezone' => $timezone,
                 'email_signature' => $emailSignature,
                 'booking_questions' => $bookingQuestions,
                 'start_date' => $startDate,
@@ -142,6 +146,7 @@ final class ProgramPutPayloadResolver
             'city' => $city,
             'postal_code' => $postalCode,
             'country' => $country,
+            'timezone' => $timezone,
             'email_signature' => $emailSignature,
             'booking_questions' => $bookingQuestions,
             'start_date' => $startDate,

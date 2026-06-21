@@ -20,6 +20,7 @@ final class PublicProgramData extends Data
         public ?string $city,
         public ?string $postal_code,
         public ?string $country,
+        public string $timezone,
         public ?string $banner_url,
         public ?string $banner_mime_type,
     ) {}
@@ -39,6 +40,7 @@ final class PublicProgramData extends Data
             city: $program->city,
             postal_code: $program->postal_code,
             country: $program->country,
+            timezone: (string) $program->timezone,
             banner_url: $program->getImageUrl('banner'),
             banner_mime_type: $program->banner_mime_type,
         );

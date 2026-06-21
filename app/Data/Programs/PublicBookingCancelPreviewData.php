@@ -11,6 +11,7 @@ final class PublicBookingCancelPreviewData extends Data
         public string $program_name,
         public string $contact_name,
         public string $departure_at,
+        public string $timezone,
         public string $ticket_summary,
         public ?string $product_name,
         public ?string $product_description,

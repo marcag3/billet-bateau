@@ -23,6 +23,7 @@ import {
     type ControlPanelDayStats,
 } from '../utilities/control-panel-day-board';
 import { parseProgramBookingQuestions } from '../utilities/program-booking-questions';
+import { resolveProgramTimezone } from '../utilities/program-timezone-datetime';
 
 export type ControlPanelTripCardModel = ReturnType<typeof mapControlPanelTripCardRow>;
 
@@ -136,6 +137,12 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
         return { startYmd: '', endYmd: '' };
     });
 
+    const programTimezone = computed((): string => {
+        const row = (programRowsRaw.value ?? [])[0] as unknown as ProgramOutput | undefined;
+
+        return resolveProgramTimezone(row?.timezone);
+    });
+
     const bookingQuestions = computed((): string[] => {
         const row = (programRowsRaw.value ?? [])[0] as unknown as ProgramOutput | undefined;
         if (row == null) {
@@ -182,13 +189,20 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
     const tripCards = computed((): ControlPanelTripCardModel[] => {
         const ymd = dayFilterYmd.value;
         return (tripCardsRaw.value ?? [])
-            .filter((row) => tripDepartureMatchesLocalDateYmd(row.scheduled_departure_at, ymd))
+            .filter((row) =>
+                tripDepartureMatchesLocalDateYmd(
+                    row.scheduled_departure_at,
+                    ymd,
+                    programTimezone.value,
+                ),
+            )
             .map(mapControlPanelTripCardRow);
     });
 
     const tripDateYmds = computed((): string[] =>
         reduceTripDepartureDateYmds(
             (tripDepartureRowsRaw.value ?? []) as unknown as TripDepartureAtRow[],
+            programTimezone.value,
         ),
     );
 
@@ -210,6 +224,7 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
         dayStats,
         tripDateYmds,
         programDateBounds,
+        programTimezone,
         bookingQuestions,
         shiftSelectedDay,
         goToToday,

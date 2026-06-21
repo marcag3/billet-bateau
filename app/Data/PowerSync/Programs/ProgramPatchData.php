@@ -42,6 +42,7 @@ final class ProgramPatchData extends Data
         public string|Optional|null $postal_code = new Optional,
         #[WithCast(TrimmedNullableStringCast::class)]
         public string|Optional|null $country = new Optional,
+        public string|Optional|null $timezone = new Optional,
         /** @var list<string>|string|Optional|null */
         public array|string|Optional|null $booking_questions = new Optional,
         #[WithCast(TrimmedNullableStringCast::class)]
@@ -72,6 +73,7 @@ final class ProgramPatchData extends Data
             'city' => ['sometimes', 'nullable', 'string', 'max:120'],
             'postal_code' => ['sometimes', 'nullable', 'string', 'max:32'],
             'country' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'timezone' => ['sometimes', 'nullable', 'string', Rule::in(timezone_identifiers_list())],
             'booking_questions' => ['sometimes'],
             'email_signature' => ['sometimes', 'nullable', 'string', 'max:1000'],
             'banner_object_key' => [

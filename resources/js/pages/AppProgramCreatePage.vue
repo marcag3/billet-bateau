@@ -109,6 +109,7 @@ async function onCreateProgram({
             slug: buildInitialProgramSlug(formValues.name, id),
             start_date: formValues.startDate,
             end_date: formValues.endDate,
+            timezone: formValues.timezone,
             booking_questions: JSON.stringify(bookingQuestions),
             email_signature: formValues.emailSignature.trim().length > 0
                 ? formValues.emailSignature.trim()

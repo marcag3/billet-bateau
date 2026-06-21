@@ -48,7 +48,7 @@ class BookingIcsGeneratorTest extends TestCase
         $this->assertStringContainsString('Harbor Tours — Sunset run', $ics);
         $this->assertStringContainsString('booking-'.$booking->getKey().'@', $ics);
 
-        $expectedEnd = $departure->copy()->timezone(config('app.timezone'))->addMinutes(90);
+        $expectedEnd = $departure->copy()->timezone('America/Toronto')->addMinutes(90);
         $this->assertStringContainsString(
             $expectedEnd->format('Ymd\THis'),
             $ics,

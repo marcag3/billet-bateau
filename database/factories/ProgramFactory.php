@@ -40,6 +40,7 @@ class ProgramFactory extends Factory
             'start_date' => now()->startOfMonth()->toDateString(),
             'end_date' => now()->addMonths(6)->endOfMonth()->toDateString(),
             'booking_questions' => [],
+            'timezone' => 'America/Toronto',
         ];
     }
 

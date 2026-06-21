@@ -47,7 +47,7 @@ final class CancelVoyageAction
         $bookings = Booking::query()
             ->where('trip_id', $tripId)
             ->with([
-                'program:id,name,email_signature',
+                'program:id,name,email_signature,timezone',
                 'trip:id,scheduled_departure_at,product_id',
                 'trip.product:id,name,description,banner_object_key,boat_type_id',
                 'trip.product.boatType:id,banner_object_key',

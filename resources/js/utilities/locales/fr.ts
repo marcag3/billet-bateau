@@ -215,6 +215,9 @@ export default {
         themeColor: "Couleur du theme",
         startDate: "Date de debut du programme",
         endDate: "Date de fin du programme",
+        timezone: "Fuseau horaire",
+        timezoneHint:
+            "Les heures de depart dans les courriels, la reservation publique et les outils du personnel utilisent ce fuseau horaire.",
         bookingQuestions: "Questions supplementaires de reservation",
         bookingQuestionsHint:
             "Une question par ligne. Elles sont affichees pendant la reservation publique.",
@@ -240,6 +243,7 @@ export default {
         validationDateYmd: "Utilisez une date au format AAAA-MM-JJ.",
         validationEndBeforeStart:
             "La date de fin doit etre le meme jour ou apres la date de debut.",
+        validationTimezone: "Choisissez un fuseau horaire valide.",
     },
     sync: {
         preparingLocal: "Preparation des donnees locales…",

@@ -58,6 +58,7 @@
                 class="public-booking-stepper">
                 <q-step :name="1" :title="t('publicBooking.stepTrip')" :done="step > 1">
                     <PublicProgramBookingTripStep :key="tripStepResetKey" :trip-options="tripOptions"
+                        :program-timezone="programTimezone"
                         v-model:selected-product-id="selectedTripProductId"
                         v-model:selected-date-ymd="selectedTripDateYmd" :program-start-date-ymd="program?.start_date"
                         :program-end-date-ymd="program?.end_date" @continue="goToTicketsStep" />
@@ -135,6 +136,7 @@ type PublicProgram = {
     banner_url?: string | null;
     start_date?: string;
     end_date?: string;
+    timezone?: string;
 };
 
 const { t, locale } = useI18n();
@@ -172,6 +174,9 @@ const [contactEmail, contactEmailProps] = quasarField('contact_email');
 const [country, countryProps] = quasarField('country');
 
 const tripOptions = computed((): BookingTripOption[] => bookingOptionsData.value?.trips ?? []);
+const programTimezone = computed(
+    () => String(program.value?.timezone ?? 'America/Toronto').trim() || 'America/Toronto',
+);
 const ticketTypeOptions = computed((): BookingTicketTypeOption[] => bookingOptionsData.value?.ticket_types ?? []);
 const customQuestions = computed((): string[] => bookingOptionsData.value?.booking_questions ?? []);
 const programBannerSrc = computed((): string =>

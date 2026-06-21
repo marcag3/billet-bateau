@@ -92,9 +92,11 @@ import {
     resolveControlPanelTripDisplayStatus,
     type ControlPanelTripDisplayStatus,
 } from '../../utilities/control-panel-day-board';
+import { formatIsoInTimezone } from '../../utilities/program-timezone-datetime';
 
 const props = defineProps<{
     card: ControlPanelTripCardModel;
+    programTimezone: string;
     boatNamesById?: Readonly<Record<string, string>>;
     guideNamesById?: Readonly<Record<string, string>>;
 }>();
@@ -122,10 +124,10 @@ const departureTimeLabel = computed((): string => {
         return '—';
     }
     try {
-        return new Intl.DateTimeFormat(String(locale.value), {
+        return formatIsoInTimezone(String(raw), props.programTimezone, String(locale.value), {
             hour: '2-digit',
             minute: '2-digit',
-        }).format(new Date(String(raw)));
+        });
     } catch {
         return String(raw);
     }

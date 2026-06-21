@@ -17,7 +17,7 @@ import {
 } from '@tanstack/db';
 import { joinTripsWithRelationsFrom, type TripWithRelationsRow } from './joined-queries';
 import type { ControlPanelQueryCollections } from './control-panel-collection-types';
-import { toBrowserLocalDateYmd } from '../utilities/public-booking-filters';
+import { toTimezoneDateYmd } from '../utilities/program-timezone-datetime';
 import { resolveControlPanelTripDisplayStatus } from '../utilities/control-panel-day-board';
 import type { VoyageOutput } from './voyages.collection';
 import type { PassengerOutput } from './passengers.collection';
@@ -50,11 +50,12 @@ type VoyageIncludeRow = VoyageOutput & {
 export function tripDepartureMatchesLocalDateYmd(
     scheduledDepartureAt: unknown,
     dateYmd: string,
+    timezone: string,
 ): boolean {
     if (scheduledDepartureAt == null || String(scheduledDepartureAt).trim() === '') {
         return false;
     }
-    const local = toBrowserLocalDateYmd(String(scheduledDepartureAt));
+    const local = toTimezoneDateYmd(String(scheduledDepartureAt), timezone);
     return local != null && local === dateYmd.trim();
 }
 
@@ -109,6 +110,7 @@ export function buildTripsForProgramDayQuery(
     cols: ControlPanelQueryCollections,
     programId: string,
     dateYmd: string,
+    timezone: string,
 ) {
     const ymd = dateYmd.trim();
     return buildProgramTripsJoinedSubquery(qb, cols, programId).fn.where((row) => {
@@ -117,7 +119,7 @@ export function buildTripsForProgramDayQuery(
         };
         const dep =
             tripRow.trip?.scheduled_departure_at ?? tripRow.scheduled_departure_at;
-        return tripDepartureMatchesLocalDateYmd(dep, ymd);
+        return tripDepartureMatchesLocalDateYmd(dep, ymd, timezone);
     });
 }
 
@@ -129,8 +131,9 @@ export function buildControlPanelDayStatsQuery(
     cols: ControlPanelQueryCollections,
     programId: string,
     dateYmd: string,
+    timezone: string,
 ) {
-    const tripsForDay = buildTripsForProgramDayQuery(qb, cols, programId, dateYmd);
+    const tripsForDay = buildTripsForProgramDayQuery(qb, cols, programId, dateYmd, timezone);
     const bookedBranch = qb
         .from({ ticket: cols.booking_tickets })
         .innerJoin({ booking: cols.bookings }, ({ ticket, booking }) =>

@@ -60,9 +60,11 @@ import {
     publicBookingTripHasAvailability,
 } from '../../utilities/public-booking-filters';
 import { pickTripBannerUrl } from '../../utilities/public-booking-trip-display';
+import { formatDepartureLabel } from '../../utilities/program-timezone-datetime';
 
 const props = defineProps<{
     tripOptions: BookingTripOption[];
+    programTimezone: string;
     /** Inclusive program bounds (`YYYY-MM-DD`) for the date filter. */
     programStartDateYmd?: string;
     programEndDateYmd?: string;
@@ -136,13 +138,19 @@ const productFilterOptions = computed((): PublicBookingProductFilterOption[] => 
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
 });
 
-const dailyAvailabilityByDate = computed(() => buildDailyAvailabilityMap(bookableTripOptions.value));
+const dailyAvailabilityByDate = computed(() =>
+    buildDailyAvailabilityMap(bookableTripOptions.value, props.programTimezone),
+);
 
 const filteredTripOptions = computed((): BookingTripOption[] => {
-    const filtered = filterPublicBookingTrips(bookableTripOptions.value, {
-        productId: selectedProductId.value,
-        dateYmd: selectedDateYmd.value,
-    });
+    const filtered = filterPublicBookingTrips(
+        bookableTripOptions.value,
+        {
+            productId: selectedProductId.value,
+            dateYmd: selectedDateYmd.value,
+        },
+        props.programTimezone,
+    );
     return filtered as BookingTripOption[];
 });
 
@@ -155,15 +163,7 @@ function formatTripPlacesRatio(trip: BookingTripOption): string {
 }
 
 function formatDeparture(iso: string): string {
-    try {
-        const d = new Date(iso);
-        const localeTag = String(locale.value);
-        const datePart = new Intl.DateTimeFormat(localeTag, { dateStyle: 'medium' }).format(d);
-        const timePart = new Intl.DateTimeFormat(localeTag, { timeStyle: 'short' }).format(d);
-        return `${datePart}\n${timePart}`;
-    } catch {
-        return iso;
-    }
+    return formatDepartureLabel(iso, props.programTimezone, String(locale.value));
 }
 
 function clearAllFilters(): void {

@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\ProgramInvitation;
 use App\Support\AppLocale;
+use App\Support\ProgramTimezone;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -43,14 +44,11 @@ class ProgramInvitationNotification extends Notification
     {
         $programName = $this->invitation->program?->name ?? __('Program');
         $acceptUrl = url('/app/invite/'.$this->plainToken);
-        $expiresLabel = $this->invitation->expires_at
-            ->timezone(config('app.timezone'))
-            ->locale($locale)
-            ->isoFormat(
-                $locale === 'fr'
-                    ? 'dddd D MMMM YYYY [à] HH:mm'
-                    : 'dddd, MMMM D, YYYY [at] h:mm A',
-            );
+        $expiresLabel = ProgramTimezone::formatDateTime(
+            $this->invitation->expires_at,
+            $locale,
+            $this->invitation->program,
+        );
 
         return (new MailMessage)
             ->subject(__('You have been invited to manage :program', ['program' => $programName]))

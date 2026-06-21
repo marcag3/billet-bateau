@@ -30,12 +30,14 @@ describe('control-panel-day-board', () => {
                     arrived_at: '2026-06-05T18:00:00.000Z',
                 },
                 '2026-06-05',
+                'America/Toronto',
             ),
         ).toBe(true);
         expect(
             voyageArrivedOnDateYmd(
                 { id: 'v1', trip_id: 't1', arrived_at: null },
                 '2026-06-05',
+                'America/Toronto',
             ),
         ).toBe(false);
     });
