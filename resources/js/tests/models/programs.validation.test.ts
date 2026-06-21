@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_PROGRAM_TIMEZONE } from '../../composables/useTimezoneOptions';
 import { createProgramEditZodSchema } from '../../models/programs/programs.validation';
 
 describe('Program edit schema normalization', () => {
@@ -14,6 +15,7 @@ describe('Program edit schema normalization', () => {
             isActive: true,
             startDate: '2026-06-01',
             endDate: '2026-06-30',
+            timezone: DEFAULT_PROGRAM_TIMEZONE,
             bookingQuestionsText: '  First 3 characters of postal code  ',
             address: {
                 line_1: '  123 Pier Road  ',

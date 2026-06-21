@@ -11,7 +11,13 @@ final class ProgramTimezone
 
     public static function resolve(?Program $program): string
     {
-        $timezone = trim((string) ($program?->timezone ?? ''));
+        $timezone = '';
+        if ($program !== null) {
+            $raw = $program->getAttributes()['timezone'] ?? null;
+            if ($raw !== null) {
+                $timezone = trim((string) $raw);
+            }
+        }
 
         if ($timezone !== '' && in_array($timezone, timezone_identifiers_list(), true)) {
             return $timezone;

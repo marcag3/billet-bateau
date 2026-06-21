@@ -253,7 +253,6 @@ const editTicketName = ref('');
 const editTicketEmail = ref('');
 const editTicketCountry = ref(DEFAULT_COUNTRY_CODE);
 
-const programId = computed(() => String(route.params.programId ?? '').trim());
 const bookingId = computed(() => String(route.params.bookingId ?? '').trim());
 const activeProgramIdRef = powersync.activeProgramIdRef;
 

@@ -330,7 +330,7 @@ export function useControlVoyageAdminOps() {
                     throw new Error(t('programsControl.cancelTripBlocked'));
                 }
 
-                let voyageId =
+                const voyageId =
                     input.existingVoyage?.id != null
                         ? String(input.existingVoyage.id)
                         : '';

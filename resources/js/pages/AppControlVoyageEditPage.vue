@@ -222,7 +222,6 @@ const { runWithNotify } = useNotifyAsyncAction();
 const {
     updateVoyage,
     deleteVoyage,
-    syncVoyagePivots,
     startDeparture,
     markArrival,
     revertDeparture,
@@ -236,7 +235,6 @@ const scheduledDepartureAt = ref('');
 const startedAt = ref('');
 const arrivedAt = ref('');
 
-const programId = computed(() => String(route.params.programId ?? '').trim());
 const voyageId = computed(() => String(route.params.voyageId ?? '').trim());
 const activeProgramIdRef = powersync.activeProgramIdRef;
 
@@ -374,9 +372,14 @@ watch(
             values: {
                 tripId: String(voyage.trip_id ?? ''),
                 waterRouteId: String(voyage.water_route_id ?? ''),
-                scheduledDepartureAt: voyage.scheduled_departure_at,
-                startedAt: voyage.started_at,
-                arrivedAt: voyage.arrived_at,
+                scheduledDepartureAt:
+                    voyage.scheduled_departure_at != null
+                        ? String(voyage.scheduled_departure_at)
+                        : null,
+                startedAt:
+                    voyage.started_at != null ? String(voyage.started_at) : null,
+                arrivedAt:
+                    voyage.arrived_at != null ? String(voyage.arrived_at) : null,
                 boatIds: liveQueryRows<{ boat_id: string | null }>(voyageBoatPivotsRaw.value)
                     .map((row) => String(row.boat_id ?? ''))
                     .filter((id) => id.length > 0),

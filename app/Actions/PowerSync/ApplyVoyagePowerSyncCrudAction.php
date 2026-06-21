@@ -123,7 +123,9 @@ final class ApplyVoyagePowerSyncCrudAction
         $voyage->save();
 
         if ($status !== $persistedStatus) {
-            $currentStatus = $existing?->status ?? $persistedStatus;
+            $currentStatus = $existing === null
+                ? $persistedStatus
+                : $existing->status;
 
             if ($this->isRevertTransition($currentStatus, $status)) {
                 $this->applyRevertTransition($voyage->fresh() ?? $voyage, $status, $userId);

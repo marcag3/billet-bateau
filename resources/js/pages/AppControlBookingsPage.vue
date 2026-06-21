@@ -93,7 +93,6 @@ const route = useRoute();
 const { selectedDateYmd, showAllDates, goPrevDay, goNextDay, goToday } =
     useControlDayDateRoute();
 
-const programId = computed(() => String(route.params.programId ?? '').trim());
 const activeProgramIdRef = powersync.activeProgramIdRef;
 
 const { data: programRow } = useLiveQuery(
@@ -112,7 +111,9 @@ const { data: programRow } = useLiveQuery(
 );
 
 const programTimezone = computed(() =>
-    resolveProgramTimezone(programRow.value?.[0]?.timezone),
+    resolveProgramTimezone(
+        liveQueryRows<{ timezone: string | null }>(programRow.value)[0]?.timezone,
+    ),
 );
 
 const { data: bookingsRaw } = useLiveQuery(
