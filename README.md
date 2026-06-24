@@ -198,6 +198,8 @@ docker compose exec production php artisan migrate --force
 
 **Later deploys:** pull the new image and restart — no config copy unless you are reprovisioning Postgres.
 
+**Disaster recovery:** [`docs/disaster-recovery.md`](docs/disaster-recovery.md) — backups, PostgreSQL restore, full server rebuild, PostGIS + PowerSync pitfalls.
+
 **Object storage (R2):** create a bucket, enable public access (custom domain or `r2.dev`), set bucket CORS (`GET`, `HEAD`, `PUT`; expose `ETag`; your SPA origin). All object-storage settings live in `deploy/.env`.
 
 ### CI (`.github/workflows/build.yml`)
