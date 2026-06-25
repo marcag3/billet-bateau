@@ -5,6 +5,15 @@
                 {{ t('programsControl.startDepartTitle') }}
             </q-card-section>
 
+            <q-card-section class="text-body2">
+                {{
+                    t('programsControl.startDepartBoardedSummary', {
+                        boarded: boardedCount,
+                        booked: bookedCount,
+                    })
+                }}
+            </q-card-section>
+
             <q-card-section class="column gap-4">
                 <q-select
                     v-model="selectedBoatIds"
@@ -59,6 +68,8 @@ const props = defineProps<{
     guideOptions: ControlPanelSelectOption[];
     initialBoatIds: string[];
     initialGuideIds: string[];
+    boardedCount: number;
+    bookedCount: number;
     submitting?: boolean;
 }>();
 

@@ -147,3 +147,57 @@ export function validatePublicBookingTickets(input: {
         canContinue: true,
     };
 }
+
+export function validateWalkInBookingTickets(input: {
+    ticketTypeOptions: BookingTicketTypeOption[];
+    ticketQuantities: Record<string, number>;
+    bookedCount: number;
+    tripCapacity: number | null;
+    t: (key: string, params?: Record<string, string>) => string;
+}): PublicBookingTicketValidationResult {
+    const { ticketTypeOptions, ticketQuantities, bookedCount, tripCapacity, t } = input;
+    const errors: Record<string, string> = {};
+    const firstTicketTypeId = ticketTypeOptions.length > 0 ? String(ticketTypeOptions[0].id) : null;
+    let totalSelected = 0;
+
+    for (const ticketTypeOption of ticketTypeOptions) {
+        const ticketTypeId = String(ticketTypeOption.id);
+        const quantity = normalizePublicBookingTicketQuantity(ticketQuantities[ticketTypeId]);
+        totalSelected += quantity;
+    }
+
+    if (totalSelected <= 0) {
+        if (firstTicketTypeId !== null) {
+            errors[firstTicketTypeId] = t('publicBooking.selectAtLeastOneTicket');
+        }
+
+        return {
+            errors,
+            totalSelected,
+            canContinue: false,
+        };
+    }
+
+    const capacity = tripCapacity;
+    if (
+        capacity != null &&
+        Number.isFinite(Number(capacity)) &&
+        bookedCount + totalSelected > Math.max(0, Math.floor(Number(capacity)))
+    ) {
+        if (firstTicketTypeId !== null) {
+            errors[firstTicketTypeId] = t('programsControl.capacityFull');
+        }
+
+        return {
+            errors,
+            totalSelected,
+            canContinue: false,
+        };
+    }
+
+    return {
+        errors,
+        totalSelected,
+        canContinue: true,
+    };
+}

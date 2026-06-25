@@ -63,7 +63,7 @@ class PowerSyncUploadTemplateDayTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertForbidden();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('template_days', ['id' => $templateDayId]);
     }
@@ -137,7 +137,7 @@ class PowerSyncUploadTemplateDayTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('template_day_slots', ['id' => $slotId]);
     }
@@ -193,7 +193,7 @@ class PowerSyncUploadTemplateDayTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('template_day_slots', ['id' => $slotId]);
     }
@@ -220,7 +220,7 @@ class PowerSyncUploadTemplateDayTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('template_day_slots', ['id' => $slotId]);
     }

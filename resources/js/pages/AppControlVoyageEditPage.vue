@@ -297,11 +297,7 @@ const pivotsEditable = computed(
 const canDelete = computed(
     () => voyageStatus.value !== 'underway' && voyageStatus.value !== 'completed',
 );
-const canDepart = computed(
-    () =>
-        voyageStatus.value === 'ready' ||
-        voyageStatus.value === 'draft',
-);
+const canDepart = computed(() => voyageStatus.value === 'ready');
 const canArrive = computed(() => voyageStatus.value === 'underway');
 const canRevertDepart = computed(() => voyageStatus.value === 'underway');
 const canRevertArrive = computed(() => voyageStatus.value === 'completed');

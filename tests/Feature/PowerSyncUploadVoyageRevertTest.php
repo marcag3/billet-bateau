@@ -123,7 +123,7 @@ class PowerSyncUploadVoyageRevertTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $voyage->refresh();
         $this->assertSame(VoyageStatus::Underway, $voyage->status);
@@ -151,6 +151,6 @@ class PowerSyncUploadVoyageRevertTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
     }
 }

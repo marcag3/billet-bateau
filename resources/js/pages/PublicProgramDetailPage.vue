@@ -112,6 +112,7 @@ import {
 } from '../services/publicApi';
 import { programBannerUrlFromUrl } from '../utilities/program-banner-url';
 import { validatePublicBookingTickets } from '../utilities/public-booking-validation';
+import { formatTicketTypePrice as formatTicketTypePriceUtil } from '../utilities/ticket-type-display';
 import {
     createPublicBookingContactFormSchema,
     type PublicBookingContactFormValues,
@@ -216,17 +217,7 @@ const canSubmitContactStep = computed(() => {
 });
 
 function formatTicketTypePrice(tt: BookingTicketTypeOption): string {
-    if (tt.is_pay_what_you_can) {
-        return t('publicBooking.payWhatYouCan');
-    }
-    if (tt.price_cents == null) {
-        return '—';
-    }
-    const amount = new Intl.NumberFormat(String(locale.value), {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(tt.price_cents / 100);
-    return t('publicBooking.priceFromCents', { amount });
+    return formatTicketTypePriceUtil(tt, String(locale.value), t);
 }
 
 function initTicketQuantities(types: BookingTicketTypeOption[]): void {

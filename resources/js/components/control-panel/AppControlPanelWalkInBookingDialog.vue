@@ -1,21 +1,18 @@
 <template>
     <q-dialog v-model="openModel" persistent>
-        <q-card style="min-width: 320px; max-width: 480px">
+        <q-card style="min-width: 320px; max-width: 520px">
             <q-card-section class="text-h6">
                 {{ t('programsControl.addWalkIn') }}
             </q-card-section>
 
             <q-form @submit="onSubmit">
                 <q-card-section class="column gap-4">
-                    <q-select
-                        v-model="ticketTypeId"
-                        outlined
-                        emit-value
-                        map-options
-                        :options="ticketTypeOptions"
-                        :label="t('programsControl.ticketType')"
-                        :error="ticketTypeError.length > 0"
-                        :error-message="ticketTypeError"
+                    <AppTicketQuantityPicker
+                        ref="ticketPickerRef"
+                        v-model:ticket-quantities="ticketQuantities"
+                        :ticket-type-options="ticketTypeOptions"
+                        :format-ticket-type-price="formatTicketTypePrice"
+                        :ticket-errors="ticketErrors"
                     />
 
                     <q-input
@@ -62,18 +59,16 @@
 import { computed, ref, watch } from 'vue';
 import { useForm } from 'vee-validate';
 import { useI18n } from 'vue-i18n';
+import type { BookingTicketTypeOption } from '../../models/public-booking/public-booking.types';
 import { createPublicBookingContactFormSchema } from '../../models/public-booking/public-booking.validation';
 import { createQuasarFieldBinder } from '../../validation/quasar-vee-fields';
 import { DEFAULT_COUNTRY_CODE } from '../../composables/useCountryOptions';
+import { validateWalkInBookingTickets } from '../../utilities/public-booking-validation';
 import AppCountrySelect from '../molecules/AppCountrySelect.vue';
-
-export type WalkInTicketTypeOption = {
-    value: string;
-    label: string;
-};
+import AppTicketQuantityPicker from '../molecules/AppTicketQuantityPicker.vue';
 
 export type WalkInBookingConfirmPayload = {
-    ticketTypeId: string;
+    ticketQuantities: Record<string, number>;
     contactName: string;
     contactEmail: string;
     country: string;
@@ -82,7 +77,8 @@ export type WalkInBookingConfirmPayload = {
 
 const props = defineProps<{
     open: boolean;
-    ticketTypeOptions: WalkInTicketTypeOption[];
+    ticketTypeOptions: BookingTicketTypeOption[];
+    formatTicketTypePrice: (tt: BookingTicketTypeOption) => string;
     bookingQuestions: string[];
     bookedCount: number;
     tripCapacity: number | null;
@@ -100,8 +96,9 @@ const openModel = computed({
     set: (value: boolean) => emit('update:open', value),
 });
 
-const ticketTypeId = ref('');
-const ticketTypeError = ref('');
+const ticketQuantities = ref<Record<string, number>>({});
+const ticketErrors = ref<Record<string, string>>({});
+const ticketPickerRef = ref<InstanceType<typeof AppTicketQuantityPicker> | null>(null);
 const customAnswers = ref<string[]>([]);
 const customAnswerErrors = ref<Record<number, string>>({});
 
@@ -120,9 +117,18 @@ const [contactName, contactNameProps] = quasarField('contact_name');
 const [contactEmail, contactEmailProps] = quasarField('contact_email');
 const [country, countryProps] = quasarField('country');
 
+function initTicketQuantities(): void {
+    const quantities: Record<string, number> = {};
+    for (const ticketType of props.ticketTypeOptions) {
+        quantities[String(ticketType.id)] = 0;
+    }
+    ticketQuantities.value = quantities;
+}
+
 function resetDialogState(): void {
-    ticketTypeId.value = '';
-    ticketTypeError.value = '';
+    ticketErrors.value = {};
+    initTicketQuantities();
+    ticketPickerRef.value?.resetTouchedState();
     customAnswerErrors.value = {};
     customAnswers.value = props.bookingQuestions.map(() => '');
     resetForm({
@@ -154,22 +160,22 @@ watch(
 );
 
 const onSubmit = handleSubmit((values) => {
-    ticketTypeError.value = '';
+    ticketErrors.value = {};
     customAnswerErrors.value = {};
 
-    const selectedTicketTypeId = ticketTypeId.value.trim();
-    if (selectedTicketTypeId.length === 0) {
-        ticketTypeError.value = t('programsControl.ticketTypeRequired');
-        return;
-    }
+    const validation = validateWalkInBookingTickets({
+        ticketTypeOptions: props.ticketTypeOptions,
+        ticketQuantities: ticketQuantities.value,
+        bookedCount: props.bookedCount,
+        tripCapacity: props.tripCapacity,
+        t,
+    });
 
-    const capacity = props.tripCapacity;
-    if (
-        capacity != null &&
-        Number.isFinite(Number(capacity)) &&
-        props.bookedCount + 1 > Math.max(0, Math.floor(Number(capacity)))
-    ) {
-        ticketTypeError.value = t('programsControl.capacityFull');
+    if (!validation.canContinue) {
+        ticketErrors.value = validation.errors;
+        for (const ticketTypeId of Object.keys(validation.errors)) {
+            ticketPickerRef.value?.markTicketTouched(ticketTypeId);
+        }
         return;
     }
 
@@ -190,7 +196,7 @@ const onSubmit = handleSubmit((values) => {
     }
 
     emit('confirm', {
-        ticketTypeId: selectedTicketTypeId,
+        ticketQuantities: { ...ticketQuantities.value },
         contactName: String(values.contact_name).trim(),
         contactEmail: String(values.contact_email).trim(),
         country: String(values.country).trim().toUpperCase(),

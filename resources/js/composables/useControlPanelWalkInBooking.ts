@@ -4,7 +4,7 @@ import { useBookingAdminCrud, type BookingTicketUpsertInput } from './useBooking
 export type WalkInBookingInput = {
     trip: TripWithRelationsRow;
     programId: string;
-    ticketTypeId: string;
+    ticketQuantities: Record<string, number>;
     contactName: string;
     contactEmail: string;
     country: string;
@@ -19,14 +19,14 @@ export function useControlPanelWalkInBooking() {
     ): Promise<
         | {
               bookingId: string;
-              ticket: { id: string; name: string; booking_id: string };
+              tickets: { id: string; name: string; booking_id: string }[];
           }
         | undefined
     > {
         const result = await crud.addWalkInBooking({
             programId: input.programId,
             tripId: String(input.trip.id),
-            ticketTypeId: input.ticketTypeId,
+            ticketQuantities: input.ticketQuantities,
             contactName: input.contactName,
             contactEmail: input.contactEmail,
             country: input.country,
@@ -39,11 +39,11 @@ export function useControlPanelWalkInBooking() {
 
         return {
             bookingId: result.bookingId,
-            ticket: {
-                id: result.ticketId,
+            tickets: result.ticketIds.map((id) => ({
+                id,
                 name: input.contactName.trim(),
                 booking_id: result.bookingId,
-            },
+            })),
         };
     }
 

@@ -151,7 +151,10 @@ class PowerSyncUploadVoyagePassengerTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()
+            ->assertJsonPath('results.0.status', 'applied')
+            ->assertJsonPath('results.1.status', 'applied')
+            ->assertJsonPath('results.2.status', 'rejected');
     }
 
     public function test_patch_voyage_completed_requires_arrived_at(): void
@@ -183,7 +186,7 @@ class PowerSyncUploadVoyagePassengerTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
     }
 
     public function test_patch_voyage_mark_arrived_uses_client_arrived_at(): void
@@ -282,7 +285,7 @@ class PowerSyncUploadVoyagePassengerTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertForbidden();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('voyages', ['id' => $voyageId]);
     }

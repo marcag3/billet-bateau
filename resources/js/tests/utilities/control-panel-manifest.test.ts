@@ -96,6 +96,59 @@ describe('control-panel-manifest', () => {
         });
     });
 
+    it('buildManifestSlots uses ticket count for empty seats before voyage', () => {
+        const slots = buildManifestSlots(
+            {
+                voyage: null,
+                passengers: [],
+                bookingTickets: [
+                    { id: 't1', name: 'Ada', booking_id: 'b1' },
+                    { id: 't2', name: 'Bob', booking_id: 'b1' },
+                    { id: 't3', name: 'Eve', booking_id: 'b2' },
+                    { id: 't4', name: 'Mia', booking_id: 'b2' },
+                ],
+                checkedInBookingIds: [],
+                pendingBookingGroups: [],
+            },
+            4,
+            true,
+        );
+
+        expect(slots.map((slot) => slot.kind)).toEqual(['booked', 'booked']);
+    });
+
+    it('buildManifestSlots shows no empty seats when multi-ticket bookings fill capacity', () => {
+        const slots = buildManifestSlots(
+            {
+                voyage: null,
+                passengers: [],
+                bookingTickets: [
+                    { id: 't1', name: 'A', booking_id: 'b1' },
+                    { id: 't2', name: 'A', booking_id: 'b1' },
+                    { id: 't3', name: 'B', booking_id: 'b2' },
+                    { id: 't4', name: 'B', booking_id: 'b2' },
+                    { id: 't5', name: 'C', booking_id: 'b3' },
+                    { id: 't6', name: 'C', booking_id: 'b3' },
+                    { id: 't7', name: 'D', booking_id: 'b4' },
+                    { id: 't8', name: 'D', booking_id: 'b4' },
+                    { id: 't9', name: 'D', booking_id: 'b4' },
+                    { id: 't10', name: 'D', booking_id: 'b4' },
+                ],
+                checkedInBookingIds: [],
+                pendingBookingGroups: [],
+            },
+            10,
+            true,
+        );
+
+        expect(slots.map((slot) => slot.kind)).toEqual([
+            'booked',
+            'booked',
+            'booked',
+            'booked',
+        ]);
+    });
+
     it('buildManifestSlots shows booked rows before voyage exists', () => {
         const slots = buildManifestSlots(
             {

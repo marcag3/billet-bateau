@@ -128,8 +128,8 @@ class PowerSyncUploadBoatTest extends TestCase
             ],
         ]);
 
-        $response->assertUnprocessable();
-        $errors = $response->json('errors') ?? [];
+        $response->assertOk()->assertJsonPath('results.0.status', 'rejected');
+        $errors = $response->json('results.0.errors') ?? [];
         $capacityErrors = $errors['capacity'] ?? $errors['data.capacity'] ?? null;
         $this->assertNotNull($capacityErrors);
         $this->assertNotEmpty($capacityErrors);
@@ -198,7 +198,7 @@ class PowerSyncUploadBoatTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertForbidden();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $boatType->refresh();
         $this->assertSame('Owners', $boatType->name);
@@ -221,7 +221,7 @@ class PowerSyncUploadBoatTest extends TestCase
                     'id' => $boat->getKey(),
                 ],
             ],
-        ])->assertForbidden();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseHas('boats', ['id' => $boat->getKey()]);
     }
@@ -243,7 +243,7 @@ class PowerSyncUploadBoatTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
     }
 
     public function test_patch_boat_rejects_negative_capacity_returns_unprocessable(): void
@@ -265,7 +265,7 @@ class PowerSyncUploadBoatTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
     }
 
     public function test_put_boat_rejects_unknown_boat_type_id_returns_unprocessable(): void
@@ -289,7 +289,7 @@ class PowerSyncUploadBoatTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('boats', ['id' => $boatId]);
     }

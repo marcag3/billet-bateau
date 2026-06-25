@@ -87,7 +87,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('trips', ['id' => $tripId]);
     }
@@ -113,7 +113,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertForbidden();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('trips', ['id' => $tripId]);
     }
@@ -152,7 +152,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
                     'id' => $trip->getKey(),
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseHas('trips', ['id' => $trip->getKey()]);
     }
@@ -172,7 +172,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
                     'id' => $trip->getKey(),
                 ],
             ],
-        ])->assertForbidden();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseHas('trips', ['id' => $trip->getKey()]);
     }
@@ -230,7 +230,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertForbidden();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('water_routes', ['id' => $routeId]);
     }
@@ -295,7 +295,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
                     'id' => $route->getKey(),
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseHas('water_routes', ['id' => $route->getKey()]);
     }
@@ -321,7 +321,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('trips', ['id' => $tripId]);
     }
@@ -348,7 +348,7 @@ class PowerSyncUploadTripWaterRouteTest extends TestCase
                     ],
                 ],
             ],
-        ])->assertUnprocessable();
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $this->assertDatabaseMissing('products', ['id' => $productId]);
     }

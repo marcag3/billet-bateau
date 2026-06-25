@@ -171,6 +171,8 @@ const tripDisplayStatus = computed((): ControlPanelTripDisplayStatus =>
 
 const tripDisplayStatusLabel = computed((): string => {
     switch (tripDisplayStatus.value) {
+        case 'boarding':
+            return t('programsControl.tripStatusBoarding');
         case 'on_water':
             return t('programsControl.tripStatusOnWater');
         case 'returned':
@@ -200,12 +202,7 @@ const manifestSlots = computed((): ManifestSlot[] =>
     buildManifestSlots(props.card, tripCapacity.value ?? 0, manifestModifiable.value),
 );
 
-const showDepart = computed(
-    () =>
-        props.card.voyage == null ||
-        voyageStatus.value === 'draft' ||
-        voyageStatus.value === 'ready',
-);
+const showDepart = computed(() => tripDisplayStatus.value === 'boarding');
 
 const showArrive = computed(() => voyageStatus.value === 'underway');
 

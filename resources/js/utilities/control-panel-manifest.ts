@@ -115,6 +115,27 @@ export function derivePendingBookingGroups(
     );
 }
 
+function occupiedManifestSeats(
+    card: Pick<
+        ControlPanelTripCardModel,
+        'passengers' | 'bookingTickets' | 'pendingBookingGroups'
+    >,
+    hasVoyage: boolean,
+    manifestModifiable: boolean,
+): number {
+    if (hasVoyage) {
+        let occupied = card.passengers.length;
+        if (manifestModifiable) {
+            for (const group of card.pendingBookingGroups) {
+                occupied += group.ticketCount;
+            }
+        }
+        return occupied;
+    }
+
+    return card.bookingTickets.length;
+}
+
 export function buildManifestSlots(
     card: Pick<
         ControlPanelTripCardModel,
@@ -168,9 +189,14 @@ export function buildManifestSlots(
         }
     }
 
+    const occupiedSeats = occupiedManifestSeats(
+        card,
+        hasVoyage,
+        manifestModifiable,
+    );
     const emptyCount =
         manifestModifiable && capacity > 0
-            ? Math.max(0, capacity - slots.length)
+            ? Math.max(0, capacity - occupiedSeats)
             : 0;
     for (let index = 0; index < emptyCount; index += 1) {
         slots.push({ kind: 'empty', key: `empty-${index}` });

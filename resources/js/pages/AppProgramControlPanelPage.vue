@@ -24,13 +24,16 @@
         </q-virtual-scroll>
 
         <AppControlPanelWalkInBookingDialog v-model:open="walkInDialogOpen" :ticket-type-options="ticketTypeOptions"
-            :booking-questions="bookingQuestions" :booked-count="walkInCard?.bookedCount ?? 0"
+            :format-ticket-type-price="formatTicketTypePrice" :booking-questions="bookingQuestions"
+            :booked-count="walkInCard?.bookedCount ?? 0"
             :trip-capacity="walkInTripCapacity" @confirm="onConfirmWalkIn" />
 
         <AppControlPanelStartVoyageModal v-model:open="departModalOpen" :boat-options="boatOptions"
             :guide-options="guideOptions" :initial-boat-ids="departCard?.initialBoatIds ?? []"
-            :initial-guide-ids="departCard?.initialGuideIds ?? []" :submitting="departSubmitting"
-            @confirm="onConfirmDepart" />
+            :initial-guide-ids="departCard?.initialGuideIds ?? []"
+            :boarded-count="departCard?.passengers.length ?? 0"
+            :booked-count="departCard?.bookedCount ?? 0"
+            :submitting="departSubmitting" @confirm="onConfirmDepart" />
     </q-page>
 </template>
 
@@ -60,9 +63,11 @@ import AppControlPanelStartVoyageModal from "../components/control-panel/AppCont
 import AppControlPanelWalkInBookingDialog from "../components/control-panel/AppControlPanelWalkInBookingDialog.vue";
 import type { ControlPanelSelectOption } from "../components/control-panel/AppControlPanelStartVoyageModal.vue";
 import type { WalkInBookingConfirmPayload } from "../components/control-panel/AppControlPanelWalkInBookingDialog.vue";
+import type { BookingTicketTypeOption } from "../models/public-booking/public-booking.types";
+import { formatTicketTypePrice as formatTicketTypePriceUtil } from "../utilities/ticket-type-display";
 import { isControlPanelTripFinished } from "../utilities/control-panel-day-board";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const { confirm } = useConfirmDialog();
 const powersync = getAppPowerSyncContext();
@@ -193,12 +198,24 @@ const guideNamesById = computed((): Record<string, string> => {
     return names;
 });
 
-const ticketTypeOptions = computed((): ControlPanelSelectOption[] => {
+const ticketTypeOptions = computed((): BookingTicketTypeOption[] => {
     return ((ticketTypesRaw.value ?? []) as Record<string, unknown>[]).map((tt) => ({
-        value: String(tt.id),
-        label: String(tt.title ?? ""),
+        id: String(tt.id),
+        title: String(tt.title ?? ""),
+        price_cents: tt.price_cents != null ? Number(tt.price_cents) : null,
+        is_pay_what_you_can: Boolean(tt.is_pay_what_you_can),
+        min_per_purchase: Number(tt.min_per_purchase ?? 0),
+        max_per_purchase: tt.max_per_purchase != null ? Number(tt.max_per_purchase) : null,
+        depends_on_ticket_type_id:
+            tt.depends_on_ticket_type_id != null ? String(tt.depends_on_ticket_type_id) : null,
+        max_per_reference_ticket:
+            tt.max_per_reference_ticket != null ? Number(tt.max_per_reference_ticket) : null,
     }));
 });
+
+function formatTicketTypePrice(tt: BookingTicketTypeOption): string {
+    return formatTicketTypePriceUtil(tt, String(locale.value), t);
+}
 
 const departModalOpen = ref(false);
 const departSubmitting = ref(false);
@@ -282,7 +299,7 @@ async function onConfirmWalkIn(payload: WalkInBookingConfirmPayload): Promise<vo
     const result = await addWalkInBooking({
         trip: card.trip,
         programId: programId.value,
-        ticketTypeId: payload.ticketTypeId,
+        ticketQuantities: payload.ticketQuantities,
         contactName: payload.contactName,
         contactEmail: payload.contactEmail,
         country: payload.country,
@@ -296,7 +313,7 @@ async function onConfirmWalkIn(payload: WalkInBookingConfirmPayload): Promise<vo
     void checkInBooking({
         card,
         bookingId: result.bookingId,
-        tickets: [...card.bookingTickets, result.ticket],
+        tickets: [...card.bookingTickets, ...result.tickets],
     });
 }
 

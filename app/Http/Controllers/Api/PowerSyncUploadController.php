@@ -2,24 +2,17 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Data\PowerSync\PowerSyncCrudEntryData;
-use App\Data\PowerSync\PowerSyncUploadBatchData;
+use App\Actions\PowerSync\ApplyPowerSyncUploadBatchAction;
 use App\Http\Controllers\Controller;
-use App\PowerSync\PowerSyncUploadRouter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class PowerSyncUploadController extends Controller
 {
-    public function __construct(
-        private readonly PowerSyncUploadRouter $router,
-    ) {}
-
     /**
      * Apply a PowerSync CRUD upload batch from the web client (FIFO, synchronous).
      */
-    public function __invoke(PowerSyncUploadBatchData $batch, Request $request): JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
         $user = $request->user();
 
@@ -29,13 +22,11 @@ class PowerSyncUploadController extends Controller
 
         $userId = (string) $user->getAuthIdentifier();
 
-        DB::transaction(function () use ($batch, $userId): void {
-            foreach ($batch->crud as $entryPayload) {
-                $entry = PowerSyncCrudEntryData::from($entryPayload);
-                $this->router->apply($entry, $userId);
-            }
-        });
+        /** @var array<string, mixed> $payload */
+        $payload = $request->all();
 
-        return response()->json(['ok' => true]);
+        $result = ApplyPowerSyncUploadBatchAction::run($payload, $userId);
+
+        return response()->json($result->toArray());
     }
 }
