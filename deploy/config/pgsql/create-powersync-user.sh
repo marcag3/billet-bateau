@@ -1,20 +1,26 @@
 #!/bin/sh
 set -eu
 
+: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
+
 # PowerSync Open Edition needs logical replication plus bucket storage.
 # See https://docs.powersync.com/configuration/source-db/setup
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-	DO \$\$
-	BEGIN
-		IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'powersync') THEN
-			CREATE ROLE powersync WITH LOGIN PASSWORD 'password' REPLICATION BYPASSRLS;
-		ELSE
-			ALTER ROLE powersync WITH REPLICATION BYPASSRLS;
-		END IF;
-	END
-	\$\$;
+role_exists="$(psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -Atc "SELECT 1 FROM pg_roles WHERE rolname = 'powersync'")"
+if [ "$role_exists" != "1" ]; then
+	psql -v ON_ERROR_STOP=1 \
+		--username "$POSTGRES_USER" \
+		--dbname "$POSTGRES_DB" \
+		-v powersync_password="$POSTGRES_PASSWORD" \
+		-c "CREATE ROLE powersync WITH LOGIN PASSWORD :'powersync_password' REPLICATION BYPASSRLS;"
+else
+	psql -v ON_ERROR_STOP=1 \
+		--username "$POSTGRES_USER" \
+		--dbname "$POSTGRES_DB" \
+		-c 'ALTER ROLE powersync WITH REPLICATION BYPASSRLS;'
+fi
 
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
 	GRANT CONNECT ON DATABASE "$POSTGRES_DB" TO powersync;
 	GRANT USAGE ON SCHEMA public TO powersync;
 	GRANT SELECT ON ALL TABLES IN SCHEMA public TO powersync;

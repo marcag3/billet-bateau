@@ -189,7 +189,7 @@ mkdir -p config/pgsql
 cp /path/to/repo/deploy/config/pgsql/create-powersync-user.sh config/pgsql/
 ```
 
-Copy `deploy/.env.example` → `deploy/.env`, set `PRODUCTION_IMAGE`, R2 credentials, and secrets (`openssl rand -hex 16`, `openssl rand -base64 48` for `POWERSYNC_JWT_SECRET`).
+Copy `deploy/.env.example` → `deploy/.env`, set `PRODUCTION_IMAGE`, R2 credentials, and secrets (`openssl rand -hex 16` for `APP_KEY`, `openssl rand -base64 48` for `POWERSYNC_JWT_SECRET`).
 
 ```bash
 docker compose pull && docker compose up -d
@@ -245,7 +245,7 @@ Usually omit from `.env`:
 | `AWS_ENDPOINT` | `http://rustfs:9000` | R2 endpoint in `deploy/.env`        |
 | `MAIL_*`       | Mailpit              | —                                   |
 
-\*Also `production-schedule`, `production-queue`. PowerSync Postgres URIs default from `DB_*`.
+\*Also `production-schedule`, `production-queue`, `powersync`. PowerSync Postgres URIs default from `DB_*` (`powersync` replication user shares `DB_PASSWORD`).
 
 ### Optional overrides
 
