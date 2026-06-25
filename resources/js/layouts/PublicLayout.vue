@@ -1,9 +1,9 @@
 <template>
     <q-layout view="hHh lpr fFf">
-        <q-header bordered class="bg-white text-grey-9">
+        <q-header elevated class="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--q-primary)_90%,white)_90%,var(--q-secondary))] text-white">
             <q-toolbar>
                 <q-space />
-                <AppLanguageSwitcher />
+                <AppLanguageSwitcher on-dark-header />
             </q-toolbar>
         </q-header>
         <q-page-container class="sm:px-6 md:px-12">
