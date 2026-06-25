@@ -1,18 +1,23 @@
 <template>
     <tr class="cursor-pointer" @click="emit('select')">
-        <td class="text-center" style="width: 3.5rem">
+        <td class="text-center align-top" style="width: 3.5rem">
             <q-avatar v-if="bannerUrl != null" rounded size="48px">
                 <q-img :src="bannerUrl" :alt="trip.product_name" fit="cover" />
             </q-avatar>
         </td>
-        <td class="whitespace-pre-line">{{ departureLabel }}</td>
-        <td>
+        <td class="align-top whitespace-nowrap !whitespace-nowrap" style="width: 1%">
+            <div v-if="departureDateLabel != null && departureDateLabel.length > 0">{{ departureDateLabel }}</div>
+            <div :class="departureDateLabel != null && departureDateLabel.length > 0 ? 'text-body2 text-grey-7' : undefined">
+                {{ departureTimeLabel }}
+            </div>
+        </td>
+        <td class="align-top min-w-0 !whitespace-normal break-words">
             <div class="text-weight-medium">{{ trip.product_name }}</div>
             <div v-if="waterRouteLine != null" class="text-body2 text-grey-7">
                 {{ waterRouteLine }}
             </div>
         </td>
-        <td>{{ availabilityLabel }}</td>
+        <td class="align-top whitespace-nowrap !whitespace-nowrap" style="width: 1%">{{ availabilityLabel }}</td>
     </tr>
 </template>
 
@@ -28,7 +33,8 @@ import {
 
 const props = defineProps<{
     trip: BookingTripOption;
-    departureLabel: string;
+    departureDateLabel?: string | null;
+    departureTimeLabel: string;
     availabilityLabel: string;
 }>();
 

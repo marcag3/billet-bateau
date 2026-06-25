@@ -37,7 +37,7 @@ services:
             REDIS_HOST: "redis"
             POWERSYNC_CONFIG_PATH: /config/service.yaml
             NODE_OPTIONS: --max-old-space-size-percentage=80
-            PS_DATA_SOURCE_URI: "${POWERSYNC_DATA_SOURCE_URI:-postgresql://powersync:password@pgsql:5432/${DB_DATABASE}?sslmode=disable}"
+            PS_DATA_SOURCE_URI: "${POWERSYNC_DATA_SOURCE_URI:-postgresql://powersync:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable}"
             PS_STORAGE_SOURCE_URI: "${POWERSYNC_STORAGE_SOURCE_URI:-postgresql://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/powersync_storage?sslmode=disable}"
             PS_JWT_SECRET: "${POWERSYNC_JWT_SECRET:-powersync-local-poc-secret-32_bytes!}"
         depends_on:
@@ -98,7 +98,7 @@ services:
             POWERSYNC_CONFIG_PATH: /config/service.yaml
             NODE_OPTIONS: --max-old-space-size=1000
             PS_PORT: "8080"
-            PS_DATA_SOURCE_URI: "${POWERSYNC_DATA_SOURCE_URI:-postgresql://powersync:password@pgsql:5432/${DB_DATABASE}?sslmode=disable}"
+            PS_DATA_SOURCE_URI: "${POWERSYNC_DATA_SOURCE_URI:-postgresql://powersync:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable}"
             PS_STORAGE_SOURCE_URI: "${POWERSYNC_STORAGE_SOURCE_URI:-postgresql://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/powersync_storage?sslmode=disable}"
             PS_JWT_SECRET: "${POWERSYNC_JWT_SECRET:-powersync-local-poc-secret-32_bytes!}"
         depends_on:

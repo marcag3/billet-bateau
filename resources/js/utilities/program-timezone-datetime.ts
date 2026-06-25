@@ -146,13 +146,23 @@ export function programWallClockToIso(
     return new Date(utcGuess - offsetMs).toISOString();
 }
 
+export function formatDepartureParts(
+    iso: string,
+    timezone: string,
+    locale: string,
+): { date: string; time: string } {
+    return {
+        date: formatIsoInTimezone(iso, timezone, locale, { dateStyle: 'medium' }),
+        time: formatIsoInTimezone(iso, timezone, locale, { timeStyle: 'short' }),
+    };
+}
+
 export function formatDepartureLabel(
     iso: string,
     timezone: string,
     locale: string,
 ): string {
-    const datePart = formatIsoInTimezone(iso, timezone, locale, { dateStyle: 'medium' });
-    const timePart = formatIsoInTimezone(iso, timezone, locale, { timeStyle: 'short' });
+    const { date, time } = formatDepartureParts(iso, timezone, locale);
 
-    return `${datePart}\n${timePart}`;
+    return `${date}\n${time}`;
 }

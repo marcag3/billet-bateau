@@ -17,9 +17,6 @@ final class PowerSyncUploadEntryResultData extends Data
         public ?array $errors = null,
     ) {}
 
-    /**
-     * @param  array<string, list<string>>  $errors
-     */
     public static function applied(
         string $id,
         ?string $type,
