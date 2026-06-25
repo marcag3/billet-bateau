@@ -32,9 +32,10 @@
                         <template #day-body="{ scope }">
                             <div class="absolute inset-0 pointer-events-none">
                                 <div v-for="ev in slotCalendarEventsForScope(scope)" :key="ev.id"
-                                    class="pointer-events-auto overflow-hidden" :style="slotEventPositionStyle(scope, ev)">
+                                    class="pointer-events-auto overflow-hidden flex flex-col"
+                                    :style="slotEventPositionStyle(scope, ev)">
                                     <q-btn dense no-caps padding="xs sm" outline color="primary"
-                                        class="text-xs h-full min-h-0 full-width text-left"
+                                        class="text-xs flex-1 min-h-0 w-full text-left items-start"
                                         @click.stop="openEditSlotDialogByEventId(ev.id)">
                                         <span class="ellipsis block">{{
                                             ev.title
@@ -407,7 +408,7 @@ function slotEventPositionStyle(
         time: ev.time,
         columnIndex: ev.columnIndex,
         columnCount: ev.columnCount,
-        intervalMinutes: ev.durationMinutes,
+        durationMinutes: ev.durationMinutes,
     });
 }
 

@@ -80,10 +80,12 @@
                 </template>
                 <template #day-body="{ scope }">
                     <div class="absolute inset-0 pointer-events-none">
-                        <div v-for="ev in eventsForDay(scope.timestamp.date)" :key="ev.id" class="pointer-events-auto overflow-hidden"
+                        <div v-for="ev in eventsForDay(scope.timestamp.date)" :key="ev.id"
+                            class="pointer-events-auto overflow-hidden flex flex-col"
                             :style="eventPositionStyle(scope, ev)">
                             <q-btn dense no-caps padding="xs sm" outline color="primary"
-                                class="text-xs h-full min-h-0 full-width text-left" @click.stop="onTripClick(ev.id)">
+                                class="text-xs flex-1 min-h-0 w-full text-left items-start"
+                                @click.stop="onTripClick(ev.id)">
                                 <span class="ellipsis block">{{ ev.title }}</span>
                             </q-btn>
                         </div>
@@ -119,7 +121,7 @@ import { ulid } from "ulid";
 import { QCalendarDay, QCalendarMonth, today } from "@quasar/quasar-ui-qcalendar";
 import { useQuasar } from "quasar";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
-import { liveQueryRow, liveQueryRows } from "../powersync/live-query-casts";
+import { liveQueryRow, liveQueryRows, queryRef } from "../powersync/live-query-casts";
 import { joinTripsWithRelationsFrom } from "../powersync/joined-queries";
 import {
     buildProgramBookedTripIdsQuery,
@@ -244,18 +246,18 @@ const { data: tripsRaw } = useLiveQuery(
                 eq(trip.program_id, pid),
             )
             .select(({ trip, product, boatType, waterRoute }) => ({
-                id: trip.id,
-                program_id: trip.program_id,
-                product_id: trip.product_id,
-                product_name: product.name,
-                scheduled_departure_at: trip.scheduled_departure_at,
-                boat_type_id: product.boat_type_id,
-                water_route_id: product.water_route_id,
-                capacity: product.capacity,
-                boatTypeName: boatType.name,
-                waterRouteName: waterRoute.name,
-                waterRouteDurationMinutes: waterRoute.duration_minutes,
-                productBannerObjectKey: product.banner_object_key,
+                id: queryRef(trip).id,
+                program_id: queryRef(trip).program_id,
+                product_id: queryRef(trip).product_id,
+                product_name: queryRef(product).name,
+                scheduled_departure_at: queryRef(trip).scheduled_departure_at,
+                boat_type_id: queryRef(product).boat_type_id,
+                water_route_id: queryRef(product).water_route_id,
+                capacity: queryRef(product).capacity,
+                boatTypeName: queryRef(boatType).name,
+                waterRouteName: queryRef(waterRoute).name,
+                waterRouteDurationMinutes: queryRef(waterRoute).duration_minutes,
+                productBannerObjectKey: queryRef(product).banner_object_key,
             }))
             .orderBy(
                 ({ scheduled_departure_at }: Record<string, unknown>) =>
@@ -943,7 +945,7 @@ function eventPositionStyle(
         time: ev.time,
         columnIndex: ev.columnIndex,
         columnCount: ev.columnCount,
-        intervalMinutes: ev.durationMinutes,
+        durationMinutes: ev.durationMinutes,
     });
 }
 

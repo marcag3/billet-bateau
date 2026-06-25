@@ -16,6 +16,44 @@ export interface DayCalendarEventPositionScope {
 /** Fallback height when route duration is missing or invalid (matches QCalendar interval). */
 export const DEFAULT_CALENDAR_EVENT_INTERVAL_MINUTES = 30;
 
+const DEFAULT_MIN_EVENT_HEIGHT_PX = 24;
+
+/** `HH:mm` + minutes, wrapping at 24h (calendar day view). */
+export function wallClockHmAfterMinutes(time: string, minutes: number): string {
+    const match = /^(\d{1,2}):(\d{2})$/.exec(String(time).trim());
+    if (match == null) {
+        return time;
+    }
+    const total = Number(match[1]) * 60 + Number(match[2]) + minutes;
+    const wrapped = ((total % (24 * 60)) + 24 * 60) % (24 * 60);
+    const h = Math.floor(wrapped / 60);
+    const m = wrapped % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/**
+ * Event bar height in pixels using the same scale as {@link DayCalendarEventPositionScope.timeStartPos}.
+ * Prefer this over {@link DayCalendarEventPositionScope.timeDurationHeight} so bar height matches
+ * the rendered interval grid when QCalendar's body metrics differ from interval-height alone.
+ */
+export function computeCalendarEventHeightPx(
+    scope: DayCalendarEventPositionScope,
+    startTime: string,
+    durationMinutes: number,
+    minHeightPx: number = DEFAULT_MIN_EVENT_HEIGHT_PX,
+): number {
+    const top = scope.timeStartPos(startTime, true);
+    if (top === false) {
+        return Math.max(scope.timeDurationHeight(durationMinutes), minHeightPx);
+    }
+    const endTime = wallClockHmAfterMinutes(startTime, durationMinutes);
+    const bottom = scope.timeStartPos(endTime, true);
+    if (bottom === false || bottom <= top) {
+        return Math.max(scope.timeDurationHeight(durationMinutes), minHeightPx);
+    }
+    return Math.max(bottom - top, minHeightPx);
+}
+
 const DEFAULT_INSET_PX = 2;
 const DEFAULT_GAP_PX = 2;
 
@@ -249,20 +287,24 @@ export function computeDayCalendarEventPositionStyle(
         time: string;
         columnIndex: number;
         columnCount: number;
-        intervalMinutes?: number;
+        /** Trip / route duration in minutes (bar height). */
+        durationMinutes?: number;
         insetPx?: number;
         gapPx?: number;
     },
 ): Record<string, string> {
-    const intervalMinutes =
-        params.intervalMinutes ?? DEFAULT_CALENDAR_EVENT_INTERVAL_MINUTES;
+    const durationMinutes =
+        params.durationMinutes ?? DEFAULT_CALENDAR_EVENT_INTERVAL_MINUTES;
     const insetPx = params.insetPx ?? DEFAULT_INSET_PX;
     const gapPx = params.gapPx ?? DEFAULT_GAP_PX;
 
     const top = scope.timeStartPos(params.time, true);
     const topPx = top === false ? 0 : top;
-    const slotH = scope.timeDurationHeight(intervalMinutes);
-    const heightPx = Math.max(slotH, 24);
+    const heightPx = computeCalendarEventHeightPx(
+        scope,
+        params.time,
+        durationMinutes,
+    );
 
     const n = Math.max(1, params.columnCount);
     const i = Math.min(Math.max(0, params.columnIndex), n - 1);

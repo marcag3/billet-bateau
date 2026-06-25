@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
     assignOverlappingIntervalColumnLayout,
+    computeCalendarEventHeightPx,
     DEFAULT_CALENDAR_EVENT_INTERVAL_MINUTES,
     normalizeCalendarEventDurationMinutes,
+    wallClockHmAfterMinutes,
 } from "../../utilities/day-calendar-event-layout";
 
 describe("normalizeCalendarEventDurationMinutes", () => {
@@ -125,5 +127,32 @@ describe("assignOverlappingIntervalColumnLayout", () => {
             },
         ]);
         expect(out.map((e) => e.columnCount)).toEqual([2, 2]);
+    });
+});
+
+describe("wallClockHmAfterMinutes", () => {
+    it("adds minutes within the same day", () => {
+        expect(wallClockHmAfterMinutes("10:00", 120)).toBe("12:00");
+        expect(wallClockHmAfterMinutes("10:30", 90)).toBe("12:00");
+    });
+});
+
+describe("computeCalendarEventHeightPx", () => {
+    const scope = {
+        timeStartPos(time: string): number {
+            const [h, m] = time.split(":").map(Number);
+            return ((h * 60 + m) / 30) * 22;
+        },
+        timeDurationHeight(minutes: number): number {
+            return (minutes / 30) * 22;
+        },
+    };
+
+    it("spans two hours as four 30-minute intervals", () => {
+        expect(computeCalendarEventHeightPx(scope, "10:00", 120)).toBe(88);
+    });
+
+    it("matches timeDurationHeight for one hour", () => {
+        expect(computeCalendarEventHeightPx(scope, "10:00", 60)).toBe(44);
     });
 });
