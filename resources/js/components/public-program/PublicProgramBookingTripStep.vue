@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="min-w-0 overflow-x-hidden">
         <div v-if="bookableTripOptions.length === 0" class="text-body1 text-grey-8">
             {{ t('publicBooking.noTrips') }}
         </div>
@@ -21,28 +21,31 @@
                 {{ t('publicBooking.noTripsForFilters') }}
             </q-banner>
 
+            <div class="min-w-0 overflow-x-hidden w-full">
             <q-virtual-scroll v-if="filteredTripOptions.length > 0" type="table" style="max-height: 70vh"
-                :virtual-scroll-item-size="64" :virtual-scroll-sticky-size-start="48"
+                :virtual-scroll-item-size="80" :virtual-scroll-sticky-size-start="48"
                 :virtual-scroll-sticky-size-end="32" bordered separator="horizontal"
-                class="h-100 [&_.thead-sticky_tr>*]:sticky [&_.thead-sticky_tr>*]:opacity-100 [&_.thead-sticky_tr>*]:z-[2] [&_.thead-sticky_tr>*]:bg-white [&_.q-markup-table.q-dark_.thead-sticky_tr>*]:bg-[var(--q-dark)] [&_.thead-sticky_tr:last-child>*]:top-0 [&_.tfoot-sticky_tr:first-child>*]:bottom-0"
+                class="h-100 min-w-0 max-w-full table-fixed w-full [&_.thead-sticky_tr>*]:sticky [&_.thead-sticky_tr>*]:opacity-100 [&_.thead-sticky_tr>*]:z-[2] [&_.thead-sticky_tr>*]:bg-white [&_.q-markup-table.q-dark_.thead-sticky_tr>*]:bg-[var(--q-dark)] [&_.thead-sticky_tr:last-child>*]:top-0 [&_.tfoot-sticky_tr:first-child>*]:bottom-0"
                 :items="filteredTripOptions">
                 <template v-slot:before>
                     <thead class="thead-sticky text-left ">
                         <tr class="bg-accent">
                             <th class="text-center" style="width: 3.5rem" />
-                            <th>{{ t('publicBooking.departure') }}</th>
+                            <th style="width: 1%">{{ t('publicBooking.departure') }}</th>
                             <th>{{ t('publicBooking.tripColumn') }}</th>
-                            <th>{{ t('publicBooking.tripAvailabilityColumn') }}</th>
+                            <th style="width: 1%">{{ t('publicBooking.tripAvailabilityColumn') }}</th>
                         </tr>
                     </thead>
                 </template>
 
                 <template v-slot="{ item: row }">
                     <PublicProgramBookingTripListRow :key="row.id" :trip="row"
-                        :departure-label="formatDeparture(row.scheduled_departure_at)"
+                        :departure-date-label="formatDeparturePartsForTrip(row.scheduled_departure_at).date"
+                        :departure-time-label="formatDeparturePartsForTrip(row.scheduled_departure_at).time"
                         :availability-label="formatTripPlacesRatio(row)" @select="emit('continue', row.id)" />
                 </template>
             </q-virtual-scroll>
+            </div>
         </template>
     </div>
 </template>
@@ -60,7 +63,7 @@ import {
     publicBookingTripHasAvailability,
 } from '../../utilities/public-booking-filters';
 import { pickTripBannerUrl } from '../../utilities/public-booking-trip-display';
-import { formatDepartureLabel } from '../../utilities/program-timezone-datetime';
+import { formatDepartureParts } from '../../utilities/program-timezone-datetime';
 
 const props = defineProps<{
     tripOptions: BookingTripOption[];
@@ -162,8 +165,8 @@ function formatTripPlacesRatio(trip: BookingTripOption): string {
     return `${trip.remaining_capacity}/${trip.capacity}`;
 }
 
-function formatDeparture(iso: string): string {
-    return formatDepartureLabel(iso, props.programTimezone, String(locale.value));
+function formatDeparturePartsForTrip(iso: string): { date: string; time: string } {
+    return formatDepartureParts(iso, props.programTimezone, String(locale.value));
 }
 
 function clearAllFilters(): void {
