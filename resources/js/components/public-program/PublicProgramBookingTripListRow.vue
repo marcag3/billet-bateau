@@ -1,7 +1,7 @@
 <template>
     <tr class="cursor-pointer" @click="emit('select')">
-        <td class="text-center align-top" style="width: 3.5rem">
-            <q-avatar v-if="bannerUrl != null" rounded size="48px">
+        <td class="text-center align-top w-10 sm:w-14">
+            <q-avatar v-if="bannerUrl != null" rounded class="!size-9 sm:!size-12">
                 <q-img :src="bannerUrl" :alt="trip.product_name" fit="cover" />
             </q-avatar>
         </td>
