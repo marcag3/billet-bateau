@@ -15,6 +15,7 @@ import {
 } from "../utilities/program-timezone-datetime";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import { joinTripsWithRelationsFrom, type TripWithRelationsRow } from "../powersync/joined-queries";
+import { queryRef } from "../powersync/live-query-casts";
 import { useConfirmDialog } from "./useConfirmDialog";
 import { useNotifyAsyncAction } from "./useNotifyAsyncAction";
 import { useNotifyErrorFromCatch } from "./useNotifyErrorFromCatch";
@@ -177,18 +178,18 @@ export function useTripModalUpsert(
             return joinTripsWithRelationsFrom(queryBuilder, col, pCol, btCol, wrCol)
                 .where(({ trip }) => eq(trip.program_id, pid))
                 .select(({ trip, product, boatType, waterRoute }) => ({
-                    id: trip.id,
-                    program_id: trip.program_id,
-                    product_id: trip.product_id,
-                    product_name: product.name,
-                    scheduled_departure_at: trip.scheduled_departure_at,
-                    boat_type_id: product.boat_type_id,
-                    water_route_id: product.water_route_id,
-                    capacity: product.capacity,
-                    boatTypeName: boatType.name,
-                    waterRouteName: waterRoute.name,
-                    waterRouteDurationMinutes: waterRoute.duration_minutes,
-                    productBannerObjectKey: product.banner_object_key,
+                    id: queryRef(trip).id,
+                    program_id: queryRef(trip).program_id,
+                    product_id: queryRef(trip).product_id,
+                    product_name: queryRef(product).name,
+                    scheduled_departure_at: queryRef(trip).scheduled_departure_at,
+                    boat_type_id: queryRef(product).boat_type_id,
+                    water_route_id: queryRef(product).water_route_id,
+                    capacity: queryRef(product).capacity,
+                    boatTypeName: queryRef(boatType).name,
+                    waterRouteName: queryRef(waterRoute).name,
+                    waterRouteDurationMinutes: queryRef(waterRoute).duration_minutes,
+                    productBannerObjectKey: queryRef(product).banner_object_key,
                 }));
         },
         [
