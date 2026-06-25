@@ -6,8 +6,10 @@
             </q-avatar>
         </td>
         <td class="align-top whitespace-nowrap !whitespace-nowrap" style="width: 1%">
-            <div>{{ departureDateLabel }}</div>
-            <div class="text-body2 text-grey-7">{{ departureTimeLabel }}</div>
+            <div v-if="departureDateLabel != null && departureDateLabel.length > 0">{{ departureDateLabel }}</div>
+            <div :class="departureDateLabel != null && departureDateLabel.length > 0 ? 'text-body2 text-grey-7' : undefined">
+                {{ departureTimeLabel }}
+            </div>
         </td>
         <td class="align-top min-w-0 !whitespace-normal break-words">
             <div class="text-weight-medium">{{ trip.product_name }}</div>
@@ -31,7 +33,7 @@ import {
 
 const props = defineProps<{
     trip: BookingTripOption;
-    departureDateLabel: string;
+    departureDateLabel?: string | null;
     departureTimeLabel: string;
     availabilityLabel: string;
 }>();

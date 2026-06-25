@@ -22,11 +22,11 @@
             </q-banner>
 
             <div class="min-w-0 overflow-x-hidden w-full">
-            <q-virtual-scroll v-if="filteredTripOptions.length > 0" type="table" style="max-height: 70vh"
+            <q-virtual-scroll v-if="virtualScrollItems.length > 0" type="table" style="max-height: 70vh"
                 :virtual-scroll-item-size="80" :virtual-scroll-sticky-size-start="48"
                 :virtual-scroll-sticky-size-end="32" bordered separator="horizontal"
                 class="h-100 min-w-0 max-w-full table-fixed w-full [&_.thead-sticky_tr>*]:sticky [&_.thead-sticky_tr>*]:opacity-100 [&_.thead-sticky_tr>*]:z-[2] [&_.thead-sticky_tr>*]:bg-white [&_.q-markup-table.q-dark_.thead-sticky_tr>*]:bg-[var(--q-dark)] [&_.thead-sticky_tr:last-child>*]:top-0 [&_.tfoot-sticky_tr:first-child>*]:bottom-0"
-                :items="filteredTripOptions">
+                :items="virtualScrollItems">
                 <template v-slot:before>
                     <thead class="thead-sticky text-left ">
                         <tr class="bg-accent">
@@ -39,10 +39,14 @@
                 </template>
 
                 <template v-slot="{ item: row }">
-                    <PublicProgramBookingTripListRow :key="row.id" :trip="row"
-                        :departure-date-label="formatDeparturePartsForTrip(row.scheduled_departure_at).date"
-                        :departure-time-label="formatDeparturePartsForTrip(row.scheduled_departure_at).time"
-                        :availability-label="formatTripPlacesRatio(row)" @select="emit('continue', row.id)" />
+                    <tr v-if="row.kind === 'day'" :key="`day-${row.id}`" class="bg-grey-2">
+                        <td colspan="4" class="text-weight-medium" style="height: 80px">{{ row.dateLabel }}</td>
+                    </tr>
+                    <PublicProgramBookingTripListRow v-else :key="`trip-${row.id}`" :trip="row.trip"
+                        :departure-date-label="showDaySeparators ? null : formatDeparturePartsForTrip(row.trip.scheduled_departure_at).date"
+                        :departure-time-label="formatDeparturePartsForTrip(row.trip.scheduled_departure_at).time"
+                        :availability-label="formatTripPlacesRatio(row.trip)"
+                        @select="emit('continue', row.trip.id)" />
                 </template>
             </q-virtual-scroll>
             </div>
@@ -63,7 +67,21 @@ import {
     publicBookingTripHasAvailability,
 } from '../../utilities/public-booking-filters';
 import { pickTripBannerUrl } from '../../utilities/public-booking-trip-display';
-import { formatDepartureParts } from '../../utilities/program-timezone-datetime';
+import { formatDepartureParts, toTimezoneDateYmd } from '../../utilities/program-timezone-datetime';
+
+type TripListDayItem = {
+    kind: 'day';
+    id: string;
+    dateLabel: string;
+};
+
+type TripListTripItem = {
+    kind: 'trip';
+    id: string;
+    trip: BookingTripOption;
+};
+
+type TripListItem = TripListDayItem | TripListTripItem;
 
 const props = defineProps<{
     tripOptions: BookingTripOption[];
@@ -155,6 +173,35 @@ const filteredTripOptions = computed((): BookingTripOption[] => {
         props.programTimezone,
     );
     return filtered as BookingTripOption[];
+});
+
+const showDaySeparators = computed(() => selectedDateYmd.value.trim().length === 0);
+
+const virtualScrollItems = computed((): TripListItem[] => {
+    const items: TripListItem[] = [];
+    let lastDayYmd = '';
+
+    for (const trip of filteredTripOptions.value) {
+        if (showDaySeparators.value) {
+            const dayYmd = toTimezoneDateYmd(trip.scheduled_departure_at, props.programTimezone);
+            if (dayYmd != null && dayYmd !== lastDayYmd) {
+                items.push({
+                    kind: 'day',
+                    id: `day-${dayYmd}`,
+                    dateLabel: formatDeparturePartsForTrip(trip.scheduled_departure_at).date,
+                });
+                lastDayYmd = dayYmd;
+            }
+        }
+
+        items.push({
+            kind: 'trip',
+            id: trip.id,
+            trip,
+        });
+    }
+
+    return items;
 });
 
 const hasActiveTripFilters = computed(
