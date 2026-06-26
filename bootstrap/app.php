@@ -23,6 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
             ->dailyAt('03:00')
             ->withoutOverlapping();
 
+        $schedule->command('powersync:diagnostics-check')
+            ->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->onOneServer();
+
         $schedule->command('bookings:send-departure-reminders')
             ->hourly()
             ->withoutOverlapping()
