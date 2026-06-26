@@ -775,6 +775,7 @@ export default {
         waterRoute: "Parcours",
         waterRouteRequired: "Sélectionnez un parcours.",
         tickets: "billets",
+        totalTickets: "Total billets",
         checkedIn: "Enregistré",
         notCheckedIn: "Non enregistré",
         backToVoyages: "Retour aux voyages",

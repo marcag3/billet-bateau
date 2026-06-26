@@ -19,7 +19,13 @@
             @prev-day="goPrevDay"
             @next-day="goNextDay"
             @go-today="goToday"
-        />
+        >
+            <template #trailing>
+                <q-chip outline>
+                    {{ t('programsControlAdmin.totalTickets') }}: {{ totalFilteredTickets }}
+                </q-chip>
+            </template>
+        </AppControlDayDateToolbar>
 
         <AppEntityList>
             <AppEmptyListRow
@@ -219,6 +225,10 @@ const filteredBookings = computed(() => {
         tripDepartureMatchesLocalDateYmd(row.tripDepartureAt, ymd, tz),
     );
 });
+
+const totalFilteredTickets = computed(() =>
+    filteredBookings.value.reduce((sum, row) => sum + row.ticketCount, 0),
+);
 
 function departureLabel(row: BookingListRow): string {
     const dep = row.tripDepartureAt;

@@ -748,6 +748,7 @@ export default {
         waterRoute: "Water route",
         waterRouteRequired: "Select a water route.",
         tickets: "tickets",
+        totalTickets: "Total tickets",
         checkedIn: "Checked in",
         notCheckedIn: "Not checked in",
         backToVoyages: "Back to voyages",
