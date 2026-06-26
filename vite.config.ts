@@ -32,6 +32,10 @@ export default defineConfig(({ mode }) => {
             sourcemap: sentryUploadEnabled ? 'hidden' : false,
         },
         resolve: {
+            // TanStack DB must be a single module instance: collections are created from
+            // `@tanstack/db` while live queries run through `@tanstack/vue-db`; without
+            // dedupe Vite pre-bundles both and `instanceof CollectionImpl` fails.
+            dedupe: ['@tanstack/db'],
             alias: isVitest
                 ? {
                       leaflet: path.resolve(projectDir, 'resources/js/tests/mocks/leaflet.ts'),
