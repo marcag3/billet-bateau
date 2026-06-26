@@ -9,6 +9,7 @@ import { isProgramScopePrioritySynced } from "./program-scope-sync-status";
 import { isUserScopePrioritySynced } from "./user-scope-sync-status";
 import {
     formatSyncErrorMessage,
+    SYNC_CONNECTING_GRACE_MS,
     type SyncHealthSnapshot,
 } from "./sync-health";
 
@@ -46,6 +47,50 @@ export const syncHealthSnapshot = shallowRef<SyncHealthSnapshot>(
 
 let connectingSinceMs: number | null = null;
 let browserOnlineTrackingStarted = false;
+let graceExpiryTimer: ReturnType<typeof setTimeout> | null = null;
+
+function clearConnectingGraceExpiryTimer(): void {
+    if (graceExpiryTimer != null) {
+        clearTimeout(graceExpiryTimer);
+        graceExpiryTimer = null;
+    }
+}
+
+function expireConnectingGraceIfElapsed(nowMs: number = Date.now()): void {
+    if (connectingSinceMs == null) {
+        return;
+    }
+
+    if (nowMs - connectingSinceMs < SYNC_CONNECTING_GRACE_MS) {
+        return;
+    }
+
+    connectingSinceMs = null;
+    publishSyncHealthSnapshot({ connectingSinceMs: null });
+}
+
+function syncConnectingGraceExpiryTimer(nowMs: number = Date.now()): void {
+    clearConnectingGraceExpiryTimer();
+
+    if (connectingSinceMs == null || typeof setTimeout === "undefined") {
+        return;
+    }
+
+    const remainingMs =
+        connectingSinceMs + SYNC_CONNECTING_GRACE_MS - nowMs;
+
+    const fire = (): void => {
+        graceExpiryTimer = null;
+        expireConnectingGraceIfElapsed();
+    };
+
+    if (remainingMs <= 0) {
+        fire();
+        return;
+    }
+
+    graceExpiryTimer = setTimeout(fire, remainingMs);
+}
 
 function resolveHasSynced(status: SyncStatus): boolean {
     return status.hasSynced === true;
@@ -71,11 +116,14 @@ export function publishSyncHealthSnapshot(
 }
 
 export function resetSyncHealthSnapshot(): void {
+    clearConnectingGraceExpiryTimer();
     connectingSinceMs = null;
     syncHealthSnapshot.value = createDefaultSnapshot();
 }
 
 export function markSyncHealthUnavailable(message: string): void {
+    clearConnectingGraceExpiryTimer();
+    connectingSinceMs = null;
     publishSyncHealthSnapshot({
         bootstrapError: message,
         connected: false,
@@ -103,9 +151,7 @@ export function applySyncHealthFromStatus(
     }
 
     if (!connecting && !status.connected && connectingSinceMs != null) {
-        const graceElapsed =
-            nowMs - connectingSinceMs >= 8_000;
-        if (graceElapsed) {
+        if (nowMs - connectingSinceMs >= SYNC_CONNECTING_GRACE_MS) {
             connectingSinceMs = null;
         }
     }
@@ -127,6 +173,8 @@ export function applySyncHealthFromStatus(
         programScopeHasSynced: isProgramScopePrioritySynced(status),
         connectingSinceMs,
     });
+
+    syncConnectingGraceExpiryTimer(nowMs);
 }
 
 export function trackBrowserOnlineForSyncHealth(): void {

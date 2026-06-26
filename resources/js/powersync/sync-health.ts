@@ -180,11 +180,7 @@ export function deriveSyncHealth(
         };
     }
 
-    if (
-        (input.connecting || insideGrace) &&
-        !hasDownloadError &&
-        !input.connected
-    ) {
+    if (insideGrace && !hasDownloadError && !input.connected) {
         return {
             phase: "connecting",
             showBanner: false,

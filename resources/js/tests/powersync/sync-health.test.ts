@@ -171,6 +171,21 @@ describe("deriveSyncHealth", () => {
         expect(result.bannerVariant).toBe("error");
     });
 
+    test("reports stale local when connecting flag persists after grace expires", () => {
+        const result = deriveSyncHealth(
+            snapshot({
+                connected: false,
+                connecting: true,
+                hasSynced: true,
+                connectingSinceMs: nowMs - SYNC_CONNECTING_GRACE_MS - 1,
+            }),
+            nowMs,
+        );
+
+        expect(result.phase).toBe("stale_local");
+        expect(result.toolbarStatusKey).toBe("sync.toolbarStatusStale");
+    });
+
     test("reports unavailable when persistence is unavailable", () => {
         const result = deriveSyncHealth(
             snapshot({
