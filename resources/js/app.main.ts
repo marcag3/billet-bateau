@@ -16,6 +16,7 @@ import { bootstrapDomainModels } from "./models/model.registry";
 import { i18n, syncQuasarLanguageWithI18n } from "./utilities/i18n";
 import { APP_AUTH_EXPIRED_EVENT } from "./utilities/events";
 import { initSentry } from "./sentry";
+import { configurePowerSyncLogger } from "./powersync/powersync-logger";
 import {
     registerLazyChunkReloadHandlers,
     watchAuthenticatedServiceWorkerRegistration,
@@ -34,6 +35,7 @@ configure({
 const app = createApp(AppLayout);
 
 initSentry(app);
+configurePowerSyncLogger();
 
 const pinia = createPinia();
 

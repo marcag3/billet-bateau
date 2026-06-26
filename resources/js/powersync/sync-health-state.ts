@@ -5,6 +5,8 @@ import {
     hasBootstrappedCollection,
     persistenceUnavailable,
 } from "./powersync-runtime-state";
+import { isProgramScopePrioritySynced } from "./program-scope-sync-status";
+import { isUserScopePrioritySynced } from "./user-scope-sync-status";
 import {
     formatSyncErrorMessage,
     type SyncHealthSnapshot,
@@ -26,10 +28,14 @@ function createDefaultSnapshot(): SyncHealthSnapshot {
         browserOnline: readBrowserOnline(),
         connected: false,
         connecting: false,
+        uploading: false,
+        downloading: false,
         hasSynced: false,
         lastSyncedAt: undefined,
         downloadError: "",
         uploadError: "",
+        userScopeHasSynced: false,
+        programScopeHasSynced: false,
         connectingSinceMs: null,
     };
 }
@@ -107,6 +113,8 @@ export function applySyncHealthFromStatus(
     publishSyncHealthSnapshot({
         connected: status.connected === true,
         connecting,
+        uploading: status.dataFlowStatus?.uploading === true,
+        downloading: status.dataFlowStatus?.downloading === true,
         hasSynced: resolveHasSynced(status),
         lastSyncedAt: status.lastSyncedAt,
         downloadError: formatSyncErrorMessage(
@@ -115,6 +123,8 @@ export function applySyncHealthFromStatus(
         uploadError: formatSyncErrorMessage(
             status.dataFlowStatus?.uploadError,
         ),
+        userScopeHasSynced: isUserScopePrioritySynced(status),
+        programScopeHasSynced: isProgramScopePrioritySynced(status),
         connectingSinceMs,
     });
 }

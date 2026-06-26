@@ -11,6 +11,7 @@
             v-if="showErrorBadge"
             floating
             rounded
+            class="pointer-events-none"
             color="red"
             text-color="white"
             label="!"
@@ -19,89 +20,43 @@
             v-else-if="outboxPendingCount > 0"
             floating
             rounded
+            class="pointer-events-none"
             color="amber"
             text-color="black"
             :label="String(outboxPendingCount)"
         />
         <q-badge
+            v-else-if="syncHealth.hasSyncActivity"
+            floating
+            rounded
+            class="pointer-events-none"
+            color="amber"
+            text-color="black"
+            label="↕"
+        />
+        <q-badge
             v-else-if="syncHealth.toolbarSeverity === 'warning'"
             floating
             rounded
+            class="pointer-events-none"
             color="amber"
             text-color="black"
             label="!"
         />
 
-        <q-menu>
-            <q-list dense bordered class="p-2" style="min-width: 300px">
-                <q-item-label header class="text-caption text-grey-8">
-                    {{ t("sync.toolbarConnectionHeader") }}
-                </q-item-label>
-
-                <q-item>
-                    <q-item-section avatar>
-                        <q-icon
-                            :name="syncHealth.toolbarIcon"
-                            :color="connectionIconColor"
-                        />
-                    </q-item-section>
-                    <q-item-section>
-                        <q-item-label class="text-weight-medium">
-                            {{ syncHealth.toolbarStatusLabel }}
-                        </q-item-label>
-                        <q-item-label caption>
-                            {{ syncHealth.lastSyncedLabel }}
-                        </q-item-label>
-                        <q-item-label
-                            v-if="syncHealth.downloadError.length > 0"
-                            caption
-                            class="text-negative"
-                        >
-                            {{ syncHealth.downloadError }}
-                        </q-item-label>
-                    </q-item-section>
-                </q-item>
-
-                <q-separator class="my-2" />
-
-                <q-item
-                    v-if="hasOutboxCommitError"
-                    class="bg-red-1 text-negative rounded-borders mb-1"
-                >
-                    <q-item-section avatar>
-                        <q-icon name="error_outline" color="negative" />
-                    </q-item-section>
-                    <q-item-section>
-                        <q-item-label class="text-weight-medium">{{
-                            t("sync.outboxCommitFailed")
-                        }}</q-item-label>
-                        <q-item-label caption class="text-negative">{{
-                            outboxCommitError
-                        }}</q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                        <q-btn
-                            flat
-                            dense
-                            color="negative"
-                            :label="t('common.dismiss')"
-                            @click="dismissOutboxCommitError"
-                        />
-                    </q-item-section>
-                </q-item>
-
-                <q-item-label header class="text-caption text-grey-8">
-                    {{ t("sync.toolbarPendingHeader") }}
-                    <span class="ml-1">({{ outboxPendingCount }})</span>
-                </q-item-label>
-
-                <q-item v-if="outboxPendingCount === 0">
-                    <q-item-section>{{ t("sync.outboxEmpty") }}</q-item-section>
-                </q-item>
-                <q-item v-else>
-                    <q-item-section>{{ t("sync.rowPendingSync") }}</q-item-section>
-                </q-item>
-            </q-list>
+        <q-menu
+            anchor="bottom right"
+            self="top right"
+            transition-show="jump-down"
+            transition-hide="jump-up"
+        >
+            <AppSyncDiagnosticsPanel
+                :outbox-pending-count="outboxPendingCount"
+                :outbox-commit-error="outboxCommitError"
+                :has-outbox-commit-error="hasOutboxCommitError"
+                :connection-icon-color="connectionIconColor"
+                @dismiss-outbox-commit-error="dismissOutboxCommitError"
+            />
         </q-menu>
     </q-btn>
 </template>
@@ -112,6 +67,7 @@ import { useI18n } from "vue-i18n";
 import { useAuthStore } from "../store/auth.store";
 import { useSyncHealth } from "../composables/useSyncHealth";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+import AppSyncDiagnosticsPanel from "./AppSyncDiagnosticsPanel.vue";
 
 const authStore = useAuthStore();
 const { t } = useI18n();
@@ -130,7 +86,8 @@ const showErrorBadge = computed(
         hasOutboxCommitError.value ||
         syncHealth.toolbarSeverity === "error" ||
         (syncHealth.hasToolbarHealthAlert &&
-            syncHealth.downloadError.length > 0),
+            (syncHealth.downloadError.length > 0 ||
+                syncHealth.uploadError.length > 0)),
 );
 
 const connectionIconColor = computed(() => {

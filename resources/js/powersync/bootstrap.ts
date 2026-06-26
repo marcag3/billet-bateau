@@ -25,6 +25,7 @@ import {
     resetSyncHealthSnapshot,
     trackBrowserOnlineForSyncHealth,
 } from "./sync-health-state";
+import { logSyncStatusErrors } from "./powersync-sync-error-logger";
 
 async function resolveAuthenticatedUserId(): Promise<string> {
     const authStore = useAuthStore();
@@ -59,6 +60,7 @@ function applyReadinessFromStatus(status: SyncStatus): void {
 function handlePowerSyncStatusChanged(status: SyncStatus): void {
     applySyncHealthFromStatus(status);
     applyReadinessFromStatus(status);
+    logSyncStatusErrors(status);
 
     const uploadError = status.dataFlowStatus?.uploadError;
     const formatted = formatPowerSyncUploadError(uploadError);
