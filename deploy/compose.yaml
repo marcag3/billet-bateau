@@ -70,6 +70,11 @@ services:
             - max_replication_slots=10
             - -c
             - max_wal_senders=10
+            # PowerSync logical replication WAL budget per slot. Sized for ~20
+            # synced tables (2 streams), FOR ALL TABLES publication, and initial
+            # snapshot / sync-config redeploy headroom. Raise if PSYNC_S1146 occurs.
+            - -c
+            - max_slot_wal_keep_size=${POSTGRES_MAX_SLOT_WAL_KEEP_SIZE:-8GB}
         environment:
             POSTGRES_DB: "${DB_DATABASE}"
             POSTGRES_USER: "${DB_USERNAME}"
