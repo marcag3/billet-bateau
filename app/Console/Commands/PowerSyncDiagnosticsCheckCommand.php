@@ -51,8 +51,8 @@ class PowerSyncDiagnosticsCheckCommand extends Command
                 'PowerSync diagnostics request failed',
                 [
                     'admin_api_url' => $adminApiUrl,
-                    'http_status' => $exception->response?->status(),
-                    'response_body' => $exception->response?->body(),
+                    'http_status' => $exception->response->status(),
+                    'response_body' => $exception->response->body(),
                 ],
                 $exception,
             );
