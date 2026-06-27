@@ -98,7 +98,7 @@ services:
             PS_DATA_SOURCE_URI: "${POWERSYNC_DATA_SOURCE_URI:-postgresql://powersync:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable}"
             PS_STORAGE_SOURCE_URI: "${POWERSYNC_STORAGE_SOURCE_URI:-postgresql://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/powersync_storage?sslmode=disable}"
             PS_JWT_SECRET: "${POWERSYNC_JWT_SECRET:-powersync-local-poc-secret-32_bytes!}"
-            POWERSYNC_ADMIN_API_TOKEN: "${POWERSYNC_ADMIN_API_TOKEN:-powersync-local-admin-token}"
+            PS_ADMIN_API_TOKEN: "${POWERSYNC_ADMIN_API_TOKEN:-powersync-local-admin-token}"
         depends_on:
             pgsql:
                 condition: service_healthy
