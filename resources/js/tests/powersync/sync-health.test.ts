@@ -19,10 +19,14 @@ function snapshot(
         browserOnline: true,
         connected: false,
         connecting: false,
+        uploading: false,
+        downloading: false,
         hasSynced: true,
         lastSyncedAt: new Date("2024-06-01T12:00:00Z"),
         downloadError: "",
         uploadError: "",
+        userScopeHasSynced: false,
+        programScopeHasSynced: false,
         connectingSinceMs: null,
         ...overrides,
     };
@@ -38,6 +42,42 @@ describe("deriveSyncHealth", () => {
         expect(result.phase).toBe("live");
         expect(result.showBanner).toBe(false);
         expect(result.toolbarIcon).toBe("cloud_done");
+    });
+
+    test("reports uploading when connected and upload is in progress", () => {
+        const result = deriveSyncHealth(
+            snapshot({ connected: true, hasSynced: true, uploading: true }),
+            nowMs,
+        );
+
+        expect(result.phase).toBe("live");
+        expect(result.toolbarIcon).toBe("cloud_sync");
+        expect(result.toolbarStatusKey).toBe("sync.toolbarStatusUploading");
+    });
+
+    test("reports downloading when connected and download is in progress", () => {
+        const result = deriveSyncHealth(
+            snapshot({ connected: true, hasSynced: true, downloading: true }),
+            nowMs,
+        );
+
+        expect(result.phase).toBe("live");
+        expect(result.toolbarIcon).toBe("cloud_sync");
+        expect(result.toolbarStatusKey).toBe("sync.toolbarStatusDownloading");
+    });
+
+    test("prefers uploading over downloading when both are active", () => {
+        const result = deriveSyncHealth(
+            snapshot({
+                connected: true,
+                hasSynced: true,
+                uploading: true,
+                downloading: true,
+            }),
+            nowMs,
+        );
+
+        expect(result.toolbarStatusKey).toBe("sync.toolbarStatusUploading");
     });
 
     test("reports stale local data after connecting grace expires", () => {
@@ -129,6 +169,21 @@ describe("deriveSyncHealth", () => {
         expect(result.phase).toBe("sync_blocked");
         expect(result.showBanner).toBe(true);
         expect(result.bannerVariant).toBe("error");
+    });
+
+    test("reports stale local when connecting flag persists after grace expires", () => {
+        const result = deriveSyncHealth(
+            snapshot({
+                connected: false,
+                connecting: true,
+                hasSynced: true,
+                connectingSinceMs: nowMs - SYNC_CONNECTING_GRACE_MS - 1,
+            }),
+            nowMs,
+        );
+
+        expect(result.phase).toBe("stale_local");
+        expect(result.toolbarStatusKey).toBe("sync.toolbarStatusStale");
     });
 
     test("reports unavailable when persistence is unavailable", () => {

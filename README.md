@@ -179,7 +179,7 @@ PowerSync + RustFS + Mailpit ports: see [Compose-only variables](#compose-only-n
 
 Production: Docker Compose under `deploy/` (`deploy/compose.yaml`, `deploy/.env.example`).
 
-PowerSync is **embedded in `PRODUCTION_IMAGE`** (`sync-config.yaml` and `service.yaml` are baked at `/config/`). The `powersync` service uses the same image with `start -r unified`. Daily bucket compaction runs at 03:00 via `production-schedule` (`powersync:compact`). Dev bind-mounts `deploy/config/powersync` for live edits.
+PowerSync is **embedded in `PRODUCTION_IMAGE`** (`sync-config.yaml` and `service.yaml` are baked at `/config/`). The `powersync` service uses the same image with `start -r unified`. Daily bucket compaction runs at 03:00 via `production-schedule` (`powersync:compact`). Replication health is polled every 5 minutes (`powersync:diagnostics-check` → Sentry when `errors[]` is non-empty). Dev bind-mounts `deploy/config/powersync` for live edits.
 
 **First install** (empty Postgres volume): copy the Postgres bootstrap script so `pgsql` can create the PowerSync role on init:
 
@@ -189,7 +189,7 @@ mkdir -p config/pgsql
 cp /path/to/repo/deploy/config/pgsql/create-powersync-user.sh config/pgsql/
 ```
 
-Copy `deploy/.env.example` → `deploy/.env`, set `PRODUCTION_IMAGE`, R2 credentials, and secrets (`openssl rand -hex 16` for `APP_KEY`, `openssl rand -base64 48` for `POWERSYNC_JWT_SECRET`).
+Copy `deploy/.env.example` → `deploy/.env`, set `PRODUCTION_IMAGE`, R2 credentials, and secrets (`openssl rand -hex 16` for `APP_KEY`, `openssl rand -base64 48` for `POWERSYNC_JWT_SECRET`, `openssl rand -base64 32` for `POWERSYNC_ADMIN_API_TOKEN`).
 
 ```bash
 docker compose pull && docker compose up -d
@@ -232,6 +232,7 @@ Copy `.env.example` → `.env` (Sail). Copy `deploy/.env.example` → `deploy/.e
 | `SANCTUM_STATEFUL_DOMAINS` |     | ✓          | SPA host(s), comma-separated        |
 | `POWERSYNC_PUBLIC_URL`     |     | ✓          | Browser PowerSync URL               |
 | `POWERSYNC_JWT_SECRET`     |     | ✓          | HS256; must match PowerSync service |
+| `POWERSYNC_ADMIN_API_TOKEN` |     | ✓          | Bearer token for Diagnostics API; shared by Laravel and `service.yaml` `api.tokens` |
 | `MAIL_HOST`                |     | ✓          | Booking confirmation email          |
 
 ### Injected by Docker Compose
@@ -245,7 +246,7 @@ Usually omit from `.env`:
 | `AWS_ENDPOINT` | `http://rustfs:9000` | R2 endpoint in `deploy/.env`        |
 | `MAIL_*`       | Mailpit              | —                                   |
 
-\*Also `production-schedule`, `production-queue`, `powersync`. PowerSync Postgres URIs default from `DB_*` (`powersync` replication user shares `DB_PASSWORD`).
+\*Also `production-schedule`, `production-queue`, `powersync`. PowerSync Postgres URIs default from `DB_*` (`powersync` replication user shares `DB_PASSWORD`). `POWERSYNC_ADMIN_API_TOKEN` is passed into the `powersync` container for `service.yaml` `api.tokens`; Laravel reads the same variable from `deploy/.env` for `powersync:diagnostics-check`.
 
 ### Optional overrides
 
@@ -271,6 +272,10 @@ Usually omit from `.env`:
 | `POWERSYNC_JWT_SECRET`         | dev placeholder         | `config/powersync.php`   |
 | `POWERSYNC_JWT_KID`            | `local-dev`             | `config/powersync.php`   |
 | `POWERSYNC_JWT_AUDIENCE`       | `powersync-dev`         | `config/powersync.php`   |
+| `POWERSYNC_ADMIN_API_TOKEN`    | `powersync-local-admin-token` | `config/powersync.php` + `deploy/config/powersync/service.yaml` |
+| `POWERSYNC_ADMIN_API_URL`      | `http://powersync:8080` | `config/powersync.php` (internal Docker hostname) |
+| `POWERSYNC_DIAGNOSTICS_CHECK_ENABLED` | `true`           | `config/powersync.php` (`false` disables scheduled poll) |
+| `POSTGRES_MAX_SLOT_WAL_KEEP_SIZE` | `8GB`              | `deploy/compose.yaml` `pgsql` command (raise if `PSYNC_S1146` / slot invalidation) |
 | `SANCTUM_STATEFUL_DOMAINS`     | localhost + host        | `config/sanctum.php`     |
 | `MAIL_MAILER`                  | `log`                   | `config/mail.php`        |
 | `MAIL_FROM_ADDRESS`            | `hello@example.com`     | `config/mail.php`        |

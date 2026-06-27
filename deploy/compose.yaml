@@ -40,6 +40,7 @@ services:
             PS_DATA_SOURCE_URI: "${POWERSYNC_DATA_SOURCE_URI:-postgresql://powersync:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable}"
             PS_STORAGE_SOURCE_URI: "${POWERSYNC_STORAGE_SOURCE_URI:-postgresql://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/powersync_storage?sslmode=disable}"
             PS_JWT_SECRET: "${POWERSYNC_JWT_SECRET:-powersync-local-poc-secret-32_bytes!}"
+            POWERSYNC_ADMIN_API_TOKEN: "${POWERSYNC_ADMIN_API_TOKEN:-powersync-local-admin-token}"
         depends_on:
             - production
         networks:
@@ -70,6 +71,11 @@ services:
             - max_replication_slots=10
             - -c
             - max_wal_senders=10
+            # PowerSync logical replication WAL budget per slot. Sized for ~20
+            # synced tables (2 streams), FOR ALL TABLES publication, and initial
+            # snapshot / sync-config redeploy headroom. Raise if PSYNC_S1146 occurs.
+            - -c
+            - max_slot_wal_keep_size=${POSTGRES_MAX_SLOT_WAL_KEEP_SIZE:-8GB}
         environment:
             POSTGRES_DB: "${DB_DATABASE}"
             POSTGRES_USER: "${DB_USERNAME}"
@@ -101,6 +107,7 @@ services:
             PS_DATA_SOURCE_URI: "${POWERSYNC_DATA_SOURCE_URI:-postgresql://powersync:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable}"
             PS_STORAGE_SOURCE_URI: "${POWERSYNC_STORAGE_SOURCE_URI:-postgresql://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/powersync_storage?sslmode=disable}"
             PS_JWT_SECRET: "${POWERSYNC_JWT_SECRET:-powersync-local-poc-secret-32_bytes!}"
+            POWERSYNC_ADMIN_API_TOKEN: "${POWERSYNC_ADMIN_API_TOKEN:-powersync-local-admin-token}"
         depends_on:
             pgsql:
                 condition: service_healthy

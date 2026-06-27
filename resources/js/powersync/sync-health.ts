@@ -16,10 +16,14 @@ export type SyncHealthSnapshot = {
     browserOnline: boolean;
     connected: boolean;
     connecting: boolean;
+    uploading: boolean;
+    downloading: boolean;
     hasSynced: boolean;
     lastSyncedAt: Date | undefined;
     downloadError: string;
     uploadError: string;
+    userScopeHasSynced: boolean;
+    programScopeHasSynced: boolean;
     connectingSinceMs: number | null;
 };
 
@@ -137,6 +141,32 @@ export function deriveSyncHealth(
     );
     const hasDownloadError = input.downloadError.trim().length > 0;
 
+    if (input.connected && !hasDownloadError && input.uploading) {
+        return {
+            phase: "live",
+            showBanner: false,
+            bannerVariant: "info",
+            bannerTitleKey: "sync.toolbarStatusUploading",
+            bannerHintKey: "",
+            toolbarIcon: "cloud_sync",
+            toolbarSeverity: "none",
+            toolbarStatusKey: "sync.toolbarStatusUploading",
+        };
+    }
+
+    if (input.connected && !hasDownloadError && input.downloading) {
+        return {
+            phase: "live",
+            showBanner: false,
+            bannerVariant: "info",
+            bannerTitleKey: "sync.toolbarStatusDownloading",
+            bannerHintKey: "",
+            toolbarIcon: "cloud_sync",
+            toolbarSeverity: "none",
+            toolbarStatusKey: "sync.toolbarStatusDownloading",
+        };
+    }
+
     if (input.connected && !hasDownloadError) {
         return {
             phase: "live",
@@ -150,11 +180,7 @@ export function deriveSyncHealth(
         };
     }
 
-    if (
-        (input.connecting || insideGrace) &&
-        !hasDownloadError &&
-        !input.connected
-    ) {
+    if (insideGrace && !hasDownloadError && !input.connected) {
         return {
             phase: "connecting",
             showBanner: false,

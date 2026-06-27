@@ -34,4 +34,16 @@ return [
     'storage_source_uri' => env('PS_STORAGE_SOURCE_URI'),
 
     'compact_node_options' => (string) env('POWERSYNC_COMPACT_NODE_OPTIONS', '--max-old-space-size-percentage=80'),
+
+    /**
+     * Internal PowerSync admin API base URL (Docker network hostname in production).
+     */
+    'admin_api_url' => rtrim((string) env('POWERSYNC_ADMIN_API_URL', 'http://powersync:8080'), '/'),
+
+    /**
+     * Bearer token matching a value in PowerSync `api.tokens` (service.yaml).
+     */
+    'admin_api_token' => (string) env('POWERSYNC_ADMIN_API_TOKEN', 'powersync-local-admin-token'),
+
+    'diagnostics_check_enabled' => (bool) env('POWERSYNC_DIAGNOSTICS_CHECK_ENABLED', true),
 ];

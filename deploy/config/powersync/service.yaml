@@ -30,4 +30,4 @@ client_auth:
 
 api:
   tokens:
-    - powersync-local-admin-token
+    - !env POWERSYNC_ADMIN_API_TOKEN

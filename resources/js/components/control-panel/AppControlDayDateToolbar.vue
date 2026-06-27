@@ -58,6 +58,10 @@
                 :label="t('programsControlAdmin.showAllDates')"
             />
         </div>
+
+        <q-space />
+
+        <slot name="trailing" />
     </div>
 </template>
 
