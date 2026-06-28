@@ -82,7 +82,6 @@ class BookingDepartureReminderNotification extends Notification
         }
 
         return $message
-            ->line(__('Conservez ce courriel pour votre référence.'))
             ->salutation(BookingMailFormatter::formatSalutation($this->booking->program?->email_signature));
     }
 }
