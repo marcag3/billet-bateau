@@ -65,7 +65,6 @@ class BookingCancellationNotification extends Notification
         return $message
             ->line(__('Départ : :departure', ['departure' => $departureLabel]))
             ->line(__('Billets : :summary', ['summary' => $ticketSummary]))
-            ->line(__('Conservez ce courriel pour votre référence.'))
             ->salutation(BookingMailFormatter::formatSalutation($this->booking->program?->email_signature));
     }
 }
