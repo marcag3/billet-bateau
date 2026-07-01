@@ -302,6 +302,49 @@ export function isBenignUploadFailureForSyncHealth(
 }
 
 /**
+ * Whether a sync upload error should be reported to Sentry (same visibility as outbox commit error).
+ *
+ * @param formattedMessage
+ * @param snapshot
+ * @param nowMs
+ */
+export function shouldReportUploadSyncErrorToSentry(
+    formattedMessage: string,
+    snapshot: SyncHealthSnapshot,
+    nowMs: number,
+): boolean {
+    if (formattedMessage.trim().length === 0) {
+        return false;
+    }
+
+    return !isBenignUploadFailureForSyncHealth(formattedMessage, {
+        browserOnline: snapshot.browserOnline,
+        connected: snapshot.connected,
+        connectingSinceMs: snapshot.connectingSinceMs,
+        nowMs,
+    });
+}
+
+/**
+ * Whether a sync download error should be reported to Sentry (when sync is blocked in the UI).
+ *
+ * @param downloadError
+ * @param snapshot
+ * @param nowMs
+ */
+export function shouldReportDownloadSyncErrorToSentry(
+    downloadError: string,
+    snapshot: SyncHealthSnapshot,
+    nowMs: number,
+): boolean {
+    if (downloadError.trim().length === 0) {
+        return false;
+    }
+
+    return deriveSyncHealth(snapshot, nowMs).phase === "sync_blocked";
+}
+
+/**
  * Whether a PowerSync error should be suppressed before reporting to Sentry.
  *
  * @param message

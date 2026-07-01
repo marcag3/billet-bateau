@@ -3,6 +3,8 @@ import {
     deriveSyncHealth,
     isBenignUploadFailureForSyncHealth,
     isInsideConnectingGrace,
+    shouldReportDownloadSyncErrorToSentry,
+    shouldReportUploadSyncErrorToSentry,
     shouldSuppressPowerSyncErrorForSentry,
     SYNC_CONNECTING_GRACE_MS,
     type SyncHealthSnapshot,
@@ -252,6 +254,99 @@ describe("isBenignUploadFailureForSyncHealth", () => {
                 connectingSinceMs: nowMs - SYNC_CONNECTING_GRACE_MS - 1,
                 nowMs,
             }),
+        ).toBe(false);
+    });
+});
+
+describe("shouldReportUploadSyncErrorToSentry", () => {
+    test("does not report empty upload errors", () => {
+        expect(
+            shouldReportUploadSyncErrorToSentry("", snapshot(), nowMs),
+        ).toBe(false);
+    });
+
+    test("does not report benign failures inside connecting grace", () => {
+        expect(
+            shouldReportUploadSyncErrorToSentry(
+                "Failed to fetch",
+                snapshot({
+                    connected: false,
+                    connectingSinceMs: nowMs - 1_000,
+                }),
+                nowMs,
+            ),
+        ).toBe(false);
+    });
+
+    test("reports non-benign upload failures when online past grace", () => {
+        expect(
+            shouldReportUploadSyncErrorToSentry(
+                "Validation failed for bookings",
+                snapshot({
+                    connected: true,
+                    connectingSinceMs: nowMs - SYNC_CONNECTING_GRACE_MS - 1,
+                }),
+                nowMs,
+            ),
+        ).toBe(true);
+    });
+
+    test("reports network upload failures when online and disconnected past grace", () => {
+        expect(
+            shouldReportUploadSyncErrorToSentry(
+                "Failed to fetch",
+                snapshot({
+                    connected: false,
+                    connectingSinceMs: nowMs - SYNC_CONNECTING_GRACE_MS - 1,
+                }),
+                nowMs,
+            ),
+        ).toBe(true);
+    });
+});
+
+describe("shouldReportDownloadSyncErrorToSentry", () => {
+    test("does not report empty download errors", () => {
+        expect(
+            shouldReportDownloadSyncErrorToSentry("", snapshot(), nowMs),
+        ).toBe(false);
+    });
+
+    test("reports download errors while sync is blocked", () => {
+        expect(
+            shouldReportDownloadSyncErrorToSentry(
+                "Invalid token",
+                snapshot({
+                    connected: false,
+                    hasSynced: false,
+                }),
+                nowMs,
+            ),
+        ).toBe(true);
+    });
+
+    test("does not report download errors during stale local phase", () => {
+        expect(
+            shouldReportDownloadSyncErrorToSentry(
+                "WebSocket connection failed",
+                snapshot({
+                    connected: false,
+                    hasSynced: true,
+                    downloadError: "WebSocket connection failed",
+                    connectingSinceMs: nowMs - 1_000,
+                }),
+                nowMs,
+            ),
+        ).toBe(false);
+    });
+
+    test("does not report download errors while live", () => {
+        expect(
+            shouldReportDownloadSyncErrorToSentry(
+                "Transient error",
+                snapshot({ connected: true, hasSynced: true }),
+                nowMs,
+            ),
         ).toBe(false);
     });
 });

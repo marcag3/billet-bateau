@@ -2,7 +2,8 @@ import type { SyncStatus } from "@powersync/common";
 import * as Sentry from "@sentry/vue";
 import {
     formatSyncErrorMessage,
-    shouldSuppressPowerSyncErrorForSentry,
+    shouldReportDownloadSyncErrorToSentry,
+    shouldReportUploadSyncErrorToSentry,
 } from "./sync-health";
 import { powerSyncDbRef } from "./powersync-runtime-state";
 import { syncHealthSnapshot } from "./sync-health-state";
@@ -48,23 +49,6 @@ function buildSyncErrorContext(status: SyncStatus): Record<string, unknown> {
     };
 }
 
-function shouldReportSyncErrorToSentry(
-    message: string,
-    nowMs: number,
-): boolean {
-    if (message.length === 0) {
-        return false;
-    }
-
-    const snapshot = syncHealthSnapshot.value;
-
-    return !shouldSuppressPowerSyncErrorForSentry(message, {
-        browserOnline: snapshot.browserOnline,
-        connectingSinceMs: snapshot.connectingSinceMs,
-        nowMs,
-    });
-}
-
 /**
  * @param status
  * @param nowMs
@@ -80,6 +64,8 @@ export function logSyncStatusErrors(
         status.dataFlowStatus?.uploadError,
     );
 
+    const snapshot = syncHealthSnapshot.value;
+
     if (
         shouldLogError(
             downloadError,
@@ -87,7 +73,7 @@ export function logSyncStatusErrors(
             lastLoggedDownloadAtMs,
             nowMs,
         ) &&
-        shouldReportSyncErrorToSentry(downloadError, nowMs)
+        shouldReportDownloadSyncErrorToSentry(downloadError, snapshot, nowMs)
     ) {
         lastLoggedDownloadError = downloadError;
         lastLoggedDownloadAtMs = nowMs;
@@ -108,7 +94,7 @@ export function logSyncStatusErrors(
             lastLoggedUploadAtMs,
             nowMs,
         ) &&
-        shouldReportSyncErrorToSentry(uploadError, nowMs)
+        shouldReportUploadSyncErrorToSentry(uploadError, snapshot, nowMs)
     ) {
         lastLoggedUploadError = uploadError;
         lastLoggedUploadAtMs = nowMs;
