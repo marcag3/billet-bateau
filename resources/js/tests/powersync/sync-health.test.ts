@@ -43,7 +43,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("live");
-        expect(result.showBanner).toBe(false);
         expect(result.toolbarIcon).toBe("cloud_done");
     });
 
@@ -94,8 +93,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("stale_local");
-        expect(result.showBanner).toBe(true);
-        expect(result.bannerVariant).toBe("warning");
         expect(result.toolbarSeverity).toBe("warning");
     });
 
@@ -111,7 +108,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("stale_local");
-        expect(result.showBanner).toBe(true);
     });
 
     test("stays in connecting phase inside grace window", () => {
@@ -126,7 +122,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("connecting");
-        expect(result.showBanner).toBe(false);
         expect(result.toolbarIcon).toBe("cloud_sync");
     });
 
@@ -141,8 +136,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("offline");
-        expect(result.showBanner).toBe(true);
-        expect(result.bannerVariant).toBe("info");
     });
 
     test("reports idle when PowerSync has not bootstrapped yet", () => {
@@ -156,7 +149,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("idle");
-        expect(result.showBanner).toBe(false);
     });
 
     test("reports sync blocked when online without prior sync", () => {
@@ -170,8 +162,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("sync_blocked");
-        expect(result.showBanner).toBe(true);
-        expect(result.bannerVariant).toBe("error");
     });
 
     test("reports stale local when connecting flag persists after grace expires", () => {
@@ -199,8 +189,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("unavailable");
-        expect(result.showBanner).toBe(true);
-        expect(result.bannerVariant).toBe("error");
     });
 });
 

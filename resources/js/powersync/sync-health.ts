@@ -29,10 +29,6 @@ export type SyncHealthSnapshot = {
 
 export type DerivedSyncHealth = {
     phase: SyncHealthPhase;
-    showBanner: boolean;
-    bannerVariant: "warning" | "error" | "info";
-    bannerTitleKey: string;
-    bannerHintKey: string;
     toolbarIcon: "cloud_done" | "cloud_off" | "cloud_sync" | "cloud_upload";
     toolbarSeverity: "none" | "warning" | "error";
     toolbarStatusKey: string;
@@ -96,13 +92,6 @@ export function deriveSyncHealth(
     if (input.persistenceUnavailable || input.bootstrapError.trim().length > 0) {
         return {
             phase: "unavailable",
-            showBanner: input.hasBootstrapped || input.persistenceUnavailable,
-            bannerVariant: "error",
-            bannerTitleKey: "sync.healthUnavailableTitle",
-            bannerHintKey:
-                input.bootstrapError.trim().length > 0
-                    ? "sync.healthUnavailableHint"
-                    : "sync.unableLoadSync",
             toolbarIcon: "cloud_off",
             toolbarSeverity: "error",
             toolbarStatusKey: "sync.toolbarStatusUnavailable",
@@ -112,10 +101,6 @@ export function deriveSyncHealth(
     if (!input.browserOnline) {
         return {
             phase: "offline",
-            showBanner: input.hasBootstrapped && input.hasSynced,
-            bannerVariant: "info",
-            bannerTitleKey: "sync.healthOfflineTitle",
-            bannerHintKey: "sync.healthOfflineHint",
             toolbarIcon: "cloud_off",
             toolbarSeverity: "none",
             toolbarStatusKey: "sync.toolbarStatusOffline",
@@ -125,10 +110,6 @@ export function deriveSyncHealth(
     if (!input.hasBootstrapped) {
         return {
             phase: "idle",
-            showBanner: false,
-            bannerVariant: "info",
-            bannerTitleKey: "",
-            bannerHintKey: "",
             toolbarIcon: "cloud_off",
             toolbarSeverity: "none",
             toolbarStatusKey: "sync.toolbarStatusConnecting",
@@ -144,10 +125,6 @@ export function deriveSyncHealth(
     if (input.connected && !hasDownloadError && input.uploading) {
         return {
             phase: "live",
-            showBanner: false,
-            bannerVariant: "info",
-            bannerTitleKey: "sync.toolbarStatusUploading",
-            bannerHintKey: "",
             toolbarIcon: "cloud_sync",
             toolbarSeverity: "none",
             toolbarStatusKey: "sync.toolbarStatusUploading",
@@ -157,10 +134,6 @@ export function deriveSyncHealth(
     if (input.connected && !hasDownloadError && input.downloading) {
         return {
             phase: "live",
-            showBanner: false,
-            bannerVariant: "info",
-            bannerTitleKey: "sync.toolbarStatusDownloading",
-            bannerHintKey: "",
             toolbarIcon: "cloud_sync",
             toolbarSeverity: "none",
             toolbarStatusKey: "sync.toolbarStatusDownloading",
@@ -170,10 +143,6 @@ export function deriveSyncHealth(
     if (input.connected && !hasDownloadError) {
         return {
             phase: "live",
-            showBanner: false,
-            bannerVariant: "info",
-            bannerTitleKey: "sync.toolbarStatusLive",
-            bannerHintKey: "",
             toolbarIcon: "cloud_done",
             toolbarSeverity: "none",
             toolbarStatusKey: "sync.toolbarStatusLive",
@@ -183,10 +152,6 @@ export function deriveSyncHealth(
     if (insideGrace && !hasDownloadError && !input.connected) {
         return {
             phase: "connecting",
-            showBanner: false,
-            bannerVariant: "info",
-            bannerTitleKey: "sync.healthConnectingTitle",
-            bannerHintKey: "sync.healthConnectingHint",
             toolbarIcon: "cloud_sync",
             toolbarSeverity: "none",
             toolbarStatusKey: "sync.toolbarStatusConnecting",
@@ -196,12 +161,6 @@ export function deriveSyncHealth(
     if (input.hasSynced && !input.connected) {
         return {
             phase: "stale_local",
-            showBanner: true,
-            bannerVariant: "warning",
-            bannerTitleKey: "sync.healthStaleTitle",
-            bannerHintKey: hasDownloadError
-                ? "sync.healthDownloadError"
-                : "sync.healthStaleHint",
             toolbarIcon: "cloud_off",
             toolbarSeverity: "warning",
             toolbarStatusKey: "sync.toolbarStatusStale",
@@ -210,12 +169,6 @@ export function deriveSyncHealth(
 
     return {
         phase: "sync_blocked",
-        showBanner: true,
-        bannerVariant: "error",
-        bannerTitleKey: "sync.healthBlockedTitle",
-        bannerHintKey: hasDownloadError
-            ? "sync.healthDownloadError"
-            : "sync.healthBlockedHint",
         toolbarIcon: "cloud_off",
         toolbarSeverity: "error",
         toolbarStatusKey: "sync.toolbarStatusBlocked",

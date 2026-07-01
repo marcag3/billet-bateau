@@ -29,48 +29,6 @@ export function useSyncHealth() {
         deriveSyncHealth(syncHealthSnapshot.value, Date.now()),
     );
 
-    const bannerTitle = computed(() => t(derived.value.bannerTitleKey));
-
-    const bannerHint = computed(() => {
-        const hintKey = derived.value.bannerHintKey;
-        if (hintKey.length === 0) {
-            return "";
-        }
-
-        const snapshot = syncHealthSnapshot.value;
-        const lastSyncedTime = formatLastSyncedAt(
-            snapshot.lastSyncedAt,
-            locale.value,
-        );
-
-        if (hintKey === "sync.healthStaleHint") {
-            return lastSyncedTime.length > 0
-                ? t(hintKey, { time: lastSyncedTime })
-                : t("sync.healthStaleHintNoTime");
-        }
-
-        if (hintKey === "sync.healthOfflineHint") {
-            return lastSyncedTime.length > 0
-                ? t(hintKey, { time: lastSyncedTime })
-                : t("sync.healthOfflineHintNoTime");
-        }
-
-        if (hintKey === "sync.healthDownloadError") {
-            return snapshot.downloadError.length > 0
-                ? snapshot.downloadError
-                : t("sync.healthBlockedHint");
-        }
-
-        if (
-            hintKey === "sync.healthUnavailableHint" &&
-            snapshot.bootstrapError.length > 0
-        ) {
-            return snapshot.bootstrapError;
-        }
-
-        return t(hintKey);
-    });
-
     const toolbarStatusLabel = computed(() =>
         t(derived.value.toolbarStatusKey),
     );
@@ -135,10 +93,6 @@ export function useSyncHealth() {
 
     return reactive({
         phase: computed(() => derived.value.phase),
-        showBanner: computed(() => derived.value.showBanner),
-        bannerVariant: computed(() => derived.value.bannerVariant),
-        bannerTitle,
-        bannerHint,
         toolbarIcon,
         toolbarSeverity: computed(() => derived.value.toolbarSeverity),
         toolbarStatusLabel,

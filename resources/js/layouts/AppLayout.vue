@@ -81,11 +81,6 @@
                 </template>
             </AppAlertBanner>
 
-            <AppSyncHealthBanner
-                v-if="syncHealth.showBanner && authStore.canAccessProtectedRoute()"
-                class="m-4"
-            />
-
             <router-view />
         </q-page-container>
     </q-layout>
@@ -104,13 +99,9 @@ import {
     provideAppProgramMainNavTarget,
 } from "../utilities/app-layout-nav";
 import AppSyncToolbarMenu from "../components/AppSyncToolbarMenu.vue";
-import AppSyncHealthBanner from "../components/AppSyncHealthBanner.vue";
 import AppLanguageSwitcher from "../components/AppLanguageSwitcher.vue";
 import AppUserMenu from "../components/AppUserMenu.vue";
 import AppAlertBanner from "../components/ui/AppAlertBanner.vue";
-import { useSyncHealth } from "../composables/useSyncHealth";
-
-const syncHealth = useSyncHealth();
 
 const router = useRouter();
 const $q = useQuasar();
