@@ -22,6 +22,7 @@ services:
             SSL_MODE: "off"
         volumes:
             - ".:/var/www/html"
+            - "./deploy/config/powersync:/config:ro"
         depends_on:
             pgsql:
                 condition: service_healthy

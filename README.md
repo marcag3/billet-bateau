@@ -179,7 +179,7 @@ PowerSync + RustFS + Mailpit ports: see [Compose-only variables](#compose-only-n
 
 Production: Docker Compose under `deploy/` (`deploy/compose.yaml`, `deploy/.env.example`).
 
-PowerSync is **embedded in `PRODUCTION_IMAGE`** (`sync-config.yaml` and `service.yaml` are baked at `/config/`). The `powersync` service uses the same image with `start -r unified`. Daily bucket compaction runs at 03:00 via `production-schedule` (`powersync:compact`). Replication health is polled every 10 minutes (`powersync:diagnostics-check` → Sentry when `errors[]` is non-empty). Dev bind-mounts `deploy/config/powersync` for live edits.
+PowerSync is **embedded in `PRODUCTION_IMAGE`** (`sync-config.yaml` and `service.yaml` are baked at `/config/`). The `powersync` service uses the same image with `start -r unified`. Daily bucket compaction runs at 03:00 via `production-schedule` (`powersync:compact`). Replication health is polled every 10 minutes (`powersync:diagnostics-check` → Sentry when `errors[]` is non-empty). Dev bind-mounts `deploy/config/powersync` on `powersync` and `laravel.test` (for `powersync:compact`); Laravel reads PowerSync settings from `.env` via `config/powersync.php`.
 
 **First install** (empty Postgres volume): copy the Postgres bootstrap script so `pgsql` can create the PowerSync role on init:
 
@@ -246,7 +246,7 @@ Usually omit from `.env`:
 | `AWS_ENDPOINT` | `http://rustfs:9000` | R2 endpoint in `deploy/.env`        |
 | `MAIL_*`       | Mailpit              | —                                   |
 
-\*Also `production-schedule`, `production-queue`, `powersync`. PowerSync Postgres URIs default from `DB_*` (`powersync` replication user shares `DB_PASSWORD`). `POWERSYNC_ADMIN_API_TOKEN` is passed into the `powersync` container for `service.yaml` `api.tokens`; Laravel reads the same variable from `deploy/.env` for `powersync:diagnostics-check`.
+\*Also `production-schedule`, `production-queue`, `powersync`. The `powersync` service gets `PS_*` URIs from Compose (defaulting from `DB_*`). `laravel.test` and `production-schedule` read PowerSync settings from Laravel config (`.env`); see optional `POWERSYNC_*_URI` overrides below. `laravel.test` also bind-mounts `deploy/config/powersync` at `/config` for `powersync:compact`.
 
 ### Optional overrides
 
@@ -273,6 +273,8 @@ Usually omit from `.env`:
 | `POWERSYNC_JWT_KID`            | `local-dev`             | `config/powersync.php`   |
 | `POWERSYNC_JWT_AUDIENCE`       | `powersync-dev`         | `config/powersync.php`   |
 | `POWERSYNC_ADMIN_API_TOKEN`    | `powersync-local-admin-token` | `config/powersync.php` + `deploy/config/powersync/service.yaml` |
+| `POWERSYNC_DATA_SOURCE_URI`    | `postgresql://powersync:{DB_PASSWORD}@pgsql:5432/{DB_DATABASE}?sslmode=disable` | `config/powersync.php` (replication DB; `powersync` user shares `DB_PASSWORD`) |
+| `POWERSYNC_STORAGE_SOURCE_URI` | `postgresql://{DB_USERNAME}:{DB_PASSWORD}@pgsql:5432/powersync_storage?sslmode=disable` | `config/powersync.php` (bucket storage DB) |
 | `POWERSYNC_ADMIN_API_URL`      | `http://powersync:8080` | `config/powersync.php` (internal Docker hostname) |
 | `POWERSYNC_DIAGNOSTICS_CHECK_ENABLED` | `true`           | `config/powersync.php` (`false` disables scheduled poll) |
 | `POSTGRES_MAX_SLOT_WAL_KEEP_SIZE` | `8GB`              | `deploy/compose.yaml` `pgsql` command (raise if `PSYNC_S1146` / slot invalidation) |

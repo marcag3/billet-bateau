@@ -33,9 +33,11 @@ class PowerSyncCompactCommandTest extends TestCase
             'powersync.service_entry' => $serviceEntry,
             'powersync.entrypoint' => $entrypoint,
             'powersync.config_path' => '/config/service.yaml',
+            'powersync.port' => 8080,
             'powersync.data_source_uri' => 'postgresql://powersync:password@pgsql:5432/database?sslmode=disable',
             'powersync.storage_source_uri' => 'postgresql://root:secret@pgsql:5432/powersync_storage?sslmode=disable',
             'powersync.jwt_secret' => 'powersync-local-poc-secret-32_bytes!',
+            'powersync.admin_api_token' => 'powersync-local-admin-token',
             'powersync.compact_node_options' => '--max-old-space-size-percentage=80',
         ]);
 
@@ -53,9 +55,11 @@ class PowerSyncCompactCommandTest extends TestCase
             }
 
             return $process->environment['POWERSYNC_CONFIG_PATH'] === '/config/service.yaml'
+                && $process->environment['PS_PORT'] === '8080'
                 && $process->environment['PS_DATA_SOURCE_URI'] === 'postgresql://powersync:password@pgsql:5432/database?sslmode=disable'
                 && $process->environment['PS_STORAGE_SOURCE_URI'] === 'postgresql://root:secret@pgsql:5432/powersync_storage?sslmode=disable'
                 && $process->environment['PS_JWT_SECRET'] === 'powersync-local-poc-secret-32_bytes!'
+                && $process->environment['PS_ADMIN_API_TOKEN'] === 'powersync-local-admin-token'
                 && $process->environment['NODE_OPTIONS'] === '--max-old-space-size-percentage=80';
         });
     }
