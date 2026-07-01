@@ -1,5 +1,7 @@
 import { createBaseLogger, LogLevel } from "@powersync/common";
 import * as Sentry from "@sentry/vue";
+import { shouldSuppressPowerSyncErrorForSentry } from "./sync-health";
+import { syncHealthSnapshot } from "./sync-health-state";
 
 export function configurePowerSyncLogger(): void {
     const logger = createBaseLogger();
@@ -38,6 +40,19 @@ export function configurePowerSyncLogger(): void {
         }
 
         if (level === "error") {
+            const snapshot = syncHealthSnapshot.value;
+            const nowMs = Date.now();
+
+            if (
+                shouldSuppressPowerSyncErrorForSentry(mainMessage, {
+                    browserOnline: snapshot.browserOnline,
+                    connectingSinceMs: snapshot.connectingSinceMs,
+                    nowMs,
+                })
+            ) {
+                return;
+            }
+
             Sentry.captureMessage(`PowerSync error: ${mainMessage}`, {
                 level: "error",
                 extra: extraData,

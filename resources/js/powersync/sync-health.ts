@@ -222,6 +222,32 @@ export function deriveSyncHealth(
     };
 }
 
+const BENIGN_NETWORK_ERROR_FRAGMENTS = [
+    "failed to fetch",
+    "networkerror",
+    "network request failed",
+    "load failed",
+    "net::err",
+    "the internet connection appears to be offline",
+    "aborted",
+    "abort",
+    "delaying due to previously encountered crud item",
+    "failed to create websocket",
+    "failed to connect websocket",
+    "websocket connection",
+] as const;
+
+/**
+ * @param message
+ */
+export function isBenignNetworkErrorMessage(message: string): boolean {
+    const text = message.toLowerCase();
+
+    return BENIGN_NETWORK_ERROR_FRAGMENTS.some((fragment) =>
+        text.includes(fragment),
+    );
+}
+
 /**
  * Whether an upload network failure should be hidden while sync is degraded.
  *
@@ -253,19 +279,34 @@ export function isBenignUploadFailureForSyncHealth(
         return false;
     }
 
-    const text = formattedMessage.toLowerCase();
+    return isBenignNetworkErrorMessage(formattedMessage);
+}
 
-    const benignFragments = [
-        "failed to fetch",
-        "networkerror",
-        "network request failed",
-        "load failed",
-        "net::err",
-        "the internet connection appears to be offline",
-        "aborted",
-        "abort",
-        "delaying due to previously encountered crud item",
-    ];
+/**
+ * Whether a PowerSync error should be suppressed before reporting to Sentry.
+ *
+ * @param message
+ * @param options
+ */
+export function shouldSuppressPowerSyncErrorForSentry(
+    message: string,
+    options: {
+        browserOnline: boolean;
+        connectingSinceMs: number | null;
+        nowMs: number;
+    },
+): boolean {
+    if (message.trim().length === 0) {
+        return true;
+    }
 
-    return benignFragments.some((fragment) => text.includes(fragment));
+    if (!options.browserOnline) {
+        return true;
+    }
+
+    if (isInsideConnectingGrace(options.connectingSinceMs, options.nowMs)) {
+        return true;
+    }
+
+    return isBenignNetworkErrorMessage(message);
 }

@@ -3,6 +3,7 @@ import {
     deriveSyncHealth,
     isBenignUploadFailureForSyncHealth,
     isInsideConnectingGrace,
+    shouldSuppressPowerSyncErrorForSentry,
     SYNC_CONNECTING_GRACE_MS,
     type SyncHealthSnapshot,
 } from "../../powersync/sync-health";
@@ -251,6 +252,85 @@ describe("isBenignUploadFailureForSyncHealth", () => {
                 connectingSinceMs: nowMs - SYNC_CONNECTING_GRACE_MS - 1,
                 nowMs,
             }),
+        ).toBe(false);
+    });
+});
+
+describe("shouldSuppressPowerSyncErrorForSentry", () => {
+    const onlinePastGrace = {
+        browserOnline: true,
+        connectingSinceMs: nowMs - SYNC_CONNECTING_GRACE_MS - 1,
+        nowMs,
+    };
+
+    test("suppresses empty messages", () => {
+        expect(shouldSuppressPowerSyncErrorForSentry("", onlinePastGrace)).toBe(
+            true,
+        );
+    });
+
+    test("suppresses Firefox network errors", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "TypeError: NetworkError when attempting to fetch resource.",
+                onlinePastGrace,
+            ),
+        ).toBe(true);
+    });
+
+    test("suppresses failed to fetch while online", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "Failed to fetch",
+                onlinePastGrace,
+            ),
+        ).toBe(true);
+    });
+
+    test("suppresses websocket connection failures while online", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "Error: Failed to create websocket connection to wss://sync.example.com/sync/stream",
+                onlinePastGrace,
+            ),
+        ).toBe(true);
+    });
+
+    test("suppresses failed to connect websocket while online", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "Failed to connect WebSocket",
+                onlinePastGrace,
+            ),
+        ).toBe(true);
+    });
+
+    test("suppresses any message while browser is offline", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry("Invalid token", {
+                browserOnline: false,
+                connectingSinceMs: null,
+                nowMs,
+            }),
+        ).toBe(true);
+    });
+
+    test("suppresses any message inside connecting grace", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry("Invalid token", {
+                browserOnline: true,
+                connectingSinceMs: nowMs - 1_000,
+                nowMs,
+            }),
+        ).toBe(true);
+    });
+
+    test("does not suppress non-network errors while online past grace", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "Invalid token",
+                onlinePastGrace,
+            ),
         ).toBe(false);
     });
 });
