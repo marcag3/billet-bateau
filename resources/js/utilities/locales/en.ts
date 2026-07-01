@@ -303,9 +303,9 @@ export default {
     inAppBrowser: {
         title: "Open this page in {browser} for the best experience",
         iosInstructions:
-            "Tap ⋯ at the bottom right, then choose Open in browser.",
+            "Tap ⋯ at the bottom right, then choose Open in browser. If you use Firefox, paste the copied link there.",
         androidInstructions:
-            "Tap ⋯ at the top right, then choose Open in Chrome.",
+            "Tap ⋯ at the top right, then choose Open in Firefox.",
         genericInstructions:
             "Use your browser menu to open this page in {browser}.",
         openInBrowser: "Open in {browser}",

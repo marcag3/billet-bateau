@@ -28,35 +28,35 @@ describe("isMetaInAppBrowser", () => {
 });
 
 describe("recommendedBrowser", () => {
-    it("recommends Safari on iOS", () => {
-        expect(recommendedBrowser(facebookIosUa)).toBe("Safari");
+    it("recommends Firefox on iOS", () => {
+        expect(recommendedBrowser(facebookIosUa)).toBe("Firefox");
     });
 
-    it("recommends Chrome on Android", () => {
-        expect(recommendedBrowser(facebookAndroidUa)).toBe("Chrome");
+    it("recommends Firefox on Android", () => {
+        expect(recommendedBrowser(facebookAndroidUa)).toBe("Firefox");
     });
 });
 
 describe("buildExternalBrowserOpenUrl", () => {
-    it("builds x-safari-https URL on iOS", () => {
+    it("builds Firefox open-url deeplink on iOS", () => {
         expect(
             buildExternalBrowserOpenUrl(
                 "https://billet.example/programs/test?fbclid=abc",
                 facebookIosUa,
             ),
         ).toBe(
-            "x-safari-https://billet.example/programs/test?fbclid=abc",
+            "firefox://open-url?url=https%3A%2F%2Fbillet.example%2Fprograms%2Ftest%3Ffbclid%3Dabc",
         );
     });
 
-    it("builds Chrome intent URL on Android", () => {
+    it("builds Firefox intent URL on Android", () => {
         expect(
             buildExternalBrowserOpenUrl(
                 "https://billet.example/?fbclid=abc",
                 facebookAndroidUa,
             ),
         ).toBe(
-            "intent://billet.example/?fbclid=abc#Intent;scheme=https;package=com.android.chrome;end",
+            "intent://billet.example/?fbclid=abc#Intent;scheme=https;package=org.mozilla.firefox;end",
         );
     });
 });

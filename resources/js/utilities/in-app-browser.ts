@@ -5,7 +5,9 @@ const ANDROID_PATTERN = /Android/i;
 export const META_IN_APP_BROWSER_BANNER_DISMISS_KEY =
     "meta-in-app-browser-banner-dismissed";
 
-export type RecommendedBrowser = "Safari" | "Chrome" | "browser";
+export type RecommendedBrowser = "Firefox" | "Safari" | "browser";
+
+const FIREFOX_ANDROID_PACKAGE = "org.mozilla.firefox";
 
 /**
  * Whether the user agent indicates Facebook or Instagram in-app browser.
@@ -27,19 +29,15 @@ export function isAndroid(userAgent: string = navigator.userAgent): boolean {
 export function recommendedBrowser(
     userAgent: string = navigator.userAgent,
 ): RecommendedBrowser {
-    if (isIos(userAgent)) {
-        return "Safari";
-    }
-
-    if (isAndroid(userAgent)) {
-        return "Chrome";
+    if (isIos(userAgent) || isAndroid(userAgent)) {
+        return "Firefox";
     }
 
     return "browser";
 }
 
 /**
- * URL scheme tricks that sometimes escape Meta in-app browsers into the system browser.
+ * URL scheme tricks that sometimes escape Meta in-app browsers into Firefox.
  */
 export function buildExternalBrowserOpenUrl(
     url: string,
@@ -49,11 +47,11 @@ export function buildExternalBrowserOpenUrl(
         const parsed = new URL(url);
 
         if (isIos(userAgent)) {
-            return `x-safari-https://${parsed.host}${parsed.pathname}${parsed.search}`;
+            return `firefox://open-url?url=${encodeURIComponent(parsed.href)}`;
         }
 
         if (isAndroid(userAgent)) {
-            return `intent://${parsed.host}${parsed.pathname}${parsed.search}#Intent;scheme=https;package=com.android.chrome;end`;
+            return `intent://${parsed.host}${parsed.pathname}${parsed.search}#Intent;scheme=https;package=${FIREFOX_ANDROID_PACKAGE};end`;
         }
     } catch {
         return null;

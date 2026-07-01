@@ -316,9 +316,9 @@ export default {
     inAppBrowser: {
         title: "Ouvrez cette page dans {browser} pour une meilleure expérience",
         iosInstructions:
-            "Appuyez sur ⋯ en bas à droite, puis sur « Ouvrir dans le navigateur ».",
+            "Appuyez sur ⋯ en bas à droite, puis sur « Ouvrir dans le navigateur ». Si vous utilisez Firefox, collez-y le lien copié.",
         androidInstructions:
-            "Appuyez sur ⋯ en haut à droite, puis sur « Ouvrir dans Chrome ».",
+            "Appuyez sur ⋯ en haut à droite, puis sur « Ouvrir dans Firefox ».",
         genericInstructions:
             "Utilisez le menu du navigateur pour ouvrir cette page dans {browser}.",
         openInBrowser: "Ouvrir dans {browser}",
