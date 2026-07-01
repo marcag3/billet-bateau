@@ -18,6 +18,10 @@ export function initSentry(app: App): void {
             // Facebook/Meta in-app browser injects scripts (e.g. sendDataToNative) that
             // assume window.webkit.messageHandlers exists outside a native WKWebView bridge.
             /window\.webkit\.messageHandlers/,
+            // Facebook/Meta Android IAB (navigation_performance_logger_android) calls Java
+            // bridge methods (postMessage, enableDidUserTypeOnKeyboardLogging, etc.) after
+            // the WebView is torn down — typically on beforeunload during navigation away.
+            /Java object is gone/,
         ],
     });
 }
