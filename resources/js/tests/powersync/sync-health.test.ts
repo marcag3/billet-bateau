@@ -333,4 +333,13 @@ describe("shouldSuppressPowerSyncErrorForSentry", () => {
             ),
         ).toBe(false);
     });
+
+    test("suppresses JWT expiry during stream teardown while online past grace", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "Error: Closed. Original cause [Error: [PSYNC_S2103] JWT has expired]",
+                onlinePastGrace,
+            ),
+        ).toBe(true);
+    });
 });

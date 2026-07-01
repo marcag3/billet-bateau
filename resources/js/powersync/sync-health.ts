@@ -237,14 +237,33 @@ const BENIGN_NETWORK_ERROR_FRAGMENTS = [
     "websocket connection",
 ] as const;
 
+/** Expected during PowerSync JWT rotation and stream teardown before reconnect. */
+const BENIGN_POWERSYNC_RECONNECT_FRAGMENTS = [
+    "jwt has expired",
+    "psync_s2103",
+    "error: closed",
+] as const;
+
+function messageIncludesFragment(
+    message: string,
+    fragments: readonly string[],
+): boolean {
+    const text = message.toLowerCase();
+
+    return fragments.some((fragment) => text.includes(fragment));
+}
+
 /**
  * @param message
  */
 export function isBenignNetworkErrorMessage(message: string): boolean {
-    const text = message.toLowerCase();
+    return messageIncludesFragment(message, BENIGN_NETWORK_ERROR_FRAGMENTS);
+}
 
-    return BENIGN_NETWORK_ERROR_FRAGMENTS.some((fragment) =>
-        text.includes(fragment),
+function isBenignPowerSyncReconnectErrorMessage(message: string): boolean {
+    return messageIncludesFragment(
+        message,
+        BENIGN_POWERSYNC_RECONNECT_FRAGMENTS,
     );
 }
 
@@ -308,5 +327,8 @@ export function shouldSuppressPowerSyncErrorForSentry(
         return true;
     }
 
-    return isBenignNetworkErrorMessage(message);
+    return (
+        isBenignNetworkErrorMessage(message) ||
+        isBenignPowerSyncReconnectErrorMessage(message)
+    );
 }
