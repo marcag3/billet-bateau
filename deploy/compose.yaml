@@ -42,7 +42,10 @@ services:
             PS_JWT_SECRET: "${POWERSYNC_JWT_SECRET:-powersync-local-poc-secret-32_bytes!}"
             POWERSYNC_ADMIN_API_TOKEN: "${POWERSYNC_ADMIN_API_TOKEN:-powersync-local-admin-token}"
         depends_on:
-            - production
+            production:
+                condition: service_started
+            powersync:
+                condition: service_healthy
         networks:
             - app
 

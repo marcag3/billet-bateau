@@ -179,7 +179,7 @@ PowerSync + RustFS + Mailpit ports: see [Compose-only variables](#compose-only-n
 
 Production: Docker Compose under `deploy/` (`deploy/compose.yaml`, `deploy/.env.example`).
 
-PowerSync is **embedded in `PRODUCTION_IMAGE`** (`sync-config.yaml` and `service.yaml` are baked at `/config/`). The `powersync` service uses the same image with `start -r unified`. Daily bucket compaction runs at 03:00 via `production-schedule` (`powersync:compact`). Replication health is polled every 5 minutes (`powersync:diagnostics-check` → Sentry when `errors[]` is non-empty). Dev bind-mounts `deploy/config/powersync` for live edits.
+PowerSync is **embedded in `PRODUCTION_IMAGE`** (`sync-config.yaml` and `service.yaml` are baked at `/config/`). The `powersync` service uses the same image with `start -r unified`. Daily bucket compaction runs at 03:00 via `production-schedule` (`powersync:compact`). Replication health is polled every 10 minutes (`powersync:diagnostics-check` → Sentry when `errors[]` is non-empty). Dev bind-mounts `deploy/config/powersync` for live edits.
 
 **First install** (empty Postgres volume): copy the Postgres bootstrap script so `pgsql` can create the PowerSync role on init:
 
