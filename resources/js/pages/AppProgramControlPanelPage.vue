@@ -11,19 +11,19 @@
             {{ emptyDayMessage }}
         </p>
 
-        <q-virtual-scroll v-else ref="tripLaneRef" v-touch-pan.mouse.horizontal="onTripLanePan"
-            :items="visibleTripCards" virtual-scroll-horizontal :virtual-scroll-item-size="CONTROL_PANEL_TRIP_CARD_WIDTH_PX"
-            :style="{ minHeight: `${CONTROL_PANEL_TRIP_CARD_HEIGHT_PX}px` }"
-            class="col w-full max-w-full min-h-0 snap-x snap-mandatory" v-slot="{ item }">
-            <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" :program-timezone="programTimezone"
-                :boat-names-by-id="boatNamesById" :guide-names-by-id="guideNamesById"
-                @open-depart="openDepartModal(item)" @arrive="confirmArrive(item)" @cancel="confirmCancel(item)"
-                @open-walk-in="openWalkInModal(item)"
-                @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)"
-                @undo-check-in-booking="(bookingId) => onUndoCheckInBooking(item, bookingId)"
-                @remove-passenger="(passengerId) => removePassenger(passengerId)"
-                @check-in-booking="(bookingId) => onCheckInBooking(item, bookingId)" />
-        </q-virtual-scroll>
+        <div v-else class="control-panel-trip-lane min-w-0 w-full overflow-x-auto snap-x snap-mandatory">
+            <div class="flex flex-nowrap w-max"
+                :style="{ height: `${CONTROL_PANEL_TRIP_CARD_HEIGHT_PX}px` }">
+                <AppControlPanelTripCard v-for="item in visibleTripCards" :key="String(item.trip.id)" :card="item"
+                    :program-timezone="programTimezone" :boat-names-by-id="boatNamesById"
+                    :guide-names-by-id="guideNamesById" @open-depart="openDepartModal(item)"
+                    @arrive="confirmArrive(item)" @cancel="confirmCancel(item)" @open-walk-in="openWalkInModal(item)"
+                    @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)"
+                    @undo-check-in-booking="(bookingId) => onUndoCheckInBooking(item, bookingId)"
+                    @remove-passenger="(passengerId) => removePassenger(passengerId)"
+                    @check-in-booking="(bookingId) => onCheckInBooking(item, bookingId)" />
+            </div>
+        </div>
 
         <AppControlPanelWalkInBookingDialog v-model:open="walkInDialogOpen" :ticket-type-options="ticketTypeOptions"
             :format-ticket-type-price="formatTicketTypePrice" :booking-questions="bookingQuestions"
@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type ComponentPublicInstance } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
@@ -55,11 +55,7 @@ import { useControlPanelWalkInBooking } from "../composables/useControlPanelWalk
 import { useControlPanelCheckIn } from "../composables/useControlPanelCheckIn";
 import { useControlPanelUndoCheckIn } from "../composables/useControlPanelUndoCheckIn";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
-import { useControlPanelTripLanePan } from "../composables/useControlPanelTripLanePan";
-import {
-    CONTROL_PANEL_TRIP_CARD_HEIGHT_PX,
-    CONTROL_PANEL_TRIP_CARD_WIDTH_PX,
-} from "../utilities/control-panel-trip-card-layout";
+import { CONTROL_PANEL_TRIP_CARD_HEIGHT_PX } from "../utilities/control-panel-trip-card-layout";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppControlPanelDayToolbar from "../components/control-panel/AppControlPanelDayToolbar.vue";
@@ -80,10 +76,6 @@ const powersync = getAppPowerSyncContext();
 usePageLayout({ documentTitleKey: "programsControl.title" });
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
-
-const tripLaneRef = ref<ComponentPublicInstance | null>(null);
-
-const { onTripLanePan } = useControlPanelTripLanePan(tripLaneRef);
 
 const {
     selectedDateYmd,
