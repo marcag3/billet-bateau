@@ -1,5 +1,5 @@
 <template>
-    <div class="row items-center gap-2 mb-4">
+    <div class="row items-center gap-2 mb-4 flex-wrap">
         <div class="col-auto row items-center gap-1">
             <q-btn
                 flat
@@ -57,7 +57,7 @@
 
         <q-space />
 
-        <div class="col-auto row gap-2">
+        <div class="col-12 sm:col-auto row gap-2 flex-nowrap overflow-x-auto pb-1">
             <q-chip outline :style="controlPanelStatChipStyle('booked')">
                 {{ t('programsControl.statsBooked') }}: {{ stats.booked }}
             </q-chip>

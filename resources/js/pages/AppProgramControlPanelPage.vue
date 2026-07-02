@@ -1,5 +1,5 @@
 <template>
-    <q-page class="p-4 column min-h-0 h-[calc(100dvh-50px)] max-h-[calc(100dvh-50px)] overflow-hidden">
+    <q-page fit class="p-4 column overflow-x-hidden" style="overflow-y: auto">
         <AppPageHeader :title="t('programsControl.title')" class="mb-2 shrink-0" />
 
         <AppControlPanelDayToolbar v-model:selected-date-ymd="selectedDateYmd" class="shrink-0"
@@ -12,11 +12,13 @@
         </p>
 
         <q-virtual-scroll v-else ref="tripLaneRef" v-touch-pan.mouse.horizontal="onTripLanePan"
-            :items="visibleTripCards" virtual-scroll-horizontal :virtual-scroll-item-size="tripCardItemSize"
+            :items="visibleTripCards" virtual-scroll-horizontal :virtual-scroll-item-size="CONTROL_PANEL_TRIP_CARD_WIDTH_PX"
+            :style="{ minHeight: `${CONTROL_PANEL_TRIP_CARD_HEIGHT_PX}px` }"
             class="col w-full max-w-full min-h-0 snap-x snap-mandatory" v-slot="{ item }">
-            <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" :program-timezone="programTimezone" :boat-names-by-id="boatNamesById"
-                :guide-names-by-id="guideNamesById" @open-depart="openDepartModal(item)"
-                @arrive="confirmArrive(item)" @cancel="confirmCancel(item)" @open-walk-in="openWalkInModal(item)"
+            <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" :program-timezone="programTimezone"
+                :boat-names-by-id="boatNamesById" :guide-names-by-id="guideNamesById"
+                @open-depart="openDepartModal(item)" @arrive="confirmArrive(item)" @cancel="confirmCancel(item)"
+                @open-walk-in="openWalkInModal(item)"
                 @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)"
                 @undo-check-in-booking="(bookingId) => onUndoCheckInBooking(item, bookingId)"
                 @remove-passenger="(passengerId) => removePassenger(passengerId)"
@@ -53,8 +55,11 @@ import { useControlPanelWalkInBooking } from "../composables/useControlPanelWalk
 import { useControlPanelCheckIn } from "../composables/useControlPanelCheckIn";
 import { useControlPanelUndoCheckIn } from "../composables/useControlPanelUndoCheckIn";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
-import { useControlPanelTripLaneLayout } from "../composables/useControlPanelTripLaneLayout";
 import { useControlPanelTripLanePan } from "../composables/useControlPanelTripLanePan";
+import {
+    CONTROL_PANEL_TRIP_CARD_HEIGHT_PX,
+    CONTROL_PANEL_TRIP_CARD_WIDTH_PX,
+} from "../utilities/control-panel-trip-card-layout";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppControlPanelDayToolbar from "../components/control-panel/AppControlPanelDayToolbar.vue";
@@ -78,7 +83,6 @@ const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const tripLaneRef = ref<ComponentPublicInstance | null>(null);
 
-const { tripCardItemSize } = useControlPanelTripLaneLayout(tripLaneRef);
 const { onTripLanePan } = useControlPanelTripLanePan(tripLaneRef);
 
 const {

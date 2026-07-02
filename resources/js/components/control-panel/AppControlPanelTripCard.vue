@@ -1,5 +1,6 @@
 <template>
-    <div class="relative snap-start shrink-0 h-full w-auto aspect-[5/12] overflow-hidden flex flex-col">
+    <div class="relative snap-start shrink-0 overflow-hidden flex flex-col"
+        :style="tripCardSizeStyle">
         <div class="shrink-0 mt-10 w-full min-w-0 px-14">
             <div class="text-center min-w-0">
                 <div class="text-h6">{{ departureTimeLabel }}</div>
@@ -93,6 +94,15 @@ import {
     type ControlPanelTripDisplayStatus,
 } from '../../utilities/control-panel-day-board';
 import { formatIsoInTimezone } from '../../utilities/program-timezone-datetime';
+import {
+    CONTROL_PANEL_TRIP_CARD_HEIGHT_PX,
+    CONTROL_PANEL_TRIP_CARD_WIDTH_PX,
+} from '../../utilities/control-panel-trip-card-layout';
+
+const tripCardSizeStyle = {
+    height: `${CONTROL_PANEL_TRIP_CARD_HEIGHT_PX}px`,
+    width: `${CONTROL_PANEL_TRIP_CARD_WIDTH_PX}px`,
+};
 
 const props = defineProps<{
     card: ControlPanelTripCardModel;

@@ -18,13 +18,17 @@ function isInteractivePanTarget(target: EventTarget | null): boolean {
     return target.closest(INTERACTIVE_SELECTOR) != null;
 }
 
+function resolveTripLaneScrollElement(
+    instance: ComponentPublicInstance | null,
+): HTMLElement | null {
+    const root = instance?.$el;
+    return root instanceof HTMLElement ? root : null;
+}
+
 export function useControlPanelTripLanePan(laneRef: Ref<ComponentPublicInstance | null>) {
     let panStartScrollLeft = 0;
 
-    const scrollEl = computed((): HTMLElement | null => {
-        const root = laneRef.value?.$el;
-        return root instanceof HTMLElement ? root : null;
-    });
+    const scrollEl = computed((): HTMLElement | null => resolveTripLaneScrollElement(laneRef.value));
 
     function onTripLanePan(details: TripLanePanDetails): void | false {
         if (details.isFinal === true) {
