@@ -80,7 +80,7 @@ class BookingModifiedNotification extends Notification
             ]);
         }
 
-        $plainCancelToken = $this->booking->cancel_token;
+        $plainCancelToken = $this->booking->plainCancelToken();
         if ($plainCancelToken !== null && $plainCancelToken !== '') {
             $message
                 ->line(__('Pour annuler votre réservation, utilisez le bouton ci-dessous.'))

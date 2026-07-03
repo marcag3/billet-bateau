@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\BookingFactory;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 
 class Booking extends Model
 {
@@ -74,5 +76,25 @@ class Booking extends Model
     public function bookingTickets(): HasMany
     {
         return $this->hasMany(BookingTicket::class, 'booking_id');
+    }
+
+    public function plainCancelToken(): ?string
+    {
+        $raw = $this->getAttributes()['cancel_token'] ?? null;
+
+        if (! is_string($raw) || $raw === '') {
+            return null;
+        }
+
+        try {
+            return $this->fromEncryptedString($raw);
+        } catch (DecryptException $exception) {
+            Log::warning('Unable to decrypt booking cancel_token.', [
+                'booking_id' => $this->getKey(),
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 }

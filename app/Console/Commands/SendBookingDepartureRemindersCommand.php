@@ -8,6 +8,7 @@ use App\Notifications\BookingDepartureReminderNotification;
 use App\Support\AppLocale;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Notification;
+use Throwable;
 
 class SendBookingDepartureRemindersCommand extends Command
 {
@@ -42,13 +43,22 @@ class SendBookingDepartureRemindersCommand extends Command
                         continue;
                     }
 
-                    $locale = AppLocale::normalize($booking->contact_locale);
+                    try {
+                        $locale = AppLocale::normalize($booking->contact_locale);
 
-                    Notification::route('mail', $booking->contact_email)
-                        ->notify(new BookingDepartureReminderNotification($booking, mailLocale: $locale));
+                        Notification::route('mail', $booking->contact_email)
+                            ->notify(new BookingDepartureReminderNotification($booking, mailLocale: $locale));
 
-                    $booking->update(['departure_reminder_sent_at' => now()]);
-                    $sentCount++;
+                        $booking->update(['departure_reminder_sent_at' => now()]);
+                        $sentCount++;
+                    } catch (Throwable $exception) {
+                        report($exception);
+                        $this->error(sprintf(
+                            'Failed to send departure reminder for booking %s: %s',
+                            $booking->getKey(),
+                            $exception->getMessage(),
+                        ));
+                    }
                 }
             });
 
