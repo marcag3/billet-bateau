@@ -71,6 +71,17 @@
                 </q-td>
             </template>
         </AppControlAdminTable>
+
+        <AppControlVoyageEditDialog
+            v-model:open="voyageEditDialogOpen"
+            :voyage-id="voyageEditId"
+            @open-booking="onOpenBookingFromVoyage"
+        />
+
+        <AppControlBookingEditDialog
+            v-model:open="bookingEditDialogOpen"
+            :booking-id="bookingEditId"
+        />
     </AppEntityIndexPageLayout>
 </template>
 
@@ -78,7 +89,7 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { eq } from '@tanstack/db';
 import type { QTableProps } from 'quasar';
@@ -99,6 +110,8 @@ import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppControlDayDateToolbar from '../components/control-panel/AppControlDayDateToolbar.vue';
 import AppControlAdminTable from '../components/control-panel/AppControlAdminTable.vue';
+import AppControlVoyageEditDialog from '../components/control-panel/AppControlVoyageEditDialog.vue';
+import AppControlBookingEditDialog from '../components/control-panel/AppControlBookingEditDialog.vue';
 
 type VoyageTableRow = {
     id: string;
@@ -119,12 +132,15 @@ const powersync = getAppPowerSyncContext();
 const { t, locale } = useI18n();
 const $q = useQuasar();
 const route = useRoute();
-const router = useRouter();
 const { confirm } = useConfirmDialog();
 const { notifyError } = useNotifyErrorFromCatch();
 const { deleteVoyage } = useControlVoyageAdminOps();
 const searchText = ref('');
 const selectedStatuses = ref<string[]>([]);
+const voyageEditDialogOpen = ref(false);
+const voyageEditId = ref('');
+const bookingEditDialogOpen = ref(false);
+const bookingEditId = ref('');
 
 function onStatusesFilterUpdate(value: string[] | null): void {
     selectedStatuses.value = value ?? [];
@@ -367,9 +383,17 @@ function onVoyageRowClick(row: Record<string, unknown>): void {
     if (voyageId.length === 0) {
         return;
     }
-    void router.push(
-        controlContextNamedRoute(route, 'control.voyages.edit', { voyageId }),
-    );
+    voyageEditId.value = voyageId;
+    voyageEditDialogOpen.value = true;
+}
+
+function onOpenBookingFromVoyage(bookingId: string): void {
+    const id = bookingId.trim();
+    if (id.length === 0) {
+        return;
+    }
+    bookingEditId.value = id;
+    bookingEditDialogOpen.value = true;
 }
 
 function confirmDelete(row: VoyageTableRow): void {
