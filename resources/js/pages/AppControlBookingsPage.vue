@@ -32,52 +32,69 @@
             </template>
         </AppControlDayDateToolbar>
 
-        <AppEntityList>
-            <AppEmptyListRow
-                :show="filteredBookings.length === 0"
-                :message="t('programsControlAdmin.bookingsEmpty')"
-            />
-            <q-item
-                v-for="row in filteredBookings"
-                :key="String(row.id)"
-                class="p-4"
+        <AppControlAdminTable
+            v-model:search="searchText"
+            :rows="tableRows"
+            :columns="tableColumns"
+            :no-data-label="t('programsControlAdmin.bookingsEmpty')"
+            :search-placeholder="t('programsControlAdmin.searchBookingsPlaceholder')"
+            default-sort-column="departure"
+            :row-class="bookingRowClass"
+        >
+            <template #body-cell-contact_name="props">
+                <q-td :props="props">
+                    <span
+                        class="cursor-pointer text-primary"
+                        @click="openBookingModal(String(props.row.id))"
+                    >{{ props.row.contact_name ?? '—' }}</span>
+                </q-td>
+            </template>
+
+            <template #body-cell-status="props">
+                <q-td :props="props">
+                    <q-chip
+                        v-if="props.row.isCancelled"
+                        dense
+                        color="negative"
+                        text-color="white"
+                        :label="t('programsControlAdmin.bookingCancelledBadge')"
+                    />
+                    <span v-else>—</span>
+                </q-td>
+            </template>
+
+            <template #body-cell-checkIn="props">
+                <q-td :props="props">
+                    {{ props.row.isCheckedIn
+                        ? t('programsControlAdmin.checkedIn')
+                        : t('programsControlAdmin.notCheckedIn') }}
+                </q-td>
+            </template>
+
+            <template
+                v-for="question in bookingQuestions"
+                :key="question"
+                #[`body-cell-${questionColumnName(question)}`]="props"
             >
-                <q-item-section>
-                    <q-item-label class="text-h6 row items-center gap-2">
-                        <span
-                            class="cursor-pointer text-primary"
-                            @click="openBookingModal(String(row.id))"
-                        >{{ row.contact_name ?? '—' }}</span>
-                        <q-chip
-                            v-if="row.isCancelled"
-                            dense
-                            color="negative"
-                            text-color="white"
-                            :label="t('programsControlAdmin.bookingCancelledBadge')"
-                        />
-                    </q-item-label>
-                    <q-item-label caption>{{ row.contact_email ?? '—' }}</q-item-label>
-                    <q-item-label caption>
-                        {{ departureLabel(row) }} · {{ row.ticketCount }}
-                        {{ t('programsControlAdmin.tickets') }}
-                    </q-item-label>
-                    <q-item-label caption>
-                        {{ checkInLabel(row.id) }}
-                    </q-item-label>
-                </q-item-section>
-                <q-item-section side>
+                <q-td :props="props">
+                    {{ customAnswerLabel(props.row, question) }}
+                </q-td>
+            </template>
+
+            <template #body-cell-actions="props">
+                <q-td :props="props" class="text-right">
                     <q-btn
                         color="primary"
                         outline
                         dense
                         :label="t('common.edit')"
                         :to="controlContextNamedRoute(route, 'control.bookings.edit', {
-                            bookingId: String(row.id),
+                            bookingId: String(props.row.id),
                         })"
                     />
-                </q-item-section>
-            </q-item>
-        </AppEntityList>
+                </q-td>
+            </template>
+        </AppControlAdminTable>
 
         <AppControlBookingEditDialog
             v-model:open="bookingEditDialogOpen"
@@ -92,6 +109,7 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { eq } from '@tanstack/db';
+import type { QTableProps } from 'quasar';
 import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
 import { liveQueryRows } from '../powersync/live-query-casts';
 import { isBookingCancelled } from '../composables/useBookingAdminCrud';
@@ -99,28 +117,38 @@ import { tripDepartureMatchesLocalDateYmd } from '../powersync/control-panel-que
 import { resolveProgramTimezone } from '../utilities/program-timezone-datetime';
 import { useControlDayDateRoute } from '../composables/useControlDayDateRoute';
 import { controlContextNamedRoute } from '../utilities/control-context-route';
+import { filterRowsBySearch } from '../utilities/control-admin-table-filters';
+import {
+    parseBookingTicketCustomFields,
+    parseProgramBookingQuestions,
+} from '../utilities/program-booking-questions';
 import AppEntityIndexPageLayout from '../layouts/AppEntityIndexPageLayout.vue';
 import AppPageHeader from '../components/ui/AppPageHeader.vue';
-import AppEntityList from '../components/ui/AppEntityList.vue';
-import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
 import AppControlDayDateToolbar from '../components/control-panel/AppControlDayDateToolbar.vue';
+import AppControlAdminTable from '../components/control-panel/AppControlAdminTable.vue';
 import AppControlBookingEditDialog from '../components/control-panel/AppControlBookingEditDialog.vue';
 
-type BookingListRow = {
+type BookingTableRow = {
     id: string;
     contact_name: string | null;
     contact_email: string | null;
     trip_id: string | null;
     tripDepartureAt: string | null;
+    departure: string;
     deleted_at: string | null;
     isCancelled: boolean;
     ticketCount: number;
+    isCheckedIn: boolean;
+    customAnswers: Record<string, string>;
 };
+
+type TableColumn = NonNullable<QTableProps['columns']>[number];
 
 const powersync = getAppPowerSyncContext();
 const { t, locale } = useI18n();
 const route = useRoute();
 const showCancelledBookings = ref(false);
+const searchText = ref('');
 const bookingEditDialogOpen = ref(false);
 const bookingEditId = ref('');
 const { selectedDateYmd, showAllDates, goPrevDay, goNextDay, goToday } =
@@ -138,7 +166,10 @@ const { data: programRow } = useLiveQuery(
         return qb
             .from({ p: col })
             .where(({ p }) => eq(p.id, pid))
-            .select(({ p }) => ({ timezone: p.timezone }));
+            .select(({ p }) => ({
+                timezone: p.timezone,
+                booking_questions: p.booking_questions,
+            }));
     },
     [powersync.collections.programs, activeProgramIdRef],
 );
@@ -146,6 +177,13 @@ const { data: programRow } = useLiveQuery(
 const programTimezone = computed(() =>
     resolveProgramTimezone(
         liveQueryRows<{ timezone: string | null }>(programRow.value)[0]?.timezone,
+    ),
+);
+
+const bookingQuestions = computed(() =>
+    parseProgramBookingQuestions(
+        liveQueryRows<{ booking_questions: unknown }>(programRow.value)[0]
+            ?.booking_questions,
     ),
 );
 
@@ -188,6 +226,7 @@ const { data: ticketsRaw } = useLiveQuery(
             .select(({ bt, b }) => ({
                 bookingId: b.id,
                 ticketId: bt.id,
+                custom_fields: bt.custom_fields,
             }));
     },
     [powersync.collections.booking_tickets, powersync.collections.bookings, activeProgramIdRef],
@@ -225,6 +264,21 @@ const ticketCountByBookingId = computed(() => {
     return map;
 });
 
+const customAnswersByBookingId = computed(() => {
+    const map = new Map<string, Record<string, string>>();
+    for (const row of liveQueryRows<{
+        bookingId: string;
+        custom_fields: unknown;
+    }>(ticketsRaw.value)) {
+        const id = String(row.bookingId ?? '').trim();
+        if (id.length === 0 || map.has(id)) {
+            continue;
+        }
+        map.set(id, parseBookingTicketCustomFields(row.custom_fields));
+    }
+    return map;
+});
+
 const checkedInBookingIds = computed(() => {
     const set = new Set<string>();
     for (const row of liveQueryRows<{ bookingId: string }>(checkInsRaw.value)) {
@@ -236,19 +290,22 @@ const checkedInBookingIds = computed(() => {
     return set;
 });
 
-const bookings = computed((): BookingListRow[] =>
-    liveQueryRows<Omit<BookingListRow, 'isCancelled' | 'ticketCount'>>(bookingsRaw.value)
+const bookings = computed((): BookingTableRow[] =>
+    liveQueryRows<Omit<BookingTableRow, 'isCancelled' | 'ticketCount' | 'isCheckedIn' | 'customAnswers' | 'departure'>>(bookingsRaw.value)
         .map((row) => ({
             ...row,
+            departure: departureLabel(row.tripDepartureAt),
             isCancelled: isBookingCancelled(row.deleted_at),
             ticketCount: ticketCountByBookingId.value.get(String(row.id)) ?? 0,
+            isCheckedIn: checkedInBookingIds.value.has(String(row.id)),
+            customAnswers: customAnswersByBookingId.value.get(String(row.id)) ?? {},
         }))
         .filter((row) =>
             showCancelledBookings.value ? row.isCancelled : !row.isCancelled,
         ),
 );
 
-const filteredBookings = computed(() => {
+const dateFilteredBookings = computed(() => {
     const rows = bookings.value;
     if (showAllDates.value) {
         return rows;
@@ -260,12 +317,95 @@ const filteredBookings = computed(() => {
     );
 });
 
-const totalFilteredTickets = computed(() =>
-    filteredBookings.value.reduce((sum, row) => sum + row.ticketCount, 0),
+const tableRows = computed(() =>
+    filterRowsBySearch(dateFilteredBookings.value, searchText.value, [
+        (row) => row.contact_name,
+        (row) => row.contact_email,
+        (row) => row.departure,
+        (row) => Object.values(row.customAnswers).join(' '),
+    ]),
 );
 
-function departureLabel(row: BookingListRow): string {
-    const dep = row.tripDepartureAt;
+const totalFilteredTickets = computed(() =>
+    tableRows.value.reduce((sum, row) => sum + row.ticketCount, 0),
+);
+
+const tableColumns = computed((): TableColumn[] => {
+    const questionColumns: TableColumn[] = bookingQuestions.value.map((question) => ({
+        name: questionColumnName(question),
+        label: question,
+        field: (row: BookingTableRow) => customAnswerLabel(row, question),
+        align: 'left',
+        sortable: true,
+    }));
+
+    return [
+        {
+            name: 'contact_name',
+            label: t('programsControlAdmin.columnContact'),
+            field: 'contact_name',
+            align: 'left',
+            sortable: true,
+        },
+        {
+            name: 'contact_email',
+            label: t('programsControlAdmin.columnEmail'),
+            field: 'contact_email',
+            align: 'left',
+            sortable: true,
+        },
+        {
+            name: 'departure',
+            label: t('programsControlAdmin.columnDeparture'),
+            field: 'departure',
+            align: 'left',
+            sortable: true,
+        },
+        {
+            name: 'ticketCount',
+            label: t('programsControlAdmin.columnTickets'),
+            field: 'ticketCount',
+            align: 'right',
+            sortable: true,
+        },
+        {
+            name: 'checkIn',
+            label: t('programsControlAdmin.columnCheckIn'),
+            field: (row: BookingTableRow) =>
+                row.isCheckedIn
+                    ? t('programsControlAdmin.checkedIn')
+                    : t('programsControlAdmin.notCheckedIn'),
+            align: 'left',
+            sortable: true,
+        },
+        {
+            name: 'status',
+            label: t('programsControlAdmin.columnStatus'),
+            field: (row: BookingTableRow) =>
+                row.isCancelled ? t('programsControlAdmin.bookingCancelledBadge') : '',
+            align: 'left',
+            sortable: true,
+        },
+        ...questionColumns,
+        {
+            name: 'actions',
+            label: t('programsControlAdmin.columnActions'),
+            field: 'id',
+            align: 'right',
+        },
+    ];
+});
+
+function questionColumnName(question: string): string {
+    return `question_${question.replace(/[^a-zA-Z0-9]+/g, '_')}`;
+}
+
+function customAnswerLabel(row: BookingTableRow, question: string): string {
+    const answer = row.customAnswers[question];
+    return answer != null && answer.length > 0 ? answer : '—';
+}
+
+function departureLabel(dep: string | null): string {
     if (dep == null || String(dep).trim() === '') {
         return '—';
     }
@@ -279,10 +419,8 @@ function departureLabel(row: BookingListRow): string {
     }
 }
 
-function checkInLabel(bookingId: string): string {
-    return checkedInBookingIds.value.has(String(bookingId))
-        ? t('programsControlAdmin.checkedIn')
-        : t('programsControlAdmin.notCheckedIn');
+function bookingRowClass(row: Record<string, unknown>): string {
+    return row.isCancelled === true ? 'opacity-60' : '';
 }
 
 function openBookingModal(bookingId: string): void {

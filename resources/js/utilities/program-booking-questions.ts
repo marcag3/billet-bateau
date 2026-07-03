@@ -38,3 +38,39 @@ export function parseBookingQuestionsInput(raw: string[]): string[] {
         ),
     );
 }
+
+/**
+ * Parses booking_tickets.custom_fields from PowerSync JSON text or object storage.
+ */
+export function parseBookingTicketCustomFields(raw: unknown): Record<string, string> {
+    let parsed: unknown = raw;
+
+    if (typeof raw === 'string') {
+        const trimmed = raw.trim();
+        if (trimmed.length === 0) {
+            return {};
+        }
+
+        try {
+            parsed = JSON.parse(trimmed) as unknown;
+        } catch {
+            return {};
+        }
+    }
+
+    if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return {};
+    }
+
+    const result: Record<string, string> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+        const question = String(key).trim();
+        if (question.length === 0) {
+            continue;
+        }
+
+        result[question] = String(value ?? '').trim();
+    }
+
+    return result;
+}
