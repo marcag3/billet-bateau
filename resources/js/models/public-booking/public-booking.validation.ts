@@ -11,8 +11,8 @@ export function createPublicBookingContactZodSchema(t: Translator) {
             .string()
             .trim()
             .min(1, t('publicBooking.contactEmailRequired'))
-            .email(t('publicBooking.contactEmailInvalid'))
-            .max(255),
+            .max(255)
+            .pipe(z.email(t('publicBooking.contactEmailInvalid'))),
         country: z
             .string()
             .trim()

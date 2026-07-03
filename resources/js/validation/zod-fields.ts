@@ -67,8 +67,8 @@ export function isValidEmail(value: string): boolean {
 /**
  * Trimmed email for auth-style forms.
  */
-export function zTrimmedEmail(requiredMessage: string, emailMessage: string): z.ZodString {
-    return z.string().trim().min(1, requiredMessage).email(emailMessage);
+export function zTrimmedEmail(requiredMessage: string, emailMessage: string) {
+    return z.string().trim().min(1, requiredMessage).pipe(z.email(emailMessage));
 }
 
 /**
