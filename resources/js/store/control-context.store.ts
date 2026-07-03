@@ -8,6 +8,7 @@ import {
 export type ControlContextProgramDateState = {
     selectedDateYmd: string;
     showAllDates: boolean;
+    showFinishedTrips: boolean;
 };
 
 function defaultProgramDateState(routeDate?: unknown): ControlContextProgramDateState {
@@ -17,12 +18,14 @@ function defaultProgramDateState(routeDate?: unknown): ControlContextProgramDate
         return {
             selectedDateYmd: fromRoute,
             showAllDates: false,
+            showFinishedTrips: false,
         };
     }
 
     return {
         selectedDateYmd: todayLocalDateYmd(),
         showAllDates: false,
+        showFinishedTrips: false,
     };
 }
 
@@ -71,6 +74,16 @@ export const useControlContextStore = defineStore('controlContext', {
 
             const state = this.ensureProgram(pid);
             state.showAllDates = showAllDates;
+        },
+
+        setShowFinishedTrips(programId: string, showFinishedTrips: boolean): void {
+            const pid = programId.trim();
+            if (pid.length === 0) {
+                return;
+            }
+
+            const state = this.ensureProgram(pid);
+            state.showFinishedTrips = showFinishedTrips;
         },
 
         goPrevDay(programId: string): void {

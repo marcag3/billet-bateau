@@ -28,6 +28,7 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
 
     const {
         selectedDateYmd,
+        showFinishedTrips,
         shiftSelectedDay,
         goToday: goToToday,
     } = useControlDayDateRoute();
@@ -181,6 +182,7 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
 
     return {
         selectedDateYmd,
+        showFinishedTrips,
         tripCards,
         dayStats,
         tripDateYmds,

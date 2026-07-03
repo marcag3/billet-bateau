@@ -83,6 +83,7 @@ const programId = computed(() => String(route.params.programId ?? "").trim());
 
 const {
     selectedDateYmd,
+    showFinishedTrips,
     tripCards,
     dayStats,
     tripDateYmds,
@@ -92,8 +93,6 @@ const {
     shiftSelectedDay,
     goToToday,
 } = useControlPanelDayBoard(programId);
-
-const showFinishedTrips = ref(false);
 
 const visibleTripCards = computed(() => {
     if (showFinishedTrips.value) {
