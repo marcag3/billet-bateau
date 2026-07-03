@@ -349,6 +349,7 @@ export default {
         selectTripFirst: "Choose a trip to continue.",
         contactName: "Contact name",
         contactEmail: "Contact email",
+        contactEmailOptional: "Contact email (optional)",
         contactNameRequired: "Contact name is required.",
         contactEmailRequired: "Email is required.",
         contactEmailInvalid: "Enter a valid email address.",

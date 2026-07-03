@@ -14,7 +14,7 @@ final class BookingResolvedPutData extends Data
     public function __construct(
         public string $trip_id,
         public string $contact_name,
-        public string $contact_email,
+        public ?string $contact_email,
     ) {}
 
     /**
@@ -25,7 +25,7 @@ final class BookingResolvedPutData extends Data
         return [
             'trip_id' => ['required', 'ulid', 'exists:trips,id'],
             'contact_name' => ['required', 'string', 'max:255'],
-            'contact_email' => ['required', 'email:rfc', 'max:255'],
+            'contact_email' => ['nullable', 'email:rfc', 'max:255'],
         ];
     }
 }

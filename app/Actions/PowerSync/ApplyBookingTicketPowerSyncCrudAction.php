@@ -184,12 +184,9 @@ final class ApplyBookingTicketPowerSyncCrudAction
         }
 
         if (! ($dto->email instanceof Optional)) {
-            if ($dto->email === null || $dto->email === '') {
-                throw ValidationException::withMessages([
-                    'data.email' => 'Email is required.',
-                ]);
-            }
-            $bookingTicket->email = $dto->email;
+            $bookingTicket->email = $dto->email === null || trim((string) $dto->email) === ''
+                ? null
+                : trim((string) $dto->email);
         }
 
         if (! ($dto->country instanceof Optional)) {

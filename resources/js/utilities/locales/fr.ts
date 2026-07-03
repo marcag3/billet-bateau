@@ -364,6 +364,7 @@ export default {
         selectTripFirst: "Choisissez une sortie pour continuer.",
         contactName: "Nom du contact",
         contactEmail: "Courriel du contact",
+        contactEmailOptional: "Courriel du contact (facultatif)",
         contactNameRequired: "Le nom du contact est requis.",
         contactEmailRequired: "Le courriel est requis.",
         contactEmailInvalid: "Entrez une adresse courriel valide.",

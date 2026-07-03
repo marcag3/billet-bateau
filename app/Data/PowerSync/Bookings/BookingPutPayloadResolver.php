@@ -9,12 +9,12 @@ use Illuminate\Validation\ValidationException;
 /**
  * Resolves merged PUT attributes for {@see Booking} PowerSync uploads (after program id is known).
  *
- * @return array{trip_id: string, contact_name: string, contact_email: string}
+ * @return array{trip_id: string, contact_name: string, contact_email: string|null}
  */
 final class BookingPutPayloadResolver
 {
     /**
-     * @return array{trip_id: string, contact_name: string, contact_email: string}
+     * @return array{trip_id: string, contact_name: string, contact_email: string|null}
      */
     public static function resolve(BookingPutData $dto, ?Booking $existing): array
     {
@@ -34,16 +34,14 @@ final class BookingPutPayloadResolver
             ]);
         }
 
-        if ($contactEmail === null || trim((string) $contactEmail) === '') {
-            throw ValidationException::withMessages([
-                'data.contact_email' => 'Contact email is required.',
-            ]);
-        }
+        $normalizedEmail = $contactEmail === null || trim((string) $contactEmail) === ''
+            ? null
+            : trim((string) $contactEmail);
 
         return [
             'trip_id' => (string) $tripId,
             'contact_name' => trim((string) $contactName),
-            'contact_email' => trim((string) $contactEmail),
+            'contact_email' => $normalizedEmail,
         ];
     }
 }

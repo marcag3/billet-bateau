@@ -6,7 +6,7 @@ export type WalkInBookingInput = {
     programId: string;
     ticketQuantities: Record<string, number>;
     contactName: string;
-    contactEmail: string;
+    contactEmail: string | null;
     country: string;
     customFieldMap: Record<string, string>;
 };

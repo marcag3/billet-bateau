@@ -29,7 +29,7 @@
                         v-bind="contactEmailProps"
                         outlined
                         type="email"
-                        :label="t('publicBooking.contactEmail')"
+                        :label="t('publicBooking.contactEmailOptional')"
                         :disable="isSubmitting"
                     />
                     <AppCountrySelect

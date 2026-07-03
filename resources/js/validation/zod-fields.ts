@@ -58,10 +58,36 @@ export function zHexColorSix(invalidMessage: string): z.ZodString {
 }
 
 /**
+ * Whether a non-empty string is a valid email (Zod 4 top-level format).
+ */
+export function isValidEmail(value: string): boolean {
+    return z.email().safeParse(value).success;
+}
+
+/**
  * Trimmed email for auth-style forms.
  */
 export function zTrimmedEmail(requiredMessage: string, emailMessage: string): z.ZodString {
     return z.string().trim().min(1, requiredMessage).email(emailMessage);
+}
+
+/**
+ * Optional trimmed email: empty input becomes null; non-empty must be valid.
+ */
+export function zOptionalTrimmedEmail(invalidMessage: string) {
+    return z
+        .string()
+        .trim()
+        .max(255)
+        .superRefine((value, context) => {
+            if (value !== '' && !isValidEmail(value)) {
+                context.addIssue({
+                    code: 'custom',
+                    message: invalidMessage,
+                });
+            }
+        })
+        .transform((value) => (value === '' ? null : value));
 }
 
 /**

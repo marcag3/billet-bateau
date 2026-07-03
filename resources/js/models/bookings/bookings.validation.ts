@@ -1,12 +1,12 @@
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
-import { createPublicBookingContactZodSchema } from '../public-booking/public-booking.validation';
+import { createWalkInBookingContactZodSchema } from '../public-booking/public-booking.validation';
 import { zRequiredTrimmedString } from '../../validation/zod-fields';
 
 export type Translator = (key: string) => string;
 
 export function createBookingAdminFormZodSchema(t: Translator) {
-    return createPublicBookingContactZodSchema(t).extend({
+    return createWalkInBookingContactZodSchema(t).extend({
         tripId: zRequiredTrimmedString(t('programsControlAdmin.tripRequired')),
     });
 }

@@ -150,12 +150,9 @@ final class ApplyBookingPowerSyncCrudAction
         }
 
         if (! ($patch->contact_email instanceof Optional)) {
-            if ($patch->contact_email === null || trim($patch->contact_email) === '') {
-                throw ValidationException::withMessages([
-                    'data.contact_email' => 'Contact email is required.',
-                ]);
-            }
-            $booking->contact_email = trim($patch->contact_email);
+            $booking->contact_email = $patch->contact_email === null || trim((string) $patch->contact_email) === ''
+                ? null
+                : trim($patch->contact_email);
         }
 
         $booking->save();

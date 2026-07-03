@@ -13,7 +13,7 @@ use Spatie\LaravelData\Optional;
  *     booking_id: string,
  *     ticket_type_id: string,
  *     name: string,
- *     email: string,
+ *     email: string|null,
  *     country: string,
  *     custom_fields: array<string, mixed>,
  *     waiver_confirmation_id: string|null
@@ -51,6 +51,7 @@ final class BookingTicketPutPayloadResolver
 
         $name = $dto->name instanceof Optional ? ($existing?->name ?? null) : $dto->name;
         $email = $dto->email instanceof Optional ? ($existing?->email ?? null) : $dto->email;
+        $email = $email === null || trim((string) $email) === '' ? null : trim((string) $email);
         $country = $dto->country instanceof Optional ? ($existing?->country ?? '') : $dto->country;
         $country = is_string($country) ? $country : '';
         $customFields = $dto->custom_fields instanceof Optional

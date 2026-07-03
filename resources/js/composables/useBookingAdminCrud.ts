@@ -7,16 +7,22 @@ export type BookingUpsertInput = {
     programId: string;
     tripId: string;
     contactName: string;
-    contactEmail: string;
+    contactEmail: string | null;
 };
 
 export type BookingTicketUpsertInput = {
     ticketTypeId: string;
     name: string;
-    email: string;
+    email: string | null;
     country: string;
     customFieldMap: Record<string, string>;
 };
+
+function normalizeOptionalEmail(email: string | null): string | null {
+    const trimmed = String(email ?? '').trim();
+
+    return trimmed === '' ? null : trimmed;
+}
 
 export function useBookingAdminCrud() {
     const powersync = getAppPowerSyncContext();
@@ -36,7 +42,7 @@ export function useBookingAdminCrud() {
                 program_id: input.programId.trim(),
                 trip_id: input.tripId.trim(),
                 contact_name: input.contactName.trim(),
-                contact_email: input.contactEmail.trim(),
+                contact_email: normalizeOptionalEmail(input.contactEmail),
             })
             .isPersisted.promise;
 
@@ -63,8 +69,8 @@ export function useBookingAdminCrud() {
             if (input.contactName != null) {
                 draft.contact_name = input.contactName.trim();
             }
-            if (input.contactEmail != null) {
-                draft.contact_email = input.contactEmail.trim();
+            if (input.contactEmail !== undefined) {
+                draft.contact_email = normalizeOptionalEmail(input.contactEmail);
             }
         });
 
@@ -96,7 +102,7 @@ export function useBookingAdminCrud() {
                 booking_id: bookingId,
                 ticket_type_id: input.ticketTypeId.trim(),
                 name: input.name.trim(),
-                email: input.email.trim(),
+                email: normalizeOptionalEmail(input.email),
                 country: input.country.trim().toUpperCase(),
                 custom_fields: JSON.stringify(input.customFieldMap),
                 waiver_confirmation_id: null,
@@ -123,8 +129,8 @@ export function useBookingAdminCrud() {
             if (input.name != null) {
                 draft.name = input.name.trim();
             }
-            if (input.email != null) {
-                draft.email = input.email.trim();
+            if (input.email !== undefined) {
+                draft.email = normalizeOptionalEmail(input.email);
             }
             if (input.country != null) {
                 draft.country = input.country.trim().toUpperCase();
@@ -163,7 +169,7 @@ export function useBookingAdminCrud() {
         tripId: string;
         ticketQuantities: Record<string, number>;
         contactName: string;
-        contactEmail: string;
+        contactEmail: string | null;
         country: string;
         customFieldMap: Record<string, string>;
     }): Promise<{ bookingId: string; ticketIds: string[] } | undefined> {

@@ -49,6 +49,56 @@ class PowerSyncUploadBookingTest extends TestCase
         ]);
     }
 
+    public function test_put_creates_walk_in_booking_without_contact_email(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->forProgram($program)->create();
+        $ticketType = TicketType::factory()->create(['program_id' => $program->getKey()]);
+        $bookingId = (string) Str::ulid();
+        $bookingTicketId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'bookings',
+                    'id' => $bookingId,
+                    'data' => [
+                        'program_id' => $program->getKey(),
+                        'trip_id' => $trip->getKey(),
+                        'contact_name' => 'Walk-in Guest',
+                        'contact_email' => null,
+                    ],
+                ],
+                [
+                    'op' => 'PUT',
+                    'type' => 'booking_tickets',
+                    'id' => $bookingTicketId,
+                    'data' => [
+                        'booking_id' => $bookingId,
+                        'ticket_type_id' => $ticketType->getKey(),
+                        'name' => 'Walk-in Guest',
+                        'email' => null,
+                        'country' => 'CA',
+                        'custom_fields' => [],
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $bookingId,
+            'contact_name' => 'Walk-in Guest',
+            'contact_email' => null,
+        ]);
+        $this->assertDatabaseHas('booking_tickets', [
+            'id' => $bookingTicketId,
+            'booking_id' => $bookingId,
+            'email' => null,
+        ]);
+    }
+
     public function test_put_walk_in_booking_and_ticket_for_past_trip(): void
     {
         $user = User::factory()->create();
