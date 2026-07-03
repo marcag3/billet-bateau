@@ -6,6 +6,8 @@
     "Billets : :summary": "Tickets: :summary",
     "Bonjour :name,": "Hello :name,",
     "Confirmation de réservation — :program": "Booking confirmation — :program",
+    "Réservation mise à jour — :program": "Booking updated — :program",
+    "Votre réservation pour :program a été mise à jour.": "Your booking with :program has been updated.",
     "Cordialement,": "Regards,",
     "Contact : :name": "Contact: :name",
     "Départ : :departure": "Departure: :departure",

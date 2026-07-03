@@ -2,6 +2,7 @@
 
 namespace App\Actions\PowerSync;
 
+use App\Actions\SendBookingModifiedNotificationAction;
 use App\Data\PowerSync\BookingTickets\BookingTicketPatchData;
 use App\Data\PowerSync\BookingTickets\BookingTicketPutData;
 use App\Data\PowerSync\BookingTickets\BookingTicketPutPayloadResolver;
@@ -210,6 +211,10 @@ final class ApplyBookingTicketPowerSyncCrudAction
         }
 
         $bookingTicket->save();
+
+        if ($bookingTicket->wasChanged()) {
+            SendBookingModifiedNotificationAction::run($booking);
+        }
     }
 
     private function assertProgramManaged(string $programId, string $userId): void

@@ -2,6 +2,7 @@
 
 namespace App\Actions\PowerSync;
 
+use App\Actions\SendBookingModifiedNotificationAction;
 use App\Data\PowerSync\Bookings\BookingPatchData;
 use App\Data\PowerSync\Bookings\BookingPutData;
 use App\Data\PowerSync\Bookings\BookingPutPayloadResolver;
@@ -118,6 +119,10 @@ final class ApplyBookingPowerSyncCrudAction
                 $existing->save();
             }
 
+            if ($existing->wasChanged()) {
+                SendBookingModifiedNotificationAction::run($existing);
+            }
+
             return;
         }
 
@@ -184,6 +189,10 @@ final class ApplyBookingPowerSyncCrudAction
         }
 
         $booking->save();
+
+        if ($booking->wasChanged()) {
+            SendBookingModifiedNotificationAction::run($booking);
+        }
     }
 
     private function resolveTripForBooking(string $tripId, string $programId): Trip

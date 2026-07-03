@@ -9,7 +9,9 @@ use App\Models\Program;
 use App\Models\TicketType;
 use App\Models\Trip;
 use App\Models\User;
+use App\Notifications\BookingModifiedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -461,5 +463,168 @@ class PowerSyncUploadBookingTest extends TestCase
 
         $this->assertDatabaseHas('bookings', ['id' => $bookingId]);
         $this->assertDatabaseMissing('booking_tickets', ['id' => $bookingTicketId]);
+    }
+
+    public function test_patch_booking_sends_modified_notification(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $tripA = Trip::factory()->forProgram($program)->create();
+        $tripB = Trip::factory()->forProgram($program)->create();
+        $booking = Booking::factory()->forTrip($tripA)->create([
+            'contact_email' => 'guest@example.com',
+            'contact_name' => 'Guest One',
+            'contact_locale' => 'en',
+        ]);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'bookings',
+                    'id' => $booking->getKey(),
+                    'data' => [
+                        'trip_id' => $tripB->getKey(),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        Notification::assertSentOnDemand(
+            BookingModifiedNotification::class,
+            function (BookingModifiedNotification $notification) use ($booking, $tripB): bool {
+                return $notification->booking->getKey() === $booking->getKey()
+                    && (string) $notification->booking->trip_id === (string) $tripB->getKey();
+            },
+        );
+    }
+
+    public function test_patch_booking_without_email_does_not_send_modified_notification(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $tripA = Trip::factory()->forProgram($program)->create();
+        $tripB = Trip::factory()->forProgram($program)->create();
+        $booking = Booking::factory()->forTrip($tripA)->create([
+            'contact_email' => null,
+            'contact_name' => 'Walk-in Guest',
+        ]);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'bookings',
+                    'id' => $booking->getKey(),
+                    'data' => [
+                        'trip_id' => $tripB->getKey(),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_put_create_booking_does_not_send_modified_notification(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->forProgram($program)->create();
+        $bookingId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'bookings',
+                    'id' => $bookingId,
+                    'data' => [
+                        'program_id' => $program->getKey(),
+                        'trip_id' => $trip->getKey(),
+                        'contact_name' => 'Walk-in Guest',
+                        'contact_email' => 'walkin@example.com',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_patch_soft_delete_does_not_send_modified_notification(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $booking = Booking::factory()->forProgram($program)->create([
+            'contact_email' => 'guest@example.com',
+        ]);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'bookings',
+                    'id' => $booking->getKey(),
+                    'data' => [
+                        'deleted_at' => now()->toIso8601String(),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_patch_booking_ticket_sends_single_modified_notification_per_batch(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create([
+            'booking_questions' => ['Dietary restrictions?'],
+        ]);
+        $trip = Trip::factory()->forProgram($program)->create();
+        $ticketType = TicketType::factory()->create(['program_id' => $program->getKey()]);
+        $booking = Booking::factory()->forTrip($trip)->create([
+            'contact_email' => 'guest@example.com',
+            'contact_name' => 'Guest One',
+        ]);
+        $bookingTicket = BookingTicket::factory()->create([
+            'booking_id' => $booking->getKey(),
+            'ticket_type_id' => $ticketType->getKey(),
+            'custom_fields' => ['Dietary restrictions?' => 'None'],
+        ]);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'bookings',
+                    'id' => $booking->getKey(),
+                    'data' => [
+                        'contact_name' => 'Guest Updated',
+                    ],
+                ],
+                [
+                    'op' => 'PATCH',
+                    'type' => 'booking_tickets',
+                    'id' => $bookingTicket->getKey(),
+                    'data' => [
+                        'custom_fields' => ['Dietary restrictions?' => 'Vegetarian'],
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        Notification::assertSentOnDemandTimes(BookingModifiedNotification::class, 1);
     }
 }
