@@ -5,7 +5,11 @@
 
     <template v-else-if="currentBooking">
         <q-banner v-if="isCancelled" class="bg-negative text-white mb-4" rounded>
-            {{ t('programsControlAdmin.bookingCancelledBanner') }}
+            {{
+                isCancelledByTrip
+                    ? t('programsControlAdmin.bookingCancelledByTripBanner')
+                    : t('programsControlAdmin.bookingCancelledBanner')
+            }}
         </q-banner>
 
         <AppCardSection :label="t('programsControlAdmin.bookingDetails')">
@@ -335,6 +339,11 @@ const currentBooking = computed(() => {
 });
 
 const isCancelled = computed(() => isBookingCancelled(currentBooking.value?.deleted_at));
+
+const isCancelledByTrip = computed(() => {
+    const voyageId = String(currentBooking.value?.cancelled_by_voyage_id ?? '').trim();
+    return isCancelled.value && voyageId.length > 0;
+});
 
 const showNotFound = computed(
     () => bookingId.value.length > 0 && bookingRaw.value != null && currentBooking.value == null,

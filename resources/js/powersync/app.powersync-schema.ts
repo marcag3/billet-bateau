@@ -103,6 +103,7 @@ const bookingsTable = new Table({
     contact_name: column.text,
     contact_email: column.text,
     deleted_at: column.text,
+    cancelled_by_voyage_id: column.text,
 });
 
 const waterRoutesTable = new Table({
@@ -154,6 +155,7 @@ const voyagesTable = new Table({
     started_at: column.text,
     arrived_at: column.text,
     status: column.text,
+    cancelled_from_status: column.text,
 });
 
 const passengersTable = new Table({

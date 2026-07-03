@@ -56,10 +56,14 @@ final class CancelVoyageAction
             ->get();
 
         DB::transaction(function () use ($voyage, $bookings, $userId): void {
+            $voyage->cancelled_from_status = $voyage->status->value;
+
             foreach ($bookings as $booking) {
                 $locale = AppLocale::normalize($booking->contact_locale);
                 $contactEmail = $booking->contact_email;
 
+                $booking->cancelled_by_voyage_id = $voyage->getKey();
+                $booking->save();
                 $booking->delete();
 
                 Notification::route('mail', $contactEmail)

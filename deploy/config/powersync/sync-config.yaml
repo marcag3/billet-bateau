@@ -144,7 +144,8 @@ streams:
           trip_id,
           contact_name,
           contact_email,
-          deleted_at
+          deleted_at,
+          cancelled_by_voyage_id
         FROM bookings
         WHERE bookings.program_id = subscription.parameter('program_id')
           AND bookings.program_id IN accessible_program_ids
@@ -193,7 +194,8 @@ streams:
           voyages.scheduled_departure_at,
           voyages.started_at,
           voyages.arrived_at,
-          voyages.status
+          voyages.status,
+          voyages.cancelled_from_status
         FROM voyages
         WHERE voyages.program_id = subscription.parameter('program_id')
           AND voyages.program_id IN accessible_program_ids

@@ -114,6 +114,7 @@ final class ApplyBookingPowerSyncCrudAction
             $existing->forceFill($attributes);
 
             if ($existing->trashed()) {
+                $existing->cancelled_by_voyage_id = null;
                 $existing->restore();
             } else {
                 $existing->save();
@@ -184,8 +185,17 @@ final class ApplyBookingPowerSyncCrudAction
 
         if (! ($patch->deleted_at instanceof Optional)) {
             $booking->deleted_at = $patch->deleted_at;
+
+            if ($patch->deleted_at !== null) {
+                $booking->cancelled_by_voyage_id = null;
+            }
         } elseif ($wasTrashed && $tripIdChanged) {
             $booking->deleted_at = null;
+            $booking->cancelled_by_voyage_id = null;
+        }
+
+        if (! ($patch->cancelled_by_voyage_id instanceof Optional)) {
+            $booking->cancelled_by_voyage_id = $patch->cancelled_by_voyage_id;
         }
 
         $booking->save();

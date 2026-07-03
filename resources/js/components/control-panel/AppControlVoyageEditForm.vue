@@ -137,6 +137,14 @@
                     :label="t('programsControl.cancelTrip')"
                     @click="onCancel"
                 />
+                <q-btn
+                    v-if="canUncancel"
+                    flat
+                    color="primary"
+                    no-caps
+                    :label="t('programsControl.uncancelTrip')"
+                    @click="onUncancel"
+                />
             </div>
         </AppCardSection>
 
@@ -221,6 +229,7 @@ const {
     revertArrival,
     removePassenger,
     cancelTrip,
+    uncancelTrip,
 } = useControlVoyageAdminOps();
 
 const isDeleting = ref(false);
@@ -299,6 +308,16 @@ const canCancel = computed(
         voyageStatus.value !== 'completed' &&
         voyageStatus.value !== 'cancelled',
 );
+const canUncancel = computed(() => {
+    if (voyageStatus.value !== 'cancelled') {
+        return false;
+    }
+    const departureRaw = selectedTrip.value?.scheduled_departure_at;
+    if (departureRaw == null || String(departureRaw).trim() === '') {
+        return true;
+    }
+    return new Date(String(departureRaw)).getTime() >= Date.now();
+});
 
 const { data: voyageBoatPivotsRaw } = useLiveQuery(
     (qb) => {
@@ -559,6 +578,19 @@ function onCancel(): void {
         title: t('programsControl.cancelTripConfirmTitle'),
         message: t('programsControl.cancelTripConfirmMessage'),
         onOk: () => cancelTrip({ trip, existingVoyage: currentVoyage.value }),
+    });
+}
+
+function onUncancel(): void {
+    const trip = selectedTrip.value;
+    const voyage = currentVoyage.value;
+    if (trip == null || voyage == null) {
+        return;
+    }
+    confirm({
+        title: t('programsControl.uncancelTripConfirmTitle'),
+        message: t('programsControl.uncancelTripConfirmMessage'),
+        onOk: () => uncancelTrip({ trip, existingVoyage: voyage }),
     });
 }
 

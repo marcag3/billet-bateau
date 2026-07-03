@@ -29,6 +29,7 @@ class Booking extends Model
         'cancel_token_hash',
         'cancel_token',
         'departure_reminder_sent_at',
+        'cancelled_by_voyage_id',
         'created_at',
         'updated_at',
     ];

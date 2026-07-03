@@ -789,6 +789,13 @@ export default {
             "Annuler cette sortie ? Tous les clients réservés recevront un courriel d'annulation.",
         cancelTripSuccess: "Sortie annulée.",
         cancelTripBlocked: "Cette sortie ne peut pas être annulée après le départ.",
+        uncancelTrip: "Rétablir la sortie",
+        uncancelTripConfirmTitle: "Rétablir cette sortie ?",
+        uncancelTripConfirmMessage:
+            "Rétablir cette sortie ? Les réservations annulées avec la sortie seront réactivées et les clients recevront un courriel.",
+        uncancelTripSuccess: "Sortie rétablie.",
+        uncancelTripBlocked: "Seule une sortie annulée peut être rétablie.",
+        uncancelTripPastDeparture: "Cette sortie ne peut pas être rétablie après le départ.",
         errorGeneric: "Une erreur est survenue. Veuillez réessayer.",
     },
     programsControlAdmin: {
@@ -806,6 +813,8 @@ export default {
         bookingCancelledBadge: "Annulée",
         bookingCancelledBanner:
             "Cette réservation a été annulée. Changez la sortie et enregistrez pour la réaffecter à un autre départ.",
+        bookingCancelledByTripBanner:
+            "Cette réservation a été annulée lors de l'annulation de la sortie. Rétablissez la sortie pour la restaurer.",
         bookingRebooked: "Réservation réaffectée au nouveau départ.",
         trip: "Sortie",
         tripRequired: "Sélectionnez une sortie.",

@@ -9,6 +9,7 @@ use App\Models\Program;
 use App\Models\TicketType;
 use App\Models\Trip;
 use App\Models\User;
+use App\Models\Voyage;
 use App\Notifications\BookingModifiedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -339,6 +340,36 @@ class PowerSyncUploadBookingTest extends TestCase
 
         $booking->refresh();
         $this->assertTrue($booking->trashed());
+        $this->assertNull($booking->cancelled_by_voyage_id);
+    }
+
+    public function test_patch_manual_soft_delete_clears_trip_cancellation_attribution(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->forProgram($program)->create();
+        $voyage = Voyage::factory()->forTrip($trip)->create();
+        $booking = Booking::factory()->forTrip($trip)->create([
+            'cancelled_by_voyage_id' => $voyage->getKey(),
+        ]);
+        $deletedAt = now()->toIso8601String();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'bookings',
+                    'id' => $booking->getKey(),
+                    'data' => [
+                        'deleted_at' => $deletedAt,
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $booking->refresh();
+        $this->assertTrue($booking->trashed());
+        $this->assertNull($booking->cancelled_by_voyage_id);
     }
 
     public function test_delete_booking_with_tickets_is_rejected(): void

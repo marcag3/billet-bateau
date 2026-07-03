@@ -10,20 +10,19 @@ use App\Models\TicketType;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Voyage;
-use App\Notifications\BookingCancellationNotification;
+use App\Notifications\BookingReactivationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
-class PowerSyncUploadVoyageCancelTest extends TestCase
+class PowerSyncUploadVoyageUncancelTest extends TestCase
 {
     use RefreshDatabase;
 
     /**
-     * @return array{0: User, 1: Trip, 2: Booking}
+     * @return array{0: User, 1: Trip, 2: Voyage, 3: Booking}
      */
-    private function tripWithBooking(): array
+    private function readyVoyageWithBooking(): array
     {
         $user = User::factory()->create();
         $program = Program::factory()->withOwner($user)->create();
@@ -31,6 +30,9 @@ class PowerSyncUploadVoyageCancelTest extends TestCase
             'scheduled_departure_at' => now()->addWeek(),
         ]);
         $type = TicketType::factory()->forProgram($program)->create();
+        $voyage = Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Ready,
+        ]);
         $booking = Booking::factory()->forTrip($trip)->create([
             'contact_email' => 'guest@example.com',
             'contact_name' => 'Guest One',
@@ -42,17 +44,14 @@ class PowerSyncUploadVoyageCancelTest extends TestCase
             'email' => 'guest@example.com',
         ]);
 
-        return [$user, $trip, $booking];
+        return [$user, $trip, $voyage, $booking];
     }
 
-    public function test_patch_ready_voyage_to_cancelled_soft_deletes_bookings_and_notifies_guests(): void
+    public function test_cancel_then_uncancel_restores_voyage_and_attributed_bookings(): void
     {
         Notification::fake();
 
-        [$user, $trip, $booking] = $this->tripWithBooking();
-        $voyage = Voyage::factory()->forTrip($trip)->create([
-            'status' => VoyageStatus::Ready,
-        ]);
+        [$user, $trip, $voyage, $booking] = $this->readyVoyageWithBooking();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -68,6 +67,7 @@ class PowerSyncUploadVoyageCancelTest extends TestCase
         ])->assertOk();
 
         $voyage->refresh();
+        $booking->refresh();
         $this->assertSame(VoyageStatus::Cancelled, $voyage->status);
         $this->assertSame(VoyageStatus::Ready->value, $voyage->cancelled_from_status);
         $this->assertSoftDeleted('bookings', ['id' => $booking->getKey()]);
@@ -76,58 +76,46 @@ class PowerSyncUploadVoyageCancelTest extends TestCase
             'cancelled_by_voyage_id' => $voyage->getKey(),
         ]);
 
-        Notification::assertSentOnDemand(
-            BookingCancellationNotification::class,
-            function (BookingCancellationNotification $notification) use ($booking): bool {
-                return $notification->booking->getKey() === $booking->getKey();
-            },
-        );
-    }
-
-    public function test_put_new_voyage_with_cancelled_status_cleans_up_trip_bookings(): void
-    {
         Notification::fake();
-
-        [$user, $trip, $booking] = $this->tripWithBooking();
-        $voyageId = (string) Str::ulid();
-        $waterRouteId = (string) $trip->product->water_route_id;
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
                 [
-                    'op' => 'PUT',
+                    'op' => 'PATCH',
                     'type' => 'voyages',
-                    'id' => $voyageId,
+                    'id' => $voyage->getKey(),
                     'data' => [
-                        'trip_id' => $trip->getKey(),
-                        'water_route_id' => $waterRouteId,
-                        'status' => 'cancelled',
+                        'status' => 'ready',
                     ],
                 ],
             ],
         ])->assertOk();
 
-        $this->assertDatabaseHas('voyages', [
-            'id' => $voyageId,
-            'trip_id' => $trip->getKey(),
-            'status' => VoyageStatus::Cancelled->value,
-        ]);
-        $this->assertSoftDeleted('bookings', ['id' => $booking->getKey()]);
+        $voyage->refresh();
+        $booking->refresh();
+        $this->assertSame(VoyageStatus::Ready, $voyage->status);
+        $this->assertNull($voyage->cancelled_from_status);
+        $this->assertFalse($booking->trashed());
+        $this->assertNull($booking->cancelled_by_voyage_id);
 
-        Notification::assertSentOnDemand(BookingCancellationNotification::class);
+        Notification::assertSentOnDemand(
+            BookingReactivationNotification::class,
+            function (BookingReactivationNotification $notification) use ($booking): bool {
+                return $notification->booking->getKey() === $booking->getKey();
+            },
+        );
     }
 
-    public function test_patch_underway_voyage_to_cancelled_is_rejected(): void
+    public function test_uncancel_leaves_user_cancelled_bookings_deleted(): void
     {
         Notification::fake();
 
-        $user = User::factory()->create();
-        $program = Program::factory()->withOwner($user)->create();
-        $trip = Trip::factory()->withWaterRoute()->forProgram($program)->create();
-        $voyage = Voyage::factory()->forTrip($trip)->create([
-            'status' => VoyageStatus::Underway,
-            'started_at' => now(),
+        [$user, $trip, $voyage, $bookingA] = $this->readyVoyageWithBooking();
+        $bookingB = Booking::factory()->forTrip($trip)->create([
+            'contact_email' => 'other@example.com',
+            'contact_name' => 'Guest Two',
         ]);
+        $bookingB->delete();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
             'crud' => [
@@ -137,68 +125,73 @@ class PowerSyncUploadVoyageCancelTest extends TestCase
                     'id' => $voyage->getKey(),
                     'data' => [
                         'status' => 'cancelled',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertSoftDeleted('bookings', ['id' => $bookingA->getKey()]);
+        $this->assertSoftDeleted('bookings', ['id' => $bookingB->getKey()]);
+        $this->assertDatabaseHas('bookings', [
+            'id' => $bookingA->getKey(),
+            'cancelled_by_voyage_id' => $voyage->getKey(),
+        ]);
+        $this->assertDatabaseHas('bookings', [
+            'id' => $bookingB->getKey(),
+            'cancelled_by_voyage_id' => null,
+        ]);
+
+        Notification::fake();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'voyages',
+                    'id' => $voyage->getKey(),
+                    'data' => [
+                        'status' => 'ready',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $bookingA->refresh();
+        $bookingB->refresh();
+        $this->assertFalse($bookingA->trashed());
+        $this->assertTrue($bookingB->trashed());
+        $this->assertNull($bookingB->cancelled_by_voyage_id);
+    }
+
+    public function test_uncancel_past_departure_is_rejected(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->withWaterRoute()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->subHour(),
+        ]);
+        $voyage = Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Cancelled,
+            'cancelled_from_status' => VoyageStatus::Ready->value,
+        ]);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'voyages',
+                    'id' => $voyage->getKey(),
+                    'data' => [
+                        'status' => 'ready',
                     ],
                 ],
             ],
         ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
 
         $voyage->refresh();
-        $this->assertSame(VoyageStatus::Underway, $voyage->status);
-        Notification::assertNothingSent();
-    }
-
-    public function test_patch_completed_voyage_is_rejected(): void
-    {
-        Notification::fake();
-
-        $user = User::factory()->create();
-        $program = Program::factory()->withOwner($user)->create();
-        $trip = Trip::factory()->withWaterRoute()->forProgram($program)->create();
-        $voyage = Voyage::factory()->forTrip($trip)->create([
-            'status' => VoyageStatus::Completed,
-            'started_at' => now()->subHour(),
-            'arrived_at' => now(),
-        ]);
-
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'PATCH',
-                    'type' => 'voyages',
-                    'id' => $voyage->getKey(),
-                    'data' => [
-                        'status' => 'cancelled',
-                    ],
-                ],
-            ],
-        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
-
-        Notification::assertNothingSent();
-    }
-
-    public function test_patch_already_cancelled_voyage_is_idempotent(): void
-    {
-        Notification::fake();
-
-        [$user, $trip, $booking] = $this->tripWithBooking();
-        $voyage = Voyage::factory()->forTrip($trip)->create([
-            'status' => VoyageStatus::Cancelled,
-        ]);
-
-        $this->actingAs($user)->postJson('/api/powersync/upload', [
-            'crud' => [
-                [
-                    'op' => 'PATCH',
-                    'type' => 'voyages',
-                    'id' => $voyage->getKey(),
-                    'data' => [
-                        'status' => 'cancelled',
-                    ],
-                ],
-            ],
-        ])->assertOk();
-
-        $this->assertDatabaseHas('bookings', ['id' => $booking->getKey()]);
+        $this->assertSame(VoyageStatus::Cancelled, $voyage->status);
         Notification::assertNothingSent();
     }
 }

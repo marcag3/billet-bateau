@@ -762,6 +762,13 @@ export default {
             "Cancel this trip? All booked guests will receive a cancellation email.",
         cancelTripSuccess: "Trip cancelled.",
         cancelTripBlocked: "This trip cannot be cancelled after departure.",
+        uncancelTrip: "Uncancel trip",
+        uncancelTripConfirmTitle: "Uncancel this trip?",
+        uncancelTripConfirmMessage:
+            "Restore this trip? Bookings cancelled with the trip will be reactivated and guests will receive an email.",
+        uncancelTripSuccess: "Trip uncancelled.",
+        uncancelTripBlocked: "Only a cancelled trip can be uncancelled.",
+        uncancelTripPastDeparture: "This trip cannot be uncancelled after departure.",
         errorGeneric: "Something went wrong. Please try again.",
     },
     programsControlAdmin: {
@@ -779,6 +786,8 @@ export default {
         bookingCancelledBadge: "Cancelled",
         bookingCancelledBanner:
             "This booking was cancelled. Change the trip and save to rebook it on another departure.",
+        bookingCancelledByTripBanner:
+            "This booking was cancelled when the trip was cancelled. Uncancel the trip to restore it.",
         bookingRebooked: "Booking rebooked on the new departure.",
         trip: "Trip",
         tripRequired: "Select a trip.",

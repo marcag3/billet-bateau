@@ -17,7 +17,7 @@
                 <AppControlPanelTripCard v-for="item in visibleTripCards" :key="String(item.trip.id)" :card="item"
                     :program-timezone="programTimezone" :boat-names-by-id="boatNamesById"
                     :guide-names-by-id="guideNamesById" @open-depart="openDepartModal(item)"
-                    @arrive="confirmArrive(item)" @cancel="confirmCancel(item)" @open-walk-in="openWalkInModal(item)"
+                    @arrive="confirmArrive(item)" @cancel="confirmCancel(item)" @uncancel="confirmUncancel(item)" @open-walk-in="openWalkInModal(item)"
                     @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)"
                     @undo-check-in-booking="(bookingId) => onUndoCheckInBooking(item, bookingId)"
                     @remove-passenger="(passengerId) => removePassenger(passengerId)"
@@ -111,7 +111,7 @@ const emptyDayMessage = computed((): string => {
     return t("programsControl.emptyDay");
 });
 
-const { startDeparture, markArrival, removePassenger, cancelTrip } = useControlPanelVoyageOps();
+const { startDeparture, markArrival, removePassenger, cancelTrip, uncancelTrip } = useControlPanelVoyageOps();
 const { addWalkInBooking, removeWalkInBookingTicket } = useControlPanelWalkInBooking();
 const { checkInBooking } = useControlPanelCheckIn();
 const { undoCheckInForBooking } = useControlPanelUndoCheckIn();
@@ -289,6 +289,21 @@ function confirmCancel(card: ControlPanelTripCardModel): void {
         message: t("programsControl.cancelTripConfirmMessage"),
         onOk: () =>
             cancelTrip({
+                trip: card.trip,
+                existingVoyage: card.voyage,
+            }),
+    });
+}
+
+function confirmUncancel(card: ControlPanelTripCardModel): void {
+    if (card.voyage == null) {
+        return;
+    }
+    confirm({
+        title: t("programsControl.uncancelTripConfirmTitle"),
+        message: t("programsControl.uncancelTripConfirmMessage"),
+        onOk: () =>
+            uncancelTrip({
                 trip: card.trip,
                 existingVoyage: card.voyage,
             }),

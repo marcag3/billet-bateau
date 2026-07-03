@@ -22,6 +22,7 @@ final class BookingPatchData extends Data
         #[WithCast(TrimmedStringCast::class)]
         public string|Optional|null $contact_email = new Optional,
         public string|Optional|null $deleted_at = new Optional,
+        public string|Optional|null $cancelled_by_voyage_id = new Optional,
     ) {}
 
     /**
@@ -35,6 +36,7 @@ final class BookingPatchData extends Data
             'contact_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'contact_email' => ['sometimes', 'nullable', 'email:rfc', 'max:255'],
             'deleted_at' => ['sometimes', 'nullable', 'date'],
+            'cancelled_by_voyage_id' => ['sometimes', 'nullable', 'ulid', 'exists:voyages,id'],
         ];
     }
 }

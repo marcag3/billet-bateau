@@ -28,6 +28,7 @@ class Voyage extends Model
         'started_at',
         'arrived_at',
         'status',
+        'cancelled_from_status',
         'created_at',
         'updated_at',
     ];

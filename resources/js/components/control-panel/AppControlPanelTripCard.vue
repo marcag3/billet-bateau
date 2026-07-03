@@ -59,7 +59,7 @@
             </q-scroll-area>
         </div>
 
-        <div v-if="showDepartedAssignment || showCancel" class="shrink-0 mx-10 mb-8 text-center min-w-0">
+        <div v-if="showDepartedAssignment || showCancel || showUncancel" class="shrink-0 mx-10 mb-8 text-center min-w-0">
             <template v-if="showDepartedAssignment">
                 <div class="text-body2 ellipsis block max-w-full" :title="departedGuideLabel">
                     {{ departedGuideLabel }}
@@ -70,6 +70,8 @@
             </template>
             <q-btn v-if="showCancel" flat dense no-caps size="sm" color="negative"
                 :label="t('programsControl.cancelTrip')" @click="emit('cancel')" />
+            <q-btn v-if="showUncancel" flat dense no-caps size="sm" color="primary"
+                :label="t('programsControl.uncancelTrip')" @click="emit('uncancel')" />
         </div>
 
         <svg class="absolute inset-0 pointer-events-none" :style="tripDisplayStatusStyle" viewBox="0 0 200 480"
@@ -122,6 +124,7 @@ const emit = defineEmits<{
     'open-depart': [];
     arrive: [];
     cancel: [];
+    uncancel: [];
     'open-walk-in': [];
     'remove-booked-ticket': [ticketId: string, bookingId: string];
     'undo-check-in-booking': [bookingId: string];
@@ -209,6 +212,17 @@ const showDepart = computed(() => tripDisplayStatus.value === 'boarding');
 const showArrive = computed(() => voyageStatus.value === 'underway');
 
 const showCancel = computed(() => manifestModifiable.value);
+
+const showUncancel = computed(() => {
+    if (voyageStatus.value !== 'cancelled') {
+        return false;
+    }
+    const raw = props.card.trip.scheduled_departure_at;
+    if (raw == null || String(raw).trim() === '') {
+        return true;
+    }
+    return new Date(String(raw)).getTime() >= Date.now();
+});
 
 const showDepartedAssignment = computed(() =>
     hasControlPanelTripDeparted(props.card.voyage),

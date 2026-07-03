@@ -356,6 +356,40 @@ export function useControlVoyageAdminOps() {
         );
     }
 
+    async function uncancelTrip(input: {
+        trip: TripWithRelationsRow;
+        existingVoyage: VoyageOutput;
+    }): Promise<void> {
+        await runWithNotify(
+            async () => {
+                const voyageStatus = String(input.existingVoyage.status ?? '').trim();
+                if (voyageStatus !== 'cancelled') {
+                    throw new Error(t('programsControl.uncancelTripBlocked'));
+                }
+
+                const departureRaw = input.trip.scheduled_departure_at;
+                if (departureRaw != null && new Date(String(departureRaw)).getTime() < Date.now()) {
+                    throw new Error(t('programsControl.uncancelTripPastDeparture'));
+                }
+
+                const voyageId = String(input.existingVoyage.id ?? '').trim();
+                if (voyageId.length === 0) {
+                    throw new Error(t('programsControl.errorGeneric'));
+                }
+
+                const targetStatus = String(
+                    input.existingVoyage.cancelled_from_status ?? 'ready',
+                ).trim() || 'ready';
+
+                await updateVoyage(voyageId, { status: targetStatus });
+            },
+            {
+                successMessage: t('programsControl.uncancelTripSuccess'),
+                errorGeneric: t('programsControl.errorGeneric'),
+            },
+        );
+    }
+
     return {
         createVoyage,
         updateVoyage,
@@ -368,5 +402,6 @@ export function useControlVoyageAdminOps() {
         addPassenger,
         removePassenger,
         cancelTrip,
+        uncancelTrip,
     };
 }
