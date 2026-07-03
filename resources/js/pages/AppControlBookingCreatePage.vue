@@ -38,6 +38,13 @@
                         :label="t('publicBooking.country')"
                         :disable="isSubmitting"
                     />
+                    <AppBookingCustomQuestionsFields
+                        v-if="bookingQuestions.length > 0"
+                        v-model:answers="customAnswers"
+                        :questions="bookingQuestions"
+                        :errors="customAnswerErrors"
+                        :disabled="isSubmitting"
+                    />
                     <q-select
                         v-model="ticketTypeId"
                         outlined
@@ -52,7 +59,7 @@
                         type="submit"
                         :label="t('programsControlAdmin.createBooking')"
                         :loading="isSubmitting"
-                        :disable="!meta.valid || isSubmitting || programId.length === 0 || !ticketTypeId"
+                        :disable="!canCreateBooking"
                         class="self-start"
                     />
                 </div>
@@ -63,7 +70,7 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
@@ -80,9 +87,14 @@ import { useBookingAdminCrud } from '../composables/useBookingAdminCrud';
 import { useProgramTripSelectOptions } from '../composables/useProgramTripSelectOptions';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import { controlContextNamedRoute } from '../utilities/control-context-route';
+import {
+    parseProgramBookingQuestions,
+    validateBookingCustomAnswers,
+} from '../utilities/program-booking-questions';
 import AppEntityCreatePageLayout from '../layouts/AppEntityCreatePageLayout.vue';
 import AppCardSection from '../components/ui/AppCardSection.vue';
 import AppCountrySelect from '../components/molecules/AppCountrySelect.vue';
+import AppBookingCustomQuestionsFields from '../components/molecules/AppBookingCustomQuestionsFields.vue';
 
 const powersync = getAppPowerSyncContext();
 const { t } = useI18n();
@@ -92,6 +104,8 @@ const { addWalkInBooking } = useBookingAdminCrud();
 const { runWithNotify } = useNotifyAsyncAction();
 
 const ticketTypeId = ref('');
+const customAnswers = ref<string[]>([]);
+const customAnswerErrors = ref<Record<number, string>>({});
 
 const programId = computed(() => String(route.params.programId ?? '').trim());
 
@@ -116,6 +130,59 @@ const [country, countryProps] = quasarField('country');
 
 const { tripOptions } = useProgramTripSelectOptions();
 
+const { data: programRaw } = useLiveQuery(
+    (qb) => {
+        const col = powersync.collections.programs.value;
+        const pid = powersync.activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) {
+            return undefined;
+        }
+        return qb
+            .from({ p: col })
+            .where(({ p }) => eq(p.id, pid))
+            .select(({ p }) => ({ booking_questions: p.booking_questions }));
+    },
+    [powersync.collections.programs, powersync.activeProgramIdRef],
+);
+
+const bookingQuestions = computed(() =>
+    parseProgramBookingQuestions(
+        liveQueryRows<{ booking_questions: unknown }>(programRaw.value)[0]?.booking_questions,
+    ),
+);
+
+watch(
+    bookingQuestions,
+    (questions) => {
+        customAnswers.value = questions.map(() => '');
+        customAnswerErrors.value = {};
+    },
+    { immediate: true },
+);
+
+const customAnswersValid = computed(() => {
+    if (bookingQuestions.value.length === 0) {
+        return true;
+    }
+
+    return (
+        validateBookingCustomAnswers({
+            questions: bookingQuestions.value,
+            answers: customAnswers.value,
+            t,
+        }).customFieldMap !== null
+    );
+});
+
+const canCreateBooking = computed(
+    () =>
+        meta.value.valid &&
+        !isSubmitting.value &&
+        programId.value.length > 0 &&
+        ticketTypeId.value.trim().length > 0 &&
+        customAnswersValid.value,
+);
+
 const { data: ticketTypesRaw } = useLiveQuery(
     (qb) => {
         const col = powersync.collections.ticket_types.value;
@@ -136,6 +203,17 @@ const ticketTypeOptions = computed(() =>
 );
 
 const onCreateSubmit = handleSubmit(async (values: BookingAdminFormValues) => {
+    const customValidation = validateBookingCustomAnswers({
+        questions: bookingQuestions.value,
+        answers: customAnswers.value,
+        t,
+    });
+
+    if (customValidation.customFieldMap === null) {
+        customAnswerErrors.value = customValidation.errors;
+        return;
+    }
+
     await runWithNotify(
         async () => {
             const result = await addWalkInBooking({
@@ -145,7 +223,7 @@ const onCreateSubmit = handleSubmit(async (values: BookingAdminFormValues) => {
                 contactName: values.contact_name,
                 contactEmail: values.contact_email,
                 country: values.country,
-                customFieldMap: {},
+                customFieldMap: customValidation.customFieldMap ?? {},
             });
             if (result == null) {
                 return;

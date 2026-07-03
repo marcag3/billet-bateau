@@ -809,6 +809,7 @@ export default {
         bookingRebooked: "Réservation réaffectée au nouveau départ.",
         trip: "Sortie",
         tripRequired: "Sélectionnez une sortie.",
+        tripCapacitySuffix: "({remaining}/{capacity})",
         waterRoute: "Parcours",
         waterRouteRequired: "Sélectionnez un parcours.",
         tickets: "billets",

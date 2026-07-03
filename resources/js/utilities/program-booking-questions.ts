@@ -74,3 +74,50 @@ export function parseBookingTicketCustomFields(raw: unknown): Record<string, str
 
     return result;
 }
+
+export type BookingCustomAnswersValidation = {
+    errors: Record<number, string>;
+    customFieldMap: Record<string, string> | null;
+};
+
+/**
+ * Validates admin/public booking custom question answers against configured program questions.
+ */
+export function validateBookingCustomAnswers(input: {
+    questions: string[];
+    answers: string[];
+    t: (key: string, params?: Record<string, string>) => string;
+}): BookingCustomAnswersValidation {
+    const { questions, answers, t } = input;
+    const errors: Record<number, string> = {};
+    const customFieldMap: Record<string, string> = {};
+
+    questions.forEach((question, index) => {
+        const answer = String(answers[index] ?? '').trim();
+        if (answer.length === 0) {
+            errors[index] = t('publicBooking.customAnswerRequired', { question });
+        } else {
+            customFieldMap[question] = answer;
+        }
+    });
+
+    if (Object.keys(errors).length > 0) {
+        return { errors, customFieldMap: null };
+    }
+
+    if (questions.length === 0) {
+        return { errors, customFieldMap: {} };
+    }
+
+    return { errors, customFieldMap };
+}
+
+/**
+ * Builds parallel answer array from a custom-field map and configured question order.
+ */
+export function customAnswersFromFieldMap(
+    questions: string[],
+    customFieldMap: Record<string, string>,
+): string[] {
+    return questions.map((question) => String(customFieldMap[question] ?? '').trim());
+}

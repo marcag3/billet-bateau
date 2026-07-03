@@ -1,7 +1,7 @@
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 import { createWalkInBookingContactZodSchema } from '../public-booking/public-booking.validation';
-import { zRequiredTrimmedString } from '../../validation/zod-fields';
+import { zOptionalTrimmedEmail, zRequiredTrimmedString } from '../../validation/zod-fields';
 
 export type Translator = (key: string) => string;
 
@@ -17,6 +17,25 @@ export type BookingAdminFormValues = z.infer<
 
 export function createBookingAdminFormSchema(t: Translator) {
     return toTypedSchema(createBookingAdminFormZodSchema(t));
+}
+
+export function createBookingEditFormZodSchema(t: Translator) {
+    return z.object({
+        tripId: zRequiredTrimmedString(t('programsControlAdmin.tripRequired')),
+        contact_name: zRequiredTrimmedString(t('publicBooking.contactNameRequired')),
+        contact_email: z.preprocess(
+            (value) => (value == null ? '' : value),
+            zOptionalTrimmedEmail(t('publicBooking.contactEmailInvalid')),
+        ),
+    });
+}
+
+export type BookingEditFormValues = z.infer<
+    ReturnType<typeof createBookingEditFormZodSchema>
+>;
+
+export function createBookingEditFormSchema(t: Translator) {
+    return toTypedSchema(createBookingEditFormZodSchema(t));
 }
 
 export function createBookingTicketRowZodSchema(t: Translator) {

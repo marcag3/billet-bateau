@@ -36,13 +36,20 @@
                         :label="t('publicBooking.contactEmail')"
                         :disable="isSubmitting || isDeleting"
                     />
+                    <AppBookingCustomQuestionsFields
+                        v-if="bookingQuestions.length > 0"
+                        v-model:answers="customAnswers"
+                        :questions="bookingQuestions"
+                        :errors="customAnswerErrors"
+                        :disabled="isSubmitting || isDeleting"
+                    />
                     <div class="row gap-2">
                         <q-btn
                             color="primary"
                             type="submit"
                             :label="t('programsControlAdmin.saveBooking')"
                             :loading="isSubmitting"
-                            :disable="!meta.valid || isSubmitting || isDeleting"
+                            :disable="!canSaveBooking"
                         />
                         <q-btn
                             v-if="canDeleteBooking"
@@ -195,8 +202,8 @@ import { useQuasar } from 'quasar';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { eq } from '@tanstack/db';
 import {
-    createBookingAdminFormSchema,
-    type BookingAdminFormValues,
+    createBookingEditFormSchema,
+    type BookingEditFormValues,
 } from '../../models/bookings/bookings.validation';
 import { createQuasarFieldBinder } from '../../validation/quasar-vee-fields';
 import { DEFAULT_COUNTRY_CODE } from '../../composables/useCountryOptions';
@@ -211,9 +218,25 @@ import { useControlPanelUndoCheckIn } from '../../composables/useControlPanelUnd
 import { useConfirmDialog } from '../../composables/useConfirmDialog';
 import { useNotifyAsyncAction } from '../../composables/useNotifyAsyncAction';
 import { useNotifyErrorFromCatch } from '../../composables/useNotifyErrorFromCatch';
+import {
+    formatTripSelectCapacitySuffix,
+    tripHasCapacityForBookingMove,
+} from '../../utilities/booking-admin-validation';
+import {
+    customAnswersFromFieldMap,
+    parseBookingTicketCustomFields,
+    parseProgramBookingQuestions,
+    validateBookingCustomAnswers,
+} from '../../utilities/program-booking-questions';
+import {
+    formatDepartureParts,
+    resolveProgramTimezone,
+} from '../../utilities/program-timezone-datetime';
+import type { TripWithRelationsRow } from '../../powersync/joined-queries';
 import AppCardSection from '../ui/AppCardSection.vue';
 import AppEmptyListRow from '../ui/AppEmptyListRow.vue';
 import AppCountrySelect from '../molecules/AppCountrySelect.vue';
+import AppBookingCustomQuestionsFields from '../molecules/AppBookingCustomQuestionsFields.vue';
 
 const props = defineProps<{
     bookingId: string;
@@ -224,7 +247,7 @@ const emit = defineEmits<{
 }>();
 
 const powersync = getAppPowerSyncContext();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const $q = useQuasar();
 const { confirm } = useConfirmDialog();
 const { notifyError } = useNotifyErrorFromCatch();
@@ -243,6 +266,8 @@ const newTicketTypeId = ref('');
 const newTicketName = ref('');
 const newTicketEmail = ref('');
 const newTicketCountry = ref(DEFAULT_COUNTRY_CODE);
+const customAnswers = ref<string[]>([]);
+const customAnswerErrors = ref<Record<number, string>>({});
 
 const editTicketDialogOpen = ref(false);
 const editingTicketId = ref('');
@@ -253,17 +278,16 @@ const editTicketCountry = ref(DEFAULT_COUNTRY_CODE);
 
 const bookingId = computed(() => String(props.bookingId ?? '').trim());
 
-const { tripOptions } = useProgramTripSelectOptions();
+const { tripRows, programTimezone } = useProgramTripSelectOptions();
 
-const schema = createBookingAdminFormSchema(t);
-const { handleSubmit, defineField, meta, isSubmitting, resetForm } =
-    useForm<BookingAdminFormValues>({
+const schema = createBookingEditFormSchema(t);
+const { handleSubmit, defineField, meta, isSubmitting, resetForm, validate } =
+    useForm<BookingEditFormValues>({
         validationSchema: schema,
         initialValues: {
             tripId: '',
             contact_name: '',
             contact_email: '',
-            country: DEFAULT_COUNTRY_CODE,
         },
     });
 
@@ -271,6 +295,27 @@ const quasarField = createQuasarFieldBinder(defineField);
 const [tripId, tripIdProps] = quasarField('tripId');
 const [contactName, contactNameProps] = quasarField('contact_name');
 const [contactEmail, contactEmailProps] = quasarField('contact_email');
+
+const { data: programRaw } = useLiveQuery(
+    (qb) => {
+        const col = powersync.collections.programs.value;
+        const pid = powersync.activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) {
+            return undefined;
+        }
+        return qb
+            .from({ p: col })
+            .where(({ p }) => eq(p.id, pid))
+            .select(({ p }) => ({ booking_questions: p.booking_questions }));
+    },
+    [powersync.collections.programs, powersync.activeProgramIdRef],
+);
+
+const bookingQuestions = computed(() =>
+    parseProgramBookingQuestions(
+        liveQueryRows<{ booking_questions: unknown }>(programRaw.value)[0]?.booking_questions,
+    ),
+);
 
 const { data: bookingRaw } = useLiveQuery(
     (qb) => {
@@ -295,26 +340,6 @@ const showNotFound = computed(
     () => bookingId.value.length > 0 && bookingRaw.value != null && currentBooking.value == null,
 );
 
-watch(
-    currentBooking,
-    (booking) => {
-        if (booking == null) {
-            return;
-        }
-        resetForm({
-            values: {
-                tripId: String(booking.trip_id ?? ''),
-                contact_name: String(booking.contact_name ?? ''),
-                contact_email: String(booking.contact_email ?? ''),
-                country: DEFAULT_COUNTRY_CODE,
-            },
-        });
-        newTicketName.value = String(booking.contact_name ?? '');
-        newTicketEmail.value = String(booking.contact_email ?? '');
-    },
-    { immediate: true },
-);
-
 const { data: ticketsRaw } = useLiveQuery(
     (qb) => {
         const col = powersync.collections.booking_tickets.value;
@@ -328,6 +353,214 @@ const { data: ticketsRaw } = useLiveQuery(
 );
 
 const tickets = computed(() => liveQueryRows<BookingTicketOutput>(ticketsRaw.value));
+
+const { data: activeTicketsRaw } = useLiveQuery(
+    (qb) => {
+        const ticketsCol = powersync.collections.booking_tickets.value;
+        const bookingsCol = powersync.collections.bookings.value;
+        const pid = powersync.activeProgramIdRef.value.trim();
+        if (!ticketsCol || !bookingsCol || pid.length === 0) {
+            return undefined;
+        }
+        return qb
+            .from({ bt: ticketsCol })
+            .innerJoin({ b: bookingsCol }, ({ bt, b }) => eq(bt.booking_id, b.id))
+            .where(({ b }) => eq(b.program_id, pid))
+            .fn.where((row) => {
+                const deletedAt = (row.b as { deleted_at?: string | null }).deleted_at;
+                return deletedAt == null || String(deletedAt).trim() === '';
+            })
+            .select(({ bt, b }) => ({
+                trip_id: b.trip_id,
+                ticket_id: bt.id,
+            }));
+    },
+    [
+        powersync.collections.booking_tickets,
+        powersync.collections.bookings,
+        powersync.activeProgramIdRef,
+    ],
+);
+
+const activeTicketCountByTripId = computed(() => {
+    const map = new Map<string, number>();
+    for (const row of liveQueryRows<{ trip_id: string | null }>(activeTicketsRaw.value)) {
+        const tripIdValue = String(row.trip_id ?? '').trim();
+        if (tripIdValue.length === 0) {
+            continue;
+        }
+        map.set(tripIdValue, (map.get(tripIdValue) ?? 0) + 1);
+    }
+    return map;
+});
+
+function formatTripSelectLabel(trip: TripWithRelationsRow): string {
+    const product = String(trip.product_name ?? '—');
+    const dep = trip.scheduled_departure_at;
+    if (dep == null || String(dep).trim() === '') {
+        return `— · ${product}`;
+    }
+
+    const { date, time } = formatDepartureParts(
+        String(dep),
+        programTimezone.value,
+        String(locale.value),
+    );
+
+    return `${date} ${time} · ${product}`;
+}
+
+const tripChanged = computed(
+    () =>
+        String(tripId.value ?? '').trim() !==
+        String(currentBooking.value?.trip_id ?? '').trim(),
+);
+
+const selectedTrip = computed(
+    () =>
+        tripRows.value.find(
+            (trip) => String(trip.id) === String(tripId.value ?? '').trim(),
+        ) ?? null,
+);
+
+const hasCapacityForSelectedTrip = computed(() => {
+    const trip = selectedTrip.value;
+    const selectedTripId = String(tripId.value ?? '').trim();
+
+    if (trip == null) {
+        return selectedTripId.length === 0;
+    }
+
+    const tripIdValue = String(trip.id);
+    const activeCount = activeTicketCountByTripId.value.get(tripIdValue) ?? 0;
+
+    return tripHasCapacityForBookingMove({
+        tripCapacity: trip.capacity,
+        activeBookedTicketCount: activeCount,
+        bookingTicketCount: tickets.value.length,
+    });
+});
+
+const canSaveBooking = computed(() => {
+    if (!meta.value.valid || isSubmitting.value || isDeleting.value) {
+        return false;
+    }
+
+    if (isCancelled.value) {
+        return tripChanged.value && hasCapacityForSelectedTrip.value;
+    }
+
+    if (tripChanged.value && !hasCapacityForSelectedTrip.value) {
+        return false;
+    }
+
+    return true;
+});
+
+const tripOptions = computed(() => {
+    const currentTripId = String(currentBooking.value?.trip_id ?? '').trim();
+    const ticketCount = tickets.value.length;
+    const tz = programTimezone.value;
+    const loc = String(locale.value);
+
+    return tripRows.value.map((trip) => {
+        const tripIdValue = String(trip.id);
+        const activeCount = activeTicketCountByTripId.value.get(tripIdValue) ?? 0;
+        const hasCapacity = tripHasCapacityForBookingMove({
+            tripCapacity: trip.capacity,
+            activeBookedTicketCount: activeCount,
+            bookingTicketCount: ticketCount,
+        });
+        const remaining = Math.max(
+            0,
+            Math.floor(Number(trip.capacity) || 0) - activeCount,
+        );
+        const baseLabel = formatTripSelectLabel(trip);
+        const suffix = formatTripSelectCapacitySuffix(remaining, trip.capacity, t);
+        const label = suffix.length > 0 ? `${baseLabel} ${suffix}` : baseLabel;
+
+        return {
+            value: tripIdValue,
+            label,
+            disable: !hasCapacity && tripIdValue !== currentTripId,
+        };
+    });
+});
+
+const seededBookingId = ref('');
+
+watch(bookingId, () => {
+    seededBookingId.value = '';
+});
+
+watch(
+    [bookingId, currentBooking, bookingQuestions],
+    async ([id, booking, questions]) => {
+        if (id.length === 0 || booking == null || String(booking.id) !== id) {
+            return;
+        }
+
+        if (seededBookingId.value === id) {
+            return;
+        }
+
+        seededBookingId.value = id;
+
+        const ticketRows = tickets.value;
+        const firstTicket = ticketRows[0];
+        const fieldMap =
+            firstTicket != null
+                ? parseBookingTicketCustomFields(firstTicket.custom_fields)
+                : {};
+
+        resetForm({
+            values: {
+                tripId: String(booking.trip_id ?? ''),
+                contact_name: String(booking.contact_name ?? ''),
+                contact_email: String(booking.contact_email ?? ''),
+            },
+        });
+        customAnswers.value = customAnswersFromFieldMap(questions, fieldMap);
+        customAnswerErrors.value = {};
+        newTicketName.value = String(booking.contact_name ?? '');
+        newTicketEmail.value = String(booking.contact_email ?? '');
+        await validate();
+    },
+    { immediate: true },
+);
+
+watch(
+    () => tickets.value.length,
+    (ticketCount, previousCount) => {
+        if (seededBookingId.value.length === 0 || ticketCount === 0) {
+            return;
+        }
+
+        if (previousCount !== 0 || bookingQuestions.value.length === 0) {
+            return;
+        }
+
+        const firstTicket = tickets.value[0];
+        if (firstTicket == null) {
+            return;
+        }
+
+        const fieldMap = parseBookingTicketCustomFields(firstTicket.custom_fields);
+        const hasStoredAnswers = Object.values(fieldMap).some(
+            (answer) => String(answer).trim().length > 0,
+        );
+        const answersEmpty = customAnswers.value.every(
+            (answer) => String(answer).trim().length === 0,
+        );
+
+        if (hasStoredAnswers && answersEmpty) {
+            customAnswers.value = customAnswersFromFieldMap(
+                bookingQuestions.value,
+                fieldMap,
+            );
+        }
+    },
+);
 
 const { data: checkInsRaw } = useLiveQuery(
     (qb) => {
@@ -386,12 +619,31 @@ const ticketTypeOptions = computed(() =>
     })),
 );
 
-const onSaveSubmit = handleSubmit(async (values: BookingAdminFormValues) => {
+function resolveCustomFieldMapForSave(): Record<string, string> | null {
+    const validation = validateBookingCustomAnswers({
+        questions: bookingQuestions.value,
+        answers: customAnswers.value,
+        t,
+    });
+    customAnswerErrors.value = validation.errors;
+
+    return validation.customFieldMap;
+}
+
+const onSaveSubmit = handleSubmit(async (values: BookingEditFormValues) => {
+    const customFieldMap = resolveCustomFieldMapForSave();
+    if (customFieldMap === null) {
+        return;
+    }
+
+    if (!hasCapacityForSelectedTrip.value) {
+        $q.notify({ type: 'negative', message: t('programsControl.capacityFull') });
+        return;
+    }
+
     await runWithNotify(
         async () => {
-            const restoreCancelled =
-                isCancelled.value &&
-                String(values.tripId).trim() !== String(currentBooking.value?.trip_id ?? '').trim();
+            const restoreCancelled = isCancelled.value && tripChanged.value;
 
             await updateBooking(bookingId.value, {
                 tripId: values.tripId,
@@ -399,6 +651,14 @@ const onSaveSubmit = handleSubmit(async (values: BookingAdminFormValues) => {
                 contactEmail: values.contact_email,
                 ...(restoreCancelled ? { deletedAt: null } : {}),
             });
+
+            if (bookingQuestions.value.length > 0) {
+                for (const ticket of tickets.value) {
+                    await updateBookingTicket(String(ticket.id), {
+                        customFieldMap,
+                    });
+                }
+            }
         },
         {
             successMessage: isCancelled.value
@@ -432,6 +692,12 @@ async function onAddTicketSubmit(): Promise<void> {
     if (!canAddTicket.value) {
         return;
     }
+
+    const customFieldMap = resolveCustomFieldMapForSave();
+    if (customFieldMap === null) {
+        return;
+    }
+
     await runWithNotify(
         async () => {
             await insertBookingTicket(bookingId.value, {
@@ -439,7 +705,7 @@ async function onAddTicketSubmit(): Promise<void> {
                 name: newTicketName.value,
                 email: newTicketEmail.value,
                 country: newTicketCountry.value,
-                customFieldMap: {},
+                customFieldMap,
             });
             newTicketTypeId.value = '';
         },

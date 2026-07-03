@@ -782,6 +782,7 @@ export default {
         bookingRebooked: "Booking rebooked on the new departure.",
         trip: "Trip",
         tripRequired: "Select a trip.",
+        tripCapacitySuffix: "({remaining}/{capacity})",
         waterRoute: "Water route",
         waterRouteRequired: "Select a water route.",
         tickets: "tickets",

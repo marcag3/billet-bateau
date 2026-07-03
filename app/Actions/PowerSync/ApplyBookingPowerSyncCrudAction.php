@@ -8,6 +8,7 @@ use App\Data\PowerSync\Bookings\BookingPutPayloadResolver;
 use App\Data\PowerSync\Bookings\BookingResolvedPutData;
 use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Models\Booking;
+use App\Models\BookingTicket;
 use App\Models\Program;
 use App\Models\Trip;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -155,6 +156,9 @@ final class ApplyBookingPowerSyncCrudAction
 
             $this->resolveTripForBooking($patch->trip_id, (string) $booking->program_id);
             $tripIdChanged = (string) $booking->trip_id !== (string) $patch->trip_id;
+            if ($tripIdChanged) {
+                $this->assertTripHasCapacityForBookingMove($booking, $patch->trip_id);
+            }
             $booking->trip_id = $patch->trip_id;
         }
 
@@ -196,6 +200,41 @@ final class ApplyBookingPowerSyncCrudAction
         }
 
         return $trip;
+    }
+
+    private function assertTripHasCapacityForBookingMove(Booking $booking, string $targetTripId): void
+    {
+        $trip = Trip::query()->whereKey($targetTripId)->with('product')->first();
+
+        if ($trip === null) {
+            throw ValidationException::withMessages([
+                'data.trip_id' => __('The selected trip is not available for this program.'),
+            ]);
+        }
+
+        $product = $trip->product;
+        if ($product === null) {
+            throw ValidationException::withMessages([
+                'data.trip_id' => __('The selected trip is not available for booking.'),
+            ]);
+        }
+
+        $ticketCount = $booking->bookingTickets()->count();
+        if ($ticketCount <= 0) {
+            return;
+        }
+
+        $usedSeats = BookingTicket::query()
+            ->whereHas('booking', static function ($query) use ($targetTripId): void {
+                $query->where('trip_id', $targetTripId);
+            })
+            ->count();
+
+        if ($usedSeats + $ticketCount > (int) $product->capacity) {
+            throw ValidationException::withMessages([
+                'data.trip_id' => __('This trip does not have enough remaining capacity.'),
+            ]);
+        }
     }
 
     private function assertProgramManaged(string $programId, string $userId): void

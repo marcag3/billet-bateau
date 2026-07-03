@@ -226,6 +226,95 @@ class PowerSyncUploadBookingTest extends TestCase
         ]);
     }
 
+    public function test_patch_rebook_rejects_trip_at_capacity(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $product = Product::factory()->create([
+            'program_id' => $program->getKey(),
+            'capacity' => 1,
+        ]);
+        $tripA = Trip::factory()->forProgram($program)->create();
+        $tripB = Trip::factory()->forProduct($product)->create();
+        $ticketType = TicketType::factory()->create(['program_id' => $program->getKey()]);
+
+        $occupyingBooking = Booking::factory()->forTrip($tripB)->create();
+        BookingTicket::factory()->create([
+            'booking_id' => $occupyingBooking->getKey(),
+            'ticket_type_id' => $ticketType->getKey(),
+        ]);
+
+        $cancelledBooking = Booking::factory()->forTrip($tripA)->create();
+        BookingTicket::factory()->create([
+            'booking_id' => $cancelledBooking->getKey(),
+            'ticket_type_id' => $ticketType->getKey(),
+        ]);
+        $cancelledBooking->delete();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'bookings',
+                    'id' => $cancelledBooking->getKey(),
+                    'data' => [
+                        'trip_id' => $tripB->getKey(),
+                    ],
+                ],
+            ],
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
+
+        $this->assertSoftDeleted('bookings', [
+            'id' => $cancelledBooking->getKey(),
+            'trip_id' => $tripA->getKey(),
+        ]);
+    }
+
+    public function test_patch_rebook_restores_when_target_has_capacity(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $product = Product::factory()->create([
+            'program_id' => $program->getKey(),
+            'capacity' => 2,
+        ]);
+        $tripA = Trip::factory()->forProgram($program)->create();
+        $tripB = Trip::factory()->forProduct($product)->create();
+        $ticketType = TicketType::factory()->create(['program_id' => $program->getKey()]);
+
+        $occupyingBooking = Booking::factory()->forTrip($tripB)->create();
+        BookingTicket::factory()->create([
+            'booking_id' => $occupyingBooking->getKey(),
+            'ticket_type_id' => $ticketType->getKey(),
+        ]);
+
+        $cancelledBooking = Booking::factory()->forTrip($tripA)->create();
+        BookingTicket::factory()->create([
+            'booking_id' => $cancelledBooking->getKey(),
+            'ticket_type_id' => $ticketType->getKey(),
+        ]);
+        $cancelledBooking->delete();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'bookings',
+                    'id' => $cancelledBooking->getKey(),
+                    'data' => [
+                        'trip_id' => $tripB->getKey(),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $cancelledBooking->getKey(),
+            'trip_id' => $tripB->getKey(),
+            'deleted_at' => null,
+        ]);
+    }
+
     public function test_patch_can_soft_delete_booking_via_deleted_at(): void
     {
         $user = User::factory()->create();

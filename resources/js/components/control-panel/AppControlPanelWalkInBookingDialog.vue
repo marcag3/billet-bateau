@@ -35,14 +35,11 @@
                         :label="t('publicBooking.country')"
                     />
 
-                    <q-input
-                        v-for="(question, index) in bookingQuestions"
-                        :key="`${index}-${question}`"
-                        v-model="customAnswers[index]"
-                        outlined
-                        :label="question"
-                        :error="customAnswerErrors[index] !== undefined"
-                        :error-message="customAnswerErrors[index] ?? ''"
+                    <AppBookingCustomQuestionsFields
+                        v-if="bookingQuestions.length > 0"
+                        v-model:answers="customAnswers"
+                        :questions="bookingQuestions"
+                        :errors="customAnswerErrors"
                     />
                 </q-card-section>
 
@@ -64,7 +61,9 @@ import { createWalkInBookingContactFormSchema } from '../../models/public-bookin
 import { createQuasarFieldBinder } from '../../validation/quasar-vee-fields';
 import { DEFAULT_COUNTRY_CODE } from '../../composables/useCountryOptions';
 import { validateWalkInBookingTickets } from '../../utilities/public-booking-validation';
+import { validateBookingCustomAnswers } from '../../utilities/program-booking-questions';
 import AppCountrySelect from '../molecules/AppCountrySelect.vue';
+import AppBookingCustomQuestionsFields from '../molecules/AppBookingCustomQuestionsFields.vue';
 import AppTicketQuantityPicker from '../molecules/AppTicketQuantityPicker.vue';
 
 export type WalkInBookingConfirmPayload = {
@@ -179,19 +178,14 @@ const onSubmit = handleSubmit((values) => {
         return;
     }
 
-    const answerErrors: Record<number, string> = {};
-    const customFieldMap: Record<string, string> = {};
-    props.bookingQuestions.forEach((question, index) => {
-        const answer = String(customAnswers.value[index] ?? '').trim();
-        if (answer.length === 0) {
-            answerErrors[index] = t('publicBooking.customAnswerRequired', { question });
-        } else {
-            customFieldMap[question] = answer;
-        }
+    const customValidation = validateBookingCustomAnswers({
+        questions: props.bookingQuestions,
+        answers: customAnswers.value,
+        t,
     });
 
-    if (Object.keys(answerErrors).length > 0) {
-        customAnswerErrors.value = answerErrors;
+    if (customValidation.customFieldMap === null) {
+        customAnswerErrors.value = customValidation.errors;
         return;
     }
 
@@ -200,7 +194,7 @@ const onSubmit = handleSubmit((values) => {
         contactName: String(values.contact_name).trim(),
         contactEmail: values.contact_email,
         country: String(values.country).trim().toUpperCase(),
-        customFieldMap,
+        customFieldMap: customValidation.customFieldMap,
     });
     emit('update:open', false);
 });
