@@ -194,7 +194,60 @@ class PowerSyncUploadBookingTest extends TestCase
             ],
         ])->assertOk();
 
-        $this->assertDatabaseMissing('bookings', ['id' => $booking->getKey()]);
+        $this->assertSoftDeleted('bookings', ['id' => $booking->getKey()]);
+    }
+
+    public function test_patch_restores_soft_deleted_booking_when_trip_changes(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $tripA = Trip::factory()->forProgram($program)->create();
+        $tripB = Trip::factory()->forProgram($program)->create();
+        $booking = Booking::factory()->forTrip($tripA)->create();
+        $booking->delete();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'bookings',
+                    'id' => $booking->getKey(),
+                    'data' => [
+                        'trip_id' => $tripB->getKey(),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $booking->getKey(),
+            'trip_id' => $tripB->getKey(),
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_patch_can_soft_delete_booking_via_deleted_at(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $booking = Booking::factory()->forProgram($program)->create();
+        $deletedAt = now()->toIso8601String();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'bookings',
+                    'id' => $booking->getKey(),
+                    'data' => [
+                        'deleted_at' => $deletedAt,
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $booking->refresh();
+        $this->assertTrue($booking->trashed());
     }
 
     public function test_delete_booking_with_tickets_is_rejected(): void

@@ -21,7 +21,8 @@
                     @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)"
                     @undo-check-in-booking="(bookingId) => onUndoCheckInBooking(item, bookingId)"
                     @remove-passenger="(passengerId) => removePassenger(passengerId)"
-                    @check-in-booking="(bookingId) => onCheckInBooking(item, bookingId)" />
+                    @check-in-booking="(bookingId) => onCheckInBooking(item, bookingId)"
+                    @open-booking="openBookingModal" />
             </div>
         </div>
 
@@ -29,6 +30,8 @@
             :format-ticket-type-price="formatTicketTypePrice" :booking-questions="bookingQuestions"
             :booked-count="walkInCard?.bookedCount ?? 0"
             :trip-capacity="walkInTripCapacity" @confirm="onConfirmWalkIn" />
+
+        <AppControlBookingEditDialog v-model:open="bookingEditDialogOpen" :booking-id="bookingEditId" />
 
         <AppControlPanelStartVoyageModal v-model:open="departModalOpen" :boat-options="boatOptions"
             :guide-options="guideOptions" :initial-boat-ids="departCard?.initialBoatIds ?? []"
@@ -62,6 +65,7 @@ import AppControlPanelDayToolbar from "../components/control-panel/AppControlPan
 import AppControlPanelTripCard from "../components/control-panel/AppControlPanelTripCard.vue";
 import AppControlPanelStartVoyageModal from "../components/control-panel/AppControlPanelStartVoyageModal.vue";
 import AppControlPanelWalkInBookingDialog from "../components/control-panel/AppControlPanelWalkInBookingDialog.vue";
+import AppControlBookingEditDialog from "../components/control-panel/AppControlBookingEditDialog.vue";
 import type { ControlPanelSelectOption } from "../components/control-panel/AppControlPanelStartVoyageModal.vue";
 import type { WalkInBookingConfirmPayload } from "../components/control-panel/AppControlPanelWalkInBookingDialog.vue";
 import type { BookingTicketTypeOption } from "../models/public-booking/public-booking.types";
@@ -219,6 +223,14 @@ const departCard = ref<ControlPanelTripCardModel | null>(null);
 
 const walkInDialogOpen = ref(false);
 const walkInCard = ref<ControlPanelTripCardModel | null>(null);
+
+const bookingEditDialogOpen = ref(false);
+const bookingEditId = ref('');
+
+function openBookingModal(bookingId: string): void {
+    bookingEditId.value = String(bookingId).trim();
+    bookingEditDialogOpen.value = true;
+}
 
 const walkInTripCapacity = computed((): number | null => {
     const cap = walkInCard.value?.trip.capacity;

@@ -802,6 +802,11 @@ export default {
         bookingsEmpty: "Aucune réservation pour ce filtre.",
         showAllDates: "Toutes les dates",
         allDates: "Toutes les dates",
+        showCancelledBookings: "Réservations annulées",
+        bookingCancelledBadge: "Annulée",
+        bookingCancelledBanner:
+            "Cette réservation a été annulée. Changez la sortie et enregistrez pour la réaffecter à un autre départ.",
+        bookingRebooked: "Réservation réaffectée au nouveau départ.",
         trip: "Sortie",
         tripRequired: "Sélectionnez une sortie.",
         waterRoute: "Parcours",

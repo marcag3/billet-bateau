@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Booking extends Model
 {
@@ -16,6 +17,7 @@ class Booking extends Model
     use HasFactory;
 
     use HasUlids;
+    use SoftDeletes;
 
     protected $fillable = [
         'id',
@@ -36,6 +38,7 @@ class Booking extends Model
         return [
             'cancel_token' => 'encrypted',
             'departure_reminder_sent_at' => 'datetime',
+            'deleted_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

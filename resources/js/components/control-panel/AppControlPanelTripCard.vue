@@ -28,7 +28,13 @@
                         <q-item-section v-if="item.kind !== 'empty'">
                             <div class="row items-center no-wrap w-full ">
                                 <q-icon v-if="item.kind === 'passenger'" name="check" color="positive" size="xs" />
-                                <div class="col text-body1">{{ item.name }}</div>
+                                <div
+                                    class="col text-body1"
+                                    :class="{ 'cursor-pointer text-primary': manifestItemBookingId(item) != null }"
+                                    @click="onBookingNameClick(item)"
+                                >
+                                    {{ item.name }}
+                                </div>
                                 <div v-if="manifestItemCanCheckIn(item)" class="col-auto">
                                     <q-btn flat dense round color="primary" icon="how_to_reg" size="sm"
                                         :aria-label="t('programsControl.checkIn')"
@@ -120,6 +126,7 @@ const emit = defineEmits<{
     'undo-check-in-booking': [bookingId: string];
     'remove-passenger': [passengerId: string];
     'check-in-booking': [bookingId: string];
+    'open-booking': [bookingId: string];
 }>();
 const { t, locale } = useI18n();
 const { confirm } = useConfirmDialog();
@@ -149,6 +156,10 @@ const passengerCount = computed((): number => {
     }
 
     if (!manifestModifiable.value) {
+        if (voyageStatus.value === 'cancelled') {
+            return props.card.bookedCount;
+        }
+
         return props.card.passengers.length;
     }
 
@@ -264,6 +275,22 @@ function removeManifestAriaLabel(item: ManifestOccupiedSlot): string {
 function onEmptySlotClick(): void {
     if (canAddWalkIn.value) {
         emit('open-walk-in');
+    }
+}
+
+function manifestItemBookingId(item: ManifestOccupiedSlot): string | null {
+    if (item.kind === 'passenger') {
+        const id = item.bookingId;
+        return id != null && String(id).trim().length > 0 ? String(id) : null;
+    }
+
+    return String(item.bookingId).trim().length > 0 ? String(item.bookingId) : null;
+}
+
+function onBookingNameClick(item: ManifestOccupiedSlot): void {
+    const bookingId = manifestItemBookingId(item);
+    if (bookingId != null) {
+        emit('open-booking', bookingId);
     }
 }
 

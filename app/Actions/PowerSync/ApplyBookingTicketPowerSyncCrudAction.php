@@ -85,6 +85,7 @@ final class ApplyBookingTicketPowerSyncCrudAction
         }
 
         $this->assertProgramManaged((string) $booking->program_id, $userId);
+        $this->assertBookingNotCancelled($booking);
 
         $ticketType = TicketType::query()->whereKey($resolved->ticket_type_id)->first();
         if ($ticketType === null) {
@@ -131,6 +132,7 @@ final class ApplyBookingTicketPowerSyncCrudAction
         }
 
         $this->assertProgramManaged((string) $booking->program_id, $userId);
+        $this->assertBookingNotCancelled($booking);
 
         if (! ($dto->booking_id instanceof Optional)) {
             if ($dto->booking_id === null || $dto->booking_id === '') {
@@ -147,6 +149,7 @@ final class ApplyBookingTicketPowerSyncCrudAction
             }
 
             $this->assertProgramManaged((string) $nextBooking->program_id, $userId);
+            $this->assertBookingNotCancelled($nextBooking);
             $bookingTicket->booking_id = $dto->booking_id;
             $booking = $nextBooking;
         }
@@ -275,6 +278,15 @@ final class ApplyBookingTicketPowerSyncCrudAction
         if ($usedSeats + 1 > (int) $product->capacity) {
             throw ValidationException::withMessages([
                 'data' => __('This trip does not have enough remaining capacity.'),
+            ]);
+        }
+    }
+
+    private function assertBookingNotCancelled(Booking $booking): void
+    {
+        if ($booking->trashed()) {
+            throw ValidationException::withMessages([
+                'booking' => __('This booking has been cancelled and cannot be modified.'),
             ]);
         }
     }

@@ -102,6 +102,7 @@ const bookingsTable = new Table({
     trip_id: column.text,
     contact_name: column.text,
     contact_email: column.text,
+    deleted_at: column.text,
 });
 
 const waterRoutesTable = new Table({

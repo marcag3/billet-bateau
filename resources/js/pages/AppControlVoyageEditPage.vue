@@ -198,11 +198,11 @@ import {
     localDatetimeInputValueToIso,
 } from '../utilities/datetime-input';
 import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
-import { joinTripsWithRelationsFrom, type TripWithRelationsRow } from '../powersync/joined-queries';
 import { liveQueryRows } from '../powersync/live-query-casts';
 import type { VoyageOutput } from '../powersync/voyages.collection';
 import type { PassengerOutput } from '../powersync/passengers.collection';
 import { useControlVoyageAdminOps } from '../composables/useControlVoyageAdminOps';
+import { useProgramTripSelectOptions } from '../composables/useProgramTripSelectOptions';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
@@ -236,7 +236,8 @@ const startedAt = ref('');
 const arrivedAt = ref('');
 
 const voyageId = computed(() => String(route.params.voyageId ?? '').trim());
-const activeProgramIdRef = powersync.activeProgramIdRef;
+
+const { tripOptions, tripRows } = useProgramTripSelectOptions();
 
 const backTo = computed(() => controlContextNamedRoute(route, 'control.voyages.list'));
 
@@ -393,44 +394,6 @@ watch(
     { immediate: true },
 );
 
-const { data: tripsRaw } = useLiveQuery(
-    (qb) => {
-        const tripsCol = powersync.collections.trips.value;
-        const productsCol = powersync.collections.products.value;
-        const boatTypesCol = powersync.collections.boat_types.value;
-        const waterRoutesCol = powersync.collections.water_routes.value;
-        const pid = activeProgramIdRef.value.trim();
-        if (!tripsCol || !productsCol || !boatTypesCol || !waterRoutesCol || pid.length === 0) {
-            return undefined;
-        }
-        return joinTripsWithRelationsFrom(
-            qb,
-            tripsCol,
-            productsCol,
-            boatTypesCol,
-            waterRoutesCol,
-        )
-            .where(({ trip }) => eq(trip.program_id, pid))
-            .orderBy(({ trip }) => trip.scheduled_departure_at, 'asc');
-    },
-    [
-        powersync.collections.trips,
-        powersync.collections.products,
-        powersync.collections.boat_types,
-        powersync.collections.water_routes,
-        activeProgramIdRef,
-    ],
-);
-
-const tripRows = computed(() => liveQueryRows<TripWithRelationsRow>(tripsRaw.value));
-
-const tripOptions = computed(() =>
-    tripRows.value.map((trip) => ({
-        value: String(trip.id),
-        label: `${String(trip.scheduled_departure_at ?? '—')} · ${String(trip.product_name ?? '—')}`,
-    })),
-);
-
 const selectedTrip = computed(
     () => tripRows.value.find((trip) => String(trip.id) === String(tripId.value ?? '').trim()) ?? null,
 );
@@ -438,13 +401,13 @@ const selectedTrip = computed(
 const { data: waterRoutesRaw } = useLiveQuery(
     (qb) => {
         const col = powersync.collections.water_routes.value;
-        const pid = activeProgramIdRef.value.trim();
+        const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || pid.length === 0) {
             return undefined;
         }
         return qb.from({ wr: col }).where(({ wr }) => eq(wr.program_id, pid));
     },
-    [powersync.collections.water_routes, activeProgramIdRef],
+    [powersync.collections.water_routes, powersync.activeProgramIdRef],
 );
 
 const waterRouteOptions = computed(() =>
@@ -457,13 +420,13 @@ const waterRouteOptions = computed(() =>
 const { data: boatsRaw } = useLiveQuery(
     (qb) => {
         const col = powersync.collections.boats.value;
-        const pid = activeProgramIdRef.value.trim();
+        const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || pid.length === 0) {
             return undefined;
         }
         return qb.from({ b: col }).where(({ b }) => eq(b.program_id, pid));
     },
-    [powersync.collections.boats, activeProgramIdRef],
+    [powersync.collections.boats, powersync.activeProgramIdRef],
 );
 
 const boatOptions = computed(() =>

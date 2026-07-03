@@ -45,6 +45,7 @@ class PublicBookingController extends Controller
         if ($tripIds !== []) {
             $usageByTripId = BookingTicket::query()
                 ->join('bookings', 'bookings.id', '=', 'booking_tickets.booking_id')
+                ->whereNull('bookings.deleted_at')
                 ->whereIn('bookings.trip_id', $tripIds)
                 ->selectRaw('bookings.trip_id as trip_id, count(*) as c')
                 ->groupBy('bookings.trip_id')

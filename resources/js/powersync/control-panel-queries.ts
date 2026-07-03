@@ -23,10 +23,17 @@ import type { VoyageOutput } from './voyages.collection';
 import type { PassengerOutput } from './passengers.collection';
 import type { BookingTicketOutput } from './booking-tickets.collection';
 import type { CheckInOutput } from './check-ins.collection';
+import { isBookingCancelled } from '../composables/useBookingAdminCrud';
 import {
     derivePendingBookingGroups,
     type ControlPanelPendingBookingGroup,
 } from '../utilities/control-panel-manifest';
+
+function isActiveBookingRow(booking: { deleted_at?: unknown }): boolean {
+    return !isBookingCancelled(
+        booking.deleted_at == null ? null : String(booking.deleted_at),
+    );
+}
 
 export type { ControlPanelQueryCollections } from './control-panel-collection-types';
 
@@ -142,6 +149,7 @@ export function buildControlPanelDayStatsQuery(
         .innerJoin({ bookedDayTrip: tripsForDay }, ({ booking, bookedDayTrip }) =>
             eq(booking.trip_id, bookedDayTrip.id),
         )
+        .fn.where((row) => isActiveBookingRow(row.booking as { deleted_at?: unknown }))
         .select(({ ticket }) => ({
             metric: 'booked' as const,
             value: count(ticket.id),
@@ -231,7 +239,7 @@ export function buildControlPanelTripCardsQuery(
                     .innerJoin({ ticket: cols.booking_tickets }, ({ booking, ticket }) =>
                         eq(booking.id, ticket.booking_id),
                     )
-                    .select(({ ticket }) => ({
+                    .select(({ ticket, booking }) => ({
                         id: ticket.id,
                         booking_id: ticket.booking_id,
                         ticket_type_id: ticket.ticket_type_id,
@@ -240,6 +248,7 @@ export function buildControlPanelTripCardsQuery(
                         country: ticket.country,
                         custom_fields: ticket.custom_fields,
                         waiver_confirmation_id: ticket.waiver_confirmation_id,
+                        booking_deleted_at: booking.deleted_at,
                     })),
             ),
             voyage: toArray(
@@ -336,12 +345,23 @@ function asArray<T>(value: T[] | { toArray?: T[] | (() => T[]) } | null | undefi
     return [];
 }
 
-function normalizeBookingTicketRow(raw: unknown): BookingTicketOutput {
+type BookingTicketIncludeRow = BookingTicketOutput & {
+    booking_deleted_at?: string | null;
+};
+
+function normalizeBookingTicketRow(raw: unknown): BookingTicketIncludeRow {
     const row = raw as Record<string, unknown>;
     const ticket =
         row.ticket != null && typeof row.ticket === 'object'
             ? (row.ticket as Record<string, unknown>)
             : row;
+
+    const bookingDeletedAt =
+        ticket.booking_deleted_at != null
+            ? String(ticket.booking_deleted_at)
+            : row.booking_deleted_at != null
+              ? String(row.booking_deleted_at)
+              : null;
 
     return {
         id: String(ticket.id ?? row.id ?? ''),
@@ -387,7 +407,22 @@ function normalizeBookingTicketRow(raw: unknown): BookingTicketOutput {
                 : row.waiver_confirmation_id != null
                   ? String(row.waiver_confirmation_id)
                   : null,
+        booking_deleted_at: bookingDeletedAt,
     };
+}
+
+function bookingTicketsForTripCard(
+    tickets: BookingTicketIncludeRow[],
+    voyage: VoyageOutput | null,
+): BookingTicketIncludeRow[] {
+    const tripCancelled = String(voyage?.status ?? '').trim() === 'cancelled';
+    if (tripCancelled) {
+        return tickets;
+    }
+
+    return tickets.filter(
+        (ticket) => !isBookingCancelled(ticket.booking_deleted_at),
+    );
 }
 
 function bookingTicketDisplayName(ticket: BookingTicketOutput): string {
@@ -440,7 +475,14 @@ export function mapControlPanelTripCardRow(
     initialBoatIds: string[];
     initialGuideIds: string[];
 } {
-    const tickets = asArray(row.bookingTickets).map(normalizeBookingTicketRow);
+    const voyageInclude = extractVoyageInclude(row.voyage);
+    const voyage: VoyageOutput | null = voyageInclude
+        ? stripVoyageInclude(voyageInclude)
+        : null;
+    const tickets = bookingTicketsForTripCard(
+        asArray(row.bookingTickets).map(normalizeBookingTicketRow),
+        voyage,
+    );
     const names: string[] = [];
     for (const bt of tickets) {
         const label = bookingTicketDisplayName(bt);
@@ -449,10 +491,6 @@ export function mapControlPanelTripCardRow(
         }
     }
 
-    const voyageInclude = extractVoyageInclude(row.voyage);
-    const voyage: VoyageOutput | null = voyageInclude
-        ? stripVoyageInclude(voyageInclude)
-        : null;
     const passengers = asArray(voyageInclude?.passengers);
     const checkIns = asArray(voyageInclude?.checkIns);
     const voyageBoatPivots = asArray(voyageInclude?.voyageBoatPivotIds);

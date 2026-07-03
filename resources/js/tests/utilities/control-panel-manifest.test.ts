@@ -198,6 +198,31 @@ describe('control-panel-manifest', () => {
         });
     });
 
+    it('buildManifestSlots shows cancelled trip bookings read-only', () => {
+        const slots = buildManifestSlots(
+            {
+                voyage: { id: 'v1', status: 'cancelled' } as never,
+                passengers: [],
+                bookingTickets: [
+                    { id: 't1', name: 'Ada', booking_id: 'b1' },
+                    { id: 't2', name: 'Bob', booking_id: 'b2' },
+                ],
+                checkedInBookingIds: [],
+                pendingBookingGroups: [],
+            },
+            4,
+            false,
+        );
+
+        expect(slots.map((slot) => slot.kind)).toEqual(['booked', 'booked']);
+        expect(slots[0]).toMatchObject({
+            kind: 'booked',
+            name: 'Ada',
+            bookingId: 'b1',
+            canCheckIn: false,
+        });
+    });
+
     it('buildManifestSlots hides pending bookings after trip has departed', () => {
         const slots = buildManifestSlots(
             {

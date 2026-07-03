@@ -146,6 +146,8 @@ export function buildManifestSlots(
 ): ManifestSlot[] {
     const slots: ManifestSlot[] = [];
     const hasVoyage = card.voyage != null;
+    const voyageStatus = String(card.voyage?.status ?? '').trim();
+    const tripCancelled = voyageStatus === 'cancelled';
 
     if (hasVoyage) {
         for (const passenger of card.passengers) {
@@ -169,6 +171,21 @@ export function buildManifestSlots(
                     displayName: group.displayName,
                     ticketCount: group.ticketCount,
                     canCheckIn: true,
+                });
+            }
+        } else if (tripCancelled) {
+            for (const group of groupTicketsByBookingId(card.bookingTickets)) {
+                const firstTicket = group.tickets[0];
+                if (firstTicket == null) {
+                    continue;
+                }
+                slots.push({
+                    kind: 'booked',
+                    key: `cancelled-${group.bookingId}`,
+                    name: group.displayName,
+                    ticketId: firstTicket.id,
+                    bookingId: group.bookingId,
+                    canCheckIn: false,
                 });
             }
         }

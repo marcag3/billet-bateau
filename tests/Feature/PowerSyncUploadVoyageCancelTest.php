@@ -45,7 +45,7 @@ class PowerSyncUploadVoyageCancelTest extends TestCase
         return [$user, $trip, $booking];
     }
 
-    public function test_patch_ready_voyage_to_cancelled_deletes_bookings_and_notifies_guests(): void
+    public function test_patch_ready_voyage_to_cancelled_soft_deletes_bookings_and_notifies_guests(): void
     {
         Notification::fake();
 
@@ -69,7 +69,7 @@ class PowerSyncUploadVoyageCancelTest extends TestCase
 
         $voyage->refresh();
         $this->assertSame(VoyageStatus::Cancelled, $voyage->status);
-        $this->assertDatabaseMissing('bookings', ['id' => $booking->getKey()]);
+        $this->assertSoftDeleted('bookings', ['id' => $booking->getKey()]);
 
         Notification::assertSentOnDemand(
             BookingCancellationNotification::class,
@@ -107,7 +107,7 @@ class PowerSyncUploadVoyageCancelTest extends TestCase
             'trip_id' => $trip->getKey(),
             'status' => VoyageStatus::Cancelled->value,
         ]);
-        $this->assertDatabaseMissing('bookings', ['id' => $booking->getKey()]);
+        $this->assertSoftDeleted('bookings', ['id' => $booking->getKey()]);
 
         Notification::assertSentOnDemand(BookingCancellationNotification::class);
     }

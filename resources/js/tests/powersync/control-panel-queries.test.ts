@@ -366,4 +366,69 @@ describe('control-panel-queries', () => {
             },
         ]);
     });
+
+    it('mapControlPanelTripCardRow includes soft-deleted bookings on cancelled trips', () => {
+        const mapped = mapControlPanelTripCardRow({
+            id: 'trip-1',
+            program_id: 'prog-1',
+            voyage: {
+                id: 'v1',
+                status: 'cancelled',
+                passengers: [],
+                checkIns: [],
+                voyageBoatPivotIds: [],
+                voyageGuidePivotIds: [],
+            },
+            bookingTickets: [
+                {
+                    id: 'bt-1',
+                    booking_id: 'b1',
+                    name: 'Ada',
+                    email: null,
+                    booking_deleted_at: '2026-07-03T12:00:00.000Z',
+                },
+            ],
+        } as never);
+
+        expect(mapped.bookedCount).toBe(1);
+        expect(mapped.bookingTickets).toEqual([
+            { id: 'bt-1', name: 'Ada', booking_id: 'b1' },
+        ]);
+    });
+
+    it('mapControlPanelTripCardRow excludes soft-deleted bookings on active trips', () => {
+        const mapped = mapControlPanelTripCardRow({
+            id: 'trip-1',
+            program_id: 'prog-1',
+            voyage: {
+                id: 'v1',
+                status: 'ready',
+                passengers: [],
+                checkIns: [],
+                voyageBoatPivotIds: [],
+                voyageGuidePivotIds: [],
+            },
+            bookingTickets: [
+                {
+                    id: 'bt-1',
+                    booking_id: 'b1',
+                    name: 'Ada',
+                    email: null,
+                    booking_deleted_at: '2026-07-03T12:00:00.000Z',
+                },
+                {
+                    id: 'bt-2',
+                    booking_id: 'b2',
+                    name: 'Bob',
+                    email: null,
+                    booking_deleted_at: null,
+                },
+            ],
+        } as never);
+
+        expect(mapped.bookedCount).toBe(1);
+        expect(mapped.bookingTickets).toEqual([
+            { id: 'bt-2', name: 'Bob', booking_id: 'b2' },
+        ]);
+    });
 });

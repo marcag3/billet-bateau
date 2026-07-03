@@ -21,6 +21,11 @@
             @go-today="goToday"
         >
             <template #trailing>
+                <q-toggle
+                    v-model="showCancelledBookings"
+                    dense
+                    :label="t('programsControlAdmin.showCancelledBookings')"
+                />
                 <q-chip outline>
                     {{ t('programsControlAdmin.totalTickets') }}: {{ totalFilteredTickets }}
                 </q-chip>
@@ -38,8 +43,18 @@
                 class="p-4"
             >
                 <q-item-section>
-                    <q-item-label class="text-h6">
-                        {{ row.contact_name ?? '—' }}
+                    <q-item-label class="text-h6 row items-center gap-2">
+                        <span
+                            class="cursor-pointer text-primary"
+                            @click="openBookingModal(String(row.id))"
+                        >{{ row.contact_name ?? '—' }}</span>
+                        <q-chip
+                            v-if="row.isCancelled"
+                            dense
+                            color="negative"
+                            text-color="white"
+                            :label="t('programsControlAdmin.bookingCancelledBadge')"
+                        />
                     </q-item-label>
                     <q-item-label caption>{{ row.contact_email ?? '—' }}</q-item-label>
                     <q-item-label caption>
@@ -63,17 +78,23 @@
                 </q-item-section>
             </q-item>
         </AppEntityList>
+
+        <AppControlBookingEditDialog
+            v-model:open="bookingEditDialogOpen"
+            :booking-id="bookingEditId"
+        />
     </AppEntityIndexPageLayout>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { eq } from '@tanstack/db';
 import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
 import { liveQueryRows } from '../powersync/live-query-casts';
+import { isBookingCancelled } from '../composables/useBookingAdminCrud';
 import { tripDepartureMatchesLocalDateYmd } from '../powersync/control-panel-queries';
 import { resolveProgramTimezone } from '../utilities/program-timezone-datetime';
 import { useControlDayDateRoute } from '../composables/useControlDayDateRoute';
@@ -83,6 +104,7 @@ import AppPageHeader from '../components/ui/AppPageHeader.vue';
 import AppEntityList from '../components/ui/AppEntityList.vue';
 import AppEmptyListRow from '../components/ui/AppEmptyListRow.vue';
 import AppControlDayDateToolbar from '../components/control-panel/AppControlDayDateToolbar.vue';
+import AppControlBookingEditDialog from '../components/control-panel/AppControlBookingEditDialog.vue';
 
 type BookingListRow = {
     id: string;
@@ -90,12 +112,17 @@ type BookingListRow = {
     contact_email: string | null;
     trip_id: string | null;
     tripDepartureAt: string | null;
+    deleted_at: string | null;
+    isCancelled: boolean;
     ticketCount: number;
 };
 
 const powersync = getAppPowerSyncContext();
 const { t, locale } = useI18n();
 const route = useRoute();
+const showCancelledBookings = ref(false);
+const bookingEditDialogOpen = ref(false);
+const bookingEditId = ref('');
 const { selectedDateYmd, showAllDates, goPrevDay, goNextDay, goToday } =
     useControlDayDateRoute();
 
@@ -140,6 +167,7 @@ const { data: bookingsRaw } = useLiveQuery(
                 contact_email: b.contact_email,
                 trip_id: b.trip_id,
                 tripDepartureAt: trip.scheduled_departure_at,
+                deleted_at: b.deleted_at,
             }));
     },
     [powersync.collections.bookings, powersync.collections.trips, activeProgramIdRef],
@@ -209,19 +237,25 @@ const checkedInBookingIds = computed(() => {
 });
 
 const bookings = computed((): BookingListRow[] =>
-    liveQueryRows<BookingListRow>(bookingsRaw.value).map((row) => ({
-        ...row,
-        ticketCount: ticketCountByBookingId.value.get(String(row.id)) ?? 0,
-    })),
+    liveQueryRows<Omit<BookingListRow, 'isCancelled' | 'ticketCount'>>(bookingsRaw.value)
+        .map((row) => ({
+            ...row,
+            isCancelled: isBookingCancelled(row.deleted_at),
+            ticketCount: ticketCountByBookingId.value.get(String(row.id)) ?? 0,
+        }))
+        .filter((row) =>
+            showCancelledBookings.value ? row.isCancelled : !row.isCancelled,
+        ),
 );
 
 const filteredBookings = computed(() => {
+    const rows = bookings.value;
     if (showAllDates.value) {
-        return bookings.value;
+        return rows;
     }
     const ymd = selectedDateYmd.value.trim();
     const tz = programTimezone.value;
-    return bookings.value.filter((row) =>
+    return rows.filter((row) =>
         tripDepartureMatchesLocalDateYmd(row.tripDepartureAt, ymd, tz),
     );
 });
@@ -249,5 +283,10 @@ function checkInLabel(bookingId: string): string {
     return checkedInBookingIds.value.has(String(bookingId))
         ? t('programsControlAdmin.checkedIn')
         : t('programsControlAdmin.notCheckedIn');
+}
+
+function openBookingModal(bookingId: string): void {
+    bookingEditId.value = String(bookingId).trim();
+    bookingEditDialogOpen.value = true;
 }
 </script>

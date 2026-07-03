@@ -105,6 +105,33 @@ export interface TripWithRelationsRow {
  *   .orderBy(({ scheduled_departure_at }) => scheduled_departure_at, "desc")
  * ```
  */
+export function selectTripWithRelationsProjection({
+    trip,
+    product,
+    boatType,
+    waterRoute,
+}: {
+    trip: Record<string, unknown>;
+    product: Record<string, unknown>;
+    boatType: Record<string, unknown>;
+    waterRoute: Record<string, unknown>;
+}) {
+    return {
+        id: queryRef(trip).id,
+        program_id: queryRef(trip).program_id,
+        product_id: queryRef(trip).product_id,
+        product_name: queryRef(product).name,
+        scheduled_departure_at: queryRef(trip).scheduled_departure_at,
+        boat_type_id: queryRef(product).boat_type_id,
+        water_route_id: queryRef(product).water_route_id,
+        capacity: queryRef(product).capacity,
+        boatTypeName: queryRef(boatType).name,
+        waterRouteName: queryRef(waterRoute).name,
+        waterRouteDurationMinutes: queryRef(waterRoute).duration_minutes,
+        productBannerObjectKey: queryRef(product).banner_object_key,
+    };
+}
+
 export function joinTripsWithRelationsFrom<
     T extends Collection<any, string | number>,
     P extends Collection<any, string | number>,
@@ -149,18 +176,5 @@ export function joinTripsWithRelations<
         productsCollection,
         boatTypesCollection,
         waterRoutesCollection,
-    ).select(({ trip, product, boatType, waterRoute }) => ({
-        id: queryRef(trip).id,
-        program_id: queryRef(trip).program_id,
-        product_id: queryRef(trip).product_id,
-        product_name: queryRef(product).name,
-        scheduled_departure_at: queryRef(trip).scheduled_departure_at,
-        boat_type_id: queryRef(product).boat_type_id,
-        water_route_id: queryRef(product).water_route_id,
-        capacity: queryRef(product).capacity,
-        boatTypeName: queryRef(boatType).name,
-        waterRouteName: queryRef(waterRoute).name,
-        waterRouteDurationMinutes: queryRef(waterRoute).duration_minutes,
-        productBannerObjectKey: queryRef(product).banner_object_key,
-    }));
+    ).select(selectTripWithRelationsProjection);
 }

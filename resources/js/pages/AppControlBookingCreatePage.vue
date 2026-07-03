@@ -75,9 +75,9 @@ import {
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { DEFAULT_COUNTRY_CODE } from '../composables/useCountryOptions';
 import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
-import { joinTripsWithRelationsFrom } from '../powersync/joined-queries';
 import { liveQueryRows } from '../powersync/live-query-casts';
 import { useBookingAdminCrud } from '../composables/useBookingAdminCrud';
+import { useProgramTripSelectOptions } from '../composables/useProgramTripSelectOptions';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import { controlContextNamedRoute } from '../utilities/control-context-route';
 import AppEntityCreatePageLayout from '../layouts/AppEntityCreatePageLayout.vue';
@@ -94,7 +94,6 @@ const { runWithNotify } = useNotifyAsyncAction();
 const ticketTypeId = ref('');
 
 const programId = computed(() => String(route.params.programId ?? '').trim());
-const activeProgramIdRef = powersync.activeProgramIdRef;
 
 const backTo = computed(() => controlContextNamedRoute(route, 'control.bookings.list'));
 
@@ -115,54 +114,18 @@ const [contactName, contactNameProps] = quasarField('contact_name');
 const [contactEmail, contactEmailProps] = quasarField('contact_email');
 const [country, countryProps] = quasarField('country');
 
-const { data: tripsRaw } = useLiveQuery(
-    (qb) => {
-        const tripsCol = powersync.collections.trips.value;
-        const productsCol = powersync.collections.products.value;
-        const boatTypesCol = powersync.collections.boat_types.value;
-        const waterRoutesCol = powersync.collections.water_routes.value;
-        const pid = activeProgramIdRef.value.trim();
-        if (!tripsCol || !productsCol || !boatTypesCol || !waterRoutesCol || pid.length === 0) {
-            return undefined;
-        }
-        return joinTripsWithRelationsFrom(
-            qb,
-            tripsCol,
-            productsCol,
-            boatTypesCol,
-            waterRoutesCol,
-        )
-            .where(({ trip }) => eq(trip.program_id, pid))
-            .orderBy(({ trip }) => trip.scheduled_departure_at, 'asc');
-    },
-    [
-        powersync.collections.trips,
-        powersync.collections.products,
-        powersync.collections.boat_types,
-        powersync.collections.water_routes,
-        activeProgramIdRef,
-    ],
-);
-
-const tripOptions = computed(() =>
-    liveQueryRows<{ id: string; product_name: string | null; scheduled_departure_at: string | null }>(
-        tripsRaw.value,
-    ).map((trip) => ({
-        value: String(trip.id),
-        label: `${String(trip.scheduled_departure_at ?? '—')} · ${String(trip.product_name ?? '—')}`,
-    })),
-);
+const { tripOptions } = useProgramTripSelectOptions();
 
 const { data: ticketTypesRaw } = useLiveQuery(
     (qb) => {
         const col = powersync.collections.ticket_types.value;
-        const pid = activeProgramIdRef.value.trim();
+        const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || pid.length === 0) {
             return undefined;
         }
         return qb.from({ tt: col }).where(({ tt }) => eq(tt.program_id, pid));
     },
-    [powersync.collections.ticket_types, activeProgramIdRef],
+    [powersync.collections.ticket_types, powersync.activeProgramIdRef],
 );
 
 const ticketTypeOptions = computed(() =>

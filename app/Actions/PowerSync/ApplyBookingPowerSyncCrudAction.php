@@ -30,9 +30,9 @@ final class ApplyBookingPowerSyncCrudAction
         $raw = $entry->data ?? [];
 
         if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $booking = Booking::query()->whereKey($id)->first();
+            $booking = Booking::withTrashed()->whereKey($id)->first();
 
-            if ($booking === null) {
+            if ($booking === null || $booking->trashed()) {
                 return;
             }
 
@@ -74,7 +74,7 @@ final class ApplyBookingPowerSyncCrudAction
 
     private function applyPut(string $id, BookingPutData $dto, string $userId): void
     {
-        $existing = Booking::query()->whereKey($id)->first();
+        $existing = Booking::withTrashed()->whereKey($id)->first();
 
         $programIdFromData = $dto->program_id instanceof Optional
             ? null
@@ -101,26 +101,43 @@ final class ApplyBookingPowerSyncCrudAction
 
         $trip = $this->resolveTripForBooking($resolved->trip_id, $programId);
 
-        Booking::query()->updateOrCreate(
-            ['id' => $id],
-            [
-                'program_id' => $programId,
-                'trip_id' => $trip->getKey(),
-                'contact_name' => $resolved->contact_name,
-                'contact_email' => $resolved->contact_email,
-            ],
-        );
+        $attributes = [
+            'program_id' => $programId,
+            'trip_id' => $trip->getKey(),
+            'contact_name' => $resolved->contact_name,
+            'contact_email' => $resolved->contact_email,
+        ];
+
+        if ($existing !== null) {
+            $existing->forceFill($attributes);
+
+            if ($existing->trashed()) {
+                $existing->restore();
+            } else {
+                $existing->save();
+            }
+
+            return;
+        }
+
+        Booking::query()->create([
+            'id' => $id,
+            ...$attributes,
+        ]);
     }
 
     private function applyPatch(string $id, BookingPatchData $patch, string $userId): void
     {
-        $booking = Booking::query()->whereKey($id)->first();
+        $booking = Booking::withTrashed()->whereKey($id)->first();
 
         if ($booking === null) {
             return;
         }
 
         $this->assertProgramManaged((string) $booking->program_id, $userId);
+
+        $wasTrashed = $booking->trashed();
+        $tripIdChanged = false;
 
         if (! ($patch->program_id instanceof Optional)) {
             $incoming = $patch->program_id;
@@ -137,6 +154,7 @@ final class ApplyBookingPowerSyncCrudAction
             }
 
             $this->resolveTripForBooking($patch->trip_id, (string) $booking->program_id);
+            $tripIdChanged = (string) $booking->trip_id !== (string) $patch->trip_id;
             $booking->trip_id = $patch->trip_id;
         }
 
@@ -153,6 +171,12 @@ final class ApplyBookingPowerSyncCrudAction
             $booking->contact_email = $patch->contact_email === null || trim((string) $patch->contact_email) === ''
                 ? null
                 : trim($patch->contact_email);
+        }
+
+        if (! ($patch->deleted_at instanceof Optional)) {
+            $booking->deleted_at = $patch->deleted_at;
+        } elseif ($wasTrashed && $tripIdChanged) {
+            $booking->deleted_at = null;
         }
 
         $booking->save();

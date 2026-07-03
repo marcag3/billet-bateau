@@ -775,6 +775,11 @@ export default {
         bookingsEmpty: "No bookings for this filter.",
         showAllDates: "All dates",
         allDates: "All dates",
+        showCancelledBookings: "Cancelled bookings",
+        bookingCancelledBadge: "Cancelled",
+        bookingCancelledBanner:
+            "This booking was cancelled. Change the trip and save to rebook it on another departure.",
+        bookingRebooked: "Booking rebooked on the new departure.",
         trip: "Trip",
         tripRequired: "Select a trip.",
         waterRoute: "Water route",

@@ -8,7 +8,16 @@ export type BookingUpsertInput = {
     tripId: string;
     contactName: string;
     contactEmail: string | null;
+    deletedAt?: string | null;
 };
+
+function softDeleteTimestamp(): string {
+    return new Date().toISOString();
+}
+
+export function isBookingCancelled(deletedAt: string | null | undefined): boolean {
+    return deletedAt != null && String(deletedAt).trim() !== '';
+}
 
 export type BookingTicketUpsertInput = {
     ticketTypeId: string;
@@ -43,6 +52,7 @@ export function useBookingAdminCrud() {
                 trip_id: input.tripId.trim(),
                 contact_name: input.contactName.trim(),
                 contact_email: normalizeOptionalEmail(input.contactEmail),
+                deleted_at: null,
             })
             .isPersisted.promise;
 
@@ -72,6 +82,9 @@ export function useBookingAdminCrud() {
             if (input.contactEmail !== undefined) {
                 draft.contact_email = normalizeOptionalEmail(input.contactEmail);
             }
+            if (input.deletedAt !== undefined) {
+                draft.deleted_at = input.deletedAt;
+            }
         });
 
         void powersync.refreshOutboxSnapshot();
@@ -82,7 +95,11 @@ export function useBookingAdminCrud() {
         if (!bookingsCol) {
             throw new Error('Collections not ready.');
         }
-        await bookingsCol.delete(bookingId).isPersisted.promise;
+
+        bookingsCol.update(bookingId, (draft) => {
+            draft.deleted_at = softDeleteTimestamp();
+        });
+
         void powersync.refreshOutboxSnapshot();
     }
 
@@ -158,7 +175,9 @@ export function useBookingAdminCrud() {
         await ticketsCol.delete(ticketId).isPersisted.promise;
 
         if (ticketsForBookingCount <= 1) {
-            await bookingsCol.delete(bookingId).isPersisted.promise;
+            bookingsCol.update(bookingId, (draft) => {
+                draft.deleted_at = softDeleteTimestamp();
+            });
         }
 
         void powersync.refreshOutboxSnapshot();
