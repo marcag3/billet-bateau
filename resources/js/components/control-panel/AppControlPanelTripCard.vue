@@ -93,6 +93,7 @@ import {
     type ManifestSlot,
 } from '../../utilities/control-panel-manifest';
 import {
+    controlPanelCardOccupiedCount,
     controlPanelTripDisplayStatusColor,
     hasControlPanelTripDeparted,
     resolveControlPanelDepartedAssignmentLabels,
@@ -150,27 +151,7 @@ const departureTimeLabel = computed((): string => {
     }
 });
 
-const passengerCount = computed((): number => {
-    if (props.card.voyage == null) {
-        return props.card.bookedCount;
-    }
-
-    if (!manifestModifiable.value) {
-        if (voyageStatus.value === 'cancelled') {
-            return props.card.bookedCount;
-        }
-
-        return props.card.passengers.length;
-    }
-
-    return (
-        props.card.passengers.length +
-        props.card.pendingBookingGroups.reduce(
-            (sum, group) => sum + group.ticketCount,
-            0,
-        )
-    );
-});
+const passengerCount = computed((): number => controlPanelCardOccupiedCount(props.card));
 
 const tripCapacity = computed((): number | null => {
     const cap = props.card.trip.capacity;

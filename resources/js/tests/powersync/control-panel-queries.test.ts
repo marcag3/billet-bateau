@@ -391,9 +391,106 @@ describe('control-panel-queries', () => {
         } as never);
 
         expect(mapped.bookedCount).toBe(1);
+        expect(mapped.activeBookedCount).toBe(0);
         expect(mapped.bookingTickets).toEqual([
             { id: 'bt-1', name: 'Ada', booking_id: 'b1' },
         ]);
+    });
+
+    it('mapControlPanelTripCardRow excludes passengers from soft-deleted bookings', () => {
+        const mapped = mapControlPanelTripCardRow({
+            id: 'trip-1',
+            program_id: 'prog-1',
+            voyage: {
+                id: 'v1',
+                status: 'underway',
+                passengers: [
+                    {
+                        id: 'p1',
+                        voyage_id: 'v1',
+                        name: 'Ada',
+                        booking_id: 'b1',
+                        check_in_id: 'ci-1',
+                        notes: null,
+                    },
+                    {
+                        id: 'p2',
+                        voyage_id: 'v1',
+                        name: 'Bob',
+                        booking_id: 'b2',
+                        check_in_id: 'ci-2',
+                        notes: null,
+                    },
+                ],
+                checkIns: [
+                    { id: 'ci-1', booking_id: 'b1', voyage_id: 'v1', notes: null },
+                    { id: 'ci-2', booking_id: 'b2', voyage_id: 'v1', notes: null },
+                ],
+                voyageBoatPivotIds: [],
+                voyageGuidePivotIds: [],
+            },
+            bookingTickets: [
+                {
+                    id: 'bt-1',
+                    booking_id: 'b1',
+                    name: 'Ada',
+                    email: null,
+                    booking_deleted_at: '2026-07-03T12:00:00.000Z',
+                },
+                {
+                    id: 'bt-2',
+                    booking_id: 'b2',
+                    name: 'Bob',
+                    email: null,
+                    booking_deleted_at: null,
+                },
+            ],
+        } as never);
+
+        expect(mapped.passengers).toHaveLength(1);
+        expect(mapped.activePassengers).toHaveLength(1);
+        expect(mapped.passengers[0]?.booking_id).toBe('b2');
+        expect(mapped.checkedInBookingIds).toEqual(['b2']);
+    });
+
+    it('mapControlPanelTripCardRow includes passengers from soft-deleted bookings on cancelled trips', () => {
+        const mapped = mapControlPanelTripCardRow({
+            id: 'trip-1',
+            program_id: 'prog-1',
+            voyage: {
+                id: 'v1',
+                status: 'cancelled',
+                passengers: [
+                    {
+                        id: 'p1',
+                        voyage_id: 'v1',
+                        name: 'Ada',
+                        booking_id: 'b1',
+                        check_in_id: 'ci-1',
+                        notes: null,
+                    },
+                ],
+                checkIns: [
+                    { id: 'ci-1', booking_id: 'b1', voyage_id: 'v1', notes: null },
+                ],
+                voyageBoatPivotIds: [],
+                voyageGuidePivotIds: [],
+            },
+            bookingTickets: [
+                {
+                    id: 'bt-1',
+                    booking_id: 'b1',
+                    name: 'Ada',
+                    email: null,
+                    booking_deleted_at: '2026-07-03T12:00:00.000Z',
+                },
+            ],
+        } as never);
+
+        expect(mapped.passengers).toHaveLength(1);
+        expect(mapped.activePassengers).toHaveLength(0);
+        expect(mapped.bookedCount).toBe(1);
+        expect(mapped.activeBookedCount).toBe(0);
     });
 
     it('mapControlPanelTripCardRow excludes soft-deleted bookings on active trips', () => {

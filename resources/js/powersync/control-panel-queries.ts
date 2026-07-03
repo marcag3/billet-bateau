@@ -411,18 +411,88 @@ function normalizeBookingTicketRow(raw: unknown): BookingTicketIncludeRow {
     };
 }
 
+function cancelledBookingIdsFromTickets(
+    tickets: readonly BookingTicketIncludeRow[],
+): Set<string> {
+    const ids = new Set<string>();
+    for (const ticket of tickets) {
+        const bookingId = String(ticket.booking_id ?? '').trim();
+        if (bookingId.length === 0) {
+            continue;
+        }
+        if (isBookingCancelled(ticket.booking_deleted_at)) {
+            ids.add(bookingId);
+        }
+    }
+    return ids;
+}
+
+function passengersExcludingCancelledBookings(
+    passengers: PassengerOutput[],
+    cancelledBookingIds: ReadonlySet<string>,
+): PassengerOutput[] {
+    return passengers.filter((passenger) => {
+        const bookingId = String(passenger.booking_id ?? '').trim();
+        if (bookingId.length === 0) {
+            return true;
+        }
+        return !cancelledBookingIds.has(bookingId);
+    });
+}
+
+function isTripCancelled(voyage: VoyageOutput | null): boolean {
+    return String(voyage?.status ?? '').trim() === 'cancelled';
+}
+
 function bookingTicketsForTripCard(
     tickets: BookingTicketIncludeRow[],
     voyage: VoyageOutput | null,
 ): BookingTicketIncludeRow[] {
-    const tripCancelled = String(voyage?.status ?? '').trim() === 'cancelled';
-    if (tripCancelled) {
+    if (isTripCancelled(voyage)) {
         return tickets;
     }
 
     return tickets.filter(
         (ticket) => !isBookingCancelled(ticket.booking_deleted_at),
     );
+}
+
+function activeBookingTickets(
+    tickets: readonly BookingTicketIncludeRow[],
+): BookingTicketIncludeRow[] {
+    return tickets.filter(
+        (ticket) => !isBookingCancelled(ticket.booking_deleted_at),
+    );
+}
+
+function passengersForTripCard(
+    passengers: PassengerOutput[],
+    cancelledBookingIds: ReadonlySet<string>,
+    voyage: VoyageOutput | null,
+): PassengerOutput[] {
+    if (isTripCancelled(voyage)) {
+        return passengers;
+    }
+
+    return passengersExcludingCancelledBookings(passengers, cancelledBookingIds);
+}
+
+function checkedInBookingIdsForTripCard(
+    checkIns: CheckInOutput[],
+    cancelledBookingIds: ReadonlySet<string>,
+    voyage: VoyageOutput | null,
+): string[] {
+    return checkIns
+        .map((checkIn) => String(checkIn.booking_id ?? '').trim())
+        .filter((id) => {
+            if (id.length === 0) {
+                return false;
+            }
+            if (isTripCancelled(voyage)) {
+                return true;
+            }
+            return !cancelledBookingIds.has(id);
+        });
 }
 
 function bookingTicketDisplayName(ticket: BookingTicketOutput): string {
@@ -467,9 +537,12 @@ export function mapControlPanelTripCardRow(
     passengers: PassengerOutput[];
     bookedTicketNames: string[];
     bookedCount: number;
+    activeBookedCount: number;
     bookingTickets: { id: string; name: string; booking_id: string }[];
     checkedInBookingIds: string[];
     pendingBookingGroups: ControlPanelPendingBookingGroup[];
+    activePassengers: PassengerOutput[];
+    activePendingBookingGroups: ControlPanelPendingBookingGroup[];
     voyageBoatPivotIds: string[];
     voyageGuidePivotIds: string[];
     initialBoatIds: string[];
@@ -479,10 +552,10 @@ export function mapControlPanelTripCardRow(
     const voyage: VoyageOutput | null = voyageInclude
         ? stripVoyageInclude(voyageInclude)
         : null;
-    const tickets = bookingTicketsForTripCard(
-        asArray(row.bookingTickets).map(normalizeBookingTicketRow),
-        voyage,
-    );
+    const allTickets = asArray(row.bookingTickets).map(normalizeBookingTicketRow);
+    const cancelledBookingIds = cancelledBookingIdsFromTickets(allTickets);
+    const tickets = bookingTicketsForTripCard(allTickets, voyage);
+    const activeTickets = activeBookingTickets(allTickets);
     const names: string[] = [];
     for (const bt of tickets) {
         const label = bookingTicketDisplayName(bt);
@@ -491,7 +564,16 @@ export function mapControlPanelTripCardRow(
         }
     }
 
-    const passengers = asArray(voyageInclude?.passengers);
+    const allPassengers = asArray(voyageInclude?.passengers);
+    const passengers = passengersForTripCard(
+        allPassengers,
+        cancelledBookingIds,
+        voyage,
+    );
+    const activePassengers = passengersExcludingCancelledBookings(
+        allPassengers,
+        cancelledBookingIds,
+    );
     const checkIns = asArray(voyageInclude?.checkIns);
     const voyageBoatPivots = asArray(voyageInclude?.voyageBoatPivotIds);
     const voyageGuidePivots = asArray(voyageInclude?.voyageGuidePivotIds);
@@ -502,24 +584,44 @@ export function mapControlPanelTripCardRow(
         booking_id: String(bt.booking_id ?? ''),
     }));
 
-    const checkedInBookingIds = checkIns
-        .map((checkIn) => String(checkIn.booking_id ?? '').trim())
-        .filter((id) => id.length > 0);
+    const checkedInBookingIds = checkedInBookingIdsForTripCard(
+        checkIns,
+        cancelledBookingIds,
+        voyage,
+    );
 
     const pendingBookingGroups = derivePendingBookingGroups(
         bookingTickets,
         checkedInBookingIds,
     );
 
+    const activeBookingTicketsForGroups = activeTickets.map((bt) => ({
+        id: String(bt.id),
+        name: bookingTicketDisplayName(bt),
+        booking_id: String(bt.booking_id ?? ''),
+    }));
+    const activeCheckedInBookingIds = checkedInBookingIdsForTripCard(
+        checkIns,
+        cancelledBookingIds,
+        null,
+    );
+    const activePendingBookingGroups = derivePendingBookingGroups(
+        activeBookingTicketsForGroups,
+        activeCheckedInBookingIds,
+    );
+
     return {
         trip: row as unknown as TripWithRelationsRow,
         voyage,
         passengers,
+        activePassengers,
         bookedTicketNames: names,
         bookedCount: tickets.length,
+        activeBookedCount: activeTickets.length,
         bookingTickets,
         checkedInBookingIds,
         pendingBookingGroups,
+        activePendingBookingGroups,
         voyageBoatPivotIds: voyageBoatPivots.map((p) => String(p.id)),
         voyageGuidePivotIds: voyageGuidePivots.map((p) => String(p.id)),
         initialBoatIds: voyageBoatPivots

@@ -28,7 +28,7 @@
 
         <AppControlPanelWalkInBookingDialog v-model:open="walkInDialogOpen" :ticket-type-options="ticketTypeOptions"
             :format-ticket-type-price="formatTicketTypePrice" :booking-questions="bookingQuestions"
-            :booked-count="walkInCard?.bookedCount ?? 0"
+            :booked-count="walkInCard?.activeBookedCount ?? 0"
             :trip-capacity="walkInTripCapacity" @confirm="onConfirmWalkIn" />
 
         <AppControlBookingEditDialog v-model:open="bookingEditDialogOpen" :booking-id="bookingEditId" />
@@ -37,7 +37,7 @@
             :guide-options="guideOptions" :initial-boat-ids="departCard?.initialBoatIds ?? []"
             :initial-guide-ids="departCard?.initialGuideIds ?? []"
             :boarded-count="departCard?.passengers.length ?? 0"
-            :booked-count="departCard?.bookedCount ?? 0"
+            :booked-count="departCard?.activeBookedCount ?? 0"
             :submitting="departSubmitting" @confirm="onConfirmDepart" />
     </q-page>
 </template>
@@ -70,7 +70,7 @@ import type { ControlPanelSelectOption } from "../components/control-panel/AppCo
 import type { WalkInBookingConfirmPayload } from "../components/control-panel/AppControlPanelWalkInBookingDialog.vue";
 import type { BookingTicketTypeOption } from "../models/public-booking/public-booking.types";
 import { formatTicketTypePrice as formatTicketTypePriceUtil } from "../utilities/ticket-type-display";
-import { isControlPanelTripFinished } from "../utilities/control-panel-day-board";
+import { isControlPanelTripFinished, computeControlPanelDayStatsFromCards } from "../utilities/control-panel-day-board";
 
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -85,7 +85,6 @@ const {
     selectedDateYmd,
     showFinishedTrips,
     tripCards,
-    dayStats,
     tripDateYmds,
     programDateBounds,
     programTimezone,
@@ -100,6 +99,10 @@ const visibleTripCards = computed(() => {
     }
     return tripCards.value.filter((card) => !isControlPanelTripFinished(card.voyage));
 });
+
+const dayStats = computed(() =>
+    computeControlPanelDayStatsFromCards(visibleTripCards.value, selectedDateYmd.value),
+);
 
 const emptyDayMessage = computed((): string => {
     if (tripCards.value.length > 0 && visibleTripCards.value.length === 0) {

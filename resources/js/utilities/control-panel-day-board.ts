@@ -1,4 +1,5 @@
 import { toTimezoneDateYmd } from './program-timezone-datetime';
+import { isControlPanelManifestModifiable } from './control-panel-manifest';
 
 export type ControlPanelDayStats = {
     booked: number;
@@ -222,11 +223,61 @@ export function voyageArrivedOnDateYmd(
 }
 
 type ControlPanelDayStatsCardInput = {
-    bookedCount: number;
-    passengers: readonly unknown[];
+    activeBookedCount: number;
+    activePassengers: readonly unknown[];
+    activePendingBookingGroups: readonly { ticketCount: number }[];
     voyage: (ControlPanelStatsVoyage & { status?: string | null }) | null;
     trip: { capacity: number | null };
 };
+
+/** Occupied seats on a trip card (matches trip card passenger count). */
+export function controlPanelCardOccupiedCount(card: {
+    voyage: { status?: string | null } | null;
+    bookedCount: number;
+    passengers: readonly unknown[];
+    pendingBookingGroups: readonly { ticketCount: number }[];
+}): number {
+    if (card.voyage == null) {
+        return card.bookedCount;
+    }
+
+    if (!isControlPanelManifestModifiable(card.voyage)) {
+        if (String(card.voyage.status ?? '').trim() === 'cancelled') {
+            return card.bookedCount;
+        }
+
+        return card.passengers.length;
+    }
+
+    const pending = card.pendingBookingGroups.reduce(
+        (sum, group) => sum + group.ticketCount,
+        0,
+    );
+    return card.passengers.length + pending;
+}
+
+/** Booked-stat bucket: reservations not yet on the water or returned. */
+export function controlPanelCardBookedStatCount(
+    card: ControlPanelDayStatsCardInput,
+): number {
+    if (card.voyage == null) {
+        return card.activeBookedCount;
+    }
+
+    const displayStatus = resolveControlPanelTripDisplayStatus(card.voyage);
+    if (displayStatus === 'on_water' || displayStatus === 'returned') {
+        return 0;
+    }
+    if (displayStatus === 'cancelled') {
+        return card.activeBookedCount;
+    }
+
+    const pending = card.activePendingBookingGroups.reduce(
+        (sum, group) => sum + group.ticketCount,
+        0,
+    );
+    return card.activePassengers.length + pending;
+}
 
 function tripCapacitySeats(capacity: number | null): number {
     if (capacity == null || !Number.isFinite(Number(capacity))) {
@@ -245,16 +296,16 @@ export function computeControlPanelDayStatsFromCards(
     let returned = 0;
     let places = 0;
     for (const card of cards) {
-        booked += card.bookedCount;
+        booked += controlPanelCardBookedStatCount(card);
         places += tripCapacitySeats(card.trip.capacity);
         if (card.voyage == null) {
             continue;
         }
         const displayStatus = resolveControlPanelTripDisplayStatus(card.voyage);
         if (displayStatus === 'on_water') {
-            onWater += card.passengers.length;
+            onWater += card.activePassengers.length;
         } else if (displayStatus === 'returned') {
-            returned += card.passengers.length;
+            returned += card.activePassengers.length;
         }
     }
     return {

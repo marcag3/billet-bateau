@@ -58,13 +58,14 @@ describe('control-panel-day-board', () => {
         expect(parseRouteDateYmdOrToday(undefined)).toBe(todayLocalDateYmd());
     });
 
-    it('computeControlPanelDayStatsFromCards aggregates booked, manifest, returned, and places', () => {
+    it('computeControlPanelDayStatsFromCards aggregates booked, on-water, returned, and places without double-counting', () => {
         expect(
             computeControlPanelDayStatsFromCards(
                 [
                     {
-                        bookedCount: 2,
-                        passengers: [{}, {}],
+                        activeBookedCount: 2,
+                        activePassengers: [{}, {}],
+                        activePendingBookingGroups: [],
                         trip: { capacity: 12 },
                         voyage: {
                             id: 'v1',
@@ -74,8 +75,9 @@ describe('control-panel-day-board', () => {
                         },
                     },
                     {
-                        bookedCount: 1,
-                        passengers: [{}],
+                        activeBookedCount: 1,
+                        activePassengers: [{}],
+                        activePendingBookingGroups: [],
                         trip: { capacity: 8 },
                         voyage: {
                             id: 'v2',
@@ -88,10 +90,10 @@ describe('control-panel-day-board', () => {
                 '2026-06-05',
             ),
         ).toEqual({
-            booked: 3,
+            booked: 0,
             onWater: 1,
             returned: 2,
-            totalPassengers: 6,
+            totalPassengers: 3,
             places: 20,
         });
     });
@@ -101,8 +103,9 @@ describe('control-panel-day-board', () => {
             computeControlPanelDayStatsFromCards(
                 [
                     {
-                        bookedCount: 1,
-                        passengers: [{}, {}],
+                        activeBookedCount: 1,
+                        activePassengers: [{}, {}],
+                        activePendingBookingGroups: [],
                         trip: { capacity: 10 },
                         voyage: {
                             id: 'v1',
@@ -115,9 +118,116 @@ describe('control-panel-day-board', () => {
                 '2026-06-05',
             ),
         ).toEqual({
-            booked: 1,
+            booked: 0,
             onWater: 0,
             returned: 2,
+            totalPassengers: 2,
+            places: 10,
+        });
+    });
+
+    it('computeControlPanelDayStatsFromCards counts all tickets when no voyage exists', () => {
+        expect(
+            computeControlPanelDayStatsFromCards(
+                [
+                    {
+                        activeBookedCount: 4,
+                        activePassengers: [],
+                        activePendingBookingGroups: [],
+                        trip: { capacity: 20 },
+                        voyage: null,
+                    },
+                ],
+                '2026-06-05',
+            ),
+        ).toEqual({
+            booked: 4,
+            onWater: 0,
+            returned: 0,
+            totalPassengers: 4,
+            places: 20,
+        });
+    });
+
+    it('computeControlPanelDayStatsFromCards counts boarding passengers and pending tickets as booked', () => {
+        expect(
+            computeControlPanelDayStatsFromCards(
+                [
+                    {
+                        activeBookedCount: 3,
+                        activePassengers: [{}, {}],
+                        activePendingBookingGroups: [{ bookingId: 'b1', tickets: [], displayName: 'A', ticketCount: 1 }],
+                        trip: { capacity: 10 },
+                        voyage: {
+                            id: 'v1',
+                            trip_id: 't1',
+                            status: 'ready',
+                            arrived_at: null,
+                        },
+                    },
+                ],
+                '2026-06-05',
+            ),
+        ).toEqual({
+            booked: 3,
+            onWater: 0,
+            returned: 0,
+            totalPassengers: 3,
+            places: 10,
+        });
+    });
+
+    it('computeControlPanelDayStatsFromCards excludes soft-deleted bookings from all buckets', () => {
+        expect(
+            computeControlPanelDayStatsFromCards(
+                [
+                    {
+                        activeBookedCount: 0,
+                        activePassengers: [{}],
+                        activePendingBookingGroups: [],
+                        trip: { capacity: 10 },
+                        voyage: {
+                            id: 'v1',
+                            trip_id: 't1',
+                            status: 'underway',
+                            arrived_at: null,
+                        },
+                    },
+                ],
+                '2026-06-05',
+            ),
+        ).toEqual({
+            booked: 0,
+            onWater: 1,
+            returned: 0,
+            totalPassengers: 1,
+            places: 10,
+        });
+    });
+
+    it('computeControlPanelDayStatsFromCards counts active bookings on cancelled voyages', () => {
+        expect(
+            computeControlPanelDayStatsFromCards(
+                [
+                    {
+                        activeBookedCount: 3,
+                        activePassengers: [],
+                        activePendingBookingGroups: [],
+                        trip: { capacity: 10 },
+                        voyage: {
+                            id: 'v1',
+                            trip_id: 't1',
+                            status: 'cancelled',
+                            arrived_at: null,
+                        },
+                    },
+                ],
+                '2026-06-05',
+            ),
+        ).toEqual({
+            booked: 3,
+            onWater: 0,
+            returned: 0,
             totalPassengers: 3,
             places: 10,
         });
@@ -128,14 +238,16 @@ describe('control-panel-day-board', () => {
             computeControlPanelDayStatsFromCards(
                 [
                     {
-                        bookedCount: 0,
-                        passengers: [],
+                        activeBookedCount: 0,
+                        activePassengers: [],
+                        activePendingBookingGroups: [],
                         trip: { capacity: null },
                         voyage: null,
                     },
                     {
-                        bookedCount: 0,
-                        passengers: [],
+                        activeBookedCount: 0,
+                        activePassengers: [],
+                        activePendingBookingGroups: [],
                         trip: { capacity: 6.9 },
                         voyage: null,
                     },
