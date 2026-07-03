@@ -27,7 +27,13 @@
 
         <AppEntityList v-if="tripsViewMode === 'list'">
             <AppEmptyListRow :show="trips.length === 0" :message="t('tripsList.empty')" />
-            <q-item v-for="tr in trips" :key="String(tr.id)" class="p-4">
+            <q-item
+                v-for="tr in trips"
+                :key="String(tr.id)"
+                clickable
+                class="p-4"
+                @click="tripModalRef?.openEditModal(String(tr.id))"
+            >
                 <q-item-section v-if="tripListProductImageUrl(tr).length > 0" avatar>
                     <q-avatar rounded size="48px">
                         <q-img :src="tripListProductImageUrl(tr)" ratio="1" fit="cover"
@@ -53,10 +59,6 @@
                             {{ tr.waterRouteName }}
                         </template>
                     </q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                    <q-btn color="primary" outline dense :label="t('common.edit')"
-                        @click="tripModalRef?.openEditModal(String(tr.id))" />
                 </q-item-section>
             </q-item>
         </AppEntityList>

@@ -28,6 +28,7 @@
             :no-data-label="t('programsControlAdmin.voyagesEmpty')"
             :search-placeholder="t('programsControlAdmin.searchVoyagesPlaceholder')"
             default-sort-column="departure"
+            @row-click="onVoyageRowClick"
         >
             <template #filters>
                 <q-select
@@ -57,27 +58,16 @@
             </template>
 
             <template #body-cell-actions="props">
-                <q-td :props="props" class="text-right">
-                    <div class="row q-gutter-xs justify-end no-wrap">
-                        <q-btn
-                            color="primary"
-                            outline
-                            dense
-                            :label="t('common.edit')"
-                            :to="controlContextNamedRoute(route, 'control.voyages.edit', {
-                                voyageId: String(props.row.id),
-                            })"
-                        />
-                        <q-btn
-                            v-if="canDeleteVoyage(props.row.status)"
-                            flat
-                            dense
-                            color="negative"
-                            icon="delete"
-                            :label="t('common.delete')"
-                            @click="() => confirmDelete(props.row)"
-                        />
-                    </div>
+                <q-td :props="props" class="text-right" @click.stop>
+                    <q-btn
+                        v-if="canDeleteVoyage(props.row.status)"
+                        flat
+                        dense
+                        color="negative"
+                        icon="delete"
+                        :label="t('common.delete')"
+                        @click="() => confirmDelete(props.row)"
+                    />
                 </q-td>
             </template>
         </AppControlAdminTable>
@@ -88,7 +78,7 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { eq } from '@tanstack/db';
 import type { QTableProps } from 'quasar';
@@ -129,6 +119,7 @@ const powersync = getAppPowerSyncContext();
 const { t, locale } = useI18n();
 const $q = useQuasar();
 const route = useRoute();
+const router = useRouter();
 const { confirm } = useConfirmDialog();
 const { notifyError } = useNotifyErrorFromCatch();
 const { deleteVoyage } = useControlVoyageAdminOps();
@@ -369,6 +360,16 @@ function statusChipColor(status: string | null): string {
 function canDeleteVoyage(status: string | null): boolean {
     const s = String(status ?? '').trim();
     return s !== 'underway' && s !== 'completed';
+}
+
+function onVoyageRowClick(row: Record<string, unknown>): void {
+    const voyageId = String(row.id ?? '').trim();
+    if (voyageId.length === 0) {
+        return;
+    }
+    void router.push(
+        controlContextNamedRoute(route, 'control.voyages.edit', { voyageId }),
+    );
 }
 
 function confirmDelete(row: VoyageTableRow): void {

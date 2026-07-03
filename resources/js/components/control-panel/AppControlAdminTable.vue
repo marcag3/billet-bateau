@@ -3,14 +3,16 @@
         v-model:pagination="pagination"
         flat
         bordered
+        class="app-control-admin-table"
         :rows="rows"
         :columns="columns"
         row-key="id"
         :loading="loading"
         :no-data-label="noDataLabel"
-        :row-class="rowClass"
+        :row-class="resolvedRowClass"
         :binary-state-sort="true"
         hide-pagination
+        @row-click="onRowClick"
     >
         <template #top>
             <div class="row q-col-gutter-sm items-center full-width q-pb-sm">
@@ -69,6 +71,10 @@ const props = withDefaults(
     },
 );
 
+const emit = defineEmits<{
+    rowClick: [row: TableRow];
+}>();
+
 const search = defineModel<string>('search', { default: '' });
 
 const searchInput = ref(search.value);
@@ -92,6 +98,21 @@ const slots = useSlots();
 const forwardedSlotNames = computed(() =>
     Object.keys(slots).filter((name) => name !== 'filters'),
 );
+
+function resolvedRowClass(row: TableRow): string {
+    const classes = ['cursor-pointer'];
+    if (props.rowClass != null) {
+        const extra = props.rowClass(row).trim();
+        if (extra.length > 0) {
+            classes.push(extra);
+        }
+    }
+    return classes.join(' ');
+}
+
+function onRowClick(_event: Event, row: TableRow): void {
+    emit('rowClick', row);
+}
 
 function onSearchInput(value: string | number | null): void {
     const next = String(value ?? '');

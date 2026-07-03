@@ -40,13 +40,11 @@
             :search-placeholder="t('programsControlAdmin.searchBookingsPlaceholder')"
             default-sort-column="departure"
             :row-class="bookingRowClass"
+            @row-click="onBookingRowClick"
         >
             <template #body-cell-contact_name="props">
                 <q-td :props="props">
-                    <span
-                        class="cursor-pointer text-primary"
-                        @click="openBookingModal(String(props.row.id))"
-                    >{{ props.row.contact_name ?? '—' }}</span>
+                    {{ props.row.contact_name ?? '—' }}
                 </q-td>
             </template>
 
@@ -81,19 +79,6 @@
                 </q-td>
             </template>
 
-            <template #body-cell-actions="props">
-                <q-td :props="props" class="text-right">
-                    <q-btn
-                        color="primary"
-                        outline
-                        dense
-                        :label="t('common.edit')"
-                        :to="controlContextNamedRoute(route, 'control.bookings.edit', {
-                            bookingId: String(props.row.id),
-                        })"
-                    />
-                </q-td>
-            </template>
         </AppControlAdminTable>
 
         <AppControlBookingEditDialog
@@ -387,12 +372,6 @@ const tableColumns = computed((): TableColumn[] => {
             sortable: true,
         },
         ...questionColumns,
-        {
-            name: 'actions',
-            label: t('programsControlAdmin.columnActions'),
-            field: 'id',
-            align: 'right',
-        },
     ];
 });
 
@@ -423,8 +402,12 @@ function bookingRowClass(row: Record<string, unknown>): string {
     return row.isCancelled === true ? 'opacity-60' : '';
 }
 
-function openBookingModal(bookingId: string): void {
-    bookingEditId.value = String(bookingId).trim();
+function onBookingRowClick(row: Record<string, unknown>): void {
+    const bookingId = String(row.id ?? '').trim();
+    if (bookingId.length === 0) {
+        return;
+    }
+    bookingEditId.value = bookingId;
     bookingEditDialogOpen.value = true;
 }
 </script>

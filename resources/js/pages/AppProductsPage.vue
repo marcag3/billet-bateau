@@ -11,7 +11,13 @@
 
         <AppEntityList>
             <AppEmptyListRow :show="products.length === 0" :message="t('productsList.empty')" />
-            <q-item v-for="row in products" :key="String(row.id)" class="p-4">
+            <q-item
+                v-for="row in products"
+                :key="String(row.id)"
+                clickable
+                class="p-4"
+                @click="productModalRef?.openEditModal(row)"
+            >
                 <q-item-section v-if="productImageUrl(row).length > 0" avatar>
                     <q-avatar rounded size="48px">
                         <q-img :src="productImageUrl(row)" ratio="1" fit="cover" :alt="t('productsList.image')" />
@@ -25,13 +31,9 @@
                         {{ productSummary(row) }}
                     </q-item-label>
                 </q-item-section>
-                <q-item-section side>
-                    <div class="column gap-1 items-end">
-                        <q-btn color="primary" outline dense :label="t('common.edit')"
-                            @click="() => productModalRef?.openEditModal(row)" />
-                        <q-btn flat dense color="negative" icon="delete" :label="t('productsList.delete')"
-                            @click="() => confirmDelete(row)" />
-                    </div>
+                <q-item-section side @click.stop>
+                    <q-btn flat dense color="negative" icon="delete" :label="t('productsList.delete')"
+                        @click="() => confirmDelete(row)" />
                 </q-item-section>
             </q-item>
         </AppEntityList>
