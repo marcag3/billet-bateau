@@ -21,9 +21,9 @@ export function filterRowsBySearch<T extends SearchableRow>(
 
 export function filterRowsByVoyageStatus<T extends { status?: string | null }>(
     rows: T[],
-    selectedStatuses: string[],
+    selectedStatuses: string[] | null | undefined,
 ): T[] {
-    if (selectedStatuses.length === 0) {
+    if (selectedStatuses == null || selectedStatuses.length === 0) {
         return rows;
     }
 

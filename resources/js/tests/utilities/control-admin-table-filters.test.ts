@@ -36,6 +36,7 @@ describe('control-admin-table-filters', () => {
         ];
 
         expect(filterRowsByVoyageStatus(rows, [])).toEqual(rows);
+        expect(filterRowsByVoyageStatus(rows, null)).toEqual(rows);
     });
 
     it('filterRowsByVoyageStatus keeps only matching statuses', () => {

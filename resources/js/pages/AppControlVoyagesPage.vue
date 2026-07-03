@@ -31,7 +31,7 @@
         >
             <template #filters>
                 <q-select
-                    v-model="selectedStatuses"
+                    :model-value="selectedStatuses"
                     dense
                     outlined
                     multiple
@@ -41,6 +41,7 @@
                     :label="t('programsControlAdmin.filterByStatus')"
                     :options="statusFilterOptions"
                     style="min-width: 220px"
+                    @update:model-value="onStatusesFilterUpdate"
                 />
             </template>
 
@@ -133,6 +134,10 @@ const { notifyError } = useNotifyErrorFromCatch();
 const { deleteVoyage } = useControlVoyageAdminOps();
 const searchText = ref('');
 const selectedStatuses = ref<string[]>([]);
+
+function onStatusesFilterUpdate(value: string[] | null): void {
+    selectedStatuses.value = value ?? [];
+}
 const { selectedDateYmd, showAllDates, goPrevDay, goNextDay, goToday } =
     useControlDayDateRoute();
 
