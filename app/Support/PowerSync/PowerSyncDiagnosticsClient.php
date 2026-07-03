@@ -43,7 +43,7 @@ final class PowerSyncDiagnosticsClient
             }
         }
 
-        throw $lastException ?? new RuntimeException('PowerSync diagnostics request failed.');
+        throw $lastException;
     }
 
     /**
