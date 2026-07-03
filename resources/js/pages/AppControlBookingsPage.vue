@@ -42,22 +42,25 @@
             :row-class="bookingRowClass"
             @row-click="onBookingRowClick"
         >
+            <template #filters>
+                <q-select
+                    :model-value="selectedCheckInStates"
+                    dense
+                    outlined
+                    multiple
+                    clearable
+                    emit-value
+                    map-options
+                    :label="t('programsControlAdmin.filterByCheckIn')"
+                    :options="checkInFilterOptions"
+                    style="min-width: 220px"
+                    @update:model-value="onCheckInFilterUpdate"
+                />
+            </template>
+
             <template #body-cell-contact_name="props">
                 <q-td :props="props">
                     {{ props.row.contact_name ?? '—' }}
-                </q-td>
-            </template>
-
-            <template #body-cell-status="props">
-                <q-td :props="props">
-                    <q-chip
-                        v-if="props.row.isCancelled"
-                        dense
-                        color="negative"
-                        text-color="white"
-                        :label="t('programsControlAdmin.bookingCancelledBadge')"
-                    />
-                    <span v-else>—</span>
                 </q-td>
             </template>
 
@@ -102,7 +105,11 @@ import { tripDepartureMatchesLocalDateYmd } from '../powersync/control-panel-que
 import { resolveProgramTimezone } from '../utilities/program-timezone-datetime';
 import { useControlDayDateRoute } from '../composables/useControlDayDateRoute';
 import { controlContextNamedRoute } from '../utilities/control-context-route';
-import { filterRowsBySearch } from '../utilities/control-admin-table-filters';
+import {
+    CHECK_IN_FILTER_VALUES,
+    filterRowsByCheckIn,
+    filterRowsBySearch,
+} from '../utilities/control-admin-table-filters';
 import {
     parseBookingTicketCustomFields,
     parseProgramBookingQuestions,
@@ -134,6 +141,18 @@ const { t, locale } = useI18n();
 const route = useRoute();
 const showCancelledBookings = ref(false);
 const searchText = ref('');
+const selectedCheckInStates = ref<string[]>([]);
+
+function onCheckInFilterUpdate(value: string[] | null): void {
+    selectedCheckInStates.value = value ?? [];
+}
+
+const checkInFilterOptions = computed(() =>
+    CHECK_IN_FILTER_VALUES.map((state) => ({
+        label: checkInFilterLabel(state),
+        value: state,
+    })),
+);
 const bookingEditDialogOpen = ref(false);
 const bookingEditId = ref('');
 const { selectedDateYmd, showAllDates, goPrevDay, goNextDay, goToday } =
@@ -302,8 +321,12 @@ const dateFilteredBookings = computed(() => {
     );
 });
 
+const checkInFilteredBookings = computed(() =>
+    filterRowsByCheckIn(dateFilteredBookings.value, selectedCheckInStates.value),
+);
+
 const tableRows = computed(() =>
-    filterRowsBySearch(dateFilteredBookings.value, searchText.value, [
+    filterRowsBySearch(checkInFilteredBookings.value, searchText.value, [
         (row) => row.contact_name,
         (row) => row.contact_email,
         (row) => row.departure,
@@ -356,24 +379,21 @@ const tableColumns = computed((): TableColumn[] => {
         {
             name: 'checkIn',
             label: t('programsControlAdmin.columnCheckIn'),
-            field: (row: BookingTableRow) =>
-                row.isCheckedIn
-                    ? t('programsControlAdmin.checkedIn')
-                    : t('programsControlAdmin.notCheckedIn'),
-            align: 'left',
-            sortable: true,
-        },
-        {
-            name: 'status',
-            label: t('programsControlAdmin.columnStatus'),
-            field: (row: BookingTableRow) =>
-                row.isCancelled ? t('programsControlAdmin.bookingCancelledBadge') : '',
+            field: (row: BookingTableRow) => checkInFilterLabel(
+                row.isCheckedIn ? 'checked_in' : 'not_checked_in',
+            ),
             align: 'left',
             sortable: true,
         },
         ...questionColumns,
     ];
 });
+
+function checkInFilterLabel(state: (typeof CHECK_IN_FILTER_VALUES)[number]): string {
+    return state === 'checked_in'
+        ? t('programsControlAdmin.checkedIn')
+        : t('programsControlAdmin.notCheckedIn');
+}
 
 function questionColumnName(question: string): string {
     return `question_${question.replace(/[^a-zA-Z0-9]+/g, '_')}`;

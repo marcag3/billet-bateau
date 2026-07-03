@@ -792,6 +792,7 @@ export default {
         searchBookingsPlaceholder: "Search bookings…",
         searchVoyagesPlaceholder: "Search voyages…",
         filterByStatus: "Status",
+        filterByCheckIn: "Check-in",
         columnContact: "Contact",
         columnEmail: "Email",
         columnDeparture: "Departure",

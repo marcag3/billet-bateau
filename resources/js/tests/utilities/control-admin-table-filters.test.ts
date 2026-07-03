@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+    filterRowsByCheckIn,
     filterRowsBySearch,
     filterRowsByVoyageStatus,
 } from '../../utilities/control-admin-table-filters';
@@ -50,5 +51,26 @@ describe('control-admin-table-filters', () => {
             rows[1],
             rows[2],
         ]);
+    });
+
+    it('filterRowsByCheckIn returns all rows when no states selected', () => {
+        const rows = [
+            { isCheckedIn: true },
+            { isCheckedIn: false },
+        ];
+
+        expect(filterRowsByCheckIn(rows, [])).toEqual(rows);
+        expect(filterRowsByCheckIn(rows, null)).toEqual(rows);
+    });
+
+    it('filterRowsByCheckIn keeps only matching check-in states', () => {
+        const rows = [
+            { id: '1', isCheckedIn: true },
+            { id: '2', isCheckedIn: false },
+            { id: '3', isCheckedIn: true },
+        ];
+
+        expect(filterRowsByCheckIn(rows, ['not_checked_in'])).toEqual([rows[1]]);
+        expect(filterRowsByCheckIn(rows, ['checked_in', 'not_checked_in'])).toEqual(rows);
     });
 });
