@@ -42,7 +42,7 @@ class BookingReactivationNotification extends Notification
 
     private function buildMailMessage(string $locale): MailMessage
     {
-        $programName = $this->booking->program?->name ?? __('Program');
+        $programName = $this->booking->program->name ?? __('Program');
         $departure = $this->booking->trip?->scheduled_departure_at;
         $departureLabel = ProgramTimezone::formatDeparture(
             $departure,

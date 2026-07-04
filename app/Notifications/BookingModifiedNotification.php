@@ -43,7 +43,7 @@ class BookingModifiedNotification extends Notification
 
     private function buildMailMessage(string $locale): MailMessage
     {
-        $programName = $this->booking->program?->name ?? __('Program');
+        $programName = $this->booking->program->name ?? __('Program');
         $departure = $this->booking->trip?->scheduled_departure_at;
         $departureLabel = ProgramTimezone::formatDeparture(
             $departure,
@@ -51,7 +51,7 @@ class BookingModifiedNotification extends Notification
             $this->booking->program,
         );
         $productName = $this->booking->trip?->product?->name;
-        $productDescription = trim((string) ($this->booking->trip?->product?->description ?? ''));
+        $productDescription = trim((string) ($this->booking->trip?->product->description ?? ''));
         $ticketSummary = BookingMailFormatter::formatTicketSummary($this->booking);
 
         $message = (new MailMessage)

@@ -58,6 +58,9 @@ class Voyage extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<Trip, $this>
+     */
     public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class, 'trip_id');
