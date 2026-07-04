@@ -101,7 +101,7 @@ const visibleTripCards = computed(() => {
 });
 
 const dayStats = computed(() =>
-    computeControlPanelDayStatsFromCards(visibleTripCards.value, selectedDateYmd.value),
+    computeControlPanelDayStatsFromCards(tripCards.value, selectedDateYmd.value),
 );
 
 const emptyDayMessage = computed((): string => {

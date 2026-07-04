@@ -2,11 +2,14 @@ import { toTimezoneDateYmd } from './program-timezone-datetime';
 import { isControlPanelManifestModifiable } from './control-panel-manifest';
 
 export type ControlPanelDayStats = {
+    /** Reservations not yet checked in (pre-departure). */
     booked: number;
+    /** Passengers checked in and waiting to depart. */
+    checkedIn: number;
     /** Passengers on voyages currently underway. */
     onWater: number;
     returned: number;
-    /** Sum of booked, on-water, and returned passenger counts. */
+    /** Sum of booked, checked-in, on-water, and returned passenger counts. */
     totalPassengers: number;
     /** Sum of product capacity across all trips on the selected day. */
     places: number;
@@ -256,7 +259,7 @@ export function controlPanelCardOccupiedCount(card: {
     return card.passengers.length + pending;
 }
 
-/** Booked-stat bucket: reservations not yet on the water or returned. */
+/** Booked-stat bucket: reservations not yet checked in. */
 export function controlPanelCardBookedStatCount(
     card: ControlPanelDayStatsCardInput,
 ): number {
@@ -272,11 +275,30 @@ export function controlPanelCardBookedStatCount(
         return card.activeBookedCount;
     }
 
-    const pending = card.activePendingBookingGroups.reduce(
+    return card.activePendingBookingGroups.reduce(
         (sum, group) => sum + group.ticketCount,
         0,
     );
-    return card.activePassengers.length + pending;
+}
+
+/** Checked-in passengers waiting to depart (boarding phase only). */
+export function controlPanelCardCheckedInStatCount(
+    card: ControlPanelDayStatsCardInput,
+): number {
+    if (card.voyage == null) {
+        return 0;
+    }
+
+    const displayStatus = resolveControlPanelTripDisplayStatus(card.voyage);
+    if (
+        displayStatus === 'on_water' ||
+        displayStatus === 'returned' ||
+        displayStatus === 'cancelled'
+    ) {
+        return 0;
+    }
+
+    return card.activePassengers.length;
 }
 
 function tripCapacitySeats(capacity: number | null): number {
@@ -286,17 +308,19 @@ function tripCapacitySeats(capacity: number | null): number {
     return Math.max(0, Math.floor(Number(capacity)));
 }
 
-/** Derive toolbar stats from day-filtered trip cards (keeps stats in sync with the strip). */
+/** Derive toolbar stats from all trip cards on the selected day (independent of finished-trip visibility). */
 export function computeControlPanelDayStatsFromCards(
     cards: readonly ControlPanelDayStatsCardInput[],
     _dateYmd: string,
 ): ControlPanelDayStats {
     let booked = 0;
+    let checkedIn = 0;
     let onWater = 0;
     let returned = 0;
     let places = 0;
     for (const card of cards) {
         booked += controlPanelCardBookedStatCount(card);
+        checkedIn += controlPanelCardCheckedInStatCount(card);
         places += tripCapacitySeats(card.trip.capacity);
         if (card.voyage == null) {
             continue;
@@ -310,9 +334,10 @@ export function computeControlPanelDayStatsFromCards(
     }
     return {
         booked,
+        checkedIn,
         onWater,
         returned,
-        totalPassengers: booked + onWater + returned,
+        totalPassengers: booked + checkedIn + onWater + returned,
         places,
     };
 }

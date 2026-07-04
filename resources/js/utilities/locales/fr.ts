@@ -724,9 +724,11 @@ export default {
     },
     programsControl: {
         title: "Panneau de contrôle",
-        statsBooked: "Réservés",
+        statsBooked: "En attente",
+        statsCheckedIn: "Enregistrés",
         statsOnWater: "Sur l'eau",
-        statsReturned: "Retournés",
+        statsReturned: "De retour",
+        statsDayTotal: "Total de la journée",
         statsTotalPassengers: "Total passagers",
         statsPlaces: "Places",
         prevDay: "Jour précédent",

@@ -91,6 +91,7 @@ describe('control-panel-day-board', () => {
             ),
         ).toEqual({
             booked: 0,
+            checkedIn: 0,
             onWater: 1,
             returned: 2,
             totalPassengers: 3,
@@ -119,6 +120,7 @@ describe('control-panel-day-board', () => {
             ),
         ).toEqual({
             booked: 0,
+            checkedIn: 0,
             onWater: 0,
             returned: 2,
             totalPassengers: 2,
@@ -142,6 +144,7 @@ describe('control-panel-day-board', () => {
             ),
         ).toEqual({
             booked: 4,
+            checkedIn: 0,
             onWater: 0,
             returned: 0,
             totalPassengers: 4,
@@ -149,7 +152,7 @@ describe('control-panel-day-board', () => {
         });
     });
 
-    it('computeControlPanelDayStatsFromCards counts boarding passengers and pending tickets as booked', () => {
+    it('computeControlPanelDayStatsFromCards splits boarding passengers and pending tickets into checked-in and booked', () => {
         expect(
             computeControlPanelDayStatsFromCards(
                 [
@@ -169,7 +172,8 @@ describe('control-panel-day-board', () => {
                 '2026-06-05',
             ),
         ).toEqual({
-            booked: 3,
+            booked: 1,
+            checkedIn: 2,
             onWater: 0,
             returned: 0,
             totalPassengers: 3,
@@ -198,6 +202,7 @@ describe('control-panel-day-board', () => {
             ),
         ).toEqual({
             booked: 0,
+            checkedIn: 0,
             onWater: 1,
             returned: 0,
             totalPassengers: 1,
@@ -226,6 +231,7 @@ describe('control-panel-day-board', () => {
             ),
         ).toEqual({
             booked: 3,
+            checkedIn: 0,
             onWater: 0,
             returned: 0,
             totalPassengers: 3,
@@ -256,6 +262,7 @@ describe('control-panel-day-board', () => {
             ),
         ).toEqual({
             booked: 0,
+            checkedIn: 0,
             onWater: 0,
             returned: 0,
             totalPassengers: 0,
