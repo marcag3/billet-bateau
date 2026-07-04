@@ -127,11 +127,17 @@ final class ApplyVoyagePowerSyncCrudAction
             $currentStatus = $existing === null
                 ? $persistedStatus
                 : $existing->status;
+            $createdForTripCancellation = $existing === null && $status === VoyageStatus::Cancelled;
 
             if ($this->isRevertTransition($currentStatus, $status)) {
                 $this->applyRevertTransition($voyage->fresh() ?? $voyage, $status, $userId);
             } else {
-                $this->applyStatusTransition($voyage->fresh() ?? $voyage, $status, $userId);
+                $this->applyStatusTransition(
+                    $voyage->fresh() ?? $voyage,
+                    $status,
+                    $userId,
+                    $createdForTripCancellation,
+                );
             }
         }
     }
@@ -263,8 +269,12 @@ final class ApplyVoyagePowerSyncCrudAction
             || $status === VoyageStatus::Cancelled;
     }
 
-    private function applyStatusTransition(Voyage $voyage, VoyageStatus $status, string $userId): void
-    {
+    private function applyStatusTransition(
+        Voyage $voyage,
+        VoyageStatus $status,
+        string $userId,
+        bool $createdForTripCancellation = false,
+    ): void {
         if ($status === VoyageStatus::Underway) {
             StartVoyageAction::run($voyage, $userId);
 
@@ -278,7 +288,7 @@ final class ApplyVoyagePowerSyncCrudAction
         }
 
         if ($status === VoyageStatus::Cancelled) {
-            CancelVoyageAction::run($voyage, $userId);
+            CancelVoyageAction::run($voyage, $userId, $createdForTripCancellation);
         }
     }
 

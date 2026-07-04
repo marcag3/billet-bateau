@@ -43,16 +43,6 @@ final class UncancelVoyageAction
             ]);
         }
 
-        $restoredStatus = VoyageStatus::tryFrom((string) ($voyage->cancelled_from_status ?? ''))
-            ?? VoyageStatus::Ready;
-
-        if (
-            $restoredStatus !== VoyageStatus::Draft
-            && $restoredStatus !== VoyageStatus::Ready
-        ) {
-            $restoredStatus = VoyageStatus::Ready;
-        }
-
         $bookingsToRestore = Booking::onlyTrashed()
             ->where('cancelled_by_voyage_id', $voyage->getKey())
             ->with([
@@ -64,10 +54,28 @@ final class UncancelVoyageAction
             ])
             ->get();
 
-        DB::transaction(function () use ($voyage, $bookingsToRestore, $restoredStatus, $userId): void {
+        $createdForTripCancellation = $voyage->cancelled_from_status === null;
+
+        DB::transaction(function () use ($voyage, $bookingsToRestore, $createdForTripCancellation, $userId): void {
             foreach ($bookingsToRestore as $booking) {
                 $booking->cancelled_by_voyage_id = null;
                 $booking->restore();
+            }
+
+            if ($createdForTripCancellation) {
+                $voyage->delete();
+
+                return;
+            }
+
+            $restoredStatus = VoyageStatus::tryFrom((string) $voyage->cancelled_from_status)
+                ?? VoyageStatus::Ready;
+
+            if (
+                $restoredStatus !== VoyageStatus::Draft
+                && $restoredStatus !== VoyageStatus::Ready
+            ) {
+                $restoredStatus = VoyageStatus::Ready;
             }
 
             $voyage->status = $restoredStatus;

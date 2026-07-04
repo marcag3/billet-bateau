@@ -111,6 +111,7 @@ class PowerSyncUploadVoyageCancelTest extends TestCase
             'id' => $voyageId,
             'trip_id' => $trip->getKey(),
             'status' => VoyageStatus::Cancelled->value,
+            'cancelled_from_status' => null,
         ]);
         $this->assertSoftDeleted('bookings', ['id' => $booking->getKey()]);
 

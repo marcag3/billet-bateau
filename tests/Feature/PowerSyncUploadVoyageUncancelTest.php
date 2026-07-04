@@ -13,6 +13,7 @@ use App\Models\Voyage;
 use App\Notifications\BookingReactivationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class PowerSyncUploadVoyageUncancelTest extends TestCase
@@ -193,5 +194,88 @@ class PowerSyncUploadVoyageUncancelTest extends TestCase
         $voyage->refresh();
         $this->assertSame(VoyageStatus::Cancelled, $voyage->status);
         Notification::assertNothingSent();
+    }
+
+    public function test_uncancel_phantom_voyage_deletes_voyage_and_restores_bookings(): void
+    {
+        Notification::fake();
+
+        [$user, $trip, $booking] = $this->tripWithBooking();
+        $voyageId = (string) Str::ulid();
+        $waterRouteId = (string) $trip->product->water_route_id;
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'voyages',
+                    'id' => $voyageId,
+                    'data' => [
+                        'trip_id' => $trip->getKey(),
+                        'water_route_id' => $waterRouteId,
+                        'status' => 'cancelled',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('voyages', [
+            'id' => $voyageId,
+            'status' => VoyageStatus::Cancelled->value,
+            'cancelled_from_status' => null,
+        ]);
+        $this->assertSoftDeleted('bookings', ['id' => $booking->getKey()]);
+
+        Notification::fake();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'voyages',
+                    'id' => $voyageId,
+                    'data' => [
+                        'status' => 'ready',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('voyages', ['id' => $voyageId]);
+        $booking->refresh();
+        $this->assertFalse($booking->trashed());
+        $this->assertNull($booking->cancelled_by_voyage_id);
+
+        Notification::assertSentOnDemand(
+            BookingReactivationNotification::class,
+            function (BookingReactivationNotification $notification) use ($booking): bool {
+                return $notification->booking->getKey() === $booking->getKey();
+            },
+        );
+    }
+
+    /**
+     * @return array{0: User, 1: Trip, 2: Booking}
+     */
+    private function tripWithBooking(): array
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->withWaterRoute()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $type = TicketType::factory()->forProgram($program)->create();
+        $booking = Booking::factory()->forTrip($trip)->create([
+            'contact_email' => 'guest@example.com',
+            'contact_name' => 'Guest One',
+        ]);
+        BookingTicket::factory()->create([
+            'booking_id' => $booking->getKey(),
+            'ticket_type_id' => $type->getKey(),
+            'name' => 'Guest One',
+            'email' => 'guest@example.com',
+        ]);
+
+        return [$user, $trip, $booking];
     }
 }

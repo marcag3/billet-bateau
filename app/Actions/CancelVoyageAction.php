@@ -17,7 +17,7 @@ final class CancelVoyageAction
 {
     use AsAction;
 
-    public function handle(Voyage $voyage, string $userId): Voyage
+    public function handle(Voyage $voyage, string $userId, bool $createdForTripCancellation = false): Voyage
     {
         $voyage = Voyage::query()->whereKey($voyage->getKey())->firstOrFail();
 
@@ -55,8 +55,10 @@ final class CancelVoyageAction
             ])
             ->get();
 
-        DB::transaction(function () use ($voyage, $bookings, $userId): void {
-            $voyage->cancelled_from_status = $voyage->status->value;
+        DB::transaction(function () use ($voyage, $bookings, $userId, $createdForTripCancellation): void {
+            $voyage->cancelled_from_status = $createdForTripCancellation
+                ? null
+                : $voyage->status->value;
 
             foreach ($bookings as $booking) {
                 $locale = AppLocale::normalize($booking->contact_locale);
