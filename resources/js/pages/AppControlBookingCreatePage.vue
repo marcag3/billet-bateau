@@ -128,7 +128,7 @@ const [contactName, contactNameProps] = quasarField('contact_name');
 const [contactEmail, contactEmailProps] = quasarField('contact_email');
 const [country, countryProps] = quasarField('country');
 
-const { tripOptions } = useProgramTripSelectOptions();
+const { tripOptions } = useProgramTripSelectOptions({ excludePastTrips: true });
 
 const { data: programRaw } = useLiveQuery(
     (qb) => {

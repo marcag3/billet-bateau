@@ -145,6 +145,7 @@ final class ApplyBookingPowerSyncCrudAction
 
         $wasTrashed = $booking->trashed();
         $tripIdChanged = false;
+        $restoring = false;
 
         if (! ($patch->program_id instanceof Optional)) {
             $incoming = $patch->program_id;
@@ -184,13 +185,28 @@ final class ApplyBookingPowerSyncCrudAction
         }
 
         if (! ($patch->deleted_at instanceof Optional)) {
+            if ($wasTrashed && $patch->deleted_at === null) {
+                $restoring = true;
+            }
+
             $booking->deleted_at = $patch->deleted_at;
 
             if ($patch->deleted_at !== null) {
                 $booking->cancelled_by_voyage_id = null;
             }
         } elseif ($wasTrashed && $tripIdChanged) {
+            $restoring = true;
             $booking->deleted_at = null;
+            $booking->cancelled_by_voyage_id = null;
+        }
+
+        if ($restoring) {
+            $this->assertCanRestoreBooking($booking);
+
+            if (! $tripIdChanged) {
+                $this->assertTripHasCapacityForBookingMove($booking, (string) $booking->trip_id);
+            }
+
             $booking->cancelled_by_voyage_id = null;
         }
 
@@ -219,6 +235,15 @@ final class ApplyBookingPowerSyncCrudAction
         }
 
         return $trip;
+    }
+
+    private function assertCanRestoreBooking(Booking $booking): void
+    {
+        if ($booking->cancelled_by_voyage_id !== null) {
+            throw ValidationException::withMessages([
+                'booking' => __('This booking was cancelled with the trip and cannot be restored individually.'),
+            ]);
+        }
     }
 
     private function assertTripHasCapacityForBookingMove(Booking $booking, string $targetTripId): void

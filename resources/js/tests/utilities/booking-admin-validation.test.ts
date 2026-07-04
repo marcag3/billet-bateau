@@ -1,8 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import {
     formatTripSelectCapacitySuffix,
+    isScheduledDeparturePast,
     tripHasCapacityForBookingMove,
 } from '../../utilities/booking-admin-validation';
+
+describe('isScheduledDeparturePast', () => {
+    it('returns false for empty or invalid values', () => {
+        expect(isScheduledDeparturePast(null)).toBe(false);
+        expect(isScheduledDeparturePast('')).toBe(false);
+        expect(isScheduledDeparturePast('not-a-date')).toBe(false);
+    });
+
+    it('returns true when departure is before now', () => {
+        expect(isScheduledDeparturePast('2000-01-01T12:00:00.000Z')).toBe(true);
+    });
+
+    it('returns false when departure is in the future', () => {
+        expect(isScheduledDeparturePast('2099-01-01T12:00:00.000Z')).toBe(false);
+    });
+});
 
 describe('tripHasCapacityForBookingMove', () => {
     it('allows when capacity is null', () => {

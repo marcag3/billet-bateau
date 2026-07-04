@@ -10,6 +10,15 @@
                     ? t('programsControlAdmin.bookingCancelledByTripBanner')
                     : t('programsControlAdmin.bookingCancelledBanner')
             }}
+            <template v-if="canRestoreBooking" #action>
+                <q-btn
+                    flat
+                    color="white"
+                    :label="t('programsControlAdmin.restoreBooking')"
+                    :loading="isRestoring"
+                    @click="confirmRestoreBooking"
+                />
+            </template>
         </q-banner>
 
         <AppCardSection :label="t('programsControlAdmin.bookingDetails')">
@@ -266,6 +275,7 @@ const {
 const { undoCheckInForBooking } = useControlPanelUndoCheckIn();
 
 const isDeleting = ref(false);
+const isRestoring = ref(false);
 const newTicketTypeId = ref('');
 const newTicketName = ref('');
 const newTicketEmail = ref('');
@@ -281,8 +291,6 @@ const editTicketEmail = ref('');
 const editTicketCountry = ref(DEFAULT_COUNTRY_CODE);
 
 const bookingId = computed(() => String(props.bookingId ?? '').trim());
-
-const { tripRows, programTimezone } = useProgramTripSelectOptions();
 
 const schema = createBookingEditFormSchema(t);
 const { handleSubmit, defineField, meta, isSubmitting, resetForm, validate } =
@@ -336,6 +344,14 @@ const { data: bookingRaw } = useLiveQuery(
 const currentBooking = computed(() => {
     const rows = liveQueryRows<BookingOutput>(bookingRaw.value);
     return rows[0] ?? null;
+});
+
+const { tripRows, programTimezone } = useProgramTripSelectOptions({
+    excludePastTrips: true,
+    alwaysIncludeTripIds: computed(() => {
+        const id = String(currentBooking.value?.trip_id ?? '').trim();
+        return id.length > 0 ? [id] : [];
+    }),
 });
 
 const isCancelled = computed(() => isBookingCancelled(currentBooking.value?.deleted_at));
@@ -449,6 +465,17 @@ const hasCapacityForSelectedTrip = computed(() => {
         bookingTicketCount: tickets.value.length,
     });
 });
+
+const canRestoreBooking = computed(
+    () =>
+        isCancelled.value &&
+        !isCancelledByTrip.value &&
+        !tripChanged.value &&
+        hasCapacityForSelectedTrip.value &&
+        !isSubmitting.value &&
+        !isDeleting.value &&
+        !isRestoring.value,
+);
 
 const canSaveBooking = computed(() => {
     if (!meta.value.valid || isSubmitting.value || isDeleting.value) {
@@ -677,6 +704,29 @@ const onSaveSubmit = handleSubmit(async (values: BookingEditFormValues) => {
         },
     );
 });
+
+function confirmRestoreBooking(): void {
+    confirm({
+        title: t('programsControlAdmin.restoreBookingConfirmTitle'),
+        message: t('programsControlAdmin.restoreBookingConfirmMessage'),
+        onOk: async () => {
+            isRestoring.value = true;
+            try {
+                await runWithNotify(
+                    async () => {
+                        await updateBooking(bookingId.value, { deletedAt: null });
+                    },
+                    {
+                        successMessage: t('programsControlAdmin.bookingRestored'),
+                        errorGeneric: t('programsControl.errorGeneric'),
+                    },
+                );
+            } finally {
+                isRestoring.value = false;
+            }
+        },
+    });
+}
 
 function confirmDeleteBooking(): void {
     confirm({

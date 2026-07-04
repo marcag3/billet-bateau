@@ -812,9 +812,14 @@ export default {
         showCancelledBookings: "Réservations annulées",
         bookingCancelledBadge: "Annulée",
         bookingCancelledBanner:
-            "Cette réservation a été annulée. Changez la sortie et enregistrez pour la réaffecter à un autre départ.",
+            "Cette réservation a été annulée. Rétablissez-la sur le même départ, ou changez la sortie et enregistrez pour la réaffecter ailleurs.",
         bookingCancelledByTripBanner:
             "Cette réservation a été annulée lors de l'annulation de la sortie. Rétablissez la sortie pour la restaurer.",
+        restoreBooking: "Rétablir la réservation",
+        restoreBookingConfirmTitle: "Rétablir cette réservation ?",
+        restoreBookingConfirmMessage:
+            "Réactiver cette réservation sur le même départ ? Le client recevra un courriel de confirmation.",
+        bookingRestored: "Réservation rétablie.",
         bookingRebooked: "Réservation réaffectée au nouveau départ.",
         trip: "Sortie",
         tripRequired: "Sélectionnez une sortie.",

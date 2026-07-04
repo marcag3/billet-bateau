@@ -785,9 +785,14 @@ export default {
         showCancelledBookings: "Cancelled bookings",
         bookingCancelledBadge: "Cancelled",
         bookingCancelledBanner:
-            "This booking was cancelled. Change the trip and save to rebook it on another departure.",
+            "This booking was cancelled. Restore it on the same departure, or change the trip and save to rebook elsewhere.",
         bookingCancelledByTripBanner:
             "This booking was cancelled when the trip was cancelled. Uncancel the trip to restore it.",
+        restoreBooking: "Restore booking",
+        restoreBookingConfirmTitle: "Restore this booking?",
+        restoreBookingConfirmMessage:
+            "Reactivate this booking on the same departure? The guest will receive a confirmation email.",
+        bookingRestored: "Booking restored.",
         bookingRebooked: "Booking rebooked on the new departure.",
         trip: "Trip",
         tripRequired: "Select a trip.",

@@ -1,7 +1,8 @@
-import { computed, type Ref } from 'vue';
+import { computed, toValue, type MaybeRefOrGetter, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { eq } from '@tanstack/db';
+import { isScheduledDeparturePast } from '../utilities/booking-admin-validation';
 import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
 import {
     joinTripsWithRelationsFrom,
@@ -36,7 +37,13 @@ function formatTripSelectLabel(
     return `${date} ${time} · ${product}`;
 }
 
-export function useProgramTripSelectOptions(options?: { includeWaterRouteId?: boolean }) {
+export function useProgramTripSelectOptions(options?: {
+    includeWaterRouteId?: boolean;
+    /** Omit trips whose scheduled departure is in the past. */
+    excludePastTrips?: boolean;
+    /** Trip ids to keep visible even when past (e.g. a booking's current trip). */
+    alwaysIncludeTripIds?: MaybeRefOrGetter<readonly string[]>;
+}) {
     const powersync = getAppPowerSyncContext();
     const { locale } = useI18n();
     const activeProgramIdRef = powersync.activeProgramIdRef;
@@ -92,7 +99,28 @@ export function useProgramTripSelectOptions(options?: { includeWaterRouteId?: bo
         ],
     );
 
-    const tripRows = computed(() => liveQueryRows<TripWithRelationsRow>(tripsRaw.value));
+    const allTripRows = computed(() => liveQueryRows<TripWithRelationsRow>(tripsRaw.value));
+
+    const tripRows = computed((): TripWithRelationsRow[] => {
+        if (options?.excludePastTrips !== true) {
+            return allTripRows.value;
+        }
+
+        const includeIds = new Set(
+            toValue(options.alwaysIncludeTripIds ?? [])
+                .map((id) => String(id).trim())
+                .filter((id) => id.length > 0),
+        );
+
+        return allTripRows.value.filter((trip) => {
+            const tripId = String(trip.id).trim();
+            if (includeIds.has(tripId)) {
+                return true;
+            }
+
+            return !isScheduledDeparturePast(trip.scheduled_departure_at);
+        });
+    });
 
     const tripOptions = computed((): ProgramTripSelectOption[] => {
         const tz = programTimezone.value;

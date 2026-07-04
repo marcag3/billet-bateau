@@ -1,3 +1,19 @@
+export function isScheduledDeparturePast(
+    scheduledDepartureAt: string | null | undefined,
+): boolean {
+    const trimmed = String(scheduledDepartureAt ?? '').trim();
+    if (trimmed.length === 0) {
+        return false;
+    }
+
+    const date = new Date(trimmed);
+    if (Number.isNaN(date.getTime())) {
+        return false;
+    }
+
+    return date.getTime() < Date.now();
+}
+
 export function tripHasCapacityForBookingMove(input: {
     tripCapacity: number | null;
     activeBookedTicketCount: number;
