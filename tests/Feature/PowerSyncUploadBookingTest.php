@@ -444,6 +444,34 @@ class PowerSyncUploadBookingTest extends TestCase
         $this->assertNull($booking->cancelled_by_voyage_id);
     }
 
+    public function test_patch_soft_delete_keeps_booking_tickets(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $booking = Booking::factory()->forProgram($program)->create();
+        $ticketType = TicketType::factory()->create(['program_id' => $program->getKey()]);
+        $ticket = BookingTicket::factory()->create([
+            'booking_id' => $booking->getKey(),
+            'ticket_type_id' => $ticketType->getKey(),
+        ]);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'bookings',
+                    'id' => $booking->getKey(),
+                    'data' => [
+                        'deleted_at' => now()->toIso8601String(),
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertSoftDeleted('bookings', ['id' => $booking->getKey()]);
+        $this->assertDatabaseHas('booking_tickets', ['id' => $ticket->getKey()]);
+    }
+
     public function test_patch_manual_soft_delete_clears_trip_cancellation_attribution(): void
     {
         $user = User::factory()->create();

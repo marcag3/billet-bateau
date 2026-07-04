@@ -65,12 +65,21 @@
                             :disable="!canSaveBooking"
                         />
                         <q-btn
+                            v-if="canCancelBooking"
+                            flat
+                            color="negative"
+                            :label="t('programsControlAdmin.cancelBooking')"
+                            :loading="isCancelling"
+                            :disable="isSubmitting || isDeleting"
+                            @click="confirmCancelBooking"
+                        />
+                        <q-btn
                             v-if="canDeleteBooking"
                             flat
                             color="negative"
                             icon="delete"
                             :label="t('common.delete')"
-                            :disable="isSubmitting || isDeleting"
+                            :disable="isSubmitting || isDeleting || isCancelling"
                             @click="confirmDeleteBooking"
                         />
                     </div>
@@ -267,6 +276,7 @@ const { notifyError } = useNotifyErrorFromCatch();
 const { runWithNotify } = useNotifyAsyncAction();
 const {
     updateBooking,
+    cancelBooking,
     deleteBooking,
     insertBookingTicket,
     updateBookingTicket,
@@ -275,6 +285,7 @@ const {
 const { undoCheckInForBooking } = useControlPanelUndoCheckIn();
 
 const isDeleting = ref(false);
+const isCancelling = ref(false);
 const isRestoring = ref(false);
 const newTicketTypeId = ref('');
 const newTicketName = ref('');
@@ -628,6 +639,17 @@ const hasCheckIn = computed(() => liveQueryRows(checkInsRaw.value).length > 0);
 
 const canDeleteBooking = computed(() => tickets.value.length === 0 && !hasCheckIn.value);
 
+const canCancelBooking = computed(
+    () =>
+        tickets.value.length > 0 &&
+        !hasCheckIn.value &&
+        !isCancelled.value &&
+        !isSubmitting.value &&
+        !isDeleting.value &&
+        !isCancelling.value &&
+        !isRestoring.value,
+);
+
 const canAddTicket = computed(
     () =>
         newTicketTypeId.value.trim().length > 0 &&
@@ -723,6 +745,29 @@ function confirmRestoreBooking(): void {
                 );
             } finally {
                 isRestoring.value = false;
+            }
+        },
+    });
+}
+
+function confirmCancelBooking(): void {
+    confirm({
+        title: t('programsControlAdmin.cancelBookingTitle'),
+        message: t('programsControlAdmin.cancelBookingMessage'),
+        onOk: async () => {
+            isCancelling.value = true;
+            try {
+                await runWithNotify(
+                    async () => {
+                        await cancelBooking(bookingId.value);
+                    },
+                    {
+                        successMessage: t('programsControl.bookingCancelled'),
+                        errorGeneric: t('programsControl.errorGeneric'),
+                    },
+                );
+            } finally {
+                isCancelling.value = false;
             }
         },
     });

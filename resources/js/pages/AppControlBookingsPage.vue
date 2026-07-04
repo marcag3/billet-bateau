@@ -82,6 +82,20 @@
                 </q-td>
             </template>
 
+            <template #body-cell-actions="props">
+                <q-td :props="props" class="text-right" @click.stop>
+                    <q-btn
+                        v-if="canCancelBooking(props.row)"
+                        flat
+                        dense
+                        color="negative"
+                        icon="cancel"
+                        :label="t('common.cancel')"
+                        @click="() => confirmCancelBooking(props.row)"
+                    />
+                </q-td>
+            </template>
+
         </AppControlAdminTable>
 
         <AppControlBookingEditDialog
@@ -94,13 +108,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useQuasar } from 'quasar';
 import { useRoute } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { eq } from '@tanstack/db';
 import type { QTableProps } from 'quasar';
 import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
 import { liveQueryRows } from '../powersync/live-query-casts';
-import { isBookingCancelled } from '../composables/useBookingAdminCrud';
+import { isBookingCancelled, useBookingAdminCrud } from '../composables/useBookingAdminCrud';
+import { useConfirmDialog } from '../composables/useConfirmDialog';
+import { useNotifyErrorFromCatch } from '../composables/useNotifyErrorFromCatch';
 import { tripDepartureMatchesLocalDateYmd } from '../powersync/control-panel-queries';
 import { resolveProgramTimezone } from '../utilities/program-timezone-datetime';
 import { useControlDayDateRoute } from '../composables/useControlDayDateRoute';
@@ -138,7 +155,11 @@ type TableColumn = NonNullable<QTableProps['columns']>[number];
 
 const powersync = getAppPowerSyncContext();
 const { t, locale } = useI18n();
+const $q = useQuasar();
 const route = useRoute();
+const { confirm } = useConfirmDialog();
+const { notifyError } = useNotifyErrorFromCatch();
+const { cancelBooking } = useBookingAdminCrud();
 const showCancelledBookings = ref(false);
 const searchText = ref('');
 const selectedCheckInStates = ref<string[]>([]);
@@ -386,8 +407,33 @@ const tableColumns = computed((): TableColumn[] => {
             sortable: true,
         },
         ...questionColumns,
+        {
+            name: 'actions',
+            label: t('programsControlAdmin.columnActions'),
+            field: 'id',
+            align: 'right',
+        },
     ];
 });
+
+function canCancelBooking(row: BookingTableRow): boolean {
+    return !row.isCancelled && !row.isCheckedIn;
+}
+
+function confirmCancelBooking(row: BookingTableRow): void {
+    confirm({
+        title: t('programsControlAdmin.cancelBookingTitle'),
+        message: t('programsControlAdmin.cancelBookingMessage'),
+        onOk: async () => {
+            try {
+                await cancelBooking(String(row.id));
+                $q.notify({ type: 'positive', message: t('programsControlAdmin.bookingCancelled') });
+            } catch (error) {
+                notifyError(error, t('programsControl.errorGeneric'));
+            }
+        },
+    });
+}
 
 function checkInFilterLabel(state: (typeof CHECK_IN_FILTER_VALUES)[number]): string {
     return state === 'checked_in'

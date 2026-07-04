@@ -90,7 +90,7 @@ export function useBookingAdminCrud() {
         void powersync.refreshOutboxSnapshot();
     }
 
-    async function deleteBooking(bookingId: string): Promise<void> {
+    async function cancelBooking(bookingId: string): Promise<void> {
         const bookingsCol = powersync.collections.bookings.value;
         if (!bookingsCol) {
             throw new Error('Collections not ready.');
@@ -101,6 +101,10 @@ export function useBookingAdminCrud() {
         });
 
         void powersync.refreshOutboxSnapshot();
+    }
+
+    async function deleteBooking(bookingId: string): Promise<void> {
+        await cancelBooking(bookingId);
     }
 
     async function insertBookingTicket(
@@ -225,6 +229,18 @@ export function useBookingAdminCrud() {
         );
     }
 
+    async function cancelWalkInBooking(bookingId: string): Promise<void> {
+        await runWithNotify(
+            async () => {
+                await cancelBooking(bookingId);
+            },
+            {
+                successMessage: t('programsControl.bookingCancelled'),
+                errorGeneric: t('programsControl.errorGeneric'),
+            },
+        );
+    }
+
     async function removeWalkInBookingTicket(
         ticketId: string,
         bookingId: string,
@@ -244,11 +260,13 @@ export function useBookingAdminCrud() {
     return {
         createBooking,
         updateBooking,
+        cancelBooking,
         deleteBooking,
         insertBookingTicket,
         updateBookingTicket,
         removeBookingTicket,
         addWalkInBooking,
+        cancelWalkInBooking,
         removeWalkInBookingTicket,
     };
 }

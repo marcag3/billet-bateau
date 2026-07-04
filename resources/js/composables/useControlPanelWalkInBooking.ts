@@ -49,6 +49,7 @@ export function useControlPanelWalkInBooking() {
 
     return {
         addWalkInBooking,
+        cancelBooking: crud.cancelWalkInBooking,
         removeWalkInBookingTicket: crud.removeWalkInBookingTicket,
     };
 }

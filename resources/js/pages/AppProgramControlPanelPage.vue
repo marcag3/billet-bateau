@@ -112,7 +112,7 @@ const emptyDayMessage = computed((): string => {
 });
 
 const { startDeparture, markArrival, removePassenger, cancelTrip, uncancelTrip } = useControlPanelVoyageOps();
-const { addWalkInBooking, removeWalkInBookingTicket } = useControlPanelWalkInBooking();
+const { addWalkInBooking, cancelBooking } = useControlPanelWalkInBooking();
 const { checkInBooking } = useControlPanelCheckIn();
 const { undoCheckInForBooking } = useControlPanelUndoCheckIn();
 
@@ -343,14 +343,11 @@ async function onConfirmWalkIn(payload: WalkInBookingConfirmPayload): Promise<vo
 }
 
 function onRemoveBookedTicket(
-    card: ControlPanelTripCardModel,
-    ticketId: string,
+    _card: ControlPanelTripCardModel,
+    _ticketId: string,
     bookingId: string,
 ): void {
-    const ticketsForBookingCount = card.bookingTickets.filter(
-        (ticket) => String(ticket.booking_id) === bookingId,
-    ).length;
-    void removeWalkInBookingTicket(ticketId, bookingId, ticketsForBookingCount);
+    void cancelBooking(bookingId);
 }
 
 function onCheckInBooking(card: ControlPanelTripCardModel, bookingId: string): void {
