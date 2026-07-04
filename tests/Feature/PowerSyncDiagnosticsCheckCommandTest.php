@@ -105,5 +105,58 @@ class PowerSyncDiagnosticsCheckCommandTest extends TestCase
         $this->artisan('powersync:diagnostics-check')
             ->expectsOutput('PowerSync diagnostics request failed.')
             ->assertFailed();
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_powersync_diagnostics_check_retries_transient_failures_before_reporting(): void
+    {
+        config([
+            'powersync.diagnostics_check_enabled' => true,
+            'powersync.admin_api_url' => 'http://powersync:8080',
+            'powersync.admin_api_token' => 'test-token',
+        ]);
+
+        Http::fake([
+            'http://powersync:8080/api/admin/v1/diagnostics' => Http::sequence()
+                ->push('Service Unavailable', 503)
+                ->push('Service Unavailable', 503)
+                ->push([
+                    'data' => [
+                        'connections' => [
+                            ['id' => 'default', 'connected' => true, 'errors' => []],
+                        ],
+                        'active_sync_rules' => [
+                            'errors' => [],
+                            'connections' => [],
+                        ],
+                    ],
+                ]),
+        ]);
+
+        $this->artisan('powersync:diagnostics-check')
+            ->expectsOutput('PowerSync diagnostics check passed.')
+            ->assertSuccessful();
+
+        Http::assertSentCount(3);
+    }
+
+    public function test_powersync_diagnostics_check_fails_after_exhausting_retries(): void
+    {
+        config([
+            'powersync.diagnostics_check_enabled' => true,
+            'powersync.admin_api_url' => 'http://powersync:8080',
+            'powersync.admin_api_token' => 'test-token',
+        ]);
+
+        Http::fake([
+            'http://powersync:8080/api/admin/v1/diagnostics' => Http::response('Service Unavailable', 503),
+        ]);
+
+        $this->artisan('powersync:diagnostics-check')
+            ->expectsOutput('PowerSync diagnostics request failed.')
+            ->assertFailed();
+
+        Http::assertSentCount(3);
     }
 }

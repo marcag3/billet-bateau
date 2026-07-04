@@ -1,7 +1,12 @@
 import type { SyncStatus } from "@powersync/common";
 import * as Sentry from "@sentry/vue";
-import { formatSyncErrorMessage } from "./sync-health";
+import {
+    formatSyncErrorMessage,
+    shouldReportDownloadSyncErrorToSentry,
+    shouldReportUploadSyncErrorToSentry,
+} from "./sync-health";
 import { powerSyncDbRef } from "./powersync-runtime-state";
+import { syncHealthSnapshot } from "./sync-health-state";
 
 const DEDUPE_MS = 5_000;
 
@@ -59,13 +64,16 @@ export function logSyncStatusErrors(
         status.dataFlowStatus?.uploadError,
     );
 
+    const snapshot = syncHealthSnapshot.value;
+
     if (
         shouldLogError(
             downloadError,
             lastLoggedDownloadError,
             lastLoggedDownloadAtMs,
             nowMs,
-        )
+        ) &&
+        shouldReportDownloadSyncErrorToSentry(downloadError, snapshot, nowMs)
     ) {
         lastLoggedDownloadError = downloadError;
         lastLoggedDownloadAtMs = nowMs;
@@ -85,7 +93,8 @@ export function logSyncStatusErrors(
             lastLoggedUploadError,
             lastLoggedUploadAtMs,
             nowMs,
-        )
+        ) &&
+        shouldReportUploadSyncErrorToSentry(uploadError, snapshot, nowMs)
     ) {
         lastLoggedUploadError = uploadError;
         lastLoggedUploadAtMs = nowMs;

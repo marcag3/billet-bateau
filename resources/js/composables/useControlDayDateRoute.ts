@@ -58,6 +58,23 @@ export function useControlDayDateRoute() {
         },
     });
 
+    const showFinishedTrips = computed({
+        get(): boolean {
+            const pid = programId.value;
+            if (pid.length === 0) {
+                return false;
+            }
+            return store.getProgramState(pid).showFinishedTrips;
+        },
+        set(value: boolean): void {
+            const pid = programId.value;
+            if (pid.length === 0) {
+                return;
+            }
+            store.setShowFinishedTrips(pid, value);
+        },
+    });
+
     function goPrevDay(): void {
         store.goPrevDay(programId.value);
     }
@@ -78,6 +95,7 @@ export function useControlDayDateRoute() {
         programId,
         selectedDateYmd,
         showAllDates,
+        showFinishedTrips,
         goPrevDay,
         goNextDay,
         goToday,

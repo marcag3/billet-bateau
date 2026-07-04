@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ->withoutOverlapping();
 
         $schedule->command('powersync:diagnostics-check')
-            ->everyFiveMinutes()
+            ->everyTenMinutes()
             ->withoutOverlapping()
             ->onOneServer();
 

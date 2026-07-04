@@ -14,6 +14,7 @@ use App\Models\Voyage;
 use App\Notifications\BookingDepartureReminderNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -91,7 +92,7 @@ class SendBookingDepartureRemindersCommandTest extends TestCase
                 return ($notifiable->routes['mail'] ?? null) === 'alex@example.com'
                     && $notification->booking->is($booking)
                     && $notification->mailLocale === 'en'
-                    && $notification->booking->cancel_token === $plainToken;
+                    && $notification->booking->plainCancelToken() === $plainToken;
             },
         );
 
@@ -234,5 +235,52 @@ class SendBookingDepartureRemindersCommandTest extends TestCase
         $this->assertStringContainsString('Regards', (string) $mail->salutation);
         $this->assertStringContainsString('The Dock Team', (string) $mail->salutation);
         $this->assertStringNotContainsString('Harbor Tours', (string) $mail->salutation);
+    }
+
+    private function storeUnreadableCancelToken(Booking $booking): void
+    {
+        DB::table('bookings')
+            ->where('id', $booking->getKey())
+            ->update([
+                'cancel_token' => base64_encode(json_encode([
+                    'iv' => base64_encode(random_bytes(16)),
+                    'value' => base64_encode('stale-token'),
+                    'mac' => hash_hmac('sha256', 'invalid-mac', 'invalid-key'),
+                    'tag' => '',
+                ], JSON_THROW_ON_ERROR)),
+            ]);
+    }
+
+    public function test_command_sends_reminder_without_cancel_link_when_cancel_token_cannot_be_decrypted(): void
+    {
+        Notification::fake();
+        Carbon::setTestNow(now());
+
+        [$booking] = $this->createPublicBooking();
+        $this->storeUnreadableCancelToken($booking);
+
+        $this->artisan('bookings:send-departure-reminders')
+            ->expectsOutput('Sent 1 departure reminder(s).')
+            ->assertSuccessful();
+
+        Notification::assertSentOnDemand(BookingDepartureReminderNotification::class);
+
+        $mail = (new BookingDepartureReminderNotification($booking->fresh(), mailLocale: 'en'))->toMail(
+            Notification::route('mail', 'alex@example.com'),
+        );
+
+        $this->assertNull($mail->actionUrl);
+        $this->assertNotNull($booking->fresh()->departure_reminder_sent_at);
+    }
+
+    public function test_plain_cancel_token_returns_null_when_encrypted_value_is_unreadable(): void
+    {
+        [$booking, $plainToken] = $this->createPublicBooking();
+
+        $this->assertSame($plainToken, $booking->plainCancelToken());
+
+        $this->storeUnreadableCancelToken($booking);
+
+        $this->assertNull($booking->fresh()->plainCancelToken());
     }
 }

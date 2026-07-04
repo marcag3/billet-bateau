@@ -1,5 +1,5 @@
 <template>
-    <div class="row items-center gap-2 mb-4">
+    <div class="row items-center gap-2 mb-4 flex-nowrap overflow-x-auto">
         <div class="col-auto row items-center gap-1">
             <q-btn
                 flat
@@ -57,21 +57,36 @@
 
         <q-space />
 
-        <div class="col-auto row gap-2">
-            <q-chip outline :style="controlPanelStatChipStyle('booked')">
-                {{ t('programsControl.statsBooked') }}: {{ stats.booked }}
-            </q-chip>
-            <q-chip outline :style="controlPanelStatChipStyle('onWater')">
-                {{ t('programsControl.statsOnWater') }}: {{ stats.onWater }}
-            </q-chip>
-            <q-chip outline :style="controlPanelStatChipStyle('returned')">
-                {{ t('programsControl.statsReturned') }}: {{ stats.returned }}
-            </q-chip>
-            <q-chip outline :style="controlPanelStatChipStyle('totalPassengers')">
-                {{ t('programsControl.statsTotalPassengers') }}: {{ stats.totalPassengers }}
-            </q-chip>
-            <q-chip outline :style="controlPanelStatChipStyle('places')">
-                {{ t('programsControl.statsPlaces') }}: {{ stats.places }}
+        <div class="col-auto shrink-0">
+            <q-chip
+                outline
+                :style="controlPanelStatChipStyle('totalPassengers')"
+                :clickable="statsDetailsOnClick"
+                :aria-label="t('programsControl.statsDayTotal')"
+                :aria-haspopup="statsDetailsOnClick ? 'true' : undefined"
+                :aria-expanded="statsDetailsOnClick && statsMenuOpen ? 'true' : undefined"
+            >
+                {{ t('programsControl.statsDayTotal') }}:
+                {{ stats.totalPassengers }}/{{ stats.places }}
+                <q-tooltip v-if="!statsDetailsOnClick">
+                    <div v-for="row in statDetailRows" :key="row.key">
+                        {{ row.label }}: {{ row.value }}
+                    </div>
+                </q-tooltip>
+                <q-menu
+                    v-if="statsDetailsOnClick"
+                    v-model="statsMenuOpen"
+                    anchor="bottom middle"
+                    self="top middle"
+                    transition-show="jump-down"
+                    transition-hide="jump-up"
+                >
+                    <q-list dense class="q-py-xs">
+                        <q-item v-for="row in statDetailRows" :key="row.key" dense>
+                            <q-item-section>{{ row.label }}: {{ row.value }}</q-item-section>
+                        </q-item>
+                    </q-list>
+                </q-menu>
             </q-chip>
         </div>
     </div>
@@ -80,6 +95,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useQuasar } from 'quasar';
 import {
     controlPanelStatChipStyle,
     normalizeCalendarYmd,
@@ -104,7 +120,18 @@ const emit = defineEmits<{
 }>();
 
 const { t, locale } = useI18n();
+const $q = useQuasar();
 const dateDialogOpen = ref(false);
+const statsMenuOpen = ref(false);
+
+const statsDetailsOnClick = computed(() => $q.platform.has.touch);
+
+const statDetailRows = computed(() => [
+    { key: 'booked', label: t('programsControl.statsBooked'), value: props.stats.booked },
+    { key: 'checkedIn', label: t('programsControl.statsCheckedIn'), value: props.stats.checkedIn },
+    { key: 'onWater', label: t('programsControl.statsOnWater'), value: props.stats.onWater },
+    { key: 'returned', label: t('programsControl.statsReturned'), value: props.stats.returned },
+]);
 
 const tripDateYmdSet = computed(() => new Set(props.tripDateYmds));
 

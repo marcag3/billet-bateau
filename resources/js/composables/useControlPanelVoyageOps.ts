@@ -9,5 +9,6 @@ export function useControlPanelVoyageOps() {
         addPassenger: ops.addPassenger,
         removePassenger: ops.removePassenger,
         cancelTrip: ops.cancelTrip,
+        uncancelTrip: ops.uncancelTrip,
     };
 }

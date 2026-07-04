@@ -1,5 +1,5 @@
 <template>
-    <q-page class="p-4 column min-h-0 h-[calc(100dvh-50px)] max-h-[calc(100dvh-50px)] overflow-hidden">
+    <q-page fit class="p-4 column overflow-x-hidden" style="overflow-y: auto">
         <AppPageHeader :title="t('programsControl.title')" class="mb-2 shrink-0" />
 
         <AppControlPanelDayToolbar v-model:selected-date-ymd="selectedDateYmd" class="shrink-0"
@@ -11,34 +11,39 @@
             {{ emptyDayMessage }}
         </p>
 
-        <q-virtual-scroll v-else ref="tripLaneRef" v-touch-pan.mouse.horizontal="onTripLanePan"
-            :items="visibleTripCards" virtual-scroll-horizontal :virtual-scroll-item-size="tripCardItemSize"
-            class="col w-full max-w-full min-h-0 snap-x snap-mandatory" v-slot="{ item }">
-            <AppControlPanelTripCard :key="String(item.trip.id)" :card="item" :program-timezone="programTimezone" :boat-names-by-id="boatNamesById"
-                :guide-names-by-id="guideNamesById" @open-depart="openDepartModal(item)"
-                @arrive="confirmArrive(item)" @cancel="confirmCancel(item)" @open-walk-in="openWalkInModal(item)"
-                @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)"
-                @undo-check-in-booking="(bookingId) => onUndoCheckInBooking(item, bookingId)"
-                @remove-passenger="(passengerId) => removePassenger(passengerId)"
-                @check-in-booking="(bookingId) => onCheckInBooking(item, bookingId)" />
-        </q-virtual-scroll>
+        <div v-else class="control-panel-trip-lane min-w-0 w-full overflow-x-auto snap-x snap-mandatory">
+            <div class="flex flex-nowrap w-max"
+                :style="{ height: `${CONTROL_PANEL_TRIP_CARD_HEIGHT_PX}px` }">
+                <AppControlPanelTripCard v-for="item in visibleTripCards" :key="String(item.trip.id)" :card="item"
+                    :program-timezone="programTimezone" :boat-names-by-id="boatNamesById"
+                    :guide-names-by-id="guideNamesById" @open-depart="openDepartModal(item)"
+                    @arrive="confirmArrive(item)" @cancel="confirmCancel(item)" @uncancel="confirmUncancel(item)" @open-walk-in="openWalkInModal(item)"
+                    @remove-booked-ticket="(ticketId, bookingId) => onRemoveBookedTicket(item, ticketId, bookingId)"
+                    @undo-check-in-booking="(bookingId) => onUndoCheckInBooking(item, bookingId)"
+                    @remove-passenger="(passengerId) => removePassenger(passengerId)"
+                    @check-in-booking="(bookingId) => onCheckInBooking(item, bookingId)"
+                    @open-booking="openBookingModal" />
+            </div>
+        </div>
 
         <AppControlPanelWalkInBookingDialog v-model:open="walkInDialogOpen" :ticket-type-options="ticketTypeOptions"
             :format-ticket-type-price="formatTicketTypePrice" :booking-questions="bookingQuestions"
-            :booked-count="walkInCard?.bookedCount ?? 0"
+            :booked-count="walkInCard?.activeBookedCount ?? 0"
             :trip-capacity="walkInTripCapacity" @confirm="onConfirmWalkIn" />
+
+        <AppControlBookingEditDialog v-model:open="bookingEditDialogOpen" :booking-id="bookingEditId" />
 
         <AppControlPanelStartVoyageModal v-model:open="departModalOpen" :boat-options="boatOptions"
             :guide-options="guideOptions" :initial-boat-ids="departCard?.initialBoatIds ?? []"
             :initial-guide-ids="departCard?.initialGuideIds ?? []"
             :boarded-count="departCard?.passengers.length ?? 0"
-            :booked-count="departCard?.bookedCount ?? 0"
+            :booked-count="departCard?.activeBookedCount ?? 0"
             :submitting="departSubmitting" @confirm="onConfirmDepart" />
     </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type ComponentPublicInstance } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useLiveQuery } from "@tanstack/vue-db";
@@ -53,19 +58,19 @@ import { useControlPanelWalkInBooking } from "../composables/useControlPanelWalk
 import { useControlPanelCheckIn } from "../composables/useControlPanelCheckIn";
 import { useControlPanelUndoCheckIn } from "../composables/useControlPanelUndoCheckIn";
 import { useConfirmDialog } from "../composables/useConfirmDialog";
-import { useControlPanelTripLaneLayout } from "../composables/useControlPanelTripLaneLayout";
-import { useControlPanelTripLanePan } from "../composables/useControlPanelTripLanePan";
+import { CONTROL_PANEL_TRIP_CARD_HEIGHT_PX } from "../utilities/control-panel-trip-card-layout";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import AppPageHeader from "../components/ui/AppPageHeader.vue";
 import AppControlPanelDayToolbar from "../components/control-panel/AppControlPanelDayToolbar.vue";
 import AppControlPanelTripCard from "../components/control-panel/AppControlPanelTripCard.vue";
 import AppControlPanelStartVoyageModal from "../components/control-panel/AppControlPanelStartVoyageModal.vue";
 import AppControlPanelWalkInBookingDialog from "../components/control-panel/AppControlPanelWalkInBookingDialog.vue";
+import AppControlBookingEditDialog from "../components/control-panel/AppControlBookingEditDialog.vue";
 import type { ControlPanelSelectOption } from "../components/control-panel/AppControlPanelStartVoyageModal.vue";
 import type { WalkInBookingConfirmPayload } from "../components/control-panel/AppControlPanelWalkInBookingDialog.vue";
 import type { BookingTicketTypeOption } from "../models/public-booking/public-booking.types";
 import { formatTicketTypePrice as formatTicketTypePriceUtil } from "../utilities/ticket-type-display";
-import { isControlPanelTripFinished } from "../utilities/control-panel-day-board";
+import { isControlPanelTripFinished, computeControlPanelDayStatsFromCards } from "../utilities/control-panel-day-board";
 
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -76,15 +81,10 @@ usePageLayout({ documentTitleKey: "programsControl.title" });
 
 const programId = computed(() => String(route.params.programId ?? "").trim());
 
-const tripLaneRef = ref<ComponentPublicInstance | null>(null);
-
-const { tripCardItemSize } = useControlPanelTripLaneLayout(tripLaneRef);
-const { onTripLanePan } = useControlPanelTripLanePan(tripLaneRef);
-
 const {
     selectedDateYmd,
+    showFinishedTrips,
     tripCards,
-    dayStats,
     tripDateYmds,
     programDateBounds,
     programTimezone,
@@ -93,14 +93,16 @@ const {
     goToToday,
 } = useControlPanelDayBoard(programId);
 
-const showFinishedTrips = ref(false);
-
 const visibleTripCards = computed(() => {
     if (showFinishedTrips.value) {
         return tripCards.value;
     }
     return tripCards.value.filter((card) => !isControlPanelTripFinished(card.voyage));
 });
+
+const dayStats = computed(() =>
+    computeControlPanelDayStatsFromCards(tripCards.value, selectedDateYmd.value),
+);
 
 const emptyDayMessage = computed((): string => {
     if (tripCards.value.length > 0 && visibleTripCards.value.length === 0) {
@@ -109,8 +111,8 @@ const emptyDayMessage = computed((): string => {
     return t("programsControl.emptyDay");
 });
 
-const { startDeparture, markArrival, removePassenger, cancelTrip } = useControlPanelVoyageOps();
-const { addWalkInBooking, removeWalkInBookingTicket } = useControlPanelWalkInBooking();
+const { startDeparture, markArrival, removePassenger, cancelTrip, uncancelTrip } = useControlPanelVoyageOps();
+const { addWalkInBooking, cancelBooking } = useControlPanelWalkInBooking();
 const { checkInBooking } = useControlPanelCheckIn();
 const { undoCheckInForBooking } = useControlPanelUndoCheckIn();
 
@@ -224,6 +226,14 @@ const departCard = ref<ControlPanelTripCardModel | null>(null);
 const walkInDialogOpen = ref(false);
 const walkInCard = ref<ControlPanelTripCardModel | null>(null);
 
+const bookingEditDialogOpen = ref(false);
+const bookingEditId = ref('');
+
+function openBookingModal(bookingId: string): void {
+    bookingEditId.value = String(bookingId).trim();
+    bookingEditDialogOpen.value = true;
+}
+
 const walkInTripCapacity = computed((): number | null => {
     const cap = walkInCard.value?.trip.capacity;
     if (cap == null || !Number.isFinite(Number(cap))) {
@@ -285,6 +295,21 @@ function confirmCancel(card: ControlPanelTripCardModel): void {
     });
 }
 
+function confirmUncancel(card: ControlPanelTripCardModel): void {
+    if (card.voyage == null) {
+        return;
+    }
+    confirm({
+        title: t("programsControl.uncancelTripConfirmTitle"),
+        message: t("programsControl.uncancelTripConfirmMessage"),
+        onOk: () =>
+            uncancelTrip({
+                trip: card.trip,
+                existingVoyage: card.voyage,
+            }),
+    });
+}
+
 function openWalkInModal(card: ControlPanelTripCardModel): void {
     walkInCard.value = card;
     walkInDialogOpen.value = true;
@@ -318,14 +343,11 @@ async function onConfirmWalkIn(payload: WalkInBookingConfirmPayload): Promise<vo
 }
 
 function onRemoveBookedTicket(
-    card: ControlPanelTripCardModel,
-    ticketId: string,
+    _card: ControlPanelTripCardModel,
+    _ticketId: string,
     bookingId: string,
 ): void {
-    const ticketsForBookingCount = card.bookingTickets.filter(
-        (ticket) => String(ticket.booking_id) === bookingId,
-    ).length;
-    void removeWalkInBookingTicket(ticketId, bookingId, ticketsForBookingCount);
+    void cancelBooking(bookingId);
 }
 
 function onCheckInBooking(card: ControlPanelTripCardModel, bookingId: string): void {

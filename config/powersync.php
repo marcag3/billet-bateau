@@ -29,9 +29,23 @@ return [
 
     'config_path' => (string) env('POWERSYNC_CONFIG_PATH', '/config/service.yaml'),
 
-    'data_source_uri' => env('PS_DATA_SOURCE_URI'),
+    'port' => (int) env('PS_PORT', 8080),
 
-    'storage_source_uri' => env('PS_STORAGE_SOURCE_URI'),
+    'data_source_uri' => env('PS_DATA_SOURCE_URI')
+        ?: env('POWERSYNC_DATA_SOURCE_URI')
+        ?: (
+            env('DB_PASSWORD') && env('DB_DATABASE')
+                ? 'postgresql://powersync:'.env('DB_PASSWORD').'@pgsql:5432/'.env('DB_DATABASE').'?sslmode=disable'
+                : null
+        ),
+
+    'storage_source_uri' => env('PS_STORAGE_SOURCE_URI')
+        ?: env('POWERSYNC_STORAGE_SOURCE_URI')
+        ?: (
+            env('DB_USERNAME') && env('DB_PASSWORD')
+                ? 'postgresql://'.env('DB_USERNAME').':'.env('DB_PASSWORD').'@pgsql:5432/powersync_storage?sslmode=disable'
+                : null
+        ),
 
     'compact_node_options' => (string) env('POWERSYNC_COMPACT_NODE_OPTIONS', '--max-old-space-size-percentage=80'),
 

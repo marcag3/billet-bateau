@@ -136,10 +136,10 @@ class PublicBookingCancelApiTest extends TestCase
             },
         );
 
-        $this->assertDatabaseMissing('bookings', [
+        $this->assertSoftDeleted('bookings', [
             'id' => $bookingId,
         ]);
-        $this->assertSame(0, BookingTicket::query()->where('booking_id', $bookingId)->count());
+        $this->assertSame(2, BookingTicket::query()->where('booking_id', $bookingId)->count());
 
         $this->getJson('/api/public/programs/cancel-flow/booking-options')
             ->assertOk()

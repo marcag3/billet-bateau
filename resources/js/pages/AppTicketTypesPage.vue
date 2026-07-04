@@ -11,7 +11,13 @@
 
         <AppEntityList>
             <AppEmptyListRow :show="ticketTypeRows.length === 0" :message="t('ticketTypesList.empty')" />
-            <q-item v-for="row in ticketTypeRows" :key="String(row.id)" class="p-4">
+            <q-item
+                v-for="row in ticketTypeRows"
+                :key="String(row.id)"
+                clickable
+                class="p-4"
+                @click="ticketTypeModalRef?.openEditModal(row)"
+            >
                 <q-item-section>
                     <q-item-label class="text-h6">{{
                         row.title
@@ -20,13 +26,9 @@
                         {{ summaryLine(row) }}
                     </q-item-label>
                 </q-item-section>
-                <q-item-section side>
-                    <div class="column gap-1 items-end">
-                        <q-btn color="primary" outline dense :label="t('common.edit')"
-                            @click="() => ticketTypeModalRef?.openEditModal(row)" />
-                        <q-btn flat dense color="negative" icon="delete" :label="t('ticketTypesList.delete')"
-                            @click="() => confirmDelete(row)" />
-                    </div>
+                <q-item-section side @click.stop>
+                    <q-btn flat dense color="negative" icon="delete" :label="t('ticketTypesList.delete')"
+                        @click="() => confirmDelete(row)" />
                 </q-item-section>
             </q-item>
         </AppEntityList>

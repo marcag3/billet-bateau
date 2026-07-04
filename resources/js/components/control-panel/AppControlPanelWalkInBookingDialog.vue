@@ -26,7 +26,7 @@
                         v-bind="contactEmailProps"
                         outlined
                         type="email"
-                        :label="t('publicBooking.contactEmail')"
+                        :label="t('publicBooking.contactEmailOptional')"
                     />
 
                     <AppCountrySelect
@@ -35,14 +35,11 @@
                         :label="t('publicBooking.country')"
                     />
 
-                    <q-input
-                        v-for="(question, index) in bookingQuestions"
-                        :key="`${index}-${question}`"
-                        v-model="customAnswers[index]"
-                        outlined
-                        :label="question"
-                        :error="customAnswerErrors[index] !== undefined"
-                        :error-message="customAnswerErrors[index] ?? ''"
+                    <AppBookingCustomQuestionsFields
+                        v-if="bookingQuestions.length > 0"
+                        v-model:answers="customAnswers"
+                        :questions="bookingQuestions"
+                        :errors="customAnswerErrors"
                     />
                 </q-card-section>
 
@@ -60,17 +57,19 @@ import { computed, ref, watch } from 'vue';
 import { useForm } from 'vee-validate';
 import { useI18n } from 'vue-i18n';
 import type { BookingTicketTypeOption } from '../../models/public-booking/public-booking.types';
-import { createPublicBookingContactFormSchema } from '../../models/public-booking/public-booking.validation';
+import { createWalkInBookingContactFormSchema } from '../../models/public-booking/public-booking.validation';
 import { createQuasarFieldBinder } from '../../validation/quasar-vee-fields';
 import { DEFAULT_COUNTRY_CODE } from '../../composables/useCountryOptions';
 import { validateWalkInBookingTickets } from '../../utilities/public-booking-validation';
+import { validateBookingCustomAnswers } from '../../utilities/program-booking-questions';
 import AppCountrySelect from '../molecules/AppCountrySelect.vue';
+import AppBookingCustomQuestionsFields from '../molecules/AppBookingCustomQuestionsFields.vue';
 import AppTicketQuantityPicker from '../molecules/AppTicketQuantityPicker.vue';
 
 export type WalkInBookingConfirmPayload = {
     ticketQuantities: Record<string, number>;
     contactName: string;
-    contactEmail: string;
+    contactEmail: string | null;
     country: string;
     customFieldMap: Record<string, string>;
 };
@@ -102,7 +101,7 @@ const ticketPickerRef = ref<InstanceType<typeof AppTicketQuantityPicker> | null>
 const customAnswers = ref<string[]>([]);
 const customAnswerErrors = ref<Record<number, string>>({});
 
-const contactSchema = createPublicBookingContactFormSchema(t);
+const contactSchema = createWalkInBookingContactFormSchema(t);
 const { handleSubmit, defineField, resetForm } = useForm({
     validationSchema: contactSchema,
     initialValues: {
@@ -179,28 +178,23 @@ const onSubmit = handleSubmit((values) => {
         return;
     }
 
-    const answerErrors: Record<number, string> = {};
-    const customFieldMap: Record<string, string> = {};
-    props.bookingQuestions.forEach((question, index) => {
-        const answer = String(customAnswers.value[index] ?? '').trim();
-        if (answer.length === 0) {
-            answerErrors[index] = t('publicBooking.customAnswerRequired', { question });
-        } else {
-            customFieldMap[question] = answer;
-        }
+    const customValidation = validateBookingCustomAnswers({
+        questions: props.bookingQuestions,
+        answers: customAnswers.value,
+        t,
     });
 
-    if (Object.keys(answerErrors).length > 0) {
-        customAnswerErrors.value = answerErrors;
+    if (customValidation.customFieldMap === null) {
+        customAnswerErrors.value = customValidation.errors;
         return;
     }
 
     emit('confirm', {
         ticketQuantities: { ...ticketQuantities.value },
         contactName: String(values.contact_name).trim(),
-        contactEmail: String(values.contact_email).trim(),
+        contactEmail: values.contact_email,
         country: String(values.country).trim().toUpperCase(),
-        customFieldMap,
+        customFieldMap: customValidation.customFieldMap,
     });
     emit('update:open', false);
 });

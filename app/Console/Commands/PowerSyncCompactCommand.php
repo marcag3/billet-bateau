@@ -37,9 +37,12 @@ class PowerSyncCompactCommand extends Command
 
         if (! $result->successful()) {
             $this->error('PowerSync compact failed after '.$duration.'s.');
-            $stderr = trim($result->errorOutput());
-            if ($stderr !== '') {
-                $this->line($stderr);
+            $details = trim($result->errorOutput());
+            if ($details === '') {
+                $details = trim($result->output());
+            }
+            if ($details !== '') {
+                $this->line($details);
             }
 
             return self::FAILURE;
@@ -75,6 +78,16 @@ class PowerSyncCompactCommand extends Command
         $jwtSecret = config('powersync.jwt_secret');
         if (is_string($jwtSecret) && $jwtSecret !== '') {
             $env['PS_JWT_SECRET'] = $jwtSecret;
+        }
+
+        $port = config('powersync.port');
+        if (is_int($port) && $port > 0) {
+            $env['PS_PORT'] = (string) $port;
+        }
+
+        $adminApiToken = config('powersync.admin_api_token');
+        if (is_string($adminApiToken) && $adminApiToken !== '') {
+            $env['PS_ADMIN_API_TOKEN'] = $adminApiToken;
         }
 
         $nodeOptions = config('powersync.compact_node_options');

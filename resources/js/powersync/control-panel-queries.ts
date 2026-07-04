@@ -23,10 +23,17 @@ import type { VoyageOutput } from './voyages.collection';
 import type { PassengerOutput } from './passengers.collection';
 import type { BookingTicketOutput } from './booking-tickets.collection';
 import type { CheckInOutput } from './check-ins.collection';
+import { isBookingCancelled } from '../composables/useBookingAdminCrud';
 import {
     derivePendingBookingGroups,
     type ControlPanelPendingBookingGroup,
 } from '../utilities/control-panel-manifest';
+
+function isActiveBookingRow(booking: { deleted_at?: unknown }): boolean {
+    return !isBookingCancelled(
+        booking.deleted_at == null ? null : String(booking.deleted_at),
+    );
+}
 
 export type { ControlPanelQueryCollections } from './control-panel-collection-types';
 
@@ -142,6 +149,7 @@ export function buildControlPanelDayStatsQuery(
         .innerJoin({ bookedDayTrip: tripsForDay }, ({ booking, bookedDayTrip }) =>
             eq(booking.trip_id, bookedDayTrip.id),
         )
+        .fn.where((row) => isActiveBookingRow(row.booking as { deleted_at?: unknown }))
         .select(({ ticket }) => ({
             metric: 'booked' as const,
             value: count(ticket.id),
@@ -231,7 +239,7 @@ export function buildControlPanelTripCardsQuery(
                     .innerJoin({ ticket: cols.booking_tickets }, ({ booking, ticket }) =>
                         eq(booking.id, ticket.booking_id),
                     )
-                    .select(({ ticket }) => ({
+                    .select(({ ticket, booking }) => ({
                         id: ticket.id,
                         booking_id: ticket.booking_id,
                         ticket_type_id: ticket.ticket_type_id,
@@ -240,6 +248,7 @@ export function buildControlPanelTripCardsQuery(
                         country: ticket.country,
                         custom_fields: ticket.custom_fields,
                         waiver_confirmation_id: ticket.waiver_confirmation_id,
+                        booking_deleted_at: booking.deleted_at,
                     })),
             ),
             voyage: toArray(
@@ -336,12 +345,23 @@ function asArray<T>(value: T[] | { toArray?: T[] | (() => T[]) } | null | undefi
     return [];
 }
 
-function normalizeBookingTicketRow(raw: unknown): BookingTicketOutput {
+type BookingTicketIncludeRow = BookingTicketOutput & {
+    booking_deleted_at?: string | null;
+};
+
+function normalizeBookingTicketRow(raw: unknown): BookingTicketIncludeRow {
     const row = raw as Record<string, unknown>;
     const ticket =
         row.ticket != null && typeof row.ticket === 'object'
             ? (row.ticket as Record<string, unknown>)
             : row;
+
+    const bookingDeletedAt =
+        ticket.booking_deleted_at != null
+            ? String(ticket.booking_deleted_at)
+            : row.booking_deleted_at != null
+              ? String(row.booking_deleted_at)
+              : null;
 
     return {
         id: String(ticket.id ?? row.id ?? ''),
@@ -387,7 +407,92 @@ function normalizeBookingTicketRow(raw: unknown): BookingTicketOutput {
                 : row.waiver_confirmation_id != null
                   ? String(row.waiver_confirmation_id)
                   : null,
+        booking_deleted_at: bookingDeletedAt,
     };
+}
+
+function cancelledBookingIdsFromTickets(
+    tickets: readonly BookingTicketIncludeRow[],
+): Set<string> {
+    const ids = new Set<string>();
+    for (const ticket of tickets) {
+        const bookingId = String(ticket.booking_id ?? '').trim();
+        if (bookingId.length === 0) {
+            continue;
+        }
+        if (isBookingCancelled(ticket.booking_deleted_at)) {
+            ids.add(bookingId);
+        }
+    }
+    return ids;
+}
+
+function passengersExcludingCancelledBookings(
+    passengers: PassengerOutput[],
+    cancelledBookingIds: ReadonlySet<string>,
+): PassengerOutput[] {
+    return passengers.filter((passenger) => {
+        const bookingId = String(passenger.booking_id ?? '').trim();
+        if (bookingId.length === 0) {
+            return true;
+        }
+        return !cancelledBookingIds.has(bookingId);
+    });
+}
+
+function isTripCancelled(voyage: VoyageOutput | null): boolean {
+    return String(voyage?.status ?? '').trim() === 'cancelled';
+}
+
+function bookingTicketsForTripCard(
+    tickets: BookingTicketIncludeRow[],
+    voyage: VoyageOutput | null,
+): BookingTicketIncludeRow[] {
+    if (isTripCancelled(voyage)) {
+        return tickets;
+    }
+
+    return tickets.filter(
+        (ticket) => !isBookingCancelled(ticket.booking_deleted_at),
+    );
+}
+
+function activeBookingTickets(
+    tickets: readonly BookingTicketIncludeRow[],
+): BookingTicketIncludeRow[] {
+    return tickets.filter(
+        (ticket) => !isBookingCancelled(ticket.booking_deleted_at),
+    );
+}
+
+function passengersForTripCard(
+    passengers: PassengerOutput[],
+    cancelledBookingIds: ReadonlySet<string>,
+    voyage: VoyageOutput | null,
+): PassengerOutput[] {
+    if (isTripCancelled(voyage)) {
+        return passengers;
+    }
+
+    return passengersExcludingCancelledBookings(passengers, cancelledBookingIds);
+}
+
+function checkedInBookingIdsForTripCard(
+    checkIns: CheckInOutput[],
+    cancelledBookingIds: ReadonlySet<string>,
+    voyage: VoyageOutput | null,
+): string[] {
+    return checkIns
+        .map((checkIn) => String(checkIn.booking_id ?? '').trim())
+        .filter((id) => {
+            if (id.length === 0) {
+                return false;
+            }
+            if (isTripCancelled(voyage)) {
+                return true;
+            }
+            return !cancelledBookingIds.has(id);
+        });
 }
 
 function bookingTicketDisplayName(ticket: BookingTicketOutput): string {
@@ -432,15 +537,25 @@ export function mapControlPanelTripCardRow(
     passengers: PassengerOutput[];
     bookedTicketNames: string[];
     bookedCount: number;
+    activeBookedCount: number;
     bookingTickets: { id: string; name: string; booking_id: string }[];
     checkedInBookingIds: string[];
     pendingBookingGroups: ControlPanelPendingBookingGroup[];
+    activePassengers: PassengerOutput[];
+    activePendingBookingGroups: ControlPanelPendingBookingGroup[];
     voyageBoatPivotIds: string[];
     voyageGuidePivotIds: string[];
     initialBoatIds: string[];
     initialGuideIds: string[];
 } {
-    const tickets = asArray(row.bookingTickets).map(normalizeBookingTicketRow);
+    const voyageInclude = extractVoyageInclude(row.voyage);
+    const voyage: VoyageOutput | null = voyageInclude
+        ? stripVoyageInclude(voyageInclude)
+        : null;
+    const allTickets = asArray(row.bookingTickets).map(normalizeBookingTicketRow);
+    const cancelledBookingIds = cancelledBookingIdsFromTickets(allTickets);
+    const tickets = bookingTicketsForTripCard(allTickets, voyage);
+    const activeTickets = activeBookingTickets(allTickets);
     const names: string[] = [];
     for (const bt of tickets) {
         const label = bookingTicketDisplayName(bt);
@@ -449,11 +564,16 @@ export function mapControlPanelTripCardRow(
         }
     }
 
-    const voyageInclude = extractVoyageInclude(row.voyage);
-    const voyage: VoyageOutput | null = voyageInclude
-        ? stripVoyageInclude(voyageInclude)
-        : null;
-    const passengers = asArray(voyageInclude?.passengers);
+    const allPassengers = asArray(voyageInclude?.passengers);
+    const passengers = passengersForTripCard(
+        allPassengers,
+        cancelledBookingIds,
+        voyage,
+    );
+    const activePassengers = passengersExcludingCancelledBookings(
+        allPassengers,
+        cancelledBookingIds,
+    );
     const checkIns = asArray(voyageInclude?.checkIns);
     const voyageBoatPivots = asArray(voyageInclude?.voyageBoatPivotIds);
     const voyageGuidePivots = asArray(voyageInclude?.voyageGuidePivotIds);
@@ -464,24 +584,44 @@ export function mapControlPanelTripCardRow(
         booking_id: String(bt.booking_id ?? ''),
     }));
 
-    const checkedInBookingIds = checkIns
-        .map((checkIn) => String(checkIn.booking_id ?? '').trim())
-        .filter((id) => id.length > 0);
+    const checkedInBookingIds = checkedInBookingIdsForTripCard(
+        checkIns,
+        cancelledBookingIds,
+        voyage,
+    );
 
     const pendingBookingGroups = derivePendingBookingGroups(
         bookingTickets,
         checkedInBookingIds,
     );
 
+    const activeBookingTicketsForGroups = activeTickets.map((bt) => ({
+        id: String(bt.id),
+        name: bookingTicketDisplayName(bt),
+        booking_id: String(bt.booking_id ?? ''),
+    }));
+    const activeCheckedInBookingIds = checkedInBookingIdsForTripCard(
+        checkIns,
+        cancelledBookingIds,
+        null,
+    );
+    const activePendingBookingGroups = derivePendingBookingGroups(
+        activeBookingTicketsForGroups,
+        activeCheckedInBookingIds,
+    );
+
     return {
         trip: row as unknown as TripWithRelationsRow,
         voyage,
         passengers,
+        activePassengers,
         bookedTicketNames: names,
         bookedCount: tickets.length,
+        activeBookedCount: activeTickets.length,
         bookingTickets,
         checkedInBookingIds,
         pendingBookingGroups,
+        activePendingBookingGroups,
         voyageBoatPivotIds: voyageBoatPivots.map((p) => String(p.id)),
         voyageGuidePivotIds: voyageGuidePivots.map((p) => String(p.id)),
         initialBoatIds: voyageBoatPivots

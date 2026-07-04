@@ -65,4 +65,14 @@ describe('useControlContextStore', () => {
         expect(store.getProgramState('prog-1').selectedDateYmd).toBe('2026-06-21');
         expect(store.getProgramState('prog-1').showAllDates).toBe(false);
     });
+
+    it('keeps show finished trips per program', () => {
+        const store = useControlContextStore();
+
+        store.setShowFinishedTrips('prog-a', true);
+        store.setShowFinishedTrips('prog-b', false);
+
+        expect(store.getProgramState('prog-a').showFinishedTrips).toBe(true);
+        expect(store.getProgramState('prog-b').showFinishedTrips).toBe(false);
+    });
 });

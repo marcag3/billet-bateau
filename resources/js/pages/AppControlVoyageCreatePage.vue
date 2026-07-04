@@ -76,9 +76,9 @@ import {
 } from '../models/voyages/voyages.validation';
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
-import { joinTripsWithRelationsFrom } from '../powersync/joined-queries';
 import { liveQueryRows } from '../powersync/live-query-casts';
 import { useControlVoyageAdminOps } from '../composables/useControlVoyageAdminOps';
+import { useProgramTripSelectOptions } from '../composables/useProgramTripSelectOptions';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import { controlContextNamedRoute } from '../utilities/control-context-route';
 import AppEntityCreatePageLayout from '../layouts/AppEntityCreatePageLayout.vue';
@@ -92,7 +92,6 @@ const { createVoyage } = useControlVoyageAdminOps();
 const { runWithNotify } = useNotifyAsyncAction();
 
 const programId = computed(() => String(route.params.programId ?? '').trim());
-const activeProgramIdRef = powersync.activeProgramIdRef;
 
 const backTo = computed(() => controlContextNamedRoute(route, 'control.voyages.list'));
 
@@ -117,47 +116,7 @@ const [waterRouteId, waterRouteIdProps] = quasarField('waterRouteId');
 const [boatIds] = quasarField('boatIds');
 const [guideIds] = quasarField('guideIds');
 
-const { data: tripsRaw } = useLiveQuery(
-    (qb) => {
-        const tripsCol = powersync.collections.trips.value;
-        const productsCol = powersync.collections.products.value;
-        const boatTypesCol = powersync.collections.boat_types.value;
-        const waterRoutesCol = powersync.collections.water_routes.value;
-        const pid = activeProgramIdRef.value.trim();
-        if (!tripsCol || !productsCol || !boatTypesCol || !waterRoutesCol || pid.length === 0) {
-            return undefined;
-        }
-        return joinTripsWithRelationsFrom(
-            qb,
-            tripsCol,
-            productsCol,
-            boatTypesCol,
-            waterRoutesCol,
-        )
-            .where(({ trip }) => eq(trip.program_id, pid))
-            .orderBy(({ trip }) => trip.scheduled_departure_at, 'asc');
-    },
-    [
-        powersync.collections.trips,
-        powersync.collections.products,
-        powersync.collections.boat_types,
-        powersync.collections.water_routes,
-        activeProgramIdRef,
-    ],
-);
-
-const tripOptions = computed(() =>
-    liveQueryRows<{
-        id: string;
-        product_name: string | null;
-        scheduled_departure_at: string | null;
-        water_route_id: string | null;
-    }>(tripsRaw.value).map((trip) => ({
-        value: String(trip.id),
-        label: `${String(trip.scheduled_departure_at ?? '—')} · ${String(trip.product_name ?? '—')}`,
-        waterRouteId: String(trip.water_route_id ?? ''),
-    })),
-);
+const { tripOptions } = useProgramTripSelectOptions({ includeWaterRouteId: true });
 
 watch(tripId, (id) => {
     const match = tripOptions.value.find((opt) => opt.value === String(id ?? '').trim());
@@ -169,13 +128,13 @@ watch(tripId, (id) => {
 const { data: waterRoutesRaw } = useLiveQuery(
     (qb) => {
         const col = powersync.collections.water_routes.value;
-        const pid = activeProgramIdRef.value.trim();
+        const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || pid.length === 0) {
             return undefined;
         }
         return qb.from({ wr: col }).where(({ wr }) => eq(wr.program_id, pid));
     },
-    [powersync.collections.water_routes, activeProgramIdRef],
+    [powersync.collections.water_routes, powersync.activeProgramIdRef],
 );
 
 const waterRouteOptions = computed(() =>
@@ -188,13 +147,13 @@ const waterRouteOptions = computed(() =>
 const { data: boatsRaw } = useLiveQuery(
     (qb) => {
         const col = powersync.collections.boats.value;
-        const pid = activeProgramIdRef.value.trim();
+        const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || pid.length === 0) {
             return undefined;
         }
         return qb.from({ b: col }).where(({ b }) => eq(b.program_id, pid));
     },
-    [powersync.collections.boats, activeProgramIdRef],
+    [powersync.collections.boats, powersync.activeProgramIdRef],
 );
 
 const boatOptions = computed(() =>

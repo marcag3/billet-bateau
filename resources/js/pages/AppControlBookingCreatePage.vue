@@ -29,7 +29,7 @@
                         v-bind="contactEmailProps"
                         outlined
                         type="email"
-                        :label="t('publicBooking.contactEmail')"
+                        :label="t('publicBooking.contactEmailOptional')"
                         :disable="isSubmitting"
                     />
                     <AppCountrySelect
@@ -37,6 +37,13 @@
                         v-bind="countryProps"
                         :label="t('publicBooking.country')"
                         :disable="isSubmitting"
+                    />
+                    <AppBookingCustomQuestionsFields
+                        v-if="bookingQuestions.length > 0"
+                        v-model:answers="customAnswers"
+                        :questions="bookingQuestions"
+                        :errors="customAnswerErrors"
+                        :disabled="isSubmitting"
                     />
                     <q-select
                         v-model="ticketTypeId"
@@ -52,7 +59,7 @@
                         type="submit"
                         :label="t('programsControlAdmin.createBooking')"
                         :loading="isSubmitting"
-                        :disable="!meta.valid || isSubmitting || programId.length === 0 || !ticketTypeId"
+                        :disable="!canCreateBooking"
                         class="self-start"
                     />
                 </div>
@@ -63,7 +70,7 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useLiveQuery } from '@tanstack/vue-db';
@@ -75,14 +82,19 @@ import {
 import { createQuasarFieldBinder } from '../validation/quasar-vee-fields';
 import { DEFAULT_COUNTRY_CODE } from '../composables/useCountryOptions';
 import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
-import { joinTripsWithRelationsFrom } from '../powersync/joined-queries';
 import { liveQueryRows } from '../powersync/live-query-casts';
 import { useBookingAdminCrud } from '../composables/useBookingAdminCrud';
+import { useProgramTripSelectOptions } from '../composables/useProgramTripSelectOptions';
 import { useNotifyAsyncAction } from '../composables/useNotifyAsyncAction';
 import { controlContextNamedRoute } from '../utilities/control-context-route';
+import {
+    parseProgramBookingQuestions,
+    validateBookingCustomAnswers,
+} from '../utilities/program-booking-questions';
 import AppEntityCreatePageLayout from '../layouts/AppEntityCreatePageLayout.vue';
 import AppCardSection from '../components/ui/AppCardSection.vue';
 import AppCountrySelect from '../components/molecules/AppCountrySelect.vue';
+import AppBookingCustomQuestionsFields from '../components/molecules/AppBookingCustomQuestionsFields.vue';
 
 const powersync = getAppPowerSyncContext();
 const { t } = useI18n();
@@ -92,9 +104,10 @@ const { addWalkInBooking } = useBookingAdminCrud();
 const { runWithNotify } = useNotifyAsyncAction();
 
 const ticketTypeId = ref('');
+const customAnswers = ref<string[]>([]);
+const customAnswerErrors = ref<Record<number, string>>({});
 
 const programId = computed(() => String(route.params.programId ?? '').trim());
-const activeProgramIdRef = powersync.activeProgramIdRef;
 
 const backTo = computed(() => controlContextNamedRoute(route, 'control.bookings.list'));
 
@@ -115,54 +128,71 @@ const [contactName, contactNameProps] = quasarField('contact_name');
 const [contactEmail, contactEmailProps] = quasarField('contact_email');
 const [country, countryProps] = quasarField('country');
 
-const { data: tripsRaw } = useLiveQuery(
+const { tripOptions } = useProgramTripSelectOptions({ excludePastTrips: true });
+
+const { data: programRaw } = useLiveQuery(
     (qb) => {
-        const tripsCol = powersync.collections.trips.value;
-        const productsCol = powersync.collections.products.value;
-        const boatTypesCol = powersync.collections.boat_types.value;
-        const waterRoutesCol = powersync.collections.water_routes.value;
-        const pid = activeProgramIdRef.value.trim();
-        if (!tripsCol || !productsCol || !boatTypesCol || !waterRoutesCol || pid.length === 0) {
+        const col = powersync.collections.programs.value;
+        const pid = powersync.activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) {
             return undefined;
         }
-        return joinTripsWithRelationsFrom(
-            qb,
-            tripsCol,
-            productsCol,
-            boatTypesCol,
-            waterRoutesCol,
-        )
-            .where(({ trip }) => eq(trip.program_id, pid))
-            .orderBy(({ trip }) => trip.scheduled_departure_at, 'asc');
+        return qb
+            .from({ p: col })
+            .where(({ p }) => eq(p.id, pid))
+            .select(({ p }) => ({ booking_questions: p.booking_questions }));
     },
-    [
-        powersync.collections.trips,
-        powersync.collections.products,
-        powersync.collections.boat_types,
-        powersync.collections.water_routes,
-        activeProgramIdRef,
-    ],
+    [powersync.collections.programs, powersync.activeProgramIdRef],
 );
 
-const tripOptions = computed(() =>
-    liveQueryRows<{ id: string; product_name: string | null; scheduled_departure_at: string | null }>(
-        tripsRaw.value,
-    ).map((trip) => ({
-        value: String(trip.id),
-        label: `${String(trip.scheduled_departure_at ?? '—')} · ${String(trip.product_name ?? '—')}`,
-    })),
+const bookingQuestions = computed(() =>
+    parseProgramBookingQuestions(
+        liveQueryRows<{ booking_questions: unknown }>(programRaw.value)[0]?.booking_questions,
+    ),
+);
+
+watch(
+    bookingQuestions,
+    (questions) => {
+        customAnswers.value = questions.map(() => '');
+        customAnswerErrors.value = {};
+    },
+    { immediate: true },
+);
+
+const customAnswersValid = computed(() => {
+    if (bookingQuestions.value.length === 0) {
+        return true;
+    }
+
+    return (
+        validateBookingCustomAnswers({
+            questions: bookingQuestions.value,
+            answers: customAnswers.value,
+            t,
+        }).customFieldMap !== null
+    );
+});
+
+const canCreateBooking = computed(
+    () =>
+        meta.value.valid &&
+        !isSubmitting.value &&
+        programId.value.length > 0 &&
+        ticketTypeId.value.trim().length > 0 &&
+        customAnswersValid.value,
 );
 
 const { data: ticketTypesRaw } = useLiveQuery(
     (qb) => {
         const col = powersync.collections.ticket_types.value;
-        const pid = activeProgramIdRef.value.trim();
+        const pid = powersync.activeProgramIdRef.value.trim();
         if (!col || pid.length === 0) {
             return undefined;
         }
         return qb.from({ tt: col }).where(({ tt }) => eq(tt.program_id, pid));
     },
-    [powersync.collections.ticket_types, activeProgramIdRef],
+    [powersync.collections.ticket_types, powersync.activeProgramIdRef],
 );
 
 const ticketTypeOptions = computed(() =>
@@ -173,6 +203,17 @@ const ticketTypeOptions = computed(() =>
 );
 
 const onCreateSubmit = handleSubmit(async (values: BookingAdminFormValues) => {
+    const customValidation = validateBookingCustomAnswers({
+        questions: bookingQuestions.value,
+        answers: customAnswers.value,
+        t,
+    });
+
+    if (customValidation.customFieldMap === null) {
+        customAnswerErrors.value = customValidation.errors;
+        return;
+    }
+
     await runWithNotify(
         async () => {
             const result = await addWalkInBooking({
@@ -182,7 +223,7 @@ const onCreateSubmit = handleSubmit(async (values: BookingAdminFormValues) => {
                 contactName: values.contact_name,
                 contactEmail: values.contact_email,
                 country: values.country,
-                customFieldMap: {},
+                customFieldMap: customValidation.customFieldMap ?? {},
             });
             if (result == null) {
                 return;

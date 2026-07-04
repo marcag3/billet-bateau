@@ -9,6 +9,8 @@ export const bookingsSchema = z.object({
     trip_id: z.string().nullable().default(null),
     contact_name: z.string().nullable().default(null),
     contact_email: z.string().nullable().default(null),
+    deleted_at: z.string().nullable().default(null),
+    cancelled_by_voyage_id: z.string().nullable().default(null),
 });
 
 export type BookingInput = z.input<typeof bookingsSchema>;

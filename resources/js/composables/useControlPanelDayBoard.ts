@@ -13,9 +13,7 @@ import {
 } from '../powersync/control-panel-queries';
 import type { ProgramOutput } from '../powersync/programs.collection';
 import {
-    computeControlPanelDayStatsFromCards,
     reduceTripDepartureDateYmds,
-    type ControlPanelDayStats,
 } from '../utilities/control-panel-day-board';
 import { parseProgramBookingQuestions } from '../utilities/program-booking-questions';
 import { resolveProgramTimezone } from '../utilities/program-timezone-datetime';
@@ -28,6 +26,7 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
 
     const {
         selectedDateYmd,
+        showFinishedTrips,
         shiftSelectedDay,
         goToday: goToToday,
     } = useControlDayDateRoute();
@@ -175,14 +174,10 @@ export function useControlPanelDayBoard(programId: Ref<string>) {
         ),
     );
 
-    const dayStats = computed((): ControlPanelDayStats =>
-        computeControlPanelDayStatsFromCards(tripCards.value, dayFilterYmd.value),
-    );
-
     return {
         selectedDateYmd,
+        showFinishedTrips,
         tripCards,
-        dayStats,
         tripDateYmds,
         programDateBounds,
         programTimezone,

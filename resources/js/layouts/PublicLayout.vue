@@ -6,6 +6,7 @@
                 <AppLanguageSwitcher on-dark-header />
             </q-toolbar>
         </q-header>
+        <PublicInAppBrowserBanner />
         <q-page-container class="sm:px-6 md:px-12">
             <router-view />
         </q-page-container>
@@ -14,4 +15,5 @@
 
 <script setup lang="ts">
 import AppLanguageSwitcher from '../components/AppLanguageSwitcher.vue';
+import PublicInAppBrowserBanner from '../components/PublicInAppBrowserBanner.vue';
 </script>

@@ -28,6 +28,11 @@ export function buildProgramBookedTripIdsQuery(
     return qb
         .from({ b: bookingsCollection })
         .where(({ b }) => eq(queryRef(b).program_id, pid))
+        .fn.where((row) => {
+            const deletedAt = (row.b as { deleted_at?: string | null }).deleted_at;
+
+            return deletedAt == null || String(deletedAt).trim() === '';
+        })
         .select(({ b }) => ({ trip_id: queryRef(b).trip_id }));
 }
 

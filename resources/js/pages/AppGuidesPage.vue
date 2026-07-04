@@ -21,31 +21,24 @@
             <q-item
                 v-for="row in guides"
                 :key="String(row.id)"
+                clickable
                 class="p-4"
+                @click="guideModalRef?.openEditModal(row)"
             >
                 <q-item-section>
                     <q-item-label class="text-h6">{{
                         guideDisplayName(row)
                     }}</q-item-label>
                 </q-item-section>
-                <q-item-section side>
-                    <div class="column gap-1 items-end">
-                        <q-btn
-                            color="primary"
-                            outline
-                            dense
-                            :label="t('common.edit')"
-                            @click="() => guideModalRef?.openEditModal(row)"
-                        />
-                        <q-btn
-                            flat
-                            dense
-                            color="negative"
-                            icon="delete"
-                            :label="t('guidesList.delete')"
-                            @click="() => confirmDelete(row)"
-                        />
-                    </div>
+                <q-item-section side @click.stop>
+                    <q-btn
+                        flat
+                        dense
+                        color="negative"
+                        icon="delete"
+                        :label="t('guidesList.delete')"
+                        @click="() => confirmDelete(row)"
+                    />
                 </q-item-section>
             </q-item>
         </AppEntityList>

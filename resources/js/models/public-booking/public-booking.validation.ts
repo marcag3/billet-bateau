@@ -1,6 +1,6 @@
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
-import { zRequiredTrimmedString } from '../../validation/zod-fields';
+import { zOptionalTrimmedEmail, zRequiredTrimmedString } from '../../validation/zod-fields';
 
 export type Translator = (key: string) => string;
 
@@ -11,8 +11,8 @@ export function createPublicBookingContactZodSchema(t: Translator) {
             .string()
             .trim()
             .min(1, t('publicBooking.contactEmailRequired'))
-            .email(t('publicBooking.contactEmailInvalid'))
-            .max(255),
+            .max(255)
+            .pipe(z.email(t('publicBooking.contactEmailInvalid'))),
         country: z
             .string()
             .trim()
@@ -29,4 +29,26 @@ export type PublicBookingContactFormValues = z.infer<
 
 export function createPublicBookingContactFormSchema(t: Translator) {
     return toTypedSchema(createPublicBookingContactZodSchema(t));
+}
+
+export function createWalkInBookingContactZodSchema(t: Translator) {
+    return z.object({
+        contact_name: zRequiredTrimmedString(t('publicBooking.contactNameRequired')),
+        contact_email: zOptionalTrimmedEmail(t('publicBooking.contactEmailInvalid')),
+        country: z
+            .string()
+            .trim()
+            .min(1, t('publicBooking.countryRequired'))
+            .length(2, t('publicBooking.countryRequired'))
+            .regex(/^[A-Za-z]{2}$/, t('publicBooking.countryRequired'))
+            .transform((value) => value.toUpperCase()),
+    });
+}
+
+export type WalkInBookingContactFormValues = z.infer<
+    ReturnType<typeof createWalkInBookingContactZodSchema>
+>;
+
+export function createWalkInBookingContactFormSchema(t: Translator) {
+    return toTypedSchema(createWalkInBookingContactZodSchema(t));
 }

@@ -1,5 +1,6 @@
 <template>
-    <div class="relative snap-start shrink-0 h-full w-auto aspect-[5/12] overflow-hidden flex flex-col">
+    <div class="relative snap-start shrink-0 overflow-hidden flex flex-col"
+        :style="tripCardSizeStyle">
         <div class="shrink-0 mt-10 w-full min-w-0 px-14">
             <div class="text-center min-w-0">
                 <div class="text-h6">{{ departureTimeLabel }}</div>
@@ -27,7 +28,13 @@
                         <q-item-section v-if="item.kind !== 'empty'">
                             <div class="row items-center no-wrap w-full ">
                                 <q-icon v-if="item.kind === 'passenger'" name="check" color="positive" size="xs" />
-                                <div class="col text-body1">{{ item.name }}</div>
+                                <div
+                                    class="col text-body1"
+                                    :class="{ 'cursor-pointer text-primary': manifestItemBookingId(item) != null }"
+                                    @click="onBookingNameClick(item)"
+                                >
+                                    {{ item.name }}
+                                </div>
                                 <div v-if="manifestItemCanCheckIn(item)" class="col-auto">
                                     <q-btn flat dense round color="primary" icon="how_to_reg" size="sm"
                                         :aria-label="t('programsControl.checkIn')"
@@ -52,7 +59,7 @@
             </q-scroll-area>
         </div>
 
-        <div v-if="showDepartedAssignment || showCancel" class="shrink-0 mx-10 mb-8 text-center min-w-0">
+        <div v-if="showDepartedAssignment || showCancel || showUncancel" class="shrink-0 mx-10 mb-8 text-center min-w-0">
             <template v-if="showDepartedAssignment">
                 <div class="text-body2 ellipsis block max-w-full" :title="departedGuideLabel">
                     {{ departedGuideLabel }}
@@ -63,6 +70,8 @@
             </template>
             <q-btn v-if="showCancel" flat dense no-caps size="sm" color="negative"
                 :label="t('programsControl.cancelTrip')" @click="emit('cancel')" />
+            <q-btn v-if="showUncancel" flat dense no-caps size="sm" color="primary"
+                :label="t('programsControl.uncancelTrip')" @click="emit('uncancel')" />
         </div>
 
         <svg class="absolute inset-0 pointer-events-none" :style="tripDisplayStatusStyle" viewBox="0 0 200 480"
@@ -86,6 +95,7 @@ import {
     type ManifestSlot,
 } from '../../utilities/control-panel-manifest';
 import {
+    controlPanelCardOccupiedCount,
     controlPanelTripDisplayStatusColor,
     hasControlPanelTripDeparted,
     resolveControlPanelDepartedAssignmentLabels,
@@ -93,6 +103,15 @@ import {
     type ControlPanelTripDisplayStatus,
 } from '../../utilities/control-panel-day-board';
 import { formatIsoInTimezone } from '../../utilities/program-timezone-datetime';
+import {
+    CONTROL_PANEL_TRIP_CARD_HEIGHT_PX,
+    CONTROL_PANEL_TRIP_CARD_WIDTH_PX,
+} from '../../utilities/control-panel-trip-card-layout';
+
+const tripCardSizeStyle = {
+    height: `${CONTROL_PANEL_TRIP_CARD_HEIGHT_PX}px`,
+    width: `${CONTROL_PANEL_TRIP_CARD_WIDTH_PX}px`,
+};
 
 const props = defineProps<{
     card: ControlPanelTripCardModel;
@@ -105,11 +124,13 @@ const emit = defineEmits<{
     'open-depart': [];
     arrive: [];
     cancel: [];
+    uncancel: [];
     'open-walk-in': [];
     'remove-booked-ticket': [ticketId: string, bookingId: string];
     'undo-check-in-booking': [bookingId: string];
     'remove-passenger': [passengerId: string];
     'check-in-booking': [bookingId: string];
+    'open-booking': [bookingId: string];
 }>();
 const { t, locale } = useI18n();
 const { confirm } = useConfirmDialog();
@@ -133,23 +154,7 @@ const departureTimeLabel = computed((): string => {
     }
 });
 
-const passengerCount = computed((): number => {
-    if (props.card.voyage == null) {
-        return props.card.bookedCount;
-    }
-
-    if (!manifestModifiable.value) {
-        return props.card.passengers.length;
-    }
-
-    return (
-        props.card.passengers.length +
-        props.card.pendingBookingGroups.reduce(
-            (sum, group) => sum + group.ticketCount,
-            0,
-        )
-    );
-});
+const passengerCount = computed((): number => controlPanelCardOccupiedCount(props.card));
 
 const tripCapacity = computed((): number | null => {
     const cap = props.card.trip.capacity;
@@ -208,6 +213,17 @@ const showArrive = computed(() => voyageStatus.value === 'underway');
 
 const showCancel = computed(() => manifestModifiable.value);
 
+const showUncancel = computed(() => {
+    if (voyageStatus.value !== 'cancelled') {
+        return false;
+    }
+    const raw = props.card.trip.scheduled_departure_at;
+    if (raw == null || String(raw).trim() === '') {
+        return true;
+    }
+    return new Date(String(raw)).getTime() >= Date.now();
+});
+
 const showDepartedAssignment = computed(() =>
     hasControlPanelTripDeparted(props.card.voyage),
 );
@@ -254,6 +270,22 @@ function removeManifestAriaLabel(item: ManifestOccupiedSlot): string {
 function onEmptySlotClick(): void {
     if (canAddWalkIn.value) {
         emit('open-walk-in');
+    }
+}
+
+function manifestItemBookingId(item: ManifestOccupiedSlot): string | null {
+    if (item.kind === 'passenger') {
+        const id = item.bookingId;
+        return id != null && String(id).trim().length > 0 ? String(id) : null;
+    }
+
+    return String(item.bookingId).trim().length > 0 ? String(item.bookingId) : null;
+}
+
+function onBookingNameClick(item: ManifestOccupiedSlot): void {
+    const bookingId = manifestItemBookingId(item);
+    if (bookingId != null) {
+        emit('open-booking', bookingId);
     }
 }
 

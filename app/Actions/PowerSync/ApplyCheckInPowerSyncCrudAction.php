@@ -173,6 +173,12 @@ final class ApplyCheckInPowerSyncCrudAction
             ]);
         }
 
+        if ($booking->trashed()) {
+            throw ValidationException::withMessages([
+                'booking_id' => __('This booking has been cancelled and cannot be checked in.'),
+            ]);
+        }
+
         if ((string) $booking->program_id !== (string) $voyage->program_id) {
             throw ValidationException::withMessages([
                 'booking_id' => __('The booking must belong to the same program as this departure.'),

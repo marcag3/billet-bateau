@@ -28,6 +28,7 @@ class Voyage extends Model
         'started_at',
         'arrived_at',
         'status',
+        'cancelled_from_status',
         'created_at',
         'updated_at',
     ];
@@ -57,6 +58,9 @@ class Voyage extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<Trip, $this>
+     */
     public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class, 'trip_id');

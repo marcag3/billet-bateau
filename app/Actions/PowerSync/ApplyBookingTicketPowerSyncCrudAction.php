@@ -2,6 +2,7 @@
 
 namespace App\Actions\PowerSync;
 
+use App\Actions\SendBookingModifiedNotificationAction;
 use App\Data\PowerSync\BookingTickets\BookingTicketPatchData;
 use App\Data\PowerSync\BookingTickets\BookingTicketPutData;
 use App\Data\PowerSync\BookingTickets\BookingTicketPutPayloadResolver;
@@ -85,6 +86,7 @@ final class ApplyBookingTicketPowerSyncCrudAction
         }
 
         $this->assertProgramManaged((string) $booking->program_id, $userId);
+        $this->assertBookingNotCancelled($booking);
 
         $ticketType = TicketType::query()->whereKey($resolved->ticket_type_id)->first();
         if ($ticketType === null) {
@@ -131,6 +133,7 @@ final class ApplyBookingTicketPowerSyncCrudAction
         }
 
         $this->assertProgramManaged((string) $booking->program_id, $userId);
+        $this->assertBookingNotCancelled($booking);
 
         if (! ($dto->booking_id instanceof Optional)) {
             if ($dto->booking_id === null || $dto->booking_id === '') {
@@ -147,6 +150,7 @@ final class ApplyBookingTicketPowerSyncCrudAction
             }
 
             $this->assertProgramManaged((string) $nextBooking->program_id, $userId);
+            $this->assertBookingNotCancelled($nextBooking);
             $bookingTicket->booking_id = $dto->booking_id;
             $booking = $nextBooking;
         }
@@ -184,12 +188,9 @@ final class ApplyBookingTicketPowerSyncCrudAction
         }
 
         if (! ($dto->email instanceof Optional)) {
-            if ($dto->email === null || $dto->email === '') {
-                throw ValidationException::withMessages([
-                    'data.email' => 'Email is required.',
-                ]);
-            }
-            $bookingTicket->email = $dto->email;
+            $bookingTicket->email = $dto->email === null || trim((string) $dto->email) === ''
+                ? null
+                : trim((string) $dto->email);
         }
 
         if (! ($dto->country instanceof Optional)) {
@@ -210,6 +211,10 @@ final class ApplyBookingTicketPowerSyncCrudAction
         }
 
         $bookingTicket->save();
+
+        if ($bookingTicket->wasChanged()) {
+            SendBookingModifiedNotificationAction::run($booking);
+        }
     }
 
     private function assertProgramManaged(string $programId, string $userId): void
@@ -278,6 +283,15 @@ final class ApplyBookingTicketPowerSyncCrudAction
         if ($usedSeats + 1 > (int) $product->capacity) {
             throw ValidationException::withMessages([
                 'data' => __('This trip does not have enough remaining capacity.'),
+            ]);
+        }
+    }
+
+    private function assertBookingNotCancelled(Booking $booking): void
+    {
+        if ($booking->trashed()) {
+            throw ValidationException::withMessages([
+                'booking' => __('This booking has been cancelled and cannot be modified.'),
             ]);
         }
     }

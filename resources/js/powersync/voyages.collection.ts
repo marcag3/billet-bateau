@@ -14,6 +14,7 @@ export const voyagesSchema = z.object({
     started_at: powerSyncCollectionNullableIsoDate(),
     arrived_at: powerSyncCollectionNullableIsoDate(),
     status: z.string().nullable().default(null),
+    cancelled_from_status: z.string().nullable().default(null),
 });
 
 export type VoyageInput = z.input<typeof voyagesSchema>;

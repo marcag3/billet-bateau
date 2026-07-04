@@ -3,6 +3,9 @@ import {
     deriveSyncHealth,
     isBenignUploadFailureForSyncHealth,
     isInsideConnectingGrace,
+    shouldReportDownloadSyncErrorToSentry,
+    shouldReportUploadSyncErrorToSentry,
+    shouldSuppressPowerSyncErrorForSentry,
     SYNC_CONNECTING_GRACE_MS,
     type SyncHealthSnapshot,
 } from "../../powersync/sync-health";
@@ -40,7 +43,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("live");
-        expect(result.showBanner).toBe(false);
         expect(result.toolbarIcon).toBe("cloud_done");
     });
 
@@ -91,8 +93,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("stale_local");
-        expect(result.showBanner).toBe(true);
-        expect(result.bannerVariant).toBe("warning");
         expect(result.toolbarSeverity).toBe("warning");
     });
 
@@ -108,7 +108,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("stale_local");
-        expect(result.showBanner).toBe(true);
     });
 
     test("stays in connecting phase inside grace window", () => {
@@ -123,7 +122,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("connecting");
-        expect(result.showBanner).toBe(false);
         expect(result.toolbarIcon).toBe("cloud_sync");
     });
 
@@ -138,8 +136,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("offline");
-        expect(result.showBanner).toBe(true);
-        expect(result.bannerVariant).toBe("info");
     });
 
     test("reports idle when PowerSync has not bootstrapped yet", () => {
@@ -153,7 +149,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("idle");
-        expect(result.showBanner).toBe(false);
     });
 
     test("reports sync blocked when online without prior sync", () => {
@@ -167,8 +162,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("sync_blocked");
-        expect(result.showBanner).toBe(true);
-        expect(result.bannerVariant).toBe("error");
     });
 
     test("reports stale local when connecting flag persists after grace expires", () => {
@@ -196,8 +189,6 @@ describe("deriveSyncHealth", () => {
         );
 
         expect(result.phase).toBe("unavailable");
-        expect(result.showBanner).toBe(true);
-        expect(result.bannerVariant).toBe("error");
     });
 });
 
@@ -252,5 +243,186 @@ describe("isBenignUploadFailureForSyncHealth", () => {
                 nowMs,
             }),
         ).toBe(false);
+    });
+});
+
+describe("shouldReportUploadSyncErrorToSentry", () => {
+    test("does not report empty upload errors", () => {
+        expect(
+            shouldReportUploadSyncErrorToSentry("", snapshot(), nowMs),
+        ).toBe(false);
+    });
+
+    test("does not report benign failures inside connecting grace", () => {
+        expect(
+            shouldReportUploadSyncErrorToSentry(
+                "Failed to fetch",
+                snapshot({
+                    connected: false,
+                    connectingSinceMs: nowMs - 1_000,
+                }),
+                nowMs,
+            ),
+        ).toBe(false);
+    });
+
+    test("reports non-benign upload failures when online past grace", () => {
+        expect(
+            shouldReportUploadSyncErrorToSentry(
+                "Validation failed for bookings",
+                snapshot({
+                    connected: true,
+                    connectingSinceMs: nowMs - SYNC_CONNECTING_GRACE_MS - 1,
+                }),
+                nowMs,
+            ),
+        ).toBe(true);
+    });
+
+    test("reports network upload failures when online and disconnected past grace", () => {
+        expect(
+            shouldReportUploadSyncErrorToSentry(
+                "Failed to fetch",
+                snapshot({
+                    connected: false,
+                    connectingSinceMs: nowMs - SYNC_CONNECTING_GRACE_MS - 1,
+                }),
+                nowMs,
+            ),
+        ).toBe(true);
+    });
+});
+
+describe("shouldReportDownloadSyncErrorToSentry", () => {
+    test("does not report empty download errors", () => {
+        expect(
+            shouldReportDownloadSyncErrorToSentry("", snapshot(), nowMs),
+        ).toBe(false);
+    });
+
+    test("reports download errors while sync is blocked", () => {
+        expect(
+            shouldReportDownloadSyncErrorToSentry(
+                "Invalid token",
+                snapshot({
+                    connected: false,
+                    hasSynced: false,
+                }),
+                nowMs,
+            ),
+        ).toBe(true);
+    });
+
+    test("does not report download errors during stale local phase", () => {
+        expect(
+            shouldReportDownloadSyncErrorToSentry(
+                "WebSocket connection failed",
+                snapshot({
+                    connected: false,
+                    hasSynced: true,
+                    downloadError: "WebSocket connection failed",
+                    connectingSinceMs: nowMs - 1_000,
+                }),
+                nowMs,
+            ),
+        ).toBe(false);
+    });
+
+    test("does not report download errors while live", () => {
+        expect(
+            shouldReportDownloadSyncErrorToSentry(
+                "Transient error",
+                snapshot({ connected: true, hasSynced: true }),
+                nowMs,
+            ),
+        ).toBe(false);
+    });
+});
+
+describe("shouldSuppressPowerSyncErrorForSentry", () => {
+    const onlinePastGrace = {
+        browserOnline: true,
+        connectingSinceMs: nowMs - SYNC_CONNECTING_GRACE_MS - 1,
+        nowMs,
+    };
+
+    test("suppresses empty messages", () => {
+        expect(shouldSuppressPowerSyncErrorForSentry("", onlinePastGrace)).toBe(
+            true,
+        );
+    });
+
+    test("suppresses Firefox network errors", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "TypeError: NetworkError when attempting to fetch resource.",
+                onlinePastGrace,
+            ),
+        ).toBe(true);
+    });
+
+    test("suppresses failed to fetch while online", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "Failed to fetch",
+                onlinePastGrace,
+            ),
+        ).toBe(true);
+    });
+
+    test("suppresses websocket connection failures while online", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "Error: Failed to create websocket connection to wss://sync.example.com/sync/stream",
+                onlinePastGrace,
+            ),
+        ).toBe(true);
+    });
+
+    test("suppresses failed to connect websocket while online", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "Failed to connect WebSocket",
+                onlinePastGrace,
+            ),
+        ).toBe(true);
+    });
+
+    test("suppresses any message while browser is offline", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry("Invalid token", {
+                browserOnline: false,
+                connectingSinceMs: null,
+                nowMs,
+            }),
+        ).toBe(true);
+    });
+
+    test("suppresses any message inside connecting grace", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry("Invalid token", {
+                browserOnline: true,
+                connectingSinceMs: nowMs - 1_000,
+                nowMs,
+            }),
+        ).toBe(true);
+    });
+
+    test("does not suppress non-network errors while online past grace", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "Invalid token",
+                onlinePastGrace,
+            ),
+        ).toBe(false);
+    });
+
+    test("suppresses JWT expiry during stream teardown while online past grace", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "Error: Closed. Original cause [Error: [PSYNC_S2103] JWT has expired]",
+                onlinePastGrace,
+            ),
+        ).toBe(true);
     });
 });
