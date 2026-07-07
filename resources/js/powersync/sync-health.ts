@@ -197,6 +197,9 @@ const BENIGN_POWERSYNC_RECONNECT_FRAGMENTS = [
     "error: closed",
 ] as const;
 
+/** Expected when the Laravel session has expired; auth store prompts re-login. */
+const BENIGN_POWERSYNC_AUTH_FRAGMENTS = ["unauthenticated"] as const;
+
 function messageIncludesFragment(
     message: string,
     fragments: readonly string[],
@@ -218,6 +221,10 @@ function isBenignPowerSyncReconnectErrorMessage(message: string): boolean {
         message,
         BENIGN_POWERSYNC_RECONNECT_FRAGMENTS,
     );
+}
+
+function isBenignPowerSyncAuthErrorMessage(message: string): boolean {
+    return messageIncludesFragment(message, BENIGN_POWERSYNC_AUTH_FRAGMENTS);
 }
 
 /**
@@ -325,6 +332,7 @@ export function shouldSuppressPowerSyncErrorForSentry(
 
     return (
         isBenignNetworkErrorMessage(message) ||
-        isBenignPowerSyncReconnectErrorMessage(message)
+        isBenignPowerSyncReconnectErrorMessage(message) ||
+        isBenignPowerSyncAuthErrorMessage(message)
     );
 }

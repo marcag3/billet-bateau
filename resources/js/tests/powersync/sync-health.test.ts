@@ -425,4 +425,13 @@ describe("shouldSuppressPowerSyncErrorForSentry", () => {
             ),
         ).toBe(true);
     });
+
+    test("suppresses unauthenticated when Laravel session has expired", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "Error: Unauthenticated.",
+                onlinePastGrace,
+            ),
+        ).toBe(true);
+    });
 });
