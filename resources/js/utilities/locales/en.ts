@@ -300,20 +300,6 @@ export default {
         diagnosticsScopePending: "Pending",
         diagnosticsUploadError: "Upload error",
     },
-    inAppBrowser: {
-        title: "Open this page in {browser} for the best experience",
-        iosInstructions:
-            "Tap ⋯ at the bottom right, then choose Open in browser. If you use Firefox, paste the copied link there.",
-        androidInstructions:
-            "Tap ⋯ at the top right, then choose Open in Firefox.",
-        genericInstructions:
-            "Use your browser menu to open this page in {browser}.",
-        openInBrowser: "Open in {browser}",
-        copyLink: "Copy link",
-        dismiss: "Continue here",
-        linkCopied: "Link copied to clipboard",
-        copyFailed: "Could not copy link",
-    },
     publicHome: {
         description: "Browse programs and find your next adventure.",
         noPrograms: "No programs are published yet.",
