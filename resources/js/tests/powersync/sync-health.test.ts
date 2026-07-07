@@ -151,6 +151,20 @@ describe("deriveSyncHealth", () => {
         expect(result.phase).toBe("idle");
     });
 
+    test("reports live when connected with a transient download error", () => {
+        const result = deriveSyncHealth(
+            snapshot({
+                connected: true,
+                hasSynced: true,
+                downloadError: "TypeError: Failed to fetch",
+            }),
+            nowMs,
+        );
+
+        expect(result.phase).toBe("live");
+        expect(result.toolbarIcon).toBe("cloud_sync");
+    });
+
     test("reports sync blocked when online without prior sync", () => {
         const result = deriveSyncHealth(
             snapshot({
@@ -337,6 +351,34 @@ describe("shouldReportDownloadSyncErrorToSentry", () => {
             ),
         ).toBe(false);
     });
+
+    test("does not report benign network download errors while sync is blocked", () => {
+        expect(
+            shouldReportDownloadSyncErrorToSentry(
+                "TypeError: Failed to fetch",
+                snapshot({
+                    connected: false,
+                    hasSynced: false,
+                    downloadError: "TypeError: Failed to fetch",
+                }),
+                nowMs,
+            ),
+        ).toBe(false);
+    });
+
+    test("does not report connected transient download failures", () => {
+        expect(
+            shouldReportDownloadSyncErrorToSentry(
+                "TypeError: Failed to fetch",
+                snapshot({
+                    connected: true,
+                    hasSynced: true,
+                    downloadError: "TypeError: Failed to fetch",
+                }),
+                nowMs,
+            ),
+        ).toBe(false);
+    });
 });
 
 describe("shouldSuppressPowerSyncErrorForSentry", () => {
@@ -430,6 +472,15 @@ describe("shouldSuppressPowerSyncErrorForSentry", () => {
         expect(
             shouldSuppressPowerSyncErrorForSentry(
                 "Error: Unauthenticated.",
+                onlinePastGrace,
+            ),
+        ).toBe(true);
+    });
+
+    test("suppresses transient credentials 502 while online past grace", () => {
+        expect(
+            shouldSuppressPowerSyncErrorForSentry(
+                "Error: Request to /api/powersync/credentials failed with 502",
                 onlinePastGrace,
             ),
         ).toBe(true);
