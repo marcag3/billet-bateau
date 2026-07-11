@@ -327,6 +327,7 @@ async function onConfirmWalkIn(payload: WalkInBookingConfirmPayload): Promise<vo
         ticketQuantities: payload.ticketQuantities,
         contactName: payload.contactName,
         contactEmail: payload.contactEmail,
+        contactPhone: payload.contactPhone,
         country: payload.country,
         customFieldMap: payload.customFieldMap,
     });

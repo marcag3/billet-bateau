@@ -159,6 +159,9 @@ final class CreatePublicBookingAction
 
             $bookingId = (string) Str::ulid();
             $plainCancelToken = Str::random(64);
+            $contactPhone = $data->contact_phone === null || trim($data->contact_phone) === ''
+                ? null
+                : trim($data->contact_phone);
 
             Booking::query()->create([
                 'id' => $bookingId,
@@ -166,6 +169,7 @@ final class CreatePublicBookingAction
                 'trip_id' => $trip->getKey(),
                 'contact_name' => $data->contact_name,
                 'contact_email' => $data->contact_email,
+                'contact_phone' => $contactPhone,
                 'contact_locale' => AppLocale::normalize($data->locale),
                 'cancel_token_hash' => CancelPublicBookingAction::hashToken($plainCancelToken),
                 'cancel_token' => $plainCancelToken,

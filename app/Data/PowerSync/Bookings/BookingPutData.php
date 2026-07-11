@@ -21,6 +21,8 @@ final class BookingPutData extends Data
         public string|Optional|null $contact_name = new Optional,
         #[WithCast(TrimmedStringCast::class)]
         public string|Optional|null $contact_email = new Optional,
+        #[WithCast(TrimmedStringCast::class)]
+        public string|Optional|null $contact_phone = new Optional,
     ) {}
 
     /**
@@ -33,6 +35,7 @@ final class BookingPutData extends Data
             'trip_id' => ['sometimes', 'nullable', 'ulid', 'exists:trips,id'],
             'contact_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'contact_email' => ['sometimes', 'nullable', 'email:rfc', 'max:255'],
+            'contact_phone' => ['sometimes', 'nullable', 'string', 'max:40', 'regex:/^[+\d\s().-]+$/'],
         ];
     }
 }

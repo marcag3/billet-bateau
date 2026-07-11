@@ -23,6 +23,7 @@ describe('public booking contact validation', () => {
             }),
         ).toMatchObject({
             country: 'CA',
+            contact_phone: null,
         });
 
         expect(
@@ -34,5 +35,29 @@ describe('public booking contact validation', () => {
         ).toMatchObject({
             country: 'CA',
         });
+    });
+
+    it('accepts optional phone and rejects invalid phone', () => {
+        const schema = createPublicBookingContactZodSchema(t);
+
+        expect(
+            schema.parse({
+                contact_name: 'Alex',
+                contact_email: 'alex@example.com',
+                contact_phone: '(514) 555-1234',
+                country: 'CA',
+            }),
+        ).toMatchObject({
+            contact_phone: '(514) 555-1234',
+        });
+
+        expect(() =>
+            schema.parse({
+                contact_name: 'Alex',
+                contact_email: 'alex@example.com',
+                contact_phone: 'asdf',
+                country: 'CA',
+            }),
+        ).toThrow();
     });
 });

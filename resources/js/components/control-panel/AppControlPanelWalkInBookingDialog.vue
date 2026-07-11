@@ -28,6 +28,13 @@
                         type="email"
                         :label="t('publicBooking.contactEmailOptional')"
                     />
+                    <q-input
+                        v-model="contactPhone"
+                        v-bind="contactPhoneProps"
+                        outlined
+                        type="tel"
+                        :label="t('publicBooking.contactPhone')"
+                    />
 
                     <AppCountrySelect
                         v-model="country"
@@ -70,6 +77,7 @@ export type WalkInBookingConfirmPayload = {
     ticketQuantities: Record<string, number>;
     contactName: string;
     contactEmail: string | null;
+    contactPhone: string | null;
     country: string;
     customFieldMap: Record<string, string>;
 };
@@ -107,6 +115,7 @@ const { handleSubmit, defineField, resetForm } = useForm({
     initialValues: {
         contact_name: '',
         contact_email: '',
+        contact_phone: '',
         country: DEFAULT_COUNTRY_CODE,
     },
 });
@@ -114,6 +123,7 @@ const { handleSubmit, defineField, resetForm } = useForm({
 const quasarField = createQuasarFieldBinder(defineField);
 const [contactName, contactNameProps] = quasarField('contact_name');
 const [contactEmail, contactEmailProps] = quasarField('contact_email');
+const [contactPhone, contactPhoneProps] = quasarField('contact_phone');
 const [country, countryProps] = quasarField('country');
 
 function initTicketQuantities(): void {
@@ -134,6 +144,7 @@ function resetDialogState(): void {
         values: {
             contact_name: '',
             contact_email: '',
+            contact_phone: '',
             country: DEFAULT_COUNTRY_CODE,
         },
     });
@@ -193,6 +204,7 @@ const onSubmit = handleSubmit((values) => {
         ticketQuantities: { ...ticketQuantities.value },
         contactName: String(values.contact_name).trim(),
         contactEmail: values.contact_email,
+        contactPhone: values.contact_phone,
         country: String(values.country).trim().toUpperCase(),
         customFieldMap: customValidation.customFieldMap,
     });

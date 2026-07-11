@@ -75,8 +75,9 @@
                 <q-step :name="3" :title="t('publicBooking.stepContact')" :disable="!canAccessStep3"
                     :header-nav="canAccessStep3">
                     <PublicProgramBookingContactStep v-model:contact-name="contactName"
-                        v-model:contact-email="contactEmail" v-model:country="country"
-                        :contact-name-props="contactNameProps" :contact-email-props="contactEmailProps"
+                        v-model:contact-email="contactEmail" v-model:contact-phone="contactPhone"
+                        v-model:country="country" :contact-name-props="contactNameProps"
+                        :contact-email-props="contactEmailProps" :contact-phone-props="contactPhoneProps"
                         :country-props="countryProps" :submit-error="submitError" v-model:custom-answers="customAnswers"
                         :custom-questions="customQuestions" :custom-answer-errors="customAnswerErrors"
                         :is-submitting="isSubmitting" :can-submit="canSubmitContactStep" @back="step = 2"
@@ -165,6 +166,7 @@ const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm<Pub
     initialValues: {
         contact_name: '',
         contact_email: '',
+        contact_phone: '',
         country: DEFAULT_COUNTRY_CODE,
     },
 });
@@ -172,6 +174,7 @@ const { handleSubmit, defineField, meta, isSubmitting, resetForm } = useForm<Pub
 const quasarField = createQuasarFieldBinder(defineField);
 const [contactName, contactNameProps] = quasarField('contact_name');
 const [contactEmail, contactEmailProps] = quasarField('contact_email');
+const [contactPhone, contactPhoneProps] = quasarField('contact_phone');
 const [country, countryProps] = quasarField('country');
 
 const tripOptions = computed((): BookingTripOption[] => bookingOptionsData.value?.trips ?? []);
@@ -337,6 +340,7 @@ const onContactSubmit = handleSubmit(async (values) => {
         ticket_quantities: quantities,
         contact_name: String(values.contact_name).trim(),
         contact_email: String(values.contact_email).trim(),
+        contact_phone: values.contact_phone,
         country: String(values.country).trim().toUpperCase(),
         locale: String(locale.value) === 'fr' ? 'fr' : 'en',
     };

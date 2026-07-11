@@ -8,6 +8,7 @@ export type BookingUpsertInput = {
     tripId: string;
     contactName: string;
     contactEmail: string | null;
+    contactPhone: string | null;
     deletedAt?: string | null;
 };
 
@@ -33,6 +34,12 @@ function normalizeOptionalEmail(email: string | null): string | null {
     return trimmed === '' ? null : trimmed;
 }
 
+function normalizeOptionalPhone(phone: string | null): string | null {
+    const trimmed = String(phone ?? '').trim();
+
+    return trimmed === '' ? null : trimmed;
+}
+
 export function useBookingAdminCrud() {
     const powersync = getAppPowerSyncContext();
     const { t } = useI18n();
@@ -52,6 +59,7 @@ export function useBookingAdminCrud() {
                 trip_id: input.tripId.trim(),
                 contact_name: input.contactName.trim(),
                 contact_email: normalizeOptionalEmail(input.contactEmail),
+                contact_phone: normalizeOptionalPhone(input.contactPhone),
                 deleted_at: null,
             })
             .isPersisted.promise;
@@ -81,6 +89,9 @@ export function useBookingAdminCrud() {
             }
             if (input.contactEmail !== undefined) {
                 draft.contact_email = normalizeOptionalEmail(input.contactEmail);
+            }
+            if (input.contactPhone !== undefined) {
+                draft.contact_phone = normalizeOptionalPhone(input.contactPhone);
             }
             if (input.deletedAt !== undefined) {
                 draft.deleted_at = input.deletedAt;
@@ -193,6 +204,7 @@ export function useBookingAdminCrud() {
         ticketQuantities: Record<string, number>;
         contactName: string;
         contactEmail: string | null;
+        contactPhone: string | null;
         country: string;
         customFieldMap: Record<string, string>;
     }): Promise<{ bookingId: string; ticketIds: string[] } | undefined> {
@@ -203,6 +215,7 @@ export function useBookingAdminCrud() {
                     tripId: input.tripId,
                     contactName: input.contactName,
                     contactEmail: input.contactEmail,
+                    contactPhone: input.contactPhone,
                 });
 
                 const ticketIds: string[] = [];

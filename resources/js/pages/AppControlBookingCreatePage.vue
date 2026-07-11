@@ -32,6 +32,14 @@
                         :label="t('publicBooking.contactEmailOptional')"
                         :disable="isSubmitting"
                     />
+                    <q-input
+                        v-model="contactPhone"
+                        v-bind="contactPhoneProps"
+                        outlined
+                        type="tel"
+                        :label="t('publicBooking.contactPhone')"
+                        :disable="isSubmitting"
+                    />
                     <AppCountrySelect
                         v-model="country"
                         v-bind="countryProps"
@@ -118,6 +126,7 @@ const { handleSubmit, defineField, meta, isSubmitting } = useForm<BookingAdminFo
         tripId: '',
         contact_name: '',
         contact_email: '',
+        contact_phone: '',
         country: DEFAULT_COUNTRY_CODE,
     },
 });
@@ -126,6 +135,7 @@ const quasarField = createQuasarFieldBinder(defineField);
 const [tripId, tripIdProps] = quasarField('tripId');
 const [contactName, contactNameProps] = quasarField('contact_name');
 const [contactEmail, contactEmailProps] = quasarField('contact_email');
+const [contactPhone, contactPhoneProps] = quasarField('contact_phone');
 const [country, countryProps] = quasarField('country');
 
 const { tripOptions } = useProgramTripSelectOptions({ excludePastTrips: true });
@@ -222,6 +232,7 @@ const onCreateSubmit = handleSubmit(async (values: BookingAdminFormValues) => {
                 ticketQuantities: { [ticketTypeId.value]: 1 },
                 contactName: values.contact_name,
                 contactEmail: values.contact_email,
+                contactPhone: values.contact_phone,
                 country: values.country,
                 customFieldMap: customValidation.customFieldMap ?? {},
             });

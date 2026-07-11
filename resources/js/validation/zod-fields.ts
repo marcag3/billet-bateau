@@ -90,6 +90,27 @@ export function zOptionalTrimmedEmail(invalidMessage: string) {
         .transform((value) => (value === '' ? null : value));
 }
 
+const OPTIONAL_PHONE_PATTERN = /^[+\d\s().-]+$/;
+
+/**
+ * Optional trimmed phone: empty input becomes null; non-empty must match soft phone chars.
+ */
+export function zOptionalTrimmedPhone(invalidMessage: string) {
+    return z
+        .string()
+        .trim()
+        .max(40)
+        .superRefine((value, context) => {
+            if (value !== '' && !OPTIONAL_PHONE_PATTERN.test(value)) {
+                context.addIssue({
+                    code: 'custom',
+                    message: invalidMessage,
+                });
+            }
+        })
+        .transform((value) => (value === '' ? null : value));
+}
+
 /**
  * Non-empty password (intentionally not trimmed).
  */

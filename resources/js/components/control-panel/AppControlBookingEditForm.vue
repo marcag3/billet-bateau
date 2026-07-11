@@ -49,6 +49,14 @@
                         :label="t('publicBooking.contactEmail')"
                         :disable="isSubmitting || isDeleting"
                     />
+                    <q-input
+                        v-model="contactPhone"
+                        v-bind="contactPhoneProps"
+                        outlined
+                        type="tel"
+                        :label="t('publicBooking.contactPhone')"
+                        :disable="isSubmitting || isDeleting"
+                    />
                     <AppBookingCustomQuestionsFields
                         v-if="bookingQuestions.length > 0"
                         v-model:answers="customAnswers"
@@ -311,6 +319,7 @@ const { handleSubmit, defineField, meta, isSubmitting, resetForm, validate } =
             tripId: '',
             contact_name: '',
             contact_email: '',
+            contact_phone: '',
         },
     });
 
@@ -318,6 +327,7 @@ const quasarField = createQuasarFieldBinder(defineField);
 const [tripId, tripIdProps] = quasarField('tripId');
 const [contactName, contactNameProps] = quasarField('contact_name');
 const [contactEmail, contactEmailProps] = quasarField('contact_email');
+const [contactPhone, contactPhoneProps] = quasarField('contact_phone');
 
 const { data: programRaw } = useLiveQuery(
     (qb) => {
@@ -565,6 +575,7 @@ watch(
                 tripId: String(booking.trip_id ?? ''),
                 contact_name: String(booking.contact_name ?? ''),
                 contact_email: String(booking.contact_email ?? ''),
+                contact_phone: String(booking.contact_phone ?? ''),
             },
         });
         customAnswers.value = customAnswersFromFieldMap(questions, fieldMap);
@@ -707,6 +718,7 @@ const onSaveSubmit = handleSubmit(async (values: BookingEditFormValues) => {
                 tripId: values.tripId,
                 contactName: values.contact_name,
                 contactEmail: values.contact_email,
+                contactPhone: values.contact_phone,
                 ...(restoreCancelled ? { deletedAt: null } : {}),
             });
 

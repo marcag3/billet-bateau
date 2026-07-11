@@ -108,6 +108,7 @@ final class ApplyBookingPowerSyncCrudAction
             'trip_id' => $trip->getKey(),
             'contact_name' => $resolved->contact_name,
             'contact_email' => $resolved->contact_email,
+            'contact_phone' => $resolved->contact_phone,
         ];
 
         if ($existing !== null) {
@@ -182,6 +183,12 @@ final class ApplyBookingPowerSyncCrudAction
             $booking->contact_email = $patch->contact_email === null || trim((string) $patch->contact_email) === ''
                 ? null
                 : trim($patch->contact_email);
+        }
+
+        if (! ($patch->contact_phone instanceof Optional)) {
+            $booking->contact_phone = $patch->contact_phone === null || trim((string) $patch->contact_phone) === ''
+                ? null
+                : trim($patch->contact_phone);
         }
 
         if (! ($patch->deleted_at instanceof Optional)) {

@@ -15,6 +15,7 @@ final class BookingResolvedPutData extends Data
         public string $trip_id,
         public string $contact_name,
         public ?string $contact_email,
+        public ?string $contact_phone,
     ) {}
 
     /**
@@ -26,6 +27,7 @@ final class BookingResolvedPutData extends Data
             'trip_id' => ['required', 'ulid', 'exists:trips,id'],
             'contact_name' => ['required', 'string', 'max:255'],
             'contact_email' => ['nullable', 'email:rfc', 'max:255'],
+            'contact_phone' => ['nullable', 'string', 'max:40', 'regex:/^[+\d\s().-]+$/'],
         ];
     }
 }
