@@ -742,8 +742,18 @@ class PowerSyncUploadBookingTest extends TestCase
         Notification::assertSentOnDemand(
             BookingModifiedNotification::class,
             function (BookingModifiedNotification $notification) use ($booking, $tripB): bool {
-                return $notification->booking->getKey() === $booking->getKey()
-                    && (string) $notification->booking->trip_id === (string) $tripB->getKey();
+                if ($notification->booking->getKey() !== $booking->getKey()) {
+                    return false;
+                }
+
+                if ((string) $notification->booking->trip_id !== (string) $tripB->getKey()) {
+                    return false;
+                }
+
+                // Ensures program address columns needed for ICS location are eager-loaded.
+                $notification->toMail((object) ['routes' => ['mail' => 'guest@example.com']]);
+
+                return true;
             },
         );
     }

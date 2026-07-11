@@ -368,7 +368,7 @@ const currentBooking = computed(() => {
 });
 
 const { tripRows, programTimezone } = useProgramTripSelectOptions({
-    excludePastTrips: true,
+    onlyScheduledOrBoardingTrips: true,
     alwaysIncludeTripIds: computed(() => {
         const id = String(currentBooking.value?.trip_id ?? '').trim();
         return id.length > 0 ? [id] : [];

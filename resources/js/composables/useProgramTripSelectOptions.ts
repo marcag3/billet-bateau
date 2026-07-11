@@ -2,7 +2,7 @@ import { computed, toValue, type MaybeRefOrGetter, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useLiveQuery } from '@tanstack/vue-db';
 import { eq } from '@tanstack/db';
-import { isScheduledDeparturePast } from '../utilities/booking-admin-validation';
+import { isTripSelectableForBooking } from '../utilities/booking-admin-validation';
 import { getAppPowerSyncContext } from '../powersync/app-powersync.runtime';
 import {
     joinTripsWithRelationsFrom,
@@ -39,9 +39,9 @@ function formatTripSelectLabel(
 
 export function useProgramTripSelectOptions(options?: {
     includeWaterRouteId?: boolean;
-    /** Omit trips whose scheduled departure is in the past. */
-    excludePastTrips?: boolean;
-    /** Trip ids to keep visible even when past (e.g. a booking's current trip). */
+    /** Keep only trips whose voyage display status is scheduled or boarding. */
+    onlyScheduledOrBoardingTrips?: boolean;
+    /** Trip ids to keep visible even when not selectable (e.g. a booking's current trip). */
     alwaysIncludeTripIds?: MaybeRefOrGetter<readonly string[]>;
 }) {
     const powersync = getAppPowerSyncContext();
@@ -99,10 +99,42 @@ export function useProgramTripSelectOptions(options?: {
         ],
     );
 
+    const { data: voyagesRaw } = useLiveQuery(
+        (qb) => {
+            const voyagesCol = powersync.collections.voyages.value;
+            const pid = activeProgramIdRef.value.trim();
+            if (!voyagesCol || pid.length === 0 || options?.onlyScheduledOrBoardingTrips !== true) {
+                return undefined;
+            }
+            return qb
+                .from({ v: voyagesCol })
+                .where(({ v }) => eq(v.program_id, pid))
+                .select(({ v }) => ({
+                    trip_id: v.trip_id,
+                    status: v.status,
+                }));
+        },
+        [powersync.collections.voyages, activeProgramIdRef],
+    );
+
+    const voyageStatusByTripId = computed(() => {
+        const map = new Map<string, string | null>();
+        for (const row of liveQueryRows<{ trip_id: string | null; status: string | null }>(
+            voyagesRaw.value,
+        )) {
+            const tripId = String(row.trip_id ?? '').trim();
+            if (tripId.length === 0 || map.has(tripId)) {
+                continue;
+            }
+            map.set(tripId, row.status);
+        }
+        return map;
+    });
+
     const allTripRows = computed(() => liveQueryRows<TripWithRelationsRow>(tripsRaw.value));
 
     const tripRows = computed((): TripWithRelationsRow[] => {
-        if (options?.excludePastTrips !== true) {
+        if (options?.onlyScheduledOrBoardingTrips !== true) {
             return allTripRows.value;
         }
 
@@ -118,7 +150,10 @@ export function useProgramTripSelectOptions(options?: {
                 return true;
             }
 
-            return !isScheduledDeparturePast(trip.scheduled_departure_at);
+            const status = voyageStatusByTripId.value.get(tripId);
+            const voyage = status === undefined ? null : { status };
+
+            return isTripSelectableForBooking(voyage);
         });
     });
 
