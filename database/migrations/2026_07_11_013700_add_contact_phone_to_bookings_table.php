@@ -12,5 +12,4 @@ return new class extends Migration
             $table->string('contact_phone', 40)->nullable()->after('contact_email');
         });
     }
-
 };
