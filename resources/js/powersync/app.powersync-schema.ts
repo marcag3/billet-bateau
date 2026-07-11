@@ -102,6 +102,7 @@ const bookingsTable = new Table({
     trip_id: column.text,
     contact_name: column.text,
     contact_email: column.text,
+    contact_phone: column.text,
     deleted_at: column.text,
     cancelled_by_voyage_id: column.text,
 });

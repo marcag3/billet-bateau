@@ -31,6 +31,31 @@ describe('booking edit form validation', () => {
             }),
         ).toMatchObject({
             contact_email: null,
+            contact_phone: null,
         });
+    });
+
+    it('accepts optional phone and rejects invalid phone', () => {
+        const schema = createBookingEditFormZodSchema(t);
+
+        expect(
+            schema.parse({
+                tripId: 'trip-1',
+                contact_name: 'Alex',
+                contact_email: null,
+                contact_phone: '(514) 555-1234',
+            }),
+        ).toMatchObject({
+            contact_phone: '(514) 555-1234',
+        });
+
+        expect(() =>
+            schema.parse({
+                tripId: 'trip-1',
+                contact_name: 'Alex',
+                contact_email: null,
+                contact_phone: 'nope',
+            }),
+        ).toThrow();
     });
 });

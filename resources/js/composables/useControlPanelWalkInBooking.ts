@@ -7,6 +7,7 @@ export type WalkInBookingInput = {
     ticketQuantities: Record<string, number>;
     contactName: string;
     contactEmail: string | null;
+    contactPhone: string | null;
     country: string;
     customFieldMap: Record<string, string>;
 };
@@ -29,6 +30,7 @@ export function useControlPanelWalkInBooking() {
             ticketQuantities: input.ticketQuantities,
             contactName: input.contactName,
             contactEmail: input.contactEmail,
+            contactPhone: input.contactPhone,
             country: input.country,
             customFieldMap: input.customFieldMap,
         });

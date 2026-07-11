@@ -313,20 +313,6 @@ export default {
         diagnosticsScopePending: "En attente",
         diagnosticsUploadError: "Erreur d'envoi",
     },
-    inAppBrowser: {
-        title: "Ouvrez cette page dans {browser} pour une meilleure expérience",
-        iosInstructions:
-            "Appuyez sur ⋯ en bas à droite, puis sur « Ouvrir dans le navigateur ». Si vous utilisez Firefox, collez-y le lien copié.",
-        androidInstructions:
-            "Appuyez sur ⋯ en haut à droite, puis sur « Ouvrir dans Firefox ».",
-        genericInstructions:
-            "Utilisez le menu du navigateur pour ouvrir cette page dans {browser}.",
-        openInBrowser: "Ouvrir dans {browser}",
-        copyLink: "Copier le lien",
-        dismiss: "Continuer ici",
-        linkCopied: "Lien copié dans le presse-papiers",
-        copyFailed: "Impossible de copier le lien",
-    },
     publicHome: {
         description: "Parcourez les programmes et trouvez votre prochaine aventure.",
         noPrograms: "Aucun programme n’est publié pour le moment.",
@@ -365,9 +351,11 @@ export default {
         contactName: "Nom du contact",
         contactEmail: "Courriel du contact",
         contactEmailOptional: "Courriel du contact (facultatif)",
+        contactPhone: "Téléphone du contact",
         contactNameRequired: "Le nom du contact est requis.",
         contactEmailRequired: "Le courriel est requis.",
         contactEmailInvalid: "Entrez une adresse courriel valide.",
+        contactPhoneInvalid: "Entrez un numéro de téléphone valide.",
         country: "Pays",
         countryRequired: "Le pays est requis.",
         customAnswerRequired: "Cette reponse est requise.",
@@ -839,6 +827,7 @@ export default {
         filterByCheckIn: "Enregistrement",
         columnContact: "Contact",
         columnEmail: "Courriel",
+        columnPhone: "Téléphone",
         columnDeparture: "Départ",
         columnTickets: "Billets",
         columnCheckIn: "Enregistrement",

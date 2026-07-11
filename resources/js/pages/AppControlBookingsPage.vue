@@ -64,6 +64,12 @@
                 </q-td>
             </template>
 
+            <template #body-cell-contact_phone="props">
+                <q-td :props="props">
+                    {{ props.row.contact_phone ?? '—' }}
+                </q-td>
+            </template>
+
             <template #body-cell-checkIn="props">
                 <q-td :props="props">
                     {{ props.row.isCheckedIn
@@ -141,6 +147,7 @@ type BookingTableRow = {
     id: string;
     contact_name: string | null;
     contact_email: string | null;
+    contact_phone: string | null;
     trip_id: string | null;
     tripDepartureAt: string | null;
     departure: string;
@@ -228,6 +235,7 @@ const { data: bookingsRaw } = useLiveQuery(
                 id: b.id,
                 contact_name: b.contact_name,
                 contact_email: b.contact_email,
+                contact_phone: b.contact_phone,
                 trip_id: b.trip_id,
                 tripDepartureAt: trip.scheduled_departure_at,
                 deleted_at: b.deleted_at,
@@ -350,6 +358,7 @@ const tableRows = computed(() =>
     filterRowsBySearch(checkInFilteredBookings.value, searchText.value, [
         (row) => row.contact_name,
         (row) => row.contact_email,
+        (row) => row.contact_phone,
         (row) => row.departure,
         (row) => Object.values(row.customAnswers).join(' '),
     ]),
@@ -380,6 +389,13 @@ const tableColumns = computed((): TableColumn[] => {
             name: 'contact_email',
             label: t('programsControlAdmin.columnEmail'),
             field: 'contact_email',
+            align: 'left',
+            sortable: true,
+        },
+        {
+            name: 'contact_phone',
+            label: t('programsControlAdmin.columnPhone'),
+            field: 'contact_phone',
             align: 'left',
             sortable: true,
         },

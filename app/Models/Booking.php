@@ -27,6 +27,7 @@ class Booking extends Model
         'trip_id',
         'contact_name',
         'contact_email',
+        'contact_phone',
         'contact_locale',
         'cancel_token_hash',
         'cancel_token',

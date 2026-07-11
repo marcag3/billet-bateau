@@ -41,7 +41,7 @@ final class SendBookingModifiedNotificationAction
             $booking = Booking::query()
                 ->whereKey($bookingId)
                 ->with([
-                    'program:id,name,email_signature,timezone',
+                    'program:id,name,email_signature,line_1,line_2,city,postal_code,country,timezone',
                     'trip:id,scheduled_departure_at,product_id',
                     'trip.product:id,name,description,water_route_id',
                     'trip.product.waterRoute:id,duration_minutes',

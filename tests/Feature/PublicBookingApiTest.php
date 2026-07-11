@@ -731,6 +731,81 @@ class PublicBookingApiTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors(['contact_email']);
     }
 
+    public function test_store_persists_optional_contact_phone(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['slug' => 'with-phone']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+        $type = TicketType::factory()->forProgram($program)->create([
+            'min_per_purchase' => 1,
+            'max_per_purchase' => 10,
+        ]);
+
+        $this->postJson('/api/public/programs/with-phone/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'Alex River',
+            'contact_email' => 'alex@example.com',
+            'contact_phone' => '(514) 555-1234',
+            'country' => 'CA',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('bookings', [
+            'contact_email' => 'alex@example.com',
+            'contact_phone' => '(514) 555-1234',
+        ]);
+    }
+
+    public function test_store_accepts_missing_contact_phone(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['slug' => 'no-phone']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+        $type = TicketType::factory()->forProgram($program)->create([
+            'min_per_purchase' => 1,
+            'max_per_purchase' => 10,
+        ]);
+
+        $this->postJson('/api/public/programs/no-phone/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'Alex River',
+            'contact_email' => 'alex@example.com',
+            'country' => 'CA',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('bookings', [
+            'contact_email' => 'alex@example.com',
+            'contact_phone' => null,
+        ]);
+    }
+
+    public function test_store_rejects_invalid_contact_phone(): void
+    {
+        $u = User::factory()->create();
+        $program = Program::factory()->withOwner($u)->create(['slug' => 'bad-phone']);
+        $trip = Trip::factory()->forProgram($program)->create([
+            'scheduled_departure_at' => now()->addWeek(),
+        ]);
+        $trip->product->forceFill(['capacity' => 10])->save();
+        $type = TicketType::factory()->forProgram($program)->create();
+
+        $this->postJson('/api/public/programs/bad-phone/bookings', [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'A',
+            'contact_email' => 'a@example.com',
+            'contact_phone' => 'not-a-phone',
+            'country' => 'CA',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['contact_phone']);
+    }
+
     public function test_booking_options_includes_program_booking_questions(): void
     {
         $u = User::factory()->create();

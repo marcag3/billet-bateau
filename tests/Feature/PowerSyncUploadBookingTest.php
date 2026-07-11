@@ -52,6 +52,93 @@ class PowerSyncUploadBookingTest extends TestCase
         ]);
     }
 
+    public function test_put_creates_booking_with_contact_phone(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->forProgram($program)->create();
+        $bookingId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'bookings',
+                    'id' => $bookingId,
+                    'data' => [
+                        'program_id' => $program->getKey(),
+                        'trip_id' => $trip->getKey(),
+                        'contact_name' => 'Walk-in Guest',
+                        'contact_email' => 'walkin@example.com',
+                        'contact_phone' => '(514) 555-1234',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $bookingId,
+            'contact_phone' => '(514) 555-1234',
+        ]);
+    }
+
+    public function test_put_rejects_invalid_contact_phone(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->forProgram($program)->create();
+        $bookingId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'bookings',
+                    'id' => $bookingId,
+                    'data' => [
+                        'program_id' => $program->getKey(),
+                        'trip_id' => $trip->getKey(),
+                        'contact_name' => 'Walk-in Guest',
+                        'contact_email' => 'walkin@example.com',
+                        'contact_phone' => 'not-a-phone',
+                    ],
+                ],
+            ],
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
+
+        $this->assertDatabaseMissing('bookings', [
+            'id' => $bookingId,
+        ]);
+    }
+
+    public function test_patch_updates_contact_phone(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->forProgram($program)->create();
+        $booking = Booking::factory()->forProgram($program)->forTrip($trip)->create([
+            'contact_phone' => null,
+        ]);
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PATCH',
+                    'type' => 'bookings',
+                    'id' => $booking->getKey(),
+                    'data' => [
+                        'contact_phone' => '(514) 555-9999',
+                    ],
+                ],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $booking->getKey(),
+            'contact_phone' => '(514) 555-9999',
+        ]);
+    }
+
     public function test_put_creates_walk_in_booking_without_contact_email(): void
     {
         $user = User::factory()->create();
@@ -655,8 +742,18 @@ class PowerSyncUploadBookingTest extends TestCase
         Notification::assertSentOnDemand(
             BookingModifiedNotification::class,
             function (BookingModifiedNotification $notification) use ($booking, $tripB): bool {
-                return $notification->booking->getKey() === $booking->getKey()
-                    && (string) $notification->booking->trip_id === (string) $tripB->getKey();
+                if ($notification->booking->getKey() !== $booking->getKey()) {
+                    return false;
+                }
+
+                if ((string) $notification->booking->trip_id !== (string) $tripB->getKey()) {
+                    return false;
+                }
+
+                // Ensures program address columns needed for ICS location are eager-loaded.
+                $notification->toMail((object) ['routes' => ['mail' => 'guest@example.com']]);
+
+                return true;
             },
         );
     }

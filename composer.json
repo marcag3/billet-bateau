@@ -72,10 +72,9 @@
         ],
         "test": [
             "@php artisan config:clear --ansi",
+            "vendor/bin/pint",
+            "vendor/bin/phpstan analyse --memory-limit=512M",
             "@php artisan test"
-        ],
-        "analyse": [
-            "@php vendor/bin/phpstan analyse --memory-limit=512M"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

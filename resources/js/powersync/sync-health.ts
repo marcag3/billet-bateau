@@ -149,6 +149,15 @@ export function deriveSyncHealth(
         };
     }
 
+    if (input.connected && hasDownloadError) {
+        return {
+            phase: "live",
+            toolbarIcon: "cloud_sync",
+            toolbarSeverity: "none",
+            toolbarStatusKey: "sync.toolbarStatusLive",
+        };
+    }
+
     if (insideGrace && !hasDownloadError && !input.connected) {
         return {
             phase: "connecting",
@@ -197,6 +206,16 @@ const BENIGN_POWERSYNC_RECONNECT_FRAGMENTS = [
     "error: closed",
 ] as const;
 
+/** Expected when the Laravel session has expired; auth store prompts re-login. */
+const BENIGN_POWERSYNC_AUTH_FRAGMENTS = ["unauthenticated"] as const;
+
+/** Expected during deploys or upstream outages when fetching PowerSync credentials. */
+const BENIGN_POWERSYNC_SERVER_FRAGMENTS = [
+    "credentials failed with 502",
+    "credentials failed with 503",
+    "credentials failed with 504",
+] as const;
+
 function messageIncludesFragment(
     message: string,
     fragments: readonly string[],
@@ -218,6 +237,14 @@ function isBenignPowerSyncReconnectErrorMessage(message: string): boolean {
         message,
         BENIGN_POWERSYNC_RECONNECT_FRAGMENTS,
     );
+}
+
+function isBenignPowerSyncAuthErrorMessage(message: string): boolean {
+    return messageIncludesFragment(message, BENIGN_POWERSYNC_AUTH_FRAGMENTS);
+}
+
+function isBenignPowerSyncServerErrorMessage(message: string): boolean {
+    return messageIncludesFragment(message, BENIGN_POWERSYNC_SERVER_FRAGMENTS);
 }
 
 /**
@@ -294,6 +321,16 @@ export function shouldReportDownloadSyncErrorToSentry(
         return false;
     }
 
+    if (
+        shouldSuppressPowerSyncErrorForSentry(downloadError, {
+            browserOnline: snapshot.browserOnline,
+            connectingSinceMs: snapshot.connectingSinceMs,
+            nowMs,
+        })
+    ) {
+        return false;
+    }
+
     return deriveSyncHealth(snapshot, nowMs).phase === "sync_blocked";
 }
 
@@ -325,6 +362,8 @@ export function shouldSuppressPowerSyncErrorForSentry(
 
     return (
         isBenignNetworkErrorMessage(message) ||
-        isBenignPowerSyncReconnectErrorMessage(message)
+        isBenignPowerSyncReconnectErrorMessage(message) ||
+        isBenignPowerSyncAuthErrorMessage(message) ||
+        isBenignPowerSyncServerErrorMessage(message)
     );
 }

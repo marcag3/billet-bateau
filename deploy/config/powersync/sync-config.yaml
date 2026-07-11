@@ -144,6 +144,7 @@ streams:
           trip_id,
           contact_name,
           contact_email,
+          contact_phone,
           deleted_at,
           cancelled_by_voyage_id
         FROM bookings

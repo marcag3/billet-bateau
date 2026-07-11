@@ -50,7 +50,5 @@
         }
     },
     "mounts": [
-        "source=${localEnv:HOME}/.gitconfig,target=/home/sail/.gitconfig,type=bind,consistency=cached",
-        "source=${localEnv:HOME}/.config/git/config,target=/home/sail/.config/git/config,type=bind,consistency=cached"
     ]
 }

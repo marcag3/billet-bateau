@@ -7,6 +7,8 @@
             :label="t('publicBooking.contactName')" />
         <q-input v-model="contactEmail" v-bind="contactEmailProps" outlined type="email" :disable="isSubmitting"
             :label="t('publicBooking.contactEmail')" />
+        <q-input v-model="contactPhone" v-bind="contactPhoneProps" outlined type="tel" :disable="isSubmitting"
+            :label="t('publicBooking.contactPhone')" />
         <AppCountrySelect v-model="country" v-bind="countryProps" :disable="isSubmitting"
             :label="t('publicBooking.country')" />
         <div v-if="customQuestions.length > 0">
@@ -32,6 +34,7 @@ type QuasarVeeFieldProps = BaseFieldProps & { error: boolean; errorMessage: stri
 defineProps<{
     contactNameProps: QuasarVeeFieldProps;
     contactEmailProps: QuasarVeeFieldProps;
+    contactPhoneProps: QuasarVeeFieldProps;
     countryProps: QuasarVeeFieldProps;
     submitError: string;
     isSubmitting: boolean;
@@ -47,6 +50,7 @@ const emit = defineEmits<{
 
 const contactName = defineModel<string>('contactName', { required: true });
 const contactEmail = defineModel<string>('contactEmail', { required: true });
+const contactPhone = defineModel<string>('contactPhone', { required: true });
 const country = defineModel<string>('country', { required: true });
 const customAnswers = defineModel<string[]>('customAnswers', { required: true });
 

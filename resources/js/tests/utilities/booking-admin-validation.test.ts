@@ -1,23 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import {
     formatTripSelectCapacitySuffix,
-    isScheduledDeparturePast,
+    isTripSelectableForBooking,
     tripHasCapacityForBookingMove,
 } from '../../utilities/booking-admin-validation';
 
-describe('isScheduledDeparturePast', () => {
-    it('returns false for empty or invalid values', () => {
-        expect(isScheduledDeparturePast(null)).toBe(false);
-        expect(isScheduledDeparturePast('')).toBe(false);
-        expect(isScheduledDeparturePast('not-a-date')).toBe(false);
+describe('isTripSelectableForBooking', () => {
+    it('allows trips with no voyage (scheduled)', () => {
+        expect(isTripSelectableForBooking(null)).toBe(true);
     });
 
-    it('returns true when departure is before now', () => {
-        expect(isScheduledDeparturePast('2000-01-01T12:00:00.000Z')).toBe(true);
+    it('allows scheduled and boarding voyage statuses', () => {
+        expect(isTripSelectableForBooking({ status: 'draft' })).toBe(true);
+        expect(isTripSelectableForBooking({ status: 'ready' })).toBe(true);
     });
 
-    it('returns false when departure is in the future', () => {
-        expect(isScheduledDeparturePast('2099-01-01T12:00:00.000Z')).toBe(false);
+    it('rejects underway, completed, and cancelled voyages', () => {
+        expect(isTripSelectableForBooking({ status: 'underway' })).toBe(false);
+        expect(isTripSelectableForBooking({ status: 'completed' })).toBe(false);
+        expect(isTripSelectableForBooking({ status: 'cancelled' })).toBe(false);
     });
 });
 

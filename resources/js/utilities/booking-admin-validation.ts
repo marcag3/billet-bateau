@@ -1,17 +1,11 @@
-export function isScheduledDeparturePast(
-    scheduledDepartureAt: string | null | undefined,
+import { resolveControlPanelTripDisplayStatus } from './control-panel-day-board';
+
+/** Trips in scheduled (prévu) or boarding status can receive bookings. */
+export function isTripSelectableForBooking(
+    voyage: { status?: string | null } | null,
 ): boolean {
-    const trimmed = String(scheduledDepartureAt ?? '').trim();
-    if (trimmed.length === 0) {
-        return false;
-    }
-
-    const date = new Date(trimmed);
-    if (Number.isNaN(date.getTime())) {
-        return false;
-    }
-
-    return date.getTime() < Date.now();
+    const displayStatus = resolveControlPanelTripDisplayStatus(voyage);
+    return displayStatus === 'scheduled' || displayStatus === 'boarding';
 }
 
 export function tripHasCapacityForBookingMove(input: {

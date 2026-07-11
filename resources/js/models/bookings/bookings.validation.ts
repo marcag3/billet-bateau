@@ -1,7 +1,11 @@
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 import { createWalkInBookingContactZodSchema } from '../public-booking/public-booking.validation';
-import { zOptionalTrimmedEmail, zRequiredTrimmedString } from '../../validation/zod-fields';
+import {
+    zOptionalTrimmedEmail,
+    zOptionalTrimmedPhone,
+    zRequiredTrimmedString,
+} from '../../validation/zod-fields';
 
 export type Translator = (key: string) => string;
 
@@ -26,6 +30,10 @@ export function createBookingEditFormZodSchema(t: Translator) {
         contact_email: z.preprocess(
             (value) => (value == null ? '' : value),
             zOptionalTrimmedEmail(t('publicBooking.contactEmailInvalid')),
+        ),
+        contact_phone: z.preprocess(
+            (value) => (value == null ? '' : value),
+            zOptionalTrimmedPhone(t('publicBooking.contactPhoneInvalid')),
         ),
     });
 }

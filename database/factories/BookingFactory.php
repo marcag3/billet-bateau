@@ -26,6 +26,7 @@ class BookingFactory extends Factory
             'trip_id' => null,
             'contact_name' => fake()->name(),
             'contact_email' => fake()->safeEmail(),
+            'contact_phone' => null,
         ];
     }
 
