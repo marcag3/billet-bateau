@@ -1,5 +1,5 @@
 import type {
-    AbstractPowerSyncDatabase,
+    CommonPowerSyncDatabase,
     PowerSyncBackendConnector,
 } from "@powersync/common";
 import { credentials, upload } from "../routes/api/powersync";
@@ -28,7 +28,7 @@ export function createAppPowerSyncConnector(): PowerSyncBackendConnector {
             return { endpoint, token };
         },
 
-        async uploadData(database: AbstractPowerSyncDatabase) {
+        async uploadData(database: CommonPowerSyncDatabase) {
             let batch = await database.getCrudBatch(100);
 
             while (batch !== null) {
