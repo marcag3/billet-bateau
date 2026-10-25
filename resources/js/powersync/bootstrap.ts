@@ -26,6 +26,7 @@ import {
     trackBrowserOnlineForSyncHealth,
 } from "./sync-health-state";
 import { logSyncStatusErrors } from "./powersync-sync-error-logger";
+import { createPowerSyncLogger } from "./powersync-logger";
 
 async function resolveAuthenticatedUserId(): Promise<string> {
     const authStore = useAuthStore();
@@ -62,7 +63,7 @@ function handlePowerSyncStatusChanged(status: SyncStatus): void {
     applyReadinessFromStatus(status);
     logSyncStatusErrors(status);
 
-    const uploadError = status.dataFlowStatus?.uploadError;
+    const uploadError = status.uploadError;
     const formatted = formatPowerSyncUploadError(uploadError);
     runtimeState.outboxCommitError.value = resolveOutboxCommitError(
         uploadError,
@@ -152,10 +153,11 @@ export async function bootstrapAppPowerSync(): Promise<void> {
 
             const db = new PowerSyncDatabase({
                 schema: appPowerSyncSchema,
-                database: { dbFilename: runtimeState.DB_FILENAME },
-                ...(import.meta.env.DEV
-                    ? { flags: { useWebWorker: false } }
-                    : {}),
+                database: {
+                    dbFilename: runtimeState.DB_FILENAME,
+                    ...(import.meta.env.DEV ? { useWebWorker: false } : {}),
+                },
+                logger: createPowerSyncLogger(),
             });
 
             await db.init();

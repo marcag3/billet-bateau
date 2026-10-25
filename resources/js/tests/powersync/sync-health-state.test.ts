@@ -15,7 +15,8 @@ function mockStatus(
         connecting: true,
         hasSynced: true,
         lastSyncedAt: new Date("2024-06-01T12:00:00Z"),
-        dataFlowStatus: {},
+        uploading: false,
+        downloading: false,
         statusForPriority: () => ({ hasSynced: false }),
         ...overrides,
     } as SyncStatus;

@@ -159,15 +159,15 @@ export function applySyncHealthFromStatus(
     publishSyncHealthSnapshot({
         connected: status.connected === true,
         connecting,
-        uploading: status.dataFlowStatus?.uploading === true,
-        downloading: status.dataFlowStatus?.downloading === true,
+        uploading: status.uploading === true,
+        downloading: status.downloading === true,
         hasSynced: resolveHasSynced(status),
         lastSyncedAt: status.lastSyncedAt,
         downloadError: formatSyncErrorMessage(
-            status.dataFlowStatus?.downloadError,
+            status.downloadError,
         ),
         uploadError: formatSyncErrorMessage(
-            status.dataFlowStatus?.uploadError,
+            status.uploadError,
         ),
         userScopeHasSynced: isUserScopePrioritySynced(status),
         programScopeHasSynced: isProgramScopePrioritySynced(status),

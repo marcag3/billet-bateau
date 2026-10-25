@@ -13,6 +13,9 @@ function mockQueryBuilder() {
         where: vi.fn(() => chain),
         select: vi.fn(() => chain),
         from: vi.fn(() => chain),
+        fn: {
+            where: vi.fn(() => chain),
+        },
     };
     return chain;
 }
