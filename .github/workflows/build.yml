@@ -49,7 +49,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            POWERSYNC_VERSION=1.22.0
+            POWERSYNC_VERSION=1.27.1
             VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
             VITE_SENTRY_RELEASE=${{ github.sha }}
             SENTRY_RELEASE=${{ github.sha }}

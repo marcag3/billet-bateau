@@ -40,8 +40,8 @@ function buildSyncErrorContext(status: SyncStatus): Record<string, unknown> {
         connecting: status.connecting,
         hasSynced: status.hasSynced,
         lastSyncedAt: status.lastSyncedAt?.toISOString(),
-        uploading: status.dataFlowStatus?.uploading === true,
-        downloading: status.dataFlowStatus?.downloading === true,
+        uploading: status.uploading === true,
+        downloading: status.downloading === true,
         sdkVersion:
             db && "sdkVersion" in db
                 ? (db as { sdkVersion?: string }).sdkVersion ?? "unknown"
@@ -58,10 +58,10 @@ export function logSyncStatusErrors(
     nowMs: number = Date.now(),
 ): void {
     const downloadError = formatSyncErrorMessage(
-        status.dataFlowStatus?.downloadError,
+        status.downloadError,
     );
     const uploadError = formatSyncErrorMessage(
-        status.dataFlowStatus?.uploadError,
+        status.uploadError,
     );
 
     const snapshot = syncHealthSnapshot.value;

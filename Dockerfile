@@ -1,7 +1,7 @@
 ############################################
 # PowerSync service runtime (vendor)
 ############################################
-ARG POWERSYNC_VERSION=1.22.0
+ARG POWERSYNC_VERSION=1.27.1
 FROM journeyapps/powersync-service:${POWERSYNC_VERSION} AS powersync_vendor
 
 ############################################

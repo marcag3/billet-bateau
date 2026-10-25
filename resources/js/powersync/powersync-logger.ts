@@ -1,53 +1,73 @@
-import { createBaseLogger, LogLevel } from "@powersync/common";
+import { LogLevels, type LogRecord, type PowerSyncLogger } from "@powersync/common";
 import * as Sentry from "@sentry/vue";
 import { shouldSuppressPowerSyncErrorForSentry } from "./sync-health";
 import { syncHealthSnapshot } from "./sync-health-state";
 
-export function configurePowerSyncLogger(): void {
-    const logger = createBaseLogger();
-    logger.useDefaults();
-    logger.setLevel(import.meta.env.PROD ? LogLevel.WARN : LogLevel.DEBUG);
+function resolveLogLevelName(level: number): Sentry.SeverityLevel {
+    if (level >= LogLevels.error) {
+        return "error";
+    }
+    if (level >= LogLevels.warn) {
+        return "warning";
+    }
+    if (level >= LogLevels.info) {
+        return "info";
+    }
+    return "debug";
+}
 
-    logger.setHandler((messages, context) => {
-        if (!context?.level) {
-            return;
-        }
+function resolveErrorData(error: unknown): Record<string, unknown> {
+    if (error === undefined) {
+        return {};
+    }
+    if (error instanceof Error) {
+        return { error: error.message, stack: error.stack };
+    }
+    return { error: typeof error === "object" && error !== null ? error : String(error) };
+}
 
-        const messageArray = Array.from(messages);
-        const mainMessage = String(messageArray[0] || "Empty log message");
-        const extraData = messageArray.slice(1).reduce<Record<string, unknown>>(
-            (acc, curr) => {
-                if (typeof curr === "object" && curr !== null) {
-                    return { ...acc, ...(curr as Record<string, unknown>) };
-                }
-                return acc;
-            },
-            {},
-        );
+/**
+ * PowerSync logger passed to `new PowerSyncDatabase({ logger })`: records breadcrumbs,
+ * forwards warnings/errors to the console and reports errors to Sentry.
+ */
+export function createPowerSyncLogger(): PowerSyncLogger {
+    const minimumLevel = import.meta.env.PROD ? LogLevels.warn : LogLevels.debug;
 
-        const level = context.level.name.toLowerCase();
+    return {
+        log(record: LogRecord): void {
+            if (record.level < minimumLevel) {
+                return;
+            }
 
-        Sentry.addBreadcrumb({
-            message: mainMessage,
-            level: level as Sentry.SeverityLevel,
-            data: extraData,
-            timestamp: Date.now() / 1000,
-            category: "powersync",
-        });
+            const mainMessage = record.message || "Empty log message";
+            const extraData = resolveErrorData(record.error);
+            const level = resolveLogLevelName(record.level);
 
-        if (level === "warn" || level === "error") {
-            console[level](`PowerSync ${level.toUpperCase()}:`, mainMessage, extraData);
-        }
+            Sentry.addBreadcrumb({
+                message: mainMessage,
+                level,
+                data: extraData,
+                timestamp: Date.now() / 1000,
+                category: "powersync",
+            });
 
-        if (level === "error") {
+            if (level === "warning") {
+                console.warn("PowerSync WARN:", mainMessage, extraData);
+            }
+
+            if (level !== "error") {
+                return;
+            }
+
+            console.error("PowerSync ERROR:", mainMessage, extraData);
+
             const snapshot = syncHealthSnapshot.value;
-            const nowMs = Date.now();
 
             if (
                 shouldSuppressPowerSyncErrorForSentry(mainMessage, {
                     browserOnline: snapshot.browserOnline,
                     connectingSinceMs: snapshot.connectingSinceMs,
-                    nowMs,
+                    nowMs: Date.now(),
                 })
             ) {
                 return;
@@ -57,6 +77,6 @@ export function configurePowerSyncLogger(): void {
                 level: "error",
                 extra: extraData,
             });
-        }
-    });
+        },
+    };
 }
