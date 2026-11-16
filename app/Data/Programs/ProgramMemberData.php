@@ -2,6 +2,7 @@
 
 namespace App\Data\Programs;
 
+use App\Models\ProgramUser;
 use App\Models\User;
 use Spatie\LaravelData\Data;
 
@@ -16,11 +17,14 @@ final class ProgramMemberData extends Data
 
     public static function fromUser(User $user): self
     {
+        /** @var ProgramUser $membership */
+        $membership = $user->getRelation('pivot');
+
         return new self(
             user_id: (string) $user->getKey(),
             name: (string) $user->name,
             email: (string) $user->email,
-            role: (string) $user->pivot->role,
+            role: (string) $membership->role,
         );
     }
 }

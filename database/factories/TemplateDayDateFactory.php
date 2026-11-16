@@ -31,13 +31,11 @@ class TemplateDayDateFactory extends Factory
     {
         return $this->afterMaking(function (TemplateDayDate $model): void {
             $templateDayId = $model->template_day_id;
-            if ($templateDayId === null) {
+            if (blank($templateDayId)) {
                 return;
             }
 
-            $templateDay = $templateDayId instanceof TemplateDay
-                ? $templateDayId
-                : TemplateDay::query()->find($templateDayId);
+            $templateDay = TemplateDay::query()->find($templateDayId);
 
             if ($templateDay instanceof TemplateDay) {
                 $model->program_id = $templateDay->program_id;

@@ -42,6 +42,7 @@ class BookingTicket extends Model
         return $this->belongsTo(Booking::class, 'booking_id');
     }
 
+    /** @return BelongsTo<TicketType, $this> */
     public function ticketType(): BelongsTo
     {
         return $this->belongsTo(TicketType::class, 'ticket_type_id');

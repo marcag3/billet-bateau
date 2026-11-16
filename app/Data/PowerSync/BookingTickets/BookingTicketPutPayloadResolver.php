@@ -34,8 +34,8 @@ final class BookingTicketPutPayloadResolver
      */
     public static function resolve(BookingTicketPutData $dto, ?BookingTicket $existing): array
     {
-        $bookingId = $dto->booking_id instanceof Optional ? ($existing?->booking_id ?? null) : $dto->booking_id;
-        $ticketTypeId = $dto->ticket_type_id instanceof Optional ? ($existing?->ticket_type_id ?? null) : $dto->ticket_type_id;
+        $bookingId = $dto->booking_id instanceof Optional ? ($existing->booking_id ?? null) : $dto->booking_id;
+        $ticketTypeId = $dto->ticket_type_id instanceof Optional ? ($existing->ticket_type_id ?? null) : $dto->ticket_type_id;
 
         if ($bookingId === null || $bookingId === '') {
             throw ValidationException::withMessages([
@@ -49,10 +49,10 @@ final class BookingTicketPutPayloadResolver
             ]);
         }
 
-        $name = $dto->name instanceof Optional ? ($existing?->name ?? null) : $dto->name;
-        $email = $dto->email instanceof Optional ? ($existing?->email ?? null) : $dto->email;
+        $name = $dto->name instanceof Optional ? ($existing->name ?? null) : $dto->name;
+        $email = $dto->email instanceof Optional ? ($existing->email ?? null) : $dto->email;
         $email = $email === null || trim((string) $email) === '' ? null : trim((string) $email);
-        $country = $dto->country instanceof Optional ? ($existing?->country ?? '') : $dto->country;
+        $country = $dto->country instanceof Optional ? ($existing->country ?? '') : $dto->country;
         $country = is_string($country) ? $country : '';
         $customFields = $dto->custom_fields instanceof Optional
             ? (is_array($existing?->custom_fields) ? $existing->custom_fields : [])

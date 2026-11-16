@@ -146,7 +146,7 @@ final class CancelPublicBookingAction
 
         return new PublicBookingCancelPreviewData(
             id: (string) $booking->getKey(),
-            program_name: $booking->program?->name ?? __('Program'),
+            program_name: $booking->program->name ?? __('Program'),
             contact_name: (string) ($booking->contact_name ?? ''),
             departure_at: $departure !== null
                 ? $departure->toIso8601String()

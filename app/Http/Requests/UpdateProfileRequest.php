@@ -32,7 +32,7 @@ class UpdateProfileRequest extends FormRequest
                 Rule::unique('users', 'email')->ignore($userId),
                 function (string $attribute, mixed $value, Closure $fail): void {
                     $normalizedEmail = Str::lower(trim((string) $value));
-                    $currentEmail = Str::lower(trim((string) ($this->user()?->email ?? '')));
+                    $currentEmail = Str::lower(trim((string) ($this->user()->email ?? '')));
 
                     if ($normalizedEmail === $currentEmail) {
                         return;

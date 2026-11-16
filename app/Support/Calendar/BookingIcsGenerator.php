@@ -45,7 +45,7 @@ final class BookingIcsGenerator
             $event->address($location);
         }
 
-        $calendarName = $program?->name ?? (string) config('app.name');
+        $calendarName = $program->name ?? (string) config('app.name');
 
         return Calendar::create($calendarName)
             ->event($event)

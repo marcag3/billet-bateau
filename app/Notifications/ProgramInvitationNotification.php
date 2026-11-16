@@ -42,7 +42,7 @@ class ProgramInvitationNotification extends Notification
 
     private function buildMailMessage(string $locale): MailMessage
     {
-        $programName = $this->invitation->program?->name ?? __('Program');
+        $programName = $this->invitation->program->name ?? __('Program');
         $acceptUrl = url('/app/invite/'.$this->plainToken);
         $expiresLabel = ProgramTimezone::formatDateTime(
             $this->invitation->expires_at,
