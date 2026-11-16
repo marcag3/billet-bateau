@@ -7,11 +7,10 @@ use App\Data\PowerSync\TicketTypes\TicketTypePatchData;
 use App\Data\PowerSync\TicketTypes\TicketTypePutData;
 use App\Data\PowerSync\TicketTypes\TicketTypePutPayloadResolver;
 use App\Data\PowerSync\TicketTypes\TicketTypeResolvedPutData;
-use App\Models\Program;
 use App\Models\TicketType;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
 /**
@@ -19,56 +18,49 @@ use Spatie\LaravelData\Optional;
  *
  * Idempotent semantics: {@see PowerSyncCrudEntryData::OP_PATCH} and {@see PowerSyncCrudEntryData::OP_DELETE}
  * no-op when the target row does not exist (offline client retries safe).
+ *
+ * @extends PowerSyncCrudAction<TicketTypePutData, TicketTypePatchData>
  */
-final class ApplyTicketTypePowerSyncCrudAction
+final class ApplyTicketTypePowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $ticketType = TicketType::query()->whereKey($id)->first();
-
-            if ($ticketType === null) {
-                return;
-            }
-
-            $this->assertProgramManaged((string) $ticketType->program_id, $userId);
-
-            if ($ticketType->bookingTickets()->exists()) {
-                throw ValidationException::withMessages([
-                    'id' => 'Cannot delete a ticket type that is still used by booking tickets.',
-                ]);
-            }
-
-            $ticketType->delete();
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = TicketTypePutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $dto = TicketTypePatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $dto, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for ticket_types: '.$op);
+        return 'ticket_types';
     }
 
-    private function applyPut(string $id, TicketTypePutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return TicketTypePutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return TicketTypePatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $ticketType = TicketType::query()->whereKey($id)->first();
+
+        if ($ticketType === null) {
+            return;
+        }
+
+        $this->assertProgramManaged((string) $ticketType->program_id, $userId);
+
+        if ($ticketType->bookingTickets()->exists()) {
+            throw ValidationException::withMessages([
+                'id' => 'Cannot delete a ticket type that is still used by booking tickets.',
+            ]);
+        }
+
+        $ticketType->delete();
+    }
+
+    /**
+     * @param  TicketTypePutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $existing = TicketType::query()->whereKey($id)->first();
 
@@ -98,7 +90,10 @@ final class ApplyTicketTypePowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, TicketTypePatchData $dto, string $userId): void
+    /**
+     * @param  TicketTypePatchData  $dto
+     */
+    protected function applyPatch(string $id, Data $dto, string $userId): void
     {
         $ticketType = TicketType::query()->whereKey($id)->first();
 
@@ -163,15 +158,6 @@ final class ApplyTicketTypePowerSyncCrudAction
         );
 
         $ticketType->save();
-    }
-
-    private function assertProgramManaged(string $programId, string $userId): void
-    {
-        $program = Program::query()->whereKey($programId)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
-        }
     }
 
     private function assertDependencyConfiguration(

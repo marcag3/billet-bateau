@@ -4,71 +4,64 @@ namespace App\Actions\PowerSync;
 
 use App\Data\PowerSync\CheckIns\CheckInPatchData;
 use App\Data\PowerSync\CheckIns\CheckInPutData;
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Enums\VoyageStatus;
 use App\Models\Booking;
 use App\Models\CheckIn;
 use App\Models\Voyage;
 use App\Support\Voyages\VoyageProgramResolver;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
-final class ApplyCheckInPowerSyncCrudAction
+/**
+ * @extends PowerSyncCrudAction<CheckInPutData, CheckInPatchData>
+ */
+final class ApplyCheckInPowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $checkIn = CheckIn::query()->whereKey($id)->first();
-
-            if ($checkIn === null) {
-                return;
-            }
-
-            $voyage = Voyage::query()->whereKey($checkIn->voyage_id)->first();
-
-            if ($voyage !== null) {
-                $this->assertVoyageAllowsCheckInEdits($voyage, $userId);
-            }
-
-            $checkIn->delete();
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = CheckInPutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $dto = CheckInPatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $dto, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for check_ins: '.$op);
+        return 'check_ins';
     }
 
-    private function applyPut(string $id, CheckInPutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return CheckInPutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return CheckInPatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $checkIn = CheckIn::query()->whereKey($id)->first();
+
+        if ($checkIn === null) {
+            return;
+        }
+
+        $voyage = Voyage::query()->whereKey($checkIn->voyage_id)->first();
+
+        if ($voyage !== null) {
+            $this->assertVoyageAllowsCheckInEdits($voyage, $userId);
+        }
+
+        $checkIn->delete();
+    }
+
+    /**
+     * @param  CheckInPutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $existing = CheckIn::query()->whereKey($id)->first();
 
         $bookingId = $dto->booking_id instanceof Optional
-            ? ($existing?->booking_id ?? null)
+            ? ($existing->booking_id ?? null)
             : $dto->booking_id;
         $voyageId = $dto->voyage_id instanceof Optional
-            ? ($existing?->voyage_id ?? null)
+            ? ($existing->voyage_id ?? null)
             : $dto->voyage_id;
 
         if ($bookingId === null || $voyageId === null) {
@@ -90,7 +83,7 @@ final class ApplyCheckInPowerSyncCrudAction
         $this->assertUniqueBookingCheckIn($bookingId, $id);
 
         $notes = $dto->notes instanceof Optional
-            ? ($existing?->notes ?? null)
+            ? ($existing->notes ?? null)
             : $dto->notes;
 
         CheckIn::query()->updateOrCreate(
@@ -103,7 +96,10 @@ final class ApplyCheckInPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, CheckInPatchData $patch, string $userId): void
+    /**
+     * @param  CheckInPatchData  $patch
+     */
+    protected function applyPatch(string $id, Data $patch, string $userId): void
     {
         $checkIn = CheckIn::query()->whereKey($id)->first();
 

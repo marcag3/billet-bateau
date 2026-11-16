@@ -2,64 +2,56 @@
 
 namespace App\Actions\PowerSync;
 
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\TemplateDaySlots\TemplateDaySlotPatchData;
 use App\Data\PowerSync\TemplateDaySlots\TemplateDaySlotPutData;
 use App\Data\PowerSync\TemplateDaySlots\TemplateDaySlotPutPayloadResolver;
 use App\Data\PowerSync\TemplateDaySlots\TemplateDaySlotResolvedPutData;
-use App\Models\Program;
 use App\Models\TemplateDay;
 use App\Models\TemplateDaySlot;
 use App\Models\WaterRoute;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
-final class ApplyTemplateDaySlotPowerSyncCrudAction
+/**
+ * @extends PowerSyncCrudAction<TemplateDaySlotPutData, TemplateDaySlotPatchData>
+ */
+final class ApplyTemplateDaySlotPowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $slot = TemplateDaySlot::query()->whereKey($id)->first();
-
-            if ($slot === null) {
-                return;
-            }
-
-            $programId = $this->programIdForTemplateDayId((string) $slot->template_day_id);
-            $this->assertCanManageProgram($programId, $userId);
-
-            $slot->delete();
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = TemplateDaySlotPutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $patch = TemplateDaySlotPatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $patch, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for template_day_slots: '.$op);
+        return 'template_day_slots';
     }
 
-    private function applyPut(string $id, TemplateDaySlotPutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return TemplateDaySlotPutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return TemplateDaySlotPatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $slot = TemplateDaySlot::query()->whereKey($id)->first();
+
+        if ($slot === null) {
+            return;
+        }
+
+        $programId = $this->programIdForTemplateDayId((string) $slot->template_day_id);
+        $this->assertProgramManaged($programId, $userId);
+
+        $slot->delete();
+    }
+
+    /**
+     * @param  TemplateDaySlotPutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $existing = TemplateDaySlot::query()->whereKey($id)->first();
 
@@ -89,7 +81,7 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction
             ]);
         }
 
-        $this->assertCanManageProgram($programId, $userId);
+        $this->assertProgramManaged($programId, $userId);
 
         $merged = TemplateDaySlotPutPayloadResolver::resolve($dto, $existing);
         $resolved = TemplateDaySlotResolvedPutData::validateAndCreate($merged);
@@ -111,7 +103,10 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, TemplateDaySlotPatchData $patch, string $userId): void
+    /**
+     * @param  TemplateDaySlotPatchData  $patch
+     */
+    protected function applyPatch(string $id, Data $patch, string $userId): void
     {
         $slot = TemplateDaySlot::query()->whereKey($id)->first();
 
@@ -124,7 +119,7 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction
             throw new AuthorizationException;
         }
 
-        $this->assertCanManageProgram($programId, $userId);
+        $this->assertProgramManaged($programId, $userId);
 
         if (! ($patch->sort_order instanceof Optional)) {
             $slot->sort_order = $patch->sort_order;
@@ -174,15 +169,6 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction
         $programId = TemplateDay::query()->whereKey($templateDayId)->value('program_id');
 
         return $programId !== null ? (string) $programId : null;
-    }
-
-    private function assertCanManageProgram(string $programId, string $userId): void
-    {
-        $program = Program::query()->whereKey($programId)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
-        }
     }
 
     private function assertWaterRouteBelongsToProgram(?string $waterRouteId, string $programId): void

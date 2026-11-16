@@ -6,63 +6,54 @@ use App\Data\PowerSync\Boats\BoatPatchData;
 use App\Data\PowerSync\Boats\BoatPutData;
 use App\Data\PowerSync\Boats\BoatPutPayloadResolver;
 use App\Data\PowerSync\Boats\BoatResolvedPutData;
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Models\Boat;
-use Illuminate\Auth\Access\AuthorizationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
 /**
  * Applies PowerSync CRUD for {@see Boat} rows (boats upload type).
+ *
+ * @extends PowerSyncCrudAction<BoatPutData, BoatPatchData>
  */
-final class ApplyBoatPowerSyncCrudAction
+final class ApplyBoatPowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $boat = Boat::query()->whereKey($id)->first();
-
-            if ($boat === null) {
-                return;
-            }
-
-            $this->ensureUserMayMutateBoat($boat, $userId);
-
-            $boat->delete();
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = BoatPutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $dto = BoatPatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $dto, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for boats: '.$op);
+        return 'boats';
     }
 
-    private function applyPut(string $id, BoatPutData $data, string $userId): void
+    protected function putDataClass(): string
+    {
+        return BoatPutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return BoatPatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $boat = Boat::query()->whereKey($id)->first();
+
+        if ($boat === null) {
+            return;
+        }
+
+        $this->assertProgramManaged($boat->program_id, $userId);
+
+        $boat->delete();
+    }
+
+    /**
+     * @param  BoatPutData  $data
+     */
+    protected function applyPut(string $id, Data $data, string $userId): void
     {
         $existing = Boat::query()->whereKey($id)->first();
 
         if ($existing !== null) {
-            $this->ensureUserMayMutateBoat($existing, $userId);
+            $this->assertProgramManaged($existing->program_id, $userId);
         }
 
         $merged = BoatPutPayloadResolver::resolve($data, $existing);
@@ -80,7 +71,10 @@ final class ApplyBoatPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, BoatPatchData $data, string $userId): void
+    /**
+     * @param  BoatPatchData  $data
+     */
+    protected function applyPatch(string $id, Data $data, string $userId): void
     {
         $boat = Boat::query()->whereKey($id)->first();
 
@@ -88,7 +82,7 @@ final class ApplyBoatPowerSyncCrudAction
             return;
         }
 
-        $this->ensureUserMayMutateBoat($boat, $userId);
+        $this->assertProgramManaged($boat->program_id, $userId);
 
         if (! ($data->name instanceof Optional)) {
             if ($data->name !== null && $data->name !== '') {
@@ -113,16 +107,5 @@ final class ApplyBoatPowerSyncCrudAction
         }
 
         $boat->save();
-    }
-
-    private function ensureUserMayMutateBoat(Boat $boat, string $userId): void
-    {
-        $program = $boat->program()->first();
-
-        if ($program !== null && $program->userCanManage($userId)) {
-            return;
-        }
-
-        throw new AuthorizationException;
     }
 }

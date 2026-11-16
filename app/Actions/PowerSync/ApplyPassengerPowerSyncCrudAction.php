@@ -4,64 +4,57 @@ namespace App\Actions\PowerSync;
 
 use App\Data\PowerSync\Passengers\PassengerPatchData;
 use App\Data\PowerSync\Passengers\PassengerPutData;
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Enums\VoyageStatus;
 use App\Models\Booking;
 use App\Models\Passenger;
 use App\Models\Voyage;
 use App\Support\Voyages\VoyageProgramResolver;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
-final class ApplyPassengerPowerSyncCrudAction
+/**
+ * @extends PowerSyncCrudAction<PassengerPutData, PassengerPatchData>
+ */
+final class ApplyPassengerPowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $passenger = Passenger::query()->whereKey($id)->first();
-
-            if ($passenger === null) {
-                return;
-            }
-
-            $voyage = Voyage::query()->whereKey($passenger->voyage_id)->first();
-
-            if ($voyage === null) {
-                return;
-            }
-
-            $this->assertVoyageAllowsManifestEdits($voyage, $userId);
-            $passenger->delete();
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = PassengerPutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $dto = PassengerPatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $dto, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for passengers: '.$op);
+        return 'passengers';
     }
 
-    private function applyPut(string $id, PassengerPutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return PassengerPutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return PassengerPatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $passenger = Passenger::query()->whereKey($id)->first();
+
+        if ($passenger === null) {
+            return;
+        }
+
+        $voyage = Voyage::query()->whereKey($passenger->voyage_id)->first();
+
+        if ($voyage === null) {
+            return;
+        }
+
+        $this->assertVoyageAllowsManifestEdits($voyage, $userId);
+        $passenger->delete();
+    }
+
+    /**
+     * @param  PassengerPutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $voyageId = $dto->voyage_id instanceof Optional ? null : $dto->voyage_id;
         $name = $dto->name instanceof Optional ? null : $dto->name;
@@ -97,7 +90,10 @@ final class ApplyPassengerPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, PassengerPatchData $patch, string $userId): void
+    /**
+     * @param  PassengerPatchData  $patch
+     */
+    protected function applyPatch(string $id, Data $patch, string $userId): void
     {
         $passenger = Passenger::query()->whereKey($id)->first();
 

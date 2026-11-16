@@ -22,7 +22,7 @@ final class VoyagePutPayloadResolver
             : $dto->trip_id;
 
         $waterRouteId = $dto->water_route_id instanceof Optional
-            ? (string) ($existing?->water_route_id ?? '')
+            ? (string) ($existing->water_route_id ?? '')
             : (string) ($dto->water_route_id ?? '');
 
         $scheduledDeparture = $dto->scheduled_departure_at instanceof Optional

@@ -2,78 +2,62 @@
 
 namespace App\Actions\PowerSync;
 
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\TemplateDayDates\TemplateDayDatePatchData;
 use App\Data\PowerSync\TemplateDayDates\TemplateDayDatePutData;
 use App\Data\PowerSync\TemplateDayDates\TemplateDayDatePutPayloadResolver;
 use App\Data\PowerSync\TemplateDayDates\TemplateDayDateResolvedPutData;
-use App\Models\Program;
 use App\Models\TemplateDay;
 use App\Models\TemplateDayDate;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
-final class ApplyTemplateDayDatePowerSyncCrudAction
+/**
+ * @extends PowerSyncCrudAction<TemplateDayDatePutData, TemplateDayDatePatchData>
+ */
+final class ApplyTemplateDayDatePowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $dateRow = TemplateDayDate::query()->whereKey($id)->first();
-
-            if ($dateRow === null) {
-                return;
-            }
-
-            $program = Program::query()->whereKey($dateRow->program_id)->first();
-
-            if ($program === null || ! $program->userCanManage($userId)) {
-                throw new AuthorizationException;
-            }
-
-            $dateRow->delete();
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = TemplateDayDatePutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $patch = TemplateDayDatePatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $patch, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for template_day_dates: '.$op);
+        return 'template_day_dates';
     }
 
-    private function applyPut(string $id, TemplateDayDatePutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return TemplateDayDatePutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return TemplateDayDatePatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $dateRow = TemplateDayDate::query()->whereKey($id)->first();
+
+        if ($dateRow === null) {
+            return;
+        }
+
+        $this->assertProgramManaged($dateRow->program_id, $userId);
+
+        $dateRow->delete();
+    }
+
+    /**
+     * @param  TemplateDayDatePutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $existing = TemplateDayDate::query()->whereKey($id)->first();
 
         $merged = TemplateDayDatePutPayloadResolver::resolve($dto, $existing);
         $resolved = TemplateDayDateResolvedPutData::validateAndCreate($merged);
 
-        $program = Program::query()->whereKey($resolved->program_id)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
-        }
+        $this->assertProgramManaged($resolved->program_id, $userId);
 
         $this->assertUniqueTemplateDayDate($id, $resolved->template_day_id, $resolved->service_date);
 
@@ -87,7 +71,10 @@ final class ApplyTemplateDayDatePowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, TemplateDayDatePatchData $patch, string $userId): void
+    /**
+     * @param  TemplateDayDatePatchData  $patch
+     */
+    protected function applyPatch(string $id, Data $patch, string $userId): void
     {
         $dateRow = TemplateDayDate::query()->whereKey($id)->first();
 
@@ -95,11 +82,7 @@ final class ApplyTemplateDayDatePowerSyncCrudAction
             return;
         }
 
-        $program = Program::query()->whereKey($dateRow->program_id)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
-        }
+        $this->assertProgramManaged($dateRow->program_id, $userId);
 
         $templateDayId = (string) $dateRow->template_day_id;
 
@@ -131,7 +114,7 @@ final class ApplyTemplateDayDatePowerSyncCrudAction
         }
 
         if (! ($patch->service_date instanceof Optional)) {
-            $dateRow->service_date = $serviceDate->toDateString();
+            $dateRow->service_date = $serviceDate;
         }
 
         $dateRow->save();

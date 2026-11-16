@@ -58,7 +58,7 @@ final class ProgramPutPayloadResolver
                 : (string) $dto->theme_color;
         }
 
-        $isActive = (bool) PowerSyncOptional::resolve($dto->is_active, $existing?->is_active ?? false, false);
+        $isActive = (bool) PowerSyncOptional::resolve($dto->is_active, $existing->is_active ?? false, false);
 
         $displayName = PowerSyncDisplayName::resolve($nameMerged, $existingName);
 

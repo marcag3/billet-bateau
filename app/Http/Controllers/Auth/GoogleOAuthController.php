@@ -9,16 +9,16 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use Laravel\Socialite\Contracts\User as SocialiteUserContract;
+use Laravel\Socialite\AbstractUser;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
-use Laravel\Socialite\Two\User as SocialiteUser;
+use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class GoogleOAuthController extends Controller
 {
-    public function redirect(Request $request): RedirectResponse
+    public function redirect(Request $request): SymfonyRedirectResponse
     {
         $this->ensureGoogleOAuthConfigured();
 
@@ -41,6 +41,10 @@ class GoogleOAuthController extends Controller
         } catch (InvalidStateException) {
             return $this->loginErrorRedirect('google_failed');
         } catch (Throwable) {
+            return $this->loginErrorRedirect('google_failed');
+        }
+
+        if (! $googleUser instanceof AbstractUser) {
             return $this->loginErrorRedirect('google_failed');
         }
 
@@ -69,11 +73,11 @@ class GoogleOAuthController extends Controller
         }
     }
 
-    private function resolveUser(SocialiteUserContract $googleUser): ?User
+    private function resolveUser(AbstractUser $googleUser): ?User
     {
-        $googleId = $googleUser->getId();
+        $googleId = (string) $googleUser->getId();
 
-        if ($googleId !== null && $googleId !== '') {
+        if ($googleId !== '') {
             $userByGoogleId = User::query()->where('google_id', $googleId)->first();
             if ($userByGoogleId !== null) {
                 return $userByGoogleId;
@@ -90,12 +94,12 @@ class GoogleOAuthController extends Controller
             ->first();
     }
 
-    private function linkGoogleAccount(User $user, SocialiteUser $googleUser): void
+    private function linkGoogleAccount(User $user, AbstractUser $googleUser): void
     {
-        $googleId = $googleUser->getId();
+        $googleId = (string) $googleUser->getId();
         $updates = [];
 
-        if (($user->google_id === null || $user->google_id === '') && $googleId !== null && $googleId !== '') {
+        if (($user->google_id === null || $user->google_id === '') && $googleId !== '') {
             $updates['google_id'] = $googleId;
         }
 

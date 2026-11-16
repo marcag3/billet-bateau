@@ -8,7 +8,6 @@ use App\Actions\RevertVoyageArrivalAction;
 use App\Actions\RevertVoyageDepartureAction;
 use App\Actions\StartVoyageAction;
 use App\Actions\UncancelVoyageAction;
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\Voyages\VoyagePatchData;
 use App\Data\PowerSync\Voyages\VoyagePutData;
 use App\Data\PowerSync\Voyages\VoyagePutPayloadResolver;
@@ -18,61 +17,55 @@ use App\Models\Trip;
 use App\Models\Voyage;
 use App\Models\WaterRoute;
 use App\Support\Voyages\VoyageProgramResolver;
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
-final class ApplyVoyagePowerSyncCrudAction
+/**
+ * @extends PowerSyncCrudAction<VoyagePutData, VoyagePatchData>
+ */
+final class ApplyVoyagePowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $voyage = Voyage::query()->whereKey($id)->first();
-
-            if ($voyage === null) {
-                return;
-            }
-
-            VoyageProgramResolver::assertProgramManaged($voyage, $userId);
-
-            if ($voyage->status === VoyageStatus::Underway || $voyage->status === VoyageStatus::Completed) {
-                throw ValidationException::withMessages([
-                    'voyage' => __('This departure cannot be deleted while underway or completed.'),
-                ]);
-            }
-
-            $voyage->delete();
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = VoyagePutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $dto = VoyagePatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $dto, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for voyages: '.$op);
+        return 'voyages';
     }
 
-    private function applyPut(string $id, VoyagePutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return VoyagePutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return VoyagePatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $voyage = Voyage::query()->whereKey($id)->first();
+
+        if ($voyage === null) {
+            return;
+        }
+
+        VoyageProgramResolver::assertProgramManaged($voyage, $userId);
+
+        if ($voyage->status === VoyageStatus::Underway || $voyage->status === VoyageStatus::Completed) {
+            throw ValidationException::withMessages([
+                'voyage' => __('This departure cannot be deleted while underway or completed.'),
+            ]);
+        }
+
+        $voyage->delete();
+    }
+
+    /**
+     * @param  VoyagePutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $existing = Voyage::query()->whereKey($id)->first();
         $merged = VoyagePutPayloadResolver::resolve($dto, $existing);
@@ -142,7 +135,10 @@ final class ApplyVoyagePowerSyncCrudAction
         }
     }
 
-    private function applyPatch(string $id, VoyagePatchData $patch, string $userId): void
+    /**
+     * @param  VoyagePatchData  $patch
+     */
+    protected function applyPatch(string $id, Data $patch, string $userId): void
     {
         $voyage = Voyage::query()->whereKey($id)->first();
 
@@ -238,13 +234,13 @@ final class ApplyVoyagePowerSyncCrudAction
         return $existingStatus ?? VoyageStatus::Draft;
     }
 
-    private function patchTimestamp(?CarbonInterface $value): ?Carbon
+    private function patchTimestamp(?CarbonInterface $value): ?CarbonImmutable
     {
         if ($value === null) {
             return null;
         }
 
-        return Carbon::instance($value);
+        return CarbonImmutable::instance($value);
     }
 
     private function assertRequiredLifecycleTimestamps(Voyage $voyage, VoyageStatus $targetStatus): void

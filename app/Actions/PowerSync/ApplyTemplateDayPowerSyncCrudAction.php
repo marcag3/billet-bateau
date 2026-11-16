@@ -2,65 +2,53 @@
 
 namespace App\Actions\PowerSync;
 
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\TemplateDays\TemplateDayPatchData;
 use App\Data\PowerSync\TemplateDays\TemplateDayPutData;
 use App\Data\PowerSync\TemplateDays\TemplateDayPutPayloadResolver;
 use App\Data\PowerSync\TemplateDays\TemplateDayResolvedPutData;
-use App\Models\Program;
 use App\Models\TemplateDay;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
-final class ApplyTemplateDayPowerSyncCrudAction
+/**
+ * @extends PowerSyncCrudAction<TemplateDayPutData, TemplateDayPatchData>
+ */
+final class ApplyTemplateDayPowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $templateDay = TemplateDay::query()->whereKey($id)->first();
-
-            if ($templateDay === null) {
-                return;
-            }
-
-            $program = Program::query()->whereKey($templateDay->program_id)->first();
-
-            if ($program === null || ! $program->userCanManage($userId)) {
-                throw new AuthorizationException;
-            }
-
-            $templateDay->delete();
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = TemplateDayPutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $patch = TemplateDayPatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $patch, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for template_days: '.$op);
+        return 'template_days';
     }
 
-    private function applyPut(string $id, TemplateDayPutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return TemplateDayPutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return TemplateDayPatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $templateDay = TemplateDay::query()->whereKey($id)->first();
+
+        if ($templateDay === null) {
+            return;
+        }
+
+        $this->assertProgramManaged($templateDay->program_id, $userId);
+
+        $templateDay->delete();
+    }
+
+    /**
+     * @param  TemplateDayPutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $existing = TemplateDay::query()->whereKey($id)->first();
 
@@ -82,11 +70,7 @@ final class ApplyTemplateDayPowerSyncCrudAction
             }
         }
 
-        $program = Program::query()->whereKey($programId)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
-        }
+        $this->assertProgramManaged($programId, $userId);
 
         $merged = TemplateDayPutPayloadResolver::resolve($dto, $existing);
         $resolved = TemplateDayResolvedPutData::validateAndCreate($merged);
@@ -100,7 +84,10 @@ final class ApplyTemplateDayPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, TemplateDayPatchData $patch, string $userId): void
+    /**
+     * @param  TemplateDayPatchData  $patch
+     */
+    protected function applyPatch(string $id, Data $patch, string $userId): void
     {
         $templateDay = TemplateDay::query()->whereKey($id)->first();
 
@@ -108,11 +95,7 @@ final class ApplyTemplateDayPowerSyncCrudAction
             return;
         }
 
-        $program = Program::query()->whereKey($templateDay->program_id)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
-        }
+        $this->assertProgramManaged($templateDay->program_id, $userId);
 
         if (! ($patch->program_id instanceof Optional)) {
             $incoming = $patch->program_id;
