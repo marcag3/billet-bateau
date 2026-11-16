@@ -44,6 +44,8 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../store/auth.store";
+import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
+import { useConfirmDialog } from "../composables/useConfirmDialog";
 
 withDefaults(
     defineProps<{
@@ -92,8 +94,25 @@ const userInitials = computed(() => {
     return "?";
 });
 
-async function disconnect() {
+const powersync = getAppPowerSyncContext();
+const { confirm } = useConfirmDialog();
+
+async function signOut(): Promise<void> {
     await authStore.logout();
     await router.replace({ name: "login" });
+}
+
+function disconnect(): void {
+    const pendingCount = powersync.outboxPendingCount.value;
+    if (pendingCount <= 0) {
+        void signOut();
+        return;
+    }
+
+    confirm({
+        title: t("common.disconnect"),
+        message: t("common.disconnectUnsentChanges", { count: pendingCount }, pendingCount),
+        onOk: signOut,
+    });
 }
 </script>
