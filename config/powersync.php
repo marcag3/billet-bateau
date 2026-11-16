@@ -9,7 +9,7 @@ return [
     /**
      * Shared secret for HS256 JWTs (UTF-8 string). Must match the PowerSync service `client_auth.jwks` oct key material.
      */
-    'jwt_secret' => (string) env('POWERSYNC_JWT_SECRET', 'powersync-local-poc-secret-32_bytes!'),
+    'jwt_secret' => (string) env('POWERSYNC_JWT_SECRET', in_array(env('APP_ENV'), ['local', 'testing'], true) ? 'powersync-local-poc-secret-32_bytes!' : ''),
 
     'jwt_kid' => (string) env('POWERSYNC_JWT_KID', 'local-dev'),
 
@@ -57,7 +57,7 @@ return [
     /**
      * Bearer token matching a value in PowerSync `api.tokens` (service.yaml).
      */
-    'admin_api_token' => (string) env('POWERSYNC_ADMIN_API_TOKEN', 'powersync-local-admin-token'),
+    'admin_api_token' => (string) env('POWERSYNC_ADMIN_API_TOKEN', in_array(env('APP_ENV'), ['local', 'testing'], true) ? 'powersync-local-admin-token' : ''),
 
     'diagnostics_check_enabled' => (bool) env('POWERSYNC_DIAGNOSTICS_CHECK_ENABLED', true),
 ];
