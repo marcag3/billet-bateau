@@ -7,7 +7,6 @@ use App\Data\PowerSync\Products\ProductPatchData;
 use App\Data\PowerSync\Products\ProductPutData;
 use App\Data\PowerSync\Products\ProductPutPayloadResolver;
 use App\Data\PowerSync\Products\ProductResolvedPutData;
-use App\Models\BoatType;
 use App\Models\Product;
 use App\Models\WaterRoute;
 use Carbon\CarbonImmutable;
@@ -183,21 +182,6 @@ final class ApplyProductPowerSyncCrudAction extends PowerSyncCrudAction
         $newKey = $product->banner_object_key;
         if ($this->shouldDeleteReplacedBannerObject($previousBannerKey, $newKey)) {
             TryDeleteStoredObjectAction::run($previousBannerKey);
-        }
-    }
-
-    private function assertBoatTypeBelongsToProgram(?string $boatTypeId, string $programId): void
-    {
-        if ($boatTypeId === null) {
-            return;
-        }
-
-        $boatType = BoatType::query()->whereKey($boatTypeId)->first();
-
-        if ($boatType === null || (string) $boatType->program_id !== $programId) {
-            throw ValidationException::withMessages([
-                'data.boat_type_id' => 'Boat type must belong to the same program.',
-            ]);
         }
     }
 

@@ -449,12 +449,13 @@ const boatOptions = computed(() =>
 const { data: guidesRaw } = useLiveQuery(
     (qb) => {
         const col = powersync.collections.guides.value;
-        if (!col) {
+        const pid = powersync.activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) {
             return undefined;
         }
-        return qb.from({ g: col });
+        return qb.from({ g: col }).where(({ g }) => eq(g.program_id, pid));
     },
-    [powersync.collections.guides],
+    [powersync.collections.guides, powersync.activeProgramIdRef],
 );
 
 const guideOptions = computed(() =>

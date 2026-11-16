@@ -13,6 +13,8 @@ export default {
         calendar: "Calendrier",
         logout: "Se deconnecter",
         disconnect: "Se deconnecter",
+        disconnectUnsentChanges:
+            "{count} modification n'a pas encore ete envoyee et sera perdue si vous vous deconnectez maintenant. | {count} modifications n'ont pas encore ete envoyees et seront perdues si vous vous deconnectez maintenant.",
         reauthenticate: "Se reconnecter",
         language: "Langue",
         welcome: "Bienvenue",
@@ -903,6 +905,7 @@ export default {
         name: "Nom",
         email: "Courriel",
         currentPassword: "Mot de passe actuel",
+        currentPasswordForEmailHint: "Entrez votre mot de passe actuel pour changer votre courriel.",
         newPassword: "Nouveau mot de passe",
         confirmPassword: "Confirmer le nouveau mot de passe",
         saveProfile: "Enregistrer le profil",

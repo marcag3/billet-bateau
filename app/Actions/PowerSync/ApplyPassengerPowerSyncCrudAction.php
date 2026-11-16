@@ -6,6 +6,7 @@ use App\Data\PowerSync\Passengers\PassengerPatchData;
 use App\Data\PowerSync\Passengers\PassengerPutData;
 use App\Enums\VoyageStatus;
 use App\Models\Booking;
+use App\Models\CheckIn;
 use App\Models\Passenger;
 use App\Models\Voyage;
 use App\Support\Voyages\VoyageProgramResolver;
@@ -41,13 +42,7 @@ final class ApplyPassengerPowerSyncCrudAction extends PowerSyncCrudAction
             return;
         }
 
-        $voyage = Voyage::query()->whereKey($passenger->voyage_id)->first();
-
-        if ($voyage === null) {
-            return;
-        }
-
-        $this->assertVoyageAllowsManifestEdits($voyage, $userId);
+        $this->assertVoyageAllowsManifestEdits($this->existingVoyageOrFail($passenger->voyage_id), $userId);
         $passenger->delete();
     }
 
@@ -75,8 +70,16 @@ final class ApplyPassengerPowerSyncCrudAction extends PowerSyncCrudAction
 
         $this->assertVoyageAllowsManifestEdits($voyage, $userId);
 
+        $existing = Passenger::query()->whereKey($id)->first();
+        if ($existing !== null) {
+            $this->assertVoyageAllowsManifestEdits($this->existingVoyageOrFail($existing->voyage_id), $userId);
+        }
+
         $bookingId = $dto->booking_id instanceof Optional ? null : $dto->booking_id;
         $this->assertBookingBelongsToVoyageTrip($bookingId, $voyage);
+
+        $checkInId = $dto->check_in_id instanceof Optional ? null : $dto->check_in_id;
+        $this->assertCheckInBelongsToVoyage($checkInId, $voyage);
 
         Passenger::query()->updateOrCreate(
             ['id' => $id],
@@ -84,7 +87,7 @@ final class ApplyPassengerPowerSyncCrudAction extends PowerSyncCrudAction
                 'voyage_id' => $voyageId,
                 'name' => trim($name),
                 'booking_id' => $bookingId,
-                'check_in_id' => $dto->check_in_id instanceof Optional ? null : $dto->check_in_id,
+                'check_in_id' => $checkInId,
                 'notes' => $dto->notes instanceof Optional ? null : $dto->notes,
             ],
         );
@@ -133,6 +136,7 @@ final class ApplyPassengerPowerSyncCrudAction extends PowerSyncCrudAction
         }
 
         if (! ($patch->check_in_id instanceof Optional)) {
+            $this->assertCheckInBelongsToVoyage($patch->check_in_id, $voyage);
             $passenger->check_in_id = $patch->check_in_id;
         }
 
@@ -150,6 +154,19 @@ final class ApplyPassengerPowerSyncCrudAction extends PowerSyncCrudAction
         if ($voyage->status === VoyageStatus::Completed) {
             throw ValidationException::withMessages([
                 'voyage' => __('Passengers cannot be changed after the departure has arrived.'),
+            ]);
+        }
+    }
+
+    private function assertCheckInBelongsToVoyage(?string $checkInId, Voyage $voyage): void
+    {
+        if ($checkInId === null) {
+            return;
+        }
+
+        if (CheckIn::query()->whereKey($checkInId)->where('voyage_id', $voyage->getKey())->doesntExist()) {
+            throw ValidationException::withMessages([
+                'check_in_id' => __('The check-in must belong to this departure.'),
             ]);
         }
     }

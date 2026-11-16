@@ -67,6 +67,11 @@ final class ApplyBookingTicketPowerSyncCrudAction extends PowerSyncCrudAction
     {
         $existing = BookingTicket::query()->whereKey($id)->first();
 
+        if ($existing !== null) {
+            $existingBooking = Booking::withTrashed()->whereKey($existing->booking_id)->first();
+            $this->assertProgramManaged($existingBooking === null ? null : (string) $existingBooking->program_id, $userId);
+        }
+
         $merged = BookingTicketPutPayloadResolver::resolve($dto, $existing);
         $resolved = BookingTicketResolvedPutData::validateAndCreate($merged);
 

@@ -28,6 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
             ->withoutOverlapping()
             ->onOneServer();
 
+        $schedule->command('media:prune-orphan-uploads')
+            ->dailyAt('03:30')
+            ->withoutOverlapping()
+            ->onOneServer();
+
         $schedule->command('bookings:send-departure-reminders')
             ->hourly()
             ->withoutOverlapping()

@@ -48,7 +48,9 @@ Route::middleware('guest')->group(function (): void {
             return view('app');
         })->name('app.reset-password');
 
-        Route::post('/login', [SessionController::class, 'store'])->name('login');
+        Route::post('/login', [SessionController::class, 'store'])
+            ->middleware('throttle:login')
+            ->name('login');
 
         Route::middleware('throttle:10,1')->group(function (): void {
             Route::get('/auth/google/redirect', [GoogleOAuthController::class, 'redirect'])

@@ -142,6 +142,7 @@ const templateDayDatesTable = new Table({
 
 const guidesTable = new Table({
     id: column.text,
+    program_id: column.text,
     name: column.text,
     staff_user_id: column.text,
 });

@@ -10,6 +10,7 @@ use App\Data\PowerSync\Bookings\BookingResolvedPutData;
 use App\Models\Booking;
 use App\Models\BookingTicket;
 use App\Models\Trip;
+use App\Models\Voyage;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
 use Spatie\LaravelData\Data;
@@ -212,6 +213,16 @@ final class ApplyBookingPowerSyncCrudAction extends PowerSyncCrudAction
         }
 
         if (! ($patch->cancelled_by_voyage_id instanceof Optional)) {
+            if ($patch->cancelled_by_voyage_id !== null
+                && Voyage::query()
+                    ->whereKey($patch->cancelled_by_voyage_id)
+                    ->where('program_id', $booking->program_id)
+                    ->doesntExist()) {
+                throw ValidationException::withMessages([
+                    'data.cancelled_by_voyage_id' => __('The selected departure is invalid.'),
+                ]);
+            }
+
             $booking->cancelled_by_voyage_id = $patch->cancelled_by_voyage_id;
         }
 

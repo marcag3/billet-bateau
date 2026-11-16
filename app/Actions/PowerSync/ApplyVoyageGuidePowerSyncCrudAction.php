@@ -37,11 +37,7 @@ final class ApplyVoyageGuidePowerSyncCrudAction extends PowerSyncCrudAction
         $row = DB::table('voyage_guide')->where('id', $id)->first();
 
         if ($row !== null) {
-            $voyage = Voyage::query()->whereKey($row->voyage_id)->first();
-
-            if ($voyage !== null) {
-                VoyageProgramResolver::assertProgramManaged($voyage, $userId);
-            }
+            VoyageProgramResolver::assertProgramManaged($this->existingVoyageOrFail((string) $row->voyage_id), $userId);
         }
 
         DB::table('voyage_guide')->where('id', $id)->delete();
@@ -77,13 +73,17 @@ final class ApplyVoyageGuidePowerSyncCrudAction extends PowerSyncCrudAction
             ]);
         }
 
-        if (Guide::query()->whereKey($guideId)->doesntExist()) {
+        if (Guide::query()->whereKey($guideId)->where('program_id', $voyage->program_id)->doesntExist()) {
             throw ValidationException::withMessages([
                 'guide_id' => __('The selected guide is invalid.'),
             ]);
         }
 
         $existing = DB::table('voyage_guide')->where('id', $id)->first();
+
+        if ($existing !== null) {
+            VoyageProgramResolver::assertProgramManaged($this->existingVoyageOrFail((string) $existing->voyage_id), $userId);
+        }
 
         if ($existing === null) {
             DB::table('voyage_guide')->insert([

@@ -26,6 +26,19 @@
                         :disable="isProfileSubmitting"
                     />
 
+                    <q-input
+                        v-if="isChangingEmail"
+                        v-model="profileCurrentPassword"
+                        v-bind="profileCurrentPasswordProps"
+                        outlined
+                        dense
+                        type="password"
+                        autocomplete="current-password"
+                        :label="t('profile.currentPassword')"
+                        :hint="t('profile.currentPasswordForEmailHint')"
+                        :disable="isProfileSubmitting"
+                    />
+
                     <div>
                         <q-btn
                             color="primary"
@@ -95,7 +108,7 @@
 <script setup lang="ts">
 import { useForm } from 'vee-validate';
 import { useI18n } from 'vue-i18n';
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
 import { useAuthStore } from '../store/auth.store';
 import { changePassword, updateProfile } from '../models/profile.api';
 import {
@@ -134,6 +147,13 @@ const {
 const profileField = createQuasarFieldBinder(defineProfileField);
 const [profileName, profileNameProps] = profileField('name');
 const [profileEmail, profileEmailProps] = profileField('email');
+const [profileCurrentPassword, profileCurrentPasswordProps] = profileField('currentPassword');
+
+const isChangingEmail = computed(
+    () =>
+        String(profileEmail.value ?? '').trim().toLowerCase() !==
+        String(authStore.user?.email ?? '').trim().toLowerCase(),
+);
 
 watch(
     () => authStore.user,
@@ -146,6 +166,7 @@ watch(
             values: {
                 name: String(user.name ?? ''),
                 email: String(user.email ?? ''),
+                currentPassword: '',
             },
         });
     },
@@ -180,6 +201,7 @@ const onProfileSubmit = handleProfileSubmit(async (values) => {
             const user = await updateProfile({
                 name: values.name,
                 email: values.email,
+                currentPassword: isChangingEmail.value ? values.currentPassword : undefined,
             });
             authStore.markAuthenticated(user);
         },

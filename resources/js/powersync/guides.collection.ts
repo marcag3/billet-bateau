@@ -5,6 +5,7 @@ import { appGuidesPowerSyncTable } from "./app.powersync-schema";
 
 export const guidesSchema = z.object({
     id: z.string(),
+    program_id: z.string().nullable().default(null),
     name: z.string().nullable().default(null),
     staff_user_id: z.string().nullable().default(null),
 });

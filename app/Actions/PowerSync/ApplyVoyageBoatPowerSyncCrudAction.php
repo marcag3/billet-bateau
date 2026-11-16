@@ -40,11 +40,7 @@ final class ApplyVoyageBoatPowerSyncCrudAction extends PowerSyncCrudAction
             return;
         }
 
-        $voyage = Voyage::query()->whereKey($row->voyage_id)->first();
-
-        if ($voyage !== null) {
-            VoyageProgramResolver::assertProgramManaged($voyage, $userId);
-        }
+        VoyageProgramResolver::assertProgramManaged($this->existingVoyageOrFail((string) $row->voyage_id), $userId);
 
         DB::table('voyage_boat')->where('id', $id)->delete();
     }
@@ -94,6 +90,10 @@ final class ApplyVoyageBoatPowerSyncCrudAction extends PowerSyncCrudAction
         }
 
         $existing = DB::table('voyage_boat')->where('id', $id)->first();
+
+        if ($existing !== null) {
+            VoyageProgramResolver::assertProgramManaged($this->existingVoyageOrFail((string) $existing->voyage_id), $userId);
+        }
 
         if ($existing === null) {
             DB::table('voyage_boat')->insert([

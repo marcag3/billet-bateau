@@ -28,6 +28,43 @@ import {
 import { logSyncStatusErrors } from "./powersync-sync-error-logger";
 import { createPowerSyncLogger } from "./powersync-logger";
 
+const LOCAL_DATA_OWNER_STORAGE_KEY = "billbateau.powersync.owner";
+
+function readLocalDataOwner(): string | null {
+    try {
+        return window.localStorage.getItem(LOCAL_DATA_OWNER_STORAGE_KEY);
+    } catch {
+        return null;
+    }
+}
+
+function writeLocalDataOwner(userId: string | null): void {
+    try {
+        if (userId === null) {
+            window.localStorage.removeItem(LOCAL_DATA_OWNER_STORAGE_KEY);
+        } else {
+            window.localStorage.setItem(LOCAL_DATA_OWNER_STORAGE_KEY, userId);
+        }
+    } catch {
+        // Storage may be unavailable (private mode); the logout wipe still applies.
+    }
+}
+
+/**
+ * The local database file is shared by every account on this browser. When it holds another
+ * user's rows (or their unsent upload queue), wipe it before this user connects.
+ */
+async function clearLocalDataOwnedByAnotherUser(
+    db: PowerSyncDatabase,
+    authenticatedUserId: string,
+): Promise<void> {
+    const owner = readLocalDataOwner();
+    if (owner !== null && owner !== authenticatedUserId) {
+        await db.disconnectAndClear();
+    }
+    writeLocalDataOwner(authenticatedUserId);
+}
+
 async function resolveAuthenticatedUserId(): Promise<string> {
     const authStore = useAuthStore();
     const existing = authStore.user?.id;
@@ -76,7 +113,12 @@ function applyCurrentPowerSyncStatus(db: PowerSyncDatabase): void {
     handlePowerSyncStatusChanged(db.currentStatus);
 }
 
-export async function teardownAppPowerSync(): Promise<void> {
+/**
+ * @param options.clearLocalData wipe synced rows and the unsent upload queue (used on logout).
+ */
+export async function teardownAppPowerSync(
+    options: { clearLocalData?: boolean } = {},
+): Promise<void> {
     if (runtimeState.bootstrapPromise !== null) {
         try {
             await runtimeState.bootstrapPromise;
@@ -100,6 +142,14 @@ export async function teardownAppPowerSync(): Promise<void> {
     const dbToClose = runtimeState.powerSyncDbRef.value;
     runtimeState.powerSyncDbRef.value = null;
     if (dbToClose) {
+        if (options.clearLocalData === true) {
+            try {
+                await dbToClose.disconnectAndClear();
+                writeLocalDataOwner(null);
+            } catch (clearError) {
+                console.error("PowerSync clear failed during teardown:", clearError);
+            }
+        }
         try {
             await dbToClose.close();
         } catch (closeError) {
@@ -161,6 +211,8 @@ export async function bootstrapAppPowerSync(): Promise<void> {
             });
 
             await db.init();
+
+            await clearLocalDataOwnedByAnotherUser(db, authenticatedUserId);
 
             runtimeState.powerSyncDbRef.value = db;
 

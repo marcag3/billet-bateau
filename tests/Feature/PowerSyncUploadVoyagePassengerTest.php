@@ -298,7 +298,7 @@ class PowerSyncUploadVoyagePassengerTest extends TestCase
         $voyage = Voyage::factory()->forTrip($trip)->create([
             'status' => VoyageStatus::Ready,
         ]);
-        $guide = Guide::factory()->create();
+        $guide = Guide::factory()->create(['program_id' => $program->getKey()]);
         $pivotId = (string) Str::ulid();
 
         $this->actingAs($user)->postJson('/api/powersync/upload', [
@@ -320,6 +320,34 @@ class PowerSyncUploadVoyagePassengerTest extends TestCase
             'voyage_id' => $voyage->getKey(),
             'guide_id' => $guide->getKey(),
         ]);
+    }
+
+    public function test_put_voyage_guide_rejects_another_programs_guide(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->withOwner($user)->create();
+        $trip = Trip::factory()->withWaterRoute()->forProgram($program)->create();
+        $voyage = Voyage::factory()->forTrip($trip)->create([
+            'status' => VoyageStatus::Ready,
+        ]);
+        $foreignGuide = Guide::factory()->create();
+        $pivotId = (string) Str::ulid();
+
+        $this->actingAs($user)->postJson('/api/powersync/upload', [
+            'crud' => [
+                [
+                    'op' => 'PUT',
+                    'type' => 'voyage_guide',
+                    'id' => $pivotId,
+                    'data' => [
+                        'voyage_id' => $voyage->getKey(),
+                        'guide_id' => $foreignGuide->getKey(),
+                    ],
+                ],
+            ],
+        ])->assertOk()->assertJsonPath('results.0.status', 'rejected');
+
+        $this->assertDatabaseMissing('voyage_guide', ['id' => $pivotId]);
     }
 
     public function test_delete_passenger(): void

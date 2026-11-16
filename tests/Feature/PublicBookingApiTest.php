@@ -342,6 +342,34 @@ class PublicBookingApiTest extends TestCase
         );
     }
 
+    public function test_store_throttles_repeated_bookings_for_the_same_contact_email(): void
+    {
+        Notification::fake();
+        $program = Program::factory()->withOwner(User::factory()->create())->create(['slug' => 'spam-me']);
+        $trip = Trip::factory()->forProgram($program)->create(['scheduled_departure_at' => now()->addWeek()]);
+        $trip->product->forceFill(['capacity' => 50])->save();
+        $type = TicketType::factory()->forProgram($program)->create(['min_per_purchase' => 1, 'max_per_purchase' => 10]);
+
+        $payload = [
+            'trip_id' => $trip->getKey(),
+            'ticket_quantities' => [(string) $type->getKey() => 1],
+            'contact_name' => 'Spam Target',
+            'contact_email' => 'target@example.com',
+            'country' => 'CA',
+        ];
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->postJson('/api/public/programs/spam-me/bookings', $payload)->assertCreated();
+        }
+
+        $this->postJson('/api/public/programs/spam-me/bookings', [
+            ...$payload,
+            'contact_email' => 'TARGET@example.com',
+        ])->assertTooManyRequests();
+
+        $this->assertSame(5, Booking::query()->where('program_id', $program->getKey())->count());
+    }
+
     public function test_store_accepts_explicit_empty_custom_answers_when_program_has_no_questions(): void
     {
         $u = User::factory()->create();

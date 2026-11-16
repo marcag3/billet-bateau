@@ -85,7 +85,7 @@ class GoogleOAuthController extends Controller
         }
 
         $email = Str::lower(trim((string) $googleUser->getEmail()));
-        if ($email === '') {
+        if ($email === '' || ! $this->googleEmailIsVerified($googleUser)) {
             return null;
         }
 
@@ -103,13 +103,21 @@ class GoogleOAuthController extends Controller
             $updates['google_id'] = $googleId;
         }
 
-        if ($user->email_verified_at === null && ($googleUser->getRaw()['email_verified'] ?? false) === true) {
+        if ($user->email_verified_at === null && $this->googleEmailIsVerified($googleUser)) {
             $updates['email_verified_at'] = now();
         }
 
         if ($updates !== []) {
             $user->forceFill($updates)->save();
         }
+    }
+
+    /**
+     * Matching an account by email is only safe when Google vouches for the address.
+     */
+    private function googleEmailIsVerified(AbstractUser $googleUser): bool
+    {
+        return ($googleUser->getRaw()['email_verified'] ?? false) === true;
     }
 
     private function loginErrorRedirect(string $error): RedirectResponse

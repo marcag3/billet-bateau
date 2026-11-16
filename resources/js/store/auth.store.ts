@@ -184,7 +184,7 @@ export const useAuthStore = defineStore("auth", {
             await logoutRequest();
 
             setActiveProgramId("");
-            await teardownAppPowerSync();
+            await teardownAppPowerSync({ clearLocalData: true });
 
             this.isAuthenticated = false;
             this.user = null;

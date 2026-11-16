@@ -41,11 +41,7 @@ final class ApplyCheckInPowerSyncCrudAction extends PowerSyncCrudAction
             return;
         }
 
-        $voyage = Voyage::query()->whereKey($checkIn->voyage_id)->first();
-
-        if ($voyage !== null) {
-            $this->assertVoyageAllowsCheckInEdits($voyage, $userId);
-        }
+        $this->assertVoyageAllowsCheckInEdits($this->existingVoyageOrFail($checkIn->voyage_id), $userId);
 
         $checkIn->delete();
     }
@@ -79,6 +75,11 @@ final class ApplyCheckInPowerSyncCrudAction extends PowerSyncCrudAction
         }
 
         $this->assertVoyageAllowsCheckInEdits($voyage, $userId);
+
+        if ($existing !== null) {
+            $this->assertVoyageAllowsCheckInEdits($this->existingVoyageOrFail($existing->voyage_id), $userId);
+        }
+
         $this->assertBookingBelongsToVoyage($bookingId, $voyage);
         $this->assertUniqueBookingCheckIn($bookingId, $id);
 

@@ -3,8 +3,11 @@
 namespace App\Actions\PowerSync;
 
 use App\Data\PowerSync\PowerSyncCrudEntryData;
+use App\Models\BoatType;
 use App\Models\Program;
+use App\Models\Voyage;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Validation\ValidationException;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Spatie\LaravelData\Data;
 
@@ -99,5 +102,51 @@ abstract class PowerSyncCrudAction
         if ($program === null || ! $program->userCanManage($userId)) {
             throw new AuthorizationException;
         }
+    }
+
+    /**
+     * Rejects a write that would move an existing row into a different program.
+     *
+     * @throws AuthorizationException
+     */
+    protected function assertProgramUnchanged(?string $existingProgramId, ?string $incomingProgramId): void
+    {
+        if ($incomingProgramId !== null && (string) $existingProgramId !== $incomingProgramId) {
+            throw new AuthorizationException;
+        }
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    protected function assertBoatTypeBelongsToProgram(?string $boatTypeId, string $programId): void
+    {
+        if ($boatTypeId === null) {
+            return;
+        }
+
+        $boatType = BoatType::query()->whereKey($boatTypeId)->first();
+
+        if ($boatType === null || (string) $boatType->program_id !== $programId) {
+            throw ValidationException::withMessages([
+                'data.boat_type_id' => 'Boat type must belong to the same program.',
+            ]);
+        }
+    }
+
+    /**
+     * Loads the voyage an existing row belongs to; a row whose voyage is gone cannot be authorized.
+     *
+     * @throws AuthorizationException
+     */
+    protected function existingVoyageOrFail(?string $voyageId): Voyage
+    {
+        $voyage = $voyageId === null ? null : Voyage::query()->whereKey($voyageId)->first();
+
+        if ($voyage === null) {
+            throw new AuthorizationException;
+        }
+
+        return $voyage;
     }
 }

@@ -13,6 +13,8 @@ export default {
         calendar: "Calendar",
         logout: "Logout",
         disconnect: "Disconnect",
+        disconnectUnsentChanges:
+            "{count} change has not been sent yet and will be lost if you disconnect now. | {count} changes have not been sent yet and will be lost if you disconnect now.",
         reauthenticate: "Reauthenticate",
         language: "Language",
         welcome: "Welcome",
@@ -876,6 +878,7 @@ export default {
         name: "Name",
         email: "Email",
         currentPassword: "Current password",
+        currentPasswordForEmailHint: "Enter your current password to change your email.",
         newPassword: "New password",
         confirmPassword: "Confirm new password",
         saveProfile: "Save profile",

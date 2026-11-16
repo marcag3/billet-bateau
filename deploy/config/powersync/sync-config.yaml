@@ -58,9 +58,6 @@ streams:
           role
         FROM program_user
         WHERE user_id = auth.user_id()
-      - |
-        SELECT id, name, staff_user_id
-        FROM guides
 
   program_scope:
     priority: 2
@@ -160,6 +157,11 @@ streams:
         FROM water_routes
         WHERE water_routes.program_id = subscription.parameter('program_id')
           AND water_routes.program_id IN accessible_program_ids
+      - |
+        SELECT id, program_id, name, staff_user_id
+        FROM guides
+        WHERE guides.program_id = subscription.parameter('program_id')
+          AND guides.program_id IN accessible_program_ids
       - |
         SELECT id, program_id, name
         FROM template_days
