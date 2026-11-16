@@ -1,7 +1,6 @@
 {
     "agents": [
-        "cursor",
-        "copilot"
+        "claude_code"
     ],
     "cloud": false,
     "guidelines": true,
@@ -12,8 +11,15 @@
     ],
     "sail": false,
     "skills": [
+        "infer-conventions",
         "laravel-best-practices",
+        "testing-best-practices",
+        "octane-development",
+        "socialite-development",
+        "telescope-debugging",
         "wayfinder-development",
-        "laravel-actions"
+        "tailwindcss-development",
+        "laravel-actions",
+        "vuejs-best-practices"
     ]
 }
