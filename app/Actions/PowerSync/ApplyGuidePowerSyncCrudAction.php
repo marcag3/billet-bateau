@@ -4,62 +4,55 @@ namespace App\Actions\PowerSync;
 
 use App\Data\PowerSync\Guides\GuidePatchData;
 use App\Data\PowerSync\Guides\GuidePutData;
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Models\Guide;
 use App\Models\Program;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
-final class ApplyGuidePowerSyncCrudAction
+/**
+ * @extends PowerSyncCrudAction<GuidePutData, GuidePatchData>
+ */
+final class ApplyGuidePowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $guide = Guide::query()->whereKey($id)->first();
-
-            if ($guide === null) {
-                return;
-            }
-
-            $this->assertStaffMember($userId);
-            $guide->delete();
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = GuidePutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $dto = GuidePatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $dto, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for guides: '.$op);
+        return 'guides';
     }
 
-    private function applyPut(string $id, GuidePutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return GuidePutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return GuidePatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $guide = Guide::query()->whereKey($id)->first();
+
+        if ($guide === null) {
+            return;
+        }
+
+        $this->assertStaffMember($userId);
+        $guide->delete();
+    }
+
+    /**
+     * @param  GuidePutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $this->assertStaffMember($userId);
 
         $existing = Guide::query()->whereKey($id)->first();
         $name = $dto->name instanceof Optional
-            ? ($existing?->name ?? null)
+            ? ($existing->name ?? null)
             : $dto->name;
 
         if ($name === null || trim($name) === '') {
@@ -69,7 +62,7 @@ final class ApplyGuidePowerSyncCrudAction
         }
 
         $staffUserId = $dto->staff_user_id instanceof Optional
-            ? ($existing?->staff_user_id ?? null)
+            ? ($existing->staff_user_id ?? null)
             : $dto->staff_user_id;
 
         Guide::query()->updateOrCreate(
@@ -81,7 +74,10 @@ final class ApplyGuidePowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, GuidePatchData $dto, string $userId): void
+    /**
+     * @param  GuidePatchData  $dto
+     */
+    protected function applyPatch(string $id, Data $dto, string $userId): void
     {
         $guide = Guide::query()->whereKey($id)->first();
 

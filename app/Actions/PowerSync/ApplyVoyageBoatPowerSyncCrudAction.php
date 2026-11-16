@@ -2,7 +2,6 @@
 
 namespace App\Actions\PowerSync;
 
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\VoyageBoat\VoyageBoatPutData;
 use App\Enums\VoyageStatus;
 use App\Models\Boat;
@@ -10,48 +9,51 @@ use App\Models\Voyage;
 use App\Support\Voyages\VoyageProgramResolver;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
-final class ApplyVoyageBoatPowerSyncCrudAction
+/**
+ * @extends PowerSyncCrudAction<VoyageBoatPutData, Data>
+ */
+final class ApplyVoyageBoatPowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
+        return 'voyage_boat';
+    }
 
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $row = DB::table('voyage_boat')->where('id', $id)->first();
+    protected function putDataClass(): string
+    {
+        return VoyageBoatPutData::class;
+    }
 
-            if ($row === null) {
-                return;
-            }
+    protected function patchDataClass(): ?string
+    {
+        return null;
+    }
 
-            $voyage = Voyage::query()->whereKey($row->voyage_id)->first();
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $row = DB::table('voyage_boat')->where('id', $id)->first();
 
-            if ($voyage !== null) {
-                VoyageProgramResolver::assertProgramManaged($voyage, $userId);
-            }
-
-            DB::table('voyage_boat')->where('id', $id)->delete();
-
+        if ($row === null) {
             return;
         }
 
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            throw new \RuntimeException('PATCH is not supported for voyage_boat.');
+        $voyage = Voyage::query()->whereKey($row->voyage_id)->first();
+
+        if ($voyage !== null) {
+            VoyageProgramResolver::assertProgramManaged($voyage, $userId);
         }
 
-        if ($op !== PowerSyncCrudEntryData::OP_PUT) {
-            throw new \RuntimeException('Unsupported PowerSync CRUD op for voyage_boat: '.$op);
-        }
+        DB::table('voyage_boat')->where('id', $id)->delete();
+    }
 
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-        $dto = VoyageBoatPutData::validateAndCreate($raw);
-
+    /**
+     * @param  VoyageBoatPutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
+    {
         $voyageId = $dto->voyage_id instanceof Optional ? null : $dto->voyage_id;
         $boatId = $dto->boat_id instanceof Optional ? null : $dto->boat_id;
 
