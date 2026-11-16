@@ -122,6 +122,9 @@ describe('AppWaterRouteForm', () => {
         const evt = new Event('submit', { cancelable: true, bubbles: true });
         await vm.submit?.(evt);
         await flushPromises();
+        await vi.waitFor(() => {
+            expect(mockCollectionRef.value?.insert).toHaveBeenCalled();
+        });
     }
 
     it('persists default trace when map trace is empty', async () => {

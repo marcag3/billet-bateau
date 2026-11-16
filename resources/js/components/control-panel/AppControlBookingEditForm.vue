@@ -260,7 +260,6 @@ import {
 } from '../../utilities/program-booking-questions';
 import {
     formatDepartureParts,
-    resolveProgramTimezone,
 } from '../../utilities/program-timezone-datetime';
 import type { TripWithRelationsRow } from '../../powersync/joined-queries';
 import AppCardSection from '../ui/AppCardSection.vue';
@@ -517,8 +516,6 @@ const canSaveBooking = computed(() => {
 const tripOptions = computed(() => {
     const currentTripId = String(currentBooking.value?.trip_id ?? '').trim();
     const ticketCount = tickets.value.length;
-    const tz = programTimezone.value;
-    const loc = String(locale.value);
 
     return tripRows.value.map((trip) => {
         const tripIdValue = String(trip.id);
