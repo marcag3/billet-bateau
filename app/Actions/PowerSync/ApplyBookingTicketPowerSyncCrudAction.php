@@ -13,9 +13,8 @@ use App\Models\BookingTicket;
 use App\Models\Program;
 use App\Models\TicketType;
 use App\Models\Trip;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
 /**
@@ -24,54 +23,47 @@ use Spatie\LaravelData\Optional;
  * Idempotent semantics: {@see PowerSyncCrudEntryData::OP_PATCH} and {@see PowerSyncCrudEntryData::OP_DELETE}
  * no-op when the target row does not exist, or when a {@see BookingTicket} row has no resolvable {@see Booking}
  * for authorization (offline client retries safe).
+ *
+ * @extends PowerSyncCrudAction<BookingTicketPutData, BookingTicketPatchData>
  */
-final class ApplyBookingTicketPowerSyncCrudAction
+final class ApplyBookingTicketPowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $bookingTicket = BookingTicket::query()->whereKey($id)->first();
-
-            if ($bookingTicket === null) {
-                return;
-            }
-
-            $booking = Booking::query()->whereKey($bookingTicket->booking_id)->first();
-            if ($booking === null) {
-                return;
-            }
-
-            $this->assertProgramManaged((string) $booking->program_id, $userId);
-            $bookingTicket->delete();
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = BookingTicketPutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $dto = BookingTicketPatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $dto, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for booking_tickets: '.$op);
+        return 'booking_tickets';
     }
 
-    private function applyPut(string $id, BookingTicketPutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return BookingTicketPutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return BookingTicketPatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $bookingTicket = BookingTicket::query()->whereKey($id)->first();
+
+        if ($bookingTicket === null) {
+            return;
+        }
+
+        $booking = Booking::query()->whereKey($bookingTicket->booking_id)->first();
+        if ($booking === null) {
+            return;
+        }
+
+        $this->assertProgramManaged((string) $booking->program_id, $userId);
+        $bookingTicket->delete();
+    }
+
+    /**
+     * @param  BookingTicketPutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $existing = BookingTicket::query()->whereKey($id)->first();
 
@@ -119,7 +111,10 @@ final class ApplyBookingTicketPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, BookingTicketPatchData $dto, string $userId): void
+    /**
+     * @param  BookingTicketPatchData  $dto
+     */
+    protected function applyPatch(string $id, Data $dto, string $userId): void
     {
         $bookingTicket = BookingTicket::query()->whereKey($id)->first();
 
@@ -214,15 +209,6 @@ final class ApplyBookingTicketPowerSyncCrudAction
 
         if ($bookingTicket->wasChanged()) {
             SendBookingModifiedNotificationAction::run($booking);
-        }
-    }
-
-    private function assertProgramManaged(string $programId, string $userId): void
-    {
-        $program = Program::query()->whereKey($programId)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
         }
     }
 

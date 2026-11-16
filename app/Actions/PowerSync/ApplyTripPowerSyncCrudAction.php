@@ -2,75 +2,62 @@
 
 namespace App\Actions\PowerSync;
 
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\Trips\TripPatchData;
 use App\Data\PowerSync\Trips\TripPutData;
 use App\Data\PowerSync\Trips\TripPutPayloadResolver;
 use App\Data\PowerSync\Trips\TripResolvedPutData;
 use App\Models\Product;
-use App\Models\Program;
 use App\Models\Trip;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
 /**
  * Applies PowerSync CRUD for {@see Trip} rows (trips upload type).
+ *
+ * @extends PowerSyncCrudAction<TripPutData, TripPatchData>
  */
-final class ApplyTripPowerSyncCrudAction
+final class ApplyTripPowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $trip = Trip::query()->whereKey($id)->first();
-
-            if ($trip === null) {
-                return;
-            }
-
-            $program = Program::query()->whereKey($trip->program_id)->first();
-
-            if ($program === null || ! $program->userCanManage($userId)) {
-                throw new AuthorizationException;
-            }
-
-            if ($trip->bookings()->exists()) {
-                throw ValidationException::withMessages([
-                    'trip' => 'This trip has bookings and cannot be deleted.',
-                ]);
-            }
-
-            $trip->delete();
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = TripPutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $patch = TripPatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $patch, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for trips: '.$op);
+        return 'trips';
     }
 
-    private function applyPut(string $id, TripPutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return TripPutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return TripPatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $trip = Trip::query()->whereKey($id)->first();
+
+        if ($trip === null) {
+            return;
+        }
+
+        $this->assertProgramManaged($trip->program_id, $userId);
+
+        if ($trip->bookings()->exists()) {
+            throw ValidationException::withMessages([
+                'trip' => 'This trip has bookings and cannot be deleted.',
+            ]);
+        }
+
+        $trip->delete();
+    }
+
+    /**
+     * @param  TripPutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $existing = Trip::query()->whereKey($id)->first();
 
@@ -92,11 +79,7 @@ final class ApplyTripPowerSyncCrudAction
             }
         }
 
-        $program = Program::query()->whereKey($programId)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
-        }
+        $this->assertProgramManaged($programId, $userId);
 
         $merged = TripPutPayloadResolver::resolve($dto, $existing);
         $resolved = TripResolvedPutData::validateAndCreate($merged);
@@ -113,7 +96,10 @@ final class ApplyTripPowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, TripPatchData $patch, string $userId): void
+    /**
+     * @param  TripPatchData  $patch
+     */
+    protected function applyPatch(string $id, Data $patch, string $userId): void
     {
         $trip = Trip::query()->whereKey($id)->first();
 
@@ -121,11 +107,7 @@ final class ApplyTripPowerSyncCrudAction
             return;
         }
 
-        $program = Program::query()->whereKey($trip->program_id)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
-        }
+        $this->assertProgramManaged($trip->program_id, $userId);
 
         if (! ($patch->program_id instanceof Optional)) {
             $incoming = $patch->program_id;

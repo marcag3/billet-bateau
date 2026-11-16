@@ -1,9 +1,8 @@
 import type { ControlPanelTripCardModel } from '../composables/useControlPanelDayBoard';
-import type { VoyageOutput } from '../powersync/voyages.collection';
 
 /** Manifest edits allowed only before the trip has departed (not underway / terminal). */
 export function isControlPanelManifestModifiable(
-    voyage: Pick<VoyageOutput, 'status'> | null,
+    voyage: { status?: string | null } | null,
 ): boolean {
     const status = String(voyage?.status ?? '').trim();
     return (

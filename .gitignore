@@ -32,3 +32,5 @@ Thumbs.db
 !deploy/config/caddy/
 !deploy/config/caddy/**
 /frankenphp
+
+/.claude/settings.local.json

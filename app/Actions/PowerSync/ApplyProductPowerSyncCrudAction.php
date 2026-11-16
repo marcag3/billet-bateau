@@ -3,75 +3,66 @@
 namespace App\Actions\PowerSync;
 
 use App\Actions\Media\TryDeleteStoredObjectAction;
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\Products\ProductPatchData;
 use App\Data\PowerSync\Products\ProductPutData;
 use App\Data\PowerSync\Products\ProductPutPayloadResolver;
 use App\Data\PowerSync\Products\ProductResolvedPutData;
 use App\Models\BoatType;
 use App\Models\Product;
-use App\Models\Program;
 use App\Models\WaterRoute;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
 /**
  * Applies PowerSync CRUD for {@see Product} rows (products upload type).
+ *
+ * @extends PowerSyncCrudAction<ProductPutData, ProductPatchData>
  */
-final class ApplyProductPowerSyncCrudAction
+final class ApplyProductPowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $product = Product::query()->whereKey($id)->first();
-
-            if ($product === null) {
-                return;
-            }
-
-            $this->assertProgramManaged((string) $product->program_id, $userId);
-
-            if ($product->trips()->exists()) {
-                throw ValidationException::withMessages([
-                    'id' => 'Cannot delete a product that is still used by trips.',
-                ]);
-            }
-
-            $previousBannerKey = $product->banner_object_key;
-            $product->delete();
-            TryDeleteStoredObjectAction::run($previousBannerKey);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = ProductPutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $dto = ProductPatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $dto, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for products: '.$op);
+        return 'products';
     }
 
-    private function applyPut(string $id, ProductPutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return ProductPutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return ProductPatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $product = Product::query()->whereKey($id)->first();
+
+        if ($product === null) {
+            return;
+        }
+
+        $this->assertProgramManaged((string) $product->program_id, $userId);
+
+        if ($product->trips()->exists()) {
+            throw ValidationException::withMessages([
+                'id' => 'Cannot delete a product that is still used by trips.',
+            ]);
+        }
+
+        $previousBannerKey = $product->banner_object_key;
+        $product->delete();
+        TryDeleteStoredObjectAction::run($previousBannerKey);
+    }
+
+    /**
+     * @param  ProductPutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $existing = Product::query()->whereKey($id)->first();
 
@@ -108,7 +99,10 @@ final class ApplyProductPowerSyncCrudAction
         }
     }
 
-    private function applyPatch(string $id, ProductPatchData $patch, string $userId): void
+    /**
+     * @param  ProductPatchData  $patch
+     */
+    protected function applyPatch(string $id, Data $patch, string $userId): void
     {
         $product = Product::query()->whereKey($id)->first();
 
@@ -189,15 +183,6 @@ final class ApplyProductPowerSyncCrudAction
         $newKey = $product->banner_object_key;
         if ($this->shouldDeleteReplacedBannerObject($previousBannerKey, $newKey)) {
             TryDeleteStoredObjectAction::run($previousBannerKey);
-        }
-    }
-
-    private function assertProgramManaged(string $programId, string $userId): void
-    {
-        $program = Program::query()->whereKey($programId)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
         }
     }
 

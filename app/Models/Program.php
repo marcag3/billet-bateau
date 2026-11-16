@@ -80,7 +80,7 @@ class Program extends Model
         $query->where('is_active', true);
     }
 
-    /** @return BelongsToMany<User, $this> */
+    /** @return BelongsToMany<User, $this, ProgramUser> */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
@@ -115,6 +115,7 @@ class Program extends Model
         return $this->hasMany(Boat::class, 'program_id');
     }
 
+    /** @return HasMany<Trip, $this> */
     public function trips(): HasMany
     {
         return $this->hasMany(Trip::class, 'program_id');
@@ -146,6 +147,7 @@ class Program extends Model
         return $this->hasMany(ProgramInvitation::class, 'program_id');
     }
 
+    /** @return HasMany<TicketType, $this> */
     public function ticketTypes(): HasMany
     {
         return $this->hasMany(TicketType::class, 'program_id');

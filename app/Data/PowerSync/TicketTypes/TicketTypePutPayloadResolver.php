@@ -50,7 +50,7 @@ final class TicketTypePutPayloadResolver
             $programId = $dto->program_id;
         }
 
-        $title = $dto->title instanceof Optional ? ($existing?->title ?? null) : $dto->title;
+        $title = $dto->title instanceof Optional ? ($existing->title ?? null) : $dto->title;
         if ($title === null || $title === '') {
             throw ValidationException::withMessages([
                 'data.title' => 'Title is required.',
@@ -59,9 +59,9 @@ final class TicketTypePutPayloadResolver
 
         $priceCents = $dto->price_cents instanceof Optional ? $existing?->price_cents : $dto->price_cents;
         $isPayWhatYouCan = $dto->is_pay_what_you_can instanceof Optional
-            ? (bool) ($existing?->is_pay_what_you_can ?? false)
+            ? (bool) ($existing->is_pay_what_you_can ?? false)
             : (bool) $dto->is_pay_what_you_can;
-        $minPerPurchase = $dto->min_per_purchase instanceof Optional ? ($existing?->min_per_purchase ?? 0) : $dto->min_per_purchase;
+        $minPerPurchase = $dto->min_per_purchase instanceof Optional ? ($existing->min_per_purchase ?? 0) : $dto->min_per_purchase;
         $maxPerPurchase = $dto->max_per_purchase instanceof Optional ? $existing?->max_per_purchase : $dto->max_per_purchase;
         $dependsOnTicketTypeId = $dto->depends_on_ticket_type_id instanceof Optional
             ? $existing?->depends_on_ticket_type_id

@@ -134,6 +134,7 @@ export default defineConfig(({ mode }) => {
             // simulate DOM with happy-dom
             // (requires installing happy-dom as a peer dependency)
             environment: 'happy-dom',
+            include: ['resources/js/**/*.{test,spec}.{ts,js}'],
             env: {
                 VITE_MEDIA_PUBLIC_BASE_URL: 'http://localhost:9000/app',
             },

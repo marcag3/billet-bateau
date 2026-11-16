@@ -7,74 +7,65 @@ use App\Data\PowerSync\Bookings\BookingPatchData;
 use App\Data\PowerSync\Bookings\BookingPutData;
 use App\Data\PowerSync\Bookings\BookingPutPayloadResolver;
 use App\Data\PowerSync\Bookings\BookingResolvedPutData;
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Models\Booking;
 use App\Models\BookingTicket;
-use App\Models\Program;
 use App\Models\Trip;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
 /**
  * Applies PowerSync CRUD for {@see Booking} rows (bookings upload type).
+ *
+ * @extends PowerSyncCrudAction<BookingPutData, BookingPatchData>
  */
-final class ApplyBookingPowerSyncCrudAction
+final class ApplyBookingPowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $booking = Booking::withTrashed()->whereKey($id)->first();
-
-            if ($booking === null || $booking->trashed()) {
-                return;
-            }
-
-            $this->assertProgramManaged((string) $booking->program_id, $userId);
-
-            if ($booking->bookingTickets()->exists()) {
-                throw ValidationException::withMessages([
-                    'booking' => __('This booking has tickets and cannot be deleted.'),
-                ]);
-            }
-
-            if ($booking->checkIn()->exists()) {
-                throw ValidationException::withMessages([
-                    'booking' => __('This booking has a check-in and cannot be deleted.'),
-                ]);
-            }
-
-            $booking->delete();
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = BookingPutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $patch = BookingPatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $patch, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for bookings: '.$op);
+        return 'bookings';
     }
 
-    private function applyPut(string $id, BookingPutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return BookingPutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return BookingPatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $booking = Booking::withTrashed()->whereKey($id)->first();
+
+        if ($booking === null || $booking->trashed()) {
+            return;
+        }
+
+        $this->assertProgramManaged((string) $booking->program_id, $userId);
+
+        if ($booking->bookingTickets()->exists()) {
+            throw ValidationException::withMessages([
+                'booking' => __('This booking has tickets and cannot be deleted.'),
+            ]);
+        }
+
+        if ($booking->checkIn()->exists()) {
+            throw ValidationException::withMessages([
+                'booking' => __('This booking has a check-in and cannot be deleted.'),
+            ]);
+        }
+
+        $booking->delete();
+    }
+
+    /**
+     * @param  BookingPutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $existing = Booking::withTrashed()->whereKey($id)->first();
 
@@ -134,7 +125,10 @@ final class ApplyBookingPowerSyncCrudAction
         ]);
     }
 
-    private function applyPatch(string $id, BookingPatchData $patch, string $userId): void
+    /**
+     * @param  BookingPatchData  $patch
+     */
+    protected function applyPatch(string $id, Data $patch, string $userId): void
     {
         $booking = Booking::withTrashed()->whereKey($id)->first();
 
@@ -285,15 +279,6 @@ final class ApplyBookingPowerSyncCrudAction
             throw ValidationException::withMessages([
                 'data.trip_id' => __('This trip does not have enough remaining capacity.'),
             ]);
-        }
-    }
-
-    private function assertProgramManaged(string $programId, string $userId): void
-    {
-        $program = Program::query()->whereKey($programId)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
         }
     }
 }

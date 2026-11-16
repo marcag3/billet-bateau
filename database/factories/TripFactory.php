@@ -20,7 +20,7 @@ class TripFactory extends Factory
     public function configure(): static
     {
         return $this->afterMaking(function (Trip $trip): void {
-            if ($trip->product_id !== null && $trip->product_id !== '') {
+            if (filled($trip->product_id)) {
                 return;
             }
 

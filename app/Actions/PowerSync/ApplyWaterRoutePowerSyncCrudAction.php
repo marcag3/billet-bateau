@@ -2,56 +2,39 @@
 
 namespace App\Actions\PowerSync;
 
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\WaterRoutes\WaterRoutePatchData;
 use App\Data\PowerSync\WaterRoutes\WaterRoutePutData;
 use App\Data\PowerSync\WaterRoutes\WaterRoutePutPayloadResolver;
 use App\Data\PowerSync\WaterRoutes\WaterRouteResolvedPutData;
-use App\Models\Program;
 use App\Models\WaterRoute;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
 /**
  * Applies PowerSync CRUD for {@see WaterRoute} rows (water_routes upload type).
+ *
+ * @extends PowerSyncCrudAction<WaterRoutePutData, WaterRoutePatchData>
  */
-final class ApplyWaterRoutePowerSyncCrudAction
+final class ApplyWaterRoutePowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $this->applyDelete($id, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = WaterRoutePutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $patch = WaterRoutePatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $patch, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for water_routes: '.$op);
+        return 'water_routes';
     }
 
-    private function applyDelete(string $id, string $userId): void
+    protected function putDataClass(): string
+    {
+        return WaterRoutePutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return WaterRoutePatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
     {
         $route = WaterRoute::query()->whereKey($id)->first();
 
@@ -59,11 +42,7 @@ final class ApplyWaterRoutePowerSyncCrudAction
             return;
         }
 
-        $program = Program::query()->whereKey($route->program_id)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
-        }
+        $this->assertProgramManaged($route->program_id, $userId);
 
         if ($route->voyages()->exists()) {
             throw ValidationException::withMessages([
@@ -74,7 +53,10 @@ final class ApplyWaterRoutePowerSyncCrudAction
         $route->delete();
     }
 
-    private function applyPut(string $id, WaterRoutePutData $dto, string $userId): void
+    /**
+     * @param  WaterRoutePutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $existing = WaterRoute::query()->whereKey($id)->first();
 
@@ -96,11 +78,7 @@ final class ApplyWaterRoutePowerSyncCrudAction
             }
         }
 
-        $program = Program::query()->whereKey($programId)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
-        }
+        $this->assertProgramManaged($programId, $userId);
 
         $merged = WaterRoutePutPayloadResolver::resolve($dto, $existing);
         $resolved = WaterRouteResolvedPutData::validateAndCreate($merged);
@@ -116,7 +94,10 @@ final class ApplyWaterRoutePowerSyncCrudAction
         );
     }
 
-    private function applyPatch(string $id, WaterRoutePatchData $patch, string $userId): void
+    /**
+     * @param  WaterRoutePatchData  $patch
+     */
+    protected function applyPatch(string $id, Data $patch, string $userId): void
     {
         $route = WaterRoute::query()->whereKey($id)->first();
 
@@ -124,11 +105,7 @@ final class ApplyWaterRoutePowerSyncCrudAction
             return;
         }
 
-        $program = Program::query()->whereKey($route->program_id)->first();
-
-        if ($program === null || ! $program->userCanManage($userId)) {
-            throw new AuthorizationException;
-        }
+        $this->assertProgramManaged($route->program_id, $userId);
 
         if (! ($patch->program_id instanceof Optional)) {
             $incoming = $patch->program_id;

@@ -159,7 +159,7 @@ describe('control-panel-day-board', () => {
                     {
                         activeBookedCount: 3,
                         activePassengers: [{}, {}],
-                        activePendingBookingGroups: [{ bookingId: 'b1', tickets: [], displayName: 'A', ticketCount: 1 }],
+                        activePendingBookingGroups: [{ ticketCount: 1 }],
                         trip: { capacity: 10 },
                         voyage: {
                             id: 'v1',

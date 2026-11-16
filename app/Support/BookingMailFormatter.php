@@ -13,7 +13,7 @@ final class BookingMailFormatter
         $lines = $booking->bookingTickets
             ->groupBy(static fn ($ticket): string => (string) $ticket->ticket_type_id)
             ->map(function (Collection $group): string {
-                $title = $group->first()?->ticketType?->title ?? __('Billet');
+                $title = $group->first()->ticketType->title ?? __('Billet');
 
                 return __(':count × :title', [
                     'count' => $group->count(),

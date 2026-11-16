@@ -88,7 +88,7 @@ export function useProgramTripSelectOptions(options?: {
             )
                 .where(({ trip }) => eq(trip.program_id, pid))
                 .select(selectTripWithRelationsProjection)
-                .orderBy(({ scheduled_departure_at }) => scheduled_departure_at, 'asc');
+                .orderBy(({ trip }) => trip.scheduled_departure_at, 'asc');
         },
         [
             powersync.collections.trips,

@@ -74,6 +74,7 @@ class Booking extends Model
         return $this->hasMany(Passenger::class, 'booking_id');
     }
 
+    /** @return HasMany<BookingTicket, $this> */
     public function bookingTickets(): HasMany
     {
         return $this->hasMany(BookingTicket::class, 'booking_id');

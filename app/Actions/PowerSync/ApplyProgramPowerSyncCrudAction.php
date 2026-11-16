@@ -3,7 +3,6 @@
 namespace App\Actions\PowerSync;
 
 use App\Actions\Media\TryDeleteStoredObjectAction;
-use App\Data\PowerSync\PowerSyncCrudEntryData;
 use App\Data\PowerSync\Programs\ProgramPatchData;
 use App\Data\PowerSync\Programs\ProgramPutData;
 use App\Data\PowerSync\Programs\ProgramPutPayloadResolver;
@@ -15,56 +14,49 @@ use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
 /**
  * Applies PowerSync CRUD for {@see Program} rows (programs upload type).
+ *
+ * @extends PowerSyncCrudAction<ProgramPutData, ProgramPatchData>
  */
-final class ApplyProgramPowerSyncCrudAction
+final class ApplyProgramPowerSyncCrudAction extends PowerSyncCrudAction
 {
-    use AsAction;
-
-    public function handle(PowerSyncCrudEntryData $entry, string $userId): void
+    protected function tableName(): string
     {
-        $id = $entry->id;
-        $op = $entry->op;
-        /** @var array<string, mixed> $raw */
-        $raw = $entry->data ?? [];
-
-        if ($op === PowerSyncCrudEntryData::OP_DELETE) {
-            $program = Program::query()->whereKey($id)->first();
-
-            if ($program === null) {
-                return;
-            }
-
-            $this->ensureUserManagesProgram($program, $userId);
-            $previousBannerKey = $program->banner_object_key;
-            $program->delete();
-            TryDeleteStoredObjectAction::run($previousBannerKey);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PUT) {
-            $dto = ProgramPutData::validateAndCreate($raw);
-            $this->applyPut($id, $dto, $userId);
-
-            return;
-        }
-
-        if ($op === PowerSyncCrudEntryData::OP_PATCH) {
-            $patch = ProgramPatchData::validateAndCreate($raw);
-            $this->applyPatch($id, $patch, $userId);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported PowerSync CRUD op for programs: '.$op);
+        return 'programs';
     }
 
-    private function applyPut(string $id, ProgramPutData $dto, string $userId): void
+    protected function putDataClass(): string
+    {
+        return ProgramPutData::class;
+    }
+
+    protected function patchDataClass(): string
+    {
+        return ProgramPatchData::class;
+    }
+
+    protected function applyDelete(string $id, string $userId): void
+    {
+        $program = Program::query()->whereKey($id)->first();
+
+        if ($program === null) {
+            return;
+        }
+
+        $this->ensureUserManagesProgram($program, $userId);
+        $previousBannerKey = $program->banner_object_key;
+        $program->delete();
+        TryDeleteStoredObjectAction::run($previousBannerKey);
+    }
+
+    /**
+     * @param  ProgramPutData  $dto
+     */
+    protected function applyPut(string $id, Data $dto, string $userId): void
     {
         $existing = Program::query()->whereKey($id)->first();
 
@@ -114,7 +106,10 @@ final class ApplyProgramPowerSyncCrudAction
         }
     }
 
-    private function applyPatch(string $id, ProgramPatchData $patch, string $userId): void
+    /**
+     * @param  ProgramPatchData  $patch
+     */
+    protected function applyPatch(string $id, Data $patch, string $userId): void
     {
         $program = Program::query()->whereKey($id)->first();
 
@@ -181,11 +176,11 @@ final class ApplyProgramPowerSyncCrudAction
         }
 
         if (! ($patch->start_date instanceof Optional) && $patch->start_date !== null && $patch->start_date !== '') {
-            $program->start_date = CarbonImmutable::parse($patch->start_date)->toDateString();
+            $program->start_date = CarbonImmutable::parse($patch->start_date)->startOfDay();
         }
 
         if (! ($patch->end_date instanceof Optional) && $patch->end_date !== null && $patch->end_date !== '') {
-            $program->end_date = CarbonImmutable::parse($patch->end_date)->toDateString();
+            $program->end_date = CarbonImmutable::parse($patch->end_date)->startOfDay();
         }
 
         if ($program->start_date->gt($program->end_date)) {
@@ -332,7 +327,7 @@ final class ApplyProgramPowerSyncCrudAction
             }
         }
 
-        return $base.'-'.str_pad((string) hrtime(true) % 100_000, 5, '0', STR_PAD_LEFT);
+        return $base.'-'.str_pad((string) (hrtime(true) % 100_000), 5, '0', STR_PAD_LEFT);
     }
 
     private function slugInUse(string $slug, string $exceptId): bool
