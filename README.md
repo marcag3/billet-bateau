@@ -189,7 +189,7 @@ mkdir -p config/pgsql
 cp /path/to/repo/deploy/config/pgsql/create-powersync-user.sh config/pgsql/
 ```
 
-Copy `deploy/.env.example` → `deploy/.env`, set `PRODUCTION_IMAGE`, R2 credentials, and secrets (`openssl rand -hex 16` for `APP_KEY`, `openssl rand -base64 48` for `POWERSYNC_JWT_SECRET`, `openssl rand -base64 32` for `POWERSYNC_ADMIN_API_TOKEN`).
+Copy `deploy/.env.example` → `deploy/.env`, set `PRODUCTION_IMAGE`, R2 credentials, and secrets (`openssl rand -hex 16` for `APP_KEY`, `openssl rand -base64 48` for `POWERSYNC_JWT_SECRET`, `openssl rand -base64 32` for `POWERSYNC_ADMIN_API_TOKEN`). Both PowerSync secrets are required: `deploy/compose.yaml` refuses to start without them.
 
 ```bash
 docker compose pull && docker compose up -d
@@ -232,7 +232,7 @@ Copy `.env.example` → `.env` (Sail). Copy `deploy/.env.example` → `deploy/.e
 | `SANCTUM_STATEFUL_DOMAINS` |     | ✓          | SPA host(s), comma-separated        |
 | `POWERSYNC_PUBLIC_URL`     |     | ✓          | Browser PowerSync URL               |
 | `POWERSYNC_JWT_SECRET`     |     | ✓          | HS256; must match PowerSync service |
-| `POWERSYNC_ADMIN_API_TOKEN` |     | ✓          | Bearer token for Diagnostics API; shared by Laravel and `service.yaml` `api.tokens` |
+| `POWERSYNC_ADMIN_API_TOKEN` |     | ✓          | **Required.** Bearer token for Diagnostics API; shared by Laravel and `service.yaml` `api.tokens` |
 | `MAIL_HOST`                |     | ✓          | Booking confirmation email          |
 
 ### Injected by Docker Compose
@@ -269,10 +269,10 @@ Usually omit from `.env`:
 | `AWS_USE_PATH_STYLE_ENDPOINT`  | `true`                  | `config/filesystems.php` |
 | `AWS_CORS_ALLOWED_ORIGINS`     | `*`                     | `config/filesystems.php` |
 | `POWERSYNC_PUBLIC_URL`         | `http://localhost:6080` | `config/powersync.php`   |
-| `POWERSYNC_JWT_SECRET`         | dev placeholder         | `config/powersync.php`   |
+| `POWERSYNC_JWT_SECRET`         | dev placeholder (local/testing only; required in production) | `config/powersync.php`   |
 | `POWERSYNC_JWT_KID`            | `local-dev`             | `config/powersync.php`   |
 | `POWERSYNC_JWT_AUDIENCE`       | `powersync-dev`         | `config/powersync.php`   |
-| `POWERSYNC_ADMIN_API_TOKEN`    | `powersync-local-admin-token` | `config/powersync.php` + `deploy/config/powersync/service.yaml` |
+| `POWERSYNC_ADMIN_API_TOKEN`    | `powersync-local-admin-token` (local/testing only; required in production) | `config/powersync.php` + `deploy/config/powersync/service.yaml` |
 | `POWERSYNC_DATA_SOURCE_URI`    | `postgresql://powersync:{DB_PASSWORD}@pgsql:5432/{DB_DATABASE}?sslmode=disable` | `config/powersync.php` (replication DB; `powersync` user shares `DB_PASSWORD`) |
 | `POWERSYNC_STORAGE_SOURCE_URI` | `postgresql://{DB_USERNAME}:{DB_PASSWORD}@pgsql:5432/powersync_storage?sslmode=disable` | `config/powersync.php` (bucket storage DB) |
 | `POWERSYNC_ADMIN_API_URL`      | `http://powersync:8080` | `config/powersync.php` (internal Docker hostname) |
