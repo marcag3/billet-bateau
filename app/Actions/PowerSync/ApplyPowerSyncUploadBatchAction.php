@@ -8,6 +8,7 @@ use App\Data\PowerSync\PowerSyncUploadEntryResultData;
 use App\PowerSync\PowerSyncUploadRouter;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Lorisleiva\Actions\Concerns\AsAction;
 use RuntimeException;
@@ -35,7 +36,9 @@ final class ApplyPowerSyncUploadBatchAction
 
         foreach ($crud as $entryPayload) {
             if (! is_array($entryPayload)) {
-                $results[] = PowerSyncUploadEntryResultData::rejected(
+                $results[] = $this->reject(
+                    entryPayload: $entryPayload,
+                    userId: $userId,
                     id: '',
                     type: null,
                     op: null,
@@ -63,7 +66,9 @@ final class ApplyPowerSyncUploadBatchAction
         try {
             $entry = PowerSyncCrudEntryData::validateAndCreate($entryPayload);
         } catch (ValidationException $exception) {
-            return PowerSyncUploadEntryResultData::rejected(
+            return $this->reject(
+                entryPayload: $entryPayload,
+                userId: $userId,
                 id: $rawId,
                 type: $rawType,
                 op: $rawOp,
@@ -76,7 +81,9 @@ final class ApplyPowerSyncUploadBatchAction
                 $this->router->apply($entry, $userId);
             });
         } catch (ValidationException|AuthorizationException|RuntimeException $exception) {
-            return PowerSyncUploadEntryResultData::rejected(
+            return $this->reject(
+                entryPayload: $entryPayload,
+                userId: $userId,
                 id: $entry->id,
                 type: $entry->type->value,
                 op: $entry->op,
@@ -88,6 +95,34 @@ final class ApplyPowerSyncUploadBatchAction
             id: $entry->id,
             type: $entry->type->value,
             op: $entry->op,
+        );
+    }
+
+    /**
+     * Log the full rejected entry so a dropped offline write can be recovered by hand,
+     * since the client discards the entry from its queue once the batch completes.
+     *
+     * @param  array<string, list<string>>  $errors
+     */
+    private function reject(
+        mixed $entryPayload,
+        string $userId,
+        string $id,
+        ?string $type,
+        ?string $op,
+        array $errors,
+    ): PowerSyncUploadEntryResultData {
+        Log::warning('PowerSync upload entry rejected.', [
+            'user_id' => $userId,
+            'errors' => $errors,
+            'entry' => $entryPayload,
+        ]);
+
+        return PowerSyncUploadEntryResultData::rejected(
+            id: $id,
+            type: $type,
+            op: $op,
+            errors: $errors,
         );
     }
 
