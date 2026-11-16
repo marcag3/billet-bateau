@@ -23,6 +23,14 @@ class InstallController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        return Cache::lock('app.install', 30)->block(10, fn (): JsonResponse => $this->install($request));
+    }
+
+    /**
+     * Runs under the install lock so two concurrent setup requests cannot both create an administrator.
+     */
+    private function install(Request $request): JsonResponse
+    {
         if (! $this->isInstallRequired()) {
             return response()->json([
                 'message' => 'Application is already installed.',

@@ -15,6 +15,7 @@ function createProfileZodSchema(t: Translator) {
             t('profile.validationRequired'),
             t('profile.validationEmail'),
         ),
+        currentPassword: z.string().optional(),
     });
 }
 

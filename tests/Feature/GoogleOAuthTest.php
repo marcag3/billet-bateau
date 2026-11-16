@@ -175,4 +175,24 @@ class GoogleOAuthTest extends TestCase
         $this->get('/auth/google/callback')
             ->assertRedirect('/app');
     }
+
+    public function test_unverified_google_email_does_not_sign_in_to_matching_account(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'john@example.com',
+            'google_id' => null,
+        ]);
+
+        Socialite::fake('google', SocialiteUser::fake([
+            'id' => 'google-attacker',
+            'email' => 'john@example.com',
+            'email_verified' => false,
+        ]));
+
+        $response = $this->get('/auth/google/callback');
+
+        $response->assertRedirect('/app/login?error=google_account_not_found');
+        $this->assertGuest();
+        $this->assertNull($user->refresh()->google_id);
+    }
 }

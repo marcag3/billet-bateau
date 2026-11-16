@@ -77,6 +77,25 @@ class AuthSessionControllerTest extends TestCase
             ->assertJsonValidationErrors(['email']);
     }
 
+    public function test_repeated_failed_sign_ins_are_throttled(): void
+    {
+        User::factory()->create([
+            'email' => 'john@example.com',
+        ]);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->postJson('/login', [
+                'email' => 'john@example.com',
+                'password' => 'invalid-password',
+            ])->assertStatus(422);
+        }
+
+        $this->postJson('/login', [
+            'email' => 'john@example.com',
+            'password' => 'invalid-password',
+        ])->assertTooManyRequests();
+    }
+
     public function test_user_can_logout_from_authenticated_session(): void
     {
         User::factory()->create([

@@ -46,6 +46,7 @@ class ProfileControllerTest extends TestCase
             ->putJson('/api/auth/profile', [
                 'name' => 'Jane Doe',
                 'email' => 'jane@example.com',
+                'current_password' => 'password',
             ]);
 
         $response
@@ -58,6 +59,35 @@ class ProfileControllerTest extends TestCase
 
         $this->assertSame('Jane Doe', $user->name);
         $this->assertSame('jane@example.com', $user->email);
+    }
+
+    public function test_profile_email_change_requires_current_password(): void
+    {
+        $user = User::factory()->create(['email' => 'john@example.com']);
+
+        $this->actingAs($user)
+            ->putJson('/api/auth/profile', [
+                'name' => 'John Doe',
+                'email' => 'attacker@example.com',
+                'current_password' => 'wrong-password',
+            ])
+            ->assertJsonValidationErrors(['current_password' => 'The provided password is incorrect.']);
+
+        $this->assertSame('john@example.com', $user->refresh()->email);
+    }
+
+    public function test_profile_name_change_does_not_require_current_password(): void
+    {
+        $user = User::factory()->create(['name' => 'John Doe', 'email' => 'john@example.com']);
+
+        $this->actingAs($user)
+            ->putJson('/api/auth/profile', [
+                'name' => 'Johnny Doe',
+                'email' => 'JOHN@example.com',
+            ])
+            ->assertOk();
+
+        $this->assertSame('Johnny Doe', $user->refresh()->name);
     }
 
     public function test_profile_update_rejects_email_with_pending_program_invitation(): void

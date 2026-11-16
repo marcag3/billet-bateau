@@ -53,9 +53,11 @@ function extractErrorMessage(
 export async function updateProfile({
     name,
     email,
+    currentPassword,
 }: {
     name: string;
     email: string;
+    currentPassword?: string;
 }): Promise<AuthUser> {
     await ensureCsrfCookie();
 
@@ -71,6 +73,7 @@ export async function updateProfile({
         body: JSON.stringify({
             name,
             email,
+            current_password: currentPassword ?? null,
         }),
     });
 
@@ -81,6 +84,7 @@ export async function updateProfile({
             extractErrorMessage(payload, translate('profile.unableUpdateProfile'), [
                 'name',
                 'email',
+                'current_password',
             ]),
         );
     }

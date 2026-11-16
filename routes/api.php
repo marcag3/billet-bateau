@@ -22,6 +22,7 @@ Route::prefix('public')->middleware('throttle:120,1')->group(function (): void {
         ->where('program', '[^/]+')
         ->name('api.public.programs.booking-options');
     Route::post('programs/{program:slug}/bookings', [PublicBookingController::class, 'store'])
+        ->middleware('throttle:public-booking')
         ->where('program', '[^/]+')
         ->name('api.public.programs.bookings.store');
     Route::get('bookings/cancel/{token}', [PublicBookingCancelController::class, 'show'])
@@ -61,5 +62,6 @@ Route::middleware(['web', 'auth:sanctum', 'throttle:60,1'])->group(function (): 
         ->name('api.programs.transfer-ownership');
 
     Route::post('/presign-upload', [PresignUploadController::class, 'presignUpload'])
+        ->middleware('throttle:20,1')
         ->name('api.presign-upload');
 });
