@@ -56,6 +56,12 @@ final class ApplyBoatTypePowerSyncCrudAction extends PowerSyncCrudAction
         $this->assertProgramManaged($data->program_id, $userId);
 
         $existing = BoatType::query()->whereKey($id)->first();
+
+        if ($existing !== null) {
+            $this->assertProgramManaged($existing->program_id, $userId);
+            $this->assertProgramUnchanged($existing->program_id, $data->program_id);
+        }
+
         $previousBannerKey = $existing?->banner_object_key;
 
         $resolved = BoatTypeResolvedPutData::fromPut($data);

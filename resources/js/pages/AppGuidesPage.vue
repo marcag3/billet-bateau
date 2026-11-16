@@ -52,6 +52,7 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
 import { useLiveQuery } from "@tanstack/vue-db";
+import { eq } from "@tanstack/db";
 import { getAppPowerSyncContext } from "../powersync/app-powersync.runtime";
 import { liveQueryRows } from "../powersync/live-query-casts";
 import type { GuideOutput } from "../powersync/guides.collection";
@@ -69,18 +70,21 @@ const $q = useQuasar();
 const { confirm } = useConfirmDialog();
 const { notifyError } = useNotifyErrorFromCatch();
 const guidesCollection = powersync.collections.guides;
+const activeProgramIdRef = powersync.activeProgramIdRef;
 
 const { data: guidesRaw } = useLiveQuery(
     (queryBuilder) => {
         const col = guidesCollection.value;
-        if (!col) {
+        const pid = activeProgramIdRef.value.trim();
+        if (!col || pid.length === 0) {
             return undefined;
         }
         return queryBuilder
             .from({ g: col })
+            .where(({ g }) => eq(g.program_id, pid))
             .orderBy(({ g }) => g.name, "asc");
     },
-    [guidesCollection],
+    [guidesCollection, activeProgramIdRef],
 );
 
 const guides = computed(() => liveQueryRows<GuideOutput>(guidesRaw.value));

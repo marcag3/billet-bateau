@@ -131,9 +131,14 @@ async function onSubmitGuide(values: GuideFormValues): Promise<void> {
                 });
                 void powersync.refreshOutboxSnapshot();
             } else {
+                const programId = powersync.activeProgramIdRef.value.trim();
+                if (programId.length === 0) {
+                    throw new Error("No active program.");
+                }
                 await col
                     .insert({
                         id: ulid(),
+                        program_id: programId,
                         name,
                         staff_user_id: null,
                     })

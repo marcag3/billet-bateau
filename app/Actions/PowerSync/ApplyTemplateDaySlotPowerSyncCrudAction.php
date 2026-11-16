@@ -87,6 +87,7 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction extends PowerSyncCrudAction
         $resolved = TemplateDaySlotResolvedPutData::validateAndCreate($merged);
 
         $this->assertWaterRouteBelongsToProgram($resolved->water_route_id, $programId);
+        $this->assertBoatTypeBelongsToProgram($resolved->boat_type_id, $programId);
 
         TemplateDaySlot::query()->updateOrCreate(
             ['id' => $id],
@@ -134,6 +135,7 @@ final class ApplyTemplateDaySlotPowerSyncCrudAction extends PowerSyncCrudAction
         }
 
         if (! ($patch->boat_type_id instanceof Optional)) {
+            $this->assertBoatTypeBelongsToProgram($patch->boat_type_id, $programId);
             $slot->boat_type_id = $patch->boat_type_id;
         }
 

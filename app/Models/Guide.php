@@ -18,6 +18,7 @@ class Guide extends Model
 
     protected $fillable = [
         'id',
+        'program_id',
         'name',
         'staff_user_id',
         'created_at',
@@ -30,6 +31,12 @@ class Guide extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    /** @return BelongsTo<Program, $this> */
+    public function program(): BelongsTo
+    {
+        return $this->belongsTo(Program::class, 'program_id');
     }
 
     public function staffUser(): BelongsTo

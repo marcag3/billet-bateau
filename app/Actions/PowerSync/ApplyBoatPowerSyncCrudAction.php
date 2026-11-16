@@ -59,6 +59,13 @@ final class ApplyBoatPowerSyncCrudAction extends PowerSyncCrudAction
         $merged = BoatPutPayloadResolver::resolve($data, $existing);
         $resolved = BoatResolvedPutData::validateAndCreate($merged);
 
+        if ($existing !== null) {
+            $this->assertProgramUnchanged($existing->program_id, $resolved->program_id);
+        }
+
+        $this->assertProgramManaged($resolved->program_id, $userId);
+        $this->assertBoatTypeBelongsToProgram($resolved->boat_type_id, $resolved->program_id);
+
         Boat::query()->updateOrCreate(
             ['id' => $id],
             [
@@ -98,12 +105,13 @@ final class ApplyBoatPowerSyncCrudAction extends PowerSyncCrudAction
             $boat->capacity = $data->capacity;
         }
 
-        if (! ($data->boat_type_id instanceof Optional)) {
-            $boat->boat_type_id = $data->boat_type_id;
+        if (! ($data->program_id instanceof Optional)) {
+            $this->assertProgramUnchanged($boat->program_id, $data->program_id);
         }
 
-        if (! ($data->program_id instanceof Optional)) {
-            $boat->program_id = $data->program_id;
+        if (! ($data->boat_type_id instanceof Optional)) {
+            $this->assertBoatTypeBelongsToProgram($data->boat_type_id, (string) $boat->program_id);
+            $boat->boat_type_id = $data->boat_type_id;
         }
 
         $boat->save();

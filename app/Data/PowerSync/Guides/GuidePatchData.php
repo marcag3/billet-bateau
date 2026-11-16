@@ -12,6 +12,7 @@ use Spatie\LaravelData\Optional;
 final class GuidePatchData extends Data
 {
     public function __construct(
+        public string|Optional|null $program_id = new Optional,
         #[WithCast(TrimmedStringCast::class)]
         public string|Optional|null $name = new Optional,
         public string|Optional|null $staff_user_id = new Optional,
@@ -23,6 +24,7 @@ final class GuidePatchData extends Data
     public static function rules(): array
     {
         return [
+            'program_id' => ['sometimes', 'nullable', 'ulid'],
             'name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'staff_user_id' => ['sometimes', 'nullable', 'ulid', 'exists:users,id'],
         ];
